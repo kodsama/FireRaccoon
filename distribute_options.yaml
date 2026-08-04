@@ -1,0 +1,49 @@
+# flutter_distributor configuration.
+#
+# From the repo root:
+#   dart pub global activate flutter_distributor
+#   flutter_distributor package --platform linux --targets appimage,deb,rpm
+#   flutter_distributor package --platform windows --targets exe
+#
+# BINARY_NAME is fireracoon (linux/windows CMakeLists.txt). Display name is
+# FireRacoon. Linux icon/desktop metadata live under packaging/linux/.
+
+output: dist/
+releases:
+  - name: release
+    jobs:
+      - name: linux-appimage
+        package:
+          platform: linux
+          target: appimage
+          build_args:
+            obfuscate: true
+            split-debug-info: build/symbols/linux
+      - name: linux-deb
+        package:
+          platform: linux
+          target: deb
+          build_args:
+            obfuscate: true
+            split-debug-info: build/symbols/linux
+      - name: linux-rpm
+        package:
+          platform: linux
+          target: rpm
+          build_args:
+            obfuscate: true
+            split-debug-info: build/symbols/linux
+      - name: windows-exe
+        package:
+          platform: windows
+          target: exe
+          build_args:
+            obfuscate: true
+            split-debug-info: build/symbols/windows
+      - name: macos-dmg
+        package:
+          platform: macos
+          target: dmg
+          build_args:
+            obfuscate: true
+            split-debug-info: build/symbols/macos

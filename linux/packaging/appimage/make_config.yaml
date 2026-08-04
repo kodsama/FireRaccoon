@@ -1,0 +1,12 @@
+# flutter_distributor AppImage config.
+display_name: FireRacoon
+icon: packaging/linux/icon_256.png
+keywords:
+  - Finance
+  - Budget
+  - Firefly
+generic_name: Personal finance
+categories:
+  - Office
+  - Finance
+supported_mime_type: []

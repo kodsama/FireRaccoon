@@ -1,0 +1,444 @@
+openapi: 3.1.0
+info:
+  title: FireRacoon API Surface
+  version: 1.0.0
+  description: |
+    Machine-readable contract for FireRacoon agent integrations.
+
+    FireRacoon is a Flutter client for [Firefly III](https://www.firefly-iii.org/).
+    This document describes:
+
+    1. **Firefly III REST endpoints** consumed by the app and MCP tools.
+    2. **MCP tools** exposed by the built-in `fireracoon_mcp` server (JSON-RPC 2.0
+       over stdio or TCP `127.0.0.1:8787+`).
+
+    The desktop app starts an embedded MCP server automatically when Firefly
+    credentials are configured. Standalone usage:
+
+    ```bash
+    FIREFLY_URL=http://localhost:8081 FIREFLY_TOKEN=... dart run packages/mcp/bin/fireracoon_mcp.dart
+    ```
+
+servers:
+  - url: '{fireflyUrl}'
+    description: Firefly III instance
+    variables:
+      fireflyUrl:
+        default: http://localhost:8081
+
+security:
+  - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: Firefly III personal access token or OAuth2 bearer token
+
+  schemas:
+    JsonApiResource:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        attributes:
+          type: object
+
+    Account:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        type: { type: string, enum: [asset, expense, revenue, liability] }
+        role: { type: string }
+        current_balance: { type: number }
+        currency_symbol: { type: string }
+        currency_code: { type: string }
+        active: { type: boolean }
+
+    Transaction:
+      type: object
+      properties:
+        id: { type: string }
+        type: { type: string, enum: [withdrawal, deposit, transfer] }
+        date: { type: string, format: date-time }
+        amount: { type: number }
+        description: { type: string }
+        source_name: { type: string }
+        destination_name: { type: string }
+        category_name: { type: string }
+        currency_symbol: { type: string }
+        currency_code: { type: string }
+        reconciled: { type: boolean }
+        partially_reconciled: { type: boolean }
+
+    Budget:
+      type: object
+      properties:
+        id: { type: string }
+        name: { type: string }
+        active: { type: boolean }
+        spent: { type: number }
+        auto_budget_amount: { type: number }
+        currency_symbol: { type: string }
+        currency_code: { type: string }
+
+    McpToolResult:
+      type: object
+      properties:
+        ok: { type: boolean }
+        code: { type: string }
+        error: { type: string }
+
+paths:
+  /api/v1/about:
+    get:
+      operationId: checkConnection
+      summary: Health / version probe
+      tags: [Firefly]
+      responses:
+        '200':
+          description: Firefly III is reachable
+
+  /api/v1/about/user:
+    get:
+      operationId: getCurrentUser
+      summary: Authenticated user profile
+      tags: [Firefly]
+      responses:
+        '200':
+          description: User resource
+
+  /api/v1/currencies/primary:
+    get:
+      operationId: getPrimaryCurrency
+      summary: Primary currency
+      tags: [Firefly]
+      responses:
+        '200':
+          description: Currency resource
+
+  /api/v1/currencies/{code}/primary:
+    post:
+      operationId: setPrimaryCurrency
+      summary: Set primary currency
+      tags: [Firefly]
+      parameters:
+        - name: code
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Primary currency updated
+
+  /api/v1/accounts:
+    get:
+      operationId: listAccounts
+      summary: List accounts
+      tags: [Firefly]
+      responses:
+        '200':
+          description: Account collection
+    parameters: []
+
+  /api/v1/accounts/{accountId}:
+    put:
+      operationId: updateAccount
+      summary: Rename an account
+      tags: [Firefly]
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        '200':
+          description: Updated account
+
+  /api/v1/accounts/{accountId}/transactions:
+    get:
+      operationId: listAccountTransactions
+      summary: Paginated account transactions
+      tags: [Firefly]
+      parameters:
+        - name: accountId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 50, maximum: 500 }
+      responses:
+        '200':
+          description: Transaction page
+
+  /api/v1/transactions:
+    get:
+      operationId: listTransactions
+      summary: List transactions (FireRacoon uses last 365 days)
+      tags: [Firefly]
+      parameters:
+        - name: start
+          in: query
+          schema: { type: string, format: date }
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Transaction page
+
+  /api/v1/transactions/{transactionId}:
+    get:
+      operationId: getTransaction
+      summary: Fetch a single transaction journal
+      tags: [Firefly]
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Transaction journal
+    put:
+      operationId: updateTransaction
+      summary: Update a transaction journal (including reconciled status)
+      tags: [Firefly]
+      parameters:
+        - name: transactionId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transactions:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      reconciled: { type: boolean }
+      responses:
+        '200':
+          description: Updated transaction journal
+
+  /api/v1/budgets:
+    get:
+      operationId: listBudgets
+      summary: List budgets
+      tags: [Firefly]
+      responses:
+        '200':
+          description: Budget collection
+
+  /api/v1/budgets/{budgetId}:
+    put:
+      operationId: updateBudget
+      summary: Update budget name and auto-budget amount
+      tags: [Firefly]
+      parameters:
+        - name: budgetId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, auto_budget_amount]
+              properties:
+                name: { type: string }
+                auto_budget_amount: { type: string }
+      responses:
+        '200':
+          description: Updated budget
+    delete:
+      operationId: deleteBudget
+      summary: Delete a budget
+      tags: [Firefly]
+      parameters:
+        - name: budgetId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: Deleted
+
+  /api/v1/budgets/{budgetId}/transactions:
+    get:
+      operationId: listBudgetTransactions
+      summary: Transactions linked to a budget
+      tags: [Firefly]
+      parameters:
+        - name: budgetId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Transaction collection
+
+x-mcp:
+  protocolVersion: '2025-06-18'
+  transport:
+    stdio:
+      command: dart run packages/mcp/bin/fireracoon_mcp.dart
+    tcp:
+      host: 127.0.0.1
+      port: 8787
+      note: Desktop app binds 8787–8796 when running
+  auth:
+    env:
+      - FIREFLY_URL
+      - FIREFLY_TOKEN
+    perToolArguments:
+      - firefly_url
+      - firefly_token
+  tools:
+    get_capabilities:
+      description: Server capabilities and tool catalog
+      inputSchema: { type: object, properties: {} }
+    check_connection:
+      description: Verify /api/v1/about with credentials
+      inputSchema:
+        type: object
+        properties:
+          firefly_url: { type: string }
+          firefly_token: { type: string }
+    get_current_user:
+      description: Fetch authenticated user
+      mapsTo: GET /api/v1/about/user
+    get_primary_currency:
+      description: Fetch primary currency
+      mapsTo: GET /api/v1/currencies/primary
+    set_primary_currency:
+      description: Set primary currency
+      mapsTo: POST /api/v1/currencies/{code}/primary
+      required: [code]
+    get_accounts:
+      description: List accounts with balances
+      mapsTo: GET /api/v1/accounts
+    get_transactions:
+      description: Fetch transactions with optional account filter and pagination
+      mapsTo: GET /api/v1/transactions
+      inputSchema:
+        type: object
+        properties:
+          account_id: { type: string }
+          page: { type: integer, default: 1 }
+          limit: { type: integer, default: 50 }
+          reconciled:
+            description: Filter by reconciliation status
+            oneOf:
+              - { type: boolean }
+              - type: string
+                enum: [all, true, false, reconciled, unreconciled]
+    get_transaction:
+      description: Fetch a single transaction by journal ID
+      mapsTo: GET /api/v1/transactions/{transactionId}
+      required: [transaction_id]
+    set_transaction_reconciled:
+      description: Mark a transaction reconciled or unreconciled
+      mapsTo: PUT /api/v1/transactions/{transactionId}
+      required: [transaction_id, reconciled]
+    store_reconciliation:
+      description: >
+        Store account reconciliation and optional correction transaction.
+        For ccAsset accounts, pass payment_account_id and payback_date to
+        create a multi-split credit-card payback transfer.
+      required:
+        - account_id
+        - start_date
+        - end_date
+        - start_balance
+        - end_balance
+        - transaction_ids
+      inputSchema:
+        type: object
+        properties:
+          payment_account_id: { type: string }
+          payback_date:
+            type: string
+            description: Payback transfer date (YYYY-MM-DD)
+    get_budgets:
+      description: List budgets
+      mapsTo: GET /api/v1/budgets
+    get_budget_transactions:
+      description: Budget transactions
+      mapsTo: GET /api/v1/budgets/{budgetId}/transactions
+      required: [budget_id]
+    update_account:
+      description: Rename account
+      mapsTo: PUT /api/v1/accounts/{accountId}
+      required: [account_id, name]
+    update_budget:
+      description: Update budget
+      mapsTo: PUT /api/v1/budgets/{budgetId}
+      required: [budget_id, name]
+    delete_budget:
+      description: Delete budget
+      mapsTo: DELETE /api/v1/budgets/{budgetId}
+      required: [budget_id]
+    run_projection:
+      description: On-device financial projection (savings, compound, portfolio, cashflow)
+      inputSchema:
+        type: object
+        properties:
+          projection_type:
+            type: string
+            enum: [savings, compound, portfolio, cashflow]
+          months: { type: integer, default: 6 }
+          what_if_percent: { type: integer, default: 0 }
+          annual_return_percent: { type: number, default: 7.0 }
+          volatility_percent: { type: number, default: 12.0 }
+    get_dashboard_kpis:
+      description: Dashboard KPIs for a period
+      inputSchema:
+        type: object
+        properties:
+          period:
+            type: string
+            enum:
+              - thisWeek
+              - lastWeek
+              - thisMonth
+              - lastMonth
+              - thisQuarter
+              - lastQuarter
+              - thisYear
+              - lastYear
+              - last2Years
+              - last5Years
+              - last10Years
+              - all
+
+tags:
+  - name: Firefly
+    description: Firefly III REST API subset used by FireRacoon

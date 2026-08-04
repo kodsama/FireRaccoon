@@ -1,0 +1,1711 @@
+{
+  "@@locale": "zh",
+  "appTitle": "FireRacoon",
+  "appTagline": "您预算中最聪明的伙伴。",
+  "appNameFire": "Fire",
+  "appNameRacoon": "Racoon",
+  "navDashboard": "仪表盘",
+  "navDashboardShort": "概览",
+  "navAccounts": "账户",
+  "navTransactions": "交易",
+  "navBudgets": "预算",
+  "navSubscriptions": "订阅与定期",
+  "navPiggyBanks": "存钱罐",
+  "navExpenses": "支出",
+  "navIncome": "收入",
+  "navTransfers": "转账",
+  "navLiabilities": "负债",
+  "navProjection": "预测",
+  "navPrognosis": "预后",
+  "navSettings": "设置",
+  "netWorth": "净资产",
+  "search": "搜索...",
+  "loading": "加载中…",
+  "fireflyUser": "Firefly 用户",
+  "fireflyConnected": "Firefly III · 已连接",
+  "fireflyDisconnected": "Firefly III · 未连接",
+  "fireflyConnectionChecking": "Firefly III · 检查中…",
+  "settingsTitle": "设置",
+  "appVersion": "版本 {version}",
+  "language": "语言",
+  "selectLanguage": "选择语言",
+  "languageEnglish": "English",
+  "languageFrench": "Français",
+  "languageSwedish": "Svenska",
+  "languagePortuguese": "Português",
+  "languageChinese": "简体中文",
+  "languageJapanese": "日本語",
+  "defaultCurrency": "默认货币",
+  "selectCurrency": "选择货币",
+  "primaryCurrencyChangeWarning": "更改默认货币时，Firefly III 可能会重新计算已存储的金额。",
+  "primaryCurrencyChanged": "默认货币已设为 {code}",
+  "@primaryCurrencyChanged": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSetPrimaryCurrency": "无法设置默认货币：{error}",
+  "@failedToSetPrimaryCurrency": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "primaryCurrencyCurrent": "当前",
+  "changePrimaryCurrencyTitle": "更改默认货币",
+  "changePrimaryCurrencyMessage": "将默认货币更改为 {code}？{warning}",
+  "@changePrimaryCurrencyMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "warning": {
+        "type": "String"
+      }
+    }
+  },
+  "changePrimaryCurrencyConfirm": "更改",
+  "connectToFireflyToLoad": "连接 Firefly III 以加载",
+  "managedInFirefly": "在 Firefly III 中管理",
+  "appearance": "外观",
+  "racoonMode": "浣熊模式",
+  "themeStyle": "主题样式",
+  "themeStyleSubtitle": "选择调色板、强调色和亮度。更改立即生效。",
+  "systemDefault": "系统默认",
+  "themeBrightness": "亮度",
+  "themeLight": "浅色",
+  "themeDark": "深色",
+  "themePalette": "调色板",
+  "paletteClassic": "经典",
+  "paletteSpectrum": "光谱",
+  "paletteRaccoon": "浣熊",
+  "themeAccentColor": "强调色",
+  "themePreview": "预览",
+  "done": "完成",
+  "accentGreen": "绿色",
+  "accentTeal": "青色",
+  "accentBlue": "蓝色",
+  "accentOrange": "橙色",
+  "accentRed": "红色",
+  "accentViolet": "紫色",
+  "accentLime": "青柠",
+  "accentSky": "天蓝",
+  "accentCharcoal": "炭灰",
+  "accentSilver": "银色",
+  "accentTan": "棕褐",
+  "accentAmber": "琥珀",
+  "accentSlate": "石板",
+  "accentMidnight": "午夜",
+  "accentSmoke": "烟灰",
+  "accentPearl": "珍珠",
+  "backendConnection": "后端连接（Firefly III）",
+  "serverUrl": "服务器 URL",
+  "notConnected": "未连接",
+  "oauth2Connection": "OAuth2 连接",
+  "personalAccessToken": "个人访问令牌",
+  "notSet": "未设置",
+  "disconnect": "断开连接",
+  "fireflyConnectionTitle": "Firefly III 连接",
+  "serverUrlLabel": "服务器 URL（例如 https://firefly.my-domain.com）",
+  "allowHttpConnections": "允许 HTTP 连接",
+  "authenticationMethod": "认证方式",
+  "oauth2": "OAuth2",
+  "oauthClientId": "OAuth 客户端 ID",
+  "testConnection": "测试连接",
+  "connectionSuccessful": "连接成功！",
+  "connectionFailed": "连接失败。请检查 URL 和令牌。",
+  "loginViaBrowser": "通过浏览器登录",
+  "cancel": "取消",
+  "save": "保存",
+  "delete": "删除",
+  "errorGeneric": "错误：{error}",
+  "@errorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingData": "加载数据出错：{error}",
+  "@errorLoadingData": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "tabInsights": "洞察",
+  "tabAccounts": "账户",
+  "tabFocus": "焦点",
+  "totalBalance": "总余额",
+  "incomeMonth": "收入 · {month}",
+  "@incomeMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingMonth": "支出 · {month}",
+  "@spendingMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "savedMonth": "储蓄 · {month}",
+  "@savedMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "snatchedFunds": "截获资金",
+  "burntCash": "燃烧现金",
+  "stash": "藏匿",
+  "snatched": "截获",
+  "burnt": "燃烧",
+  "navDashboardRacoon": "浣熊窝",
+  "navDashboardShortRacoon": "窝",
+  "navAccountsRacoon": "藏匿处",
+  "navTransactionsRacoon": "打劫记录",
+  "navBudgetsRacoon": "囤积计划",
+  "navSubscriptionsRacoon": "定期突袭",
+  "navPiggyBanksRacoon": "迷你藏匿处",
+  "navExpensesRacoon": "燃烧报告",
+  "navProjectionRacoon": "水晶宝藏",
+  "navPrognosisRacoon": "月末战利品",
+  "navSettingsRacoon": "窝规",
+  "netWorthRacoon": "总宝藏",
+  "searchRacoon": "嗅一嗅…",
+  "accountsTitleRacoon": "藏匿处",
+  "transactionsTitleRacoon": "打劫记录",
+  "budgetsTitleRacoon": "囤积计划",
+  "expensesTitleRacoon": "燃烧报告",
+  "projectionTitleRacoon": "水晶宝藏",
+  "settingsTitleRacoon": "窝规",
+  "tabInsightsRacoon": "赃物情报",
+  "tabAccountsRacoon": "藏匿处",
+  "tabFocusRacoon": "打劫总部",
+  "totalBalanceRacoon": "满藏宝库",
+  "incomeMonthRacoon": "截获 · {month}",
+  "@incomeMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingMonthRacoon": "燃烧 · {month}",
+  "@spendingMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "savedMonthRacoon": "藏匿 · {month}",
+  "@savedMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "cashFlowRacoon": "赃物流",
+  "whereMoneyGoesRacoon": "赃物去向",
+  "recentActivityRacoon": "近期打劫",
+  "yourAccountsRacoon": "你的藏匿处",
+  "budgetsAtGlanceRacoon": "囤积一览",
+  "viewAllAccountsRacoon": "全部藏匿处",
+  "assetAccountsRacoon": "宝藏藏匿处",
+  "liabilityAccountsRacoon": "欠债 & IOU",
+  "stocksAndFundsAccountsRacoon": "市场藏匿处",
+  "allAccountsRacoon": "全部藏匿处",
+  "accountsRacoon": "藏匿处",
+  "newTransactionRacoon": "策划打劫",
+  "editTransactionRacoon": "编辑打劫",
+  "transactionsCountRacoon": "{count} 次打劫",
+  "@transactionsCountRacoon": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneTransactionRacoon": "1 次打劫",
+  "transactionTypeDepositRacoon": "截获",
+  "transactionTypeWithdrawalRacoon": "燃烧",
+  "transactionTypeTransferRacoon": "藏匿转移",
+  "expenseLabelRacoon": "燃烧",
+  "spentRacoon": "已燃烧",
+  "newBudgetRacoon": "新囤积计划",
+  "projectedBalanceRacoon": "未来宝藏",
+  "piggyBankRacoon": "迷你藏匿处",
+  "transfersRacoon": "藏匿转移",
+  "expensesFilterRacoon": "燃烧",
+  "noTransactionsYetRacoon": "还没有打劫",
+  "lookingAheadRacoon": "窥探未来",
+  "openProjectionRacoon": "展望未来",
+  "editAccountRacoon": "编辑藏匿处",
+  "accountNameRacoon": "藏匿处名称",
+  "filterAccountRacoon": "筛选藏匿处",
+  "sourceAccountRacoon": "来源藏匿处",
+  "destinationAccountRacoon": "目标藏匿处",
+  "totalSpentPeriodRacoon": "本期总燃烧",
+  "totalIncomePeriodRacoon": "本期总截获",
+  "totalTransferredPeriodRacoon": "本期总转移",
+  "newAccount": "新建账户",
+  "newLiability": "新建负债",
+  "newExpense": "新建支出",
+  "newAccountRacoon": "新藏匿处",
+  "newLiabilityRacoon": "新欠债",
+  "newExpenseRacoon": "策划燃烧",
+  "income": "收入",
+  "spending": "支出",
+  "saved": "储蓄",
+  "cashFlow": "现金流",
+  "whereMoneyGoes": "资金流向",
+  "noSpendingThisMonth": "本月尚无支出",
+  "recentActivity": "最近活动",
+  "viewAll": "查看全部",
+  "noTransactionsYet": "暂无交易",
+  "lookingAhead": "展望未来",
+  "spendingPaceWarning": "本月支出速度可能超过收入",
+  "openProjection": "打开预测",
+  "yourAccounts": "您的账户",
+  "budgetsAtGlance": "预算一览",
+  "viewAllAccounts": "查看所有账户",
+  "thirtyDayOutlook": "30 天展望",
+  "monthEndPrognosis": "月末预测",
+  "projectedEndOfMonth": "月末",
+  "includeCreditCardPayments": "包含信用卡还款",
+  "prognosisDeltaPositive": "预计 +{amount}",
+  "@prognosisDeltaPositive": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisDeltaNegative": "预计 {amount}",
+  "@prognosisDeltaNegative": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisLowBalanceWarning": "预计余额可能为负",
+  "prognosisDebtWarning": "预计负债可能增加",
+  "openPrognosis": "打开预后",
+  "prognosisMarginLabel": "安全边际",
+  "prognosisMarginDetail": "在预测余额中保留的缓冲金额。",
+  "@prognosisMarginDetail": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisIncludeScheduled": "包含计划交易",
+  "prognosisIncludeRecurring": "包含定期交易",
+  "prognosisIncludeBills": "包含账单",
+  "prognosisIncludeIncome": "包含收入",
+  "prognosisIncludeExpenses": "包含支出",
+  "prognosisIncludeTransfers": "包含转账",
+  "prognosisIncludeCreditCards": "包含信用卡",
+  "prognosisEndOfNextMonth": "下月末",
+  "prognosisMinBalance": "最低余额",
+  "prognosisMaxBalance": "最高余额",
+  "prognosisExpectedBalance": "预期余额",
+  "prognosisSelectAccount": "选择账户",
+  "prognosisBandLegend": "余额区间",
+  "prognosisModeExpected": "预期",
+  "prognosisModeProjected": "预测",
+  "prognosisModeExpectedHint": "基于已记录交易和定期规则。",
+  "prognosisModeProjectedHint": "包含计划与预测的未来现金流。",
+  "prognosisHorizonLabel": "时间范围",
+  "prognosisHorizonEndOfMonth": "本月末",
+  "prognosisHorizonEndOfNextMonth": "下月末",
+  "prognosisHorizonTwoMonths": "两个月",
+  "prognosisHorizonThreeMonths": "三个月",
+  "prognosisHorizonSixMonths": "六个月",
+  "prognosisHorizonOneYear": "一年",
+  "prognosisHorizonThreeYears": "三年",
+  "prognosisHorizonFiveYears": "五年",
+  "prognosisHorizonTenYears": "十年",
+  "prognosisMilestoneThreeMonths": "三个月里程碑",
+  "prognosisMilestoneSixMonths": "六个月里程碑",
+  "prognosisMilestoneOneYear": "一年里程碑",
+  "prognosisIncludeSources": "包含来源账户",
+  "prognosisIncludeLiabilities": "包含负债",
+  "prognosisNegativeOn": "负余额日期",
+  "@prognosisNegativeOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisCurrentBalance": "当前余额",
+  "prognosisPredictedBalances": "预测余额",
+  "todaysTimeline": "今日时间线",
+  "noActivityToday": "今日无活动",
+  "noChangeVsLastMonth": "与上月相比无变化",
+  "newActivityThisMonth": "本月新活动",
+  "percentVsLastMonth": "较上月 {arrow}{percent}%",
+  "@percentVsLastMonth": {
+    "placeholders": {
+      "arrow": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "projectedSavingsHeadline": "本月预计储蓄 {amount}",
+  "@projectedSavingsHeadline": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "onPaceDetail": "按当前速度，月底预计储蓄 {amount}",
+  "@onPaceDetail": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingOutpacingDetail": "支出超出收入 {amount}",
+  "@spendingOutpacingDetail": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "accountsTitle": "账户",
+  "assetAccounts": "资产账户",
+  "stocksAndFundsAccounts": "股票和基金账户",
+  "liabilityAccounts": "负债账户",
+  "noAccountsFound": "未找到账户。",
+  "allAccounts": "所有账户",
+  "assetsOnly": "仅资产",
+  "liabilitiesOnly": "仅负债",
+  "accountName": "账户名称",
+  "accountRoleDefault": "支票账户",
+  "accountRoleShared": "共享账户",
+  "accountRoleSaving": "储蓄账户",
+  "accountRoleCreditCard": "信用卡",
+  "holdingAccountFundLabel": "(基金)",
+  "holdingAccountStockLabel": "(股票)",
+  "failedToUpdate": "更新失败：{error}",
+  "@failedToUpdate": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "name": "名称",
+  "transactionsTitle": "交易",
+  "filteredBy": "筛选条件：{account}",
+  "@filteredBy": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "balance": "余额：",
+  "balanceCheckMode": "核对余额",
+  "balanceCheckExpected": "预期余额",
+  "balanceCheckStatement": "您的余额",
+  "balanceCheckStatementHint": "输入账单上的余额",
+  "balanceCheckMatch": "余额一致",
+  "balanceCheckDifference": "差额：{amount}",
+  "@balanceCheckDifference": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceCheckEnterBalance": "输入余额以进行比较",
+  "balanceCheckInvalidAmount": "请输入有效金额",
+  "balanceCheckSelectedBalance": "所选交易余额",
+  "balanceCheckReconcile": "对账所选",
+  "balanceCheckReconciled": "所选交易已对账",
+  "balanceCheckNothingToReconcile": "没有需要对账的交易。请选择未对账的交易以将其包含在内。",
+  "balanceCheckPaymentAccount": "付款账户",
+  "balanceCheckPaybackDate": "还款日期",
+  "balanceCheckSelectPaymentAccount": "选择付款账户",
+  "balanceCheckNoPaymentAccounts": "没有可用的付款账户",
+  "balanceCheckPaybackSummary": "还款：{amount}，从 {account}，日期 {date}",
+  "@balanceCheckPaybackSummary": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "account": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceCheckPaybackReconciled": "已对账消费并创建还款转账",
+  "balanceCheckNoEligiblePurchases": "请至少选择一笔信用卡消费",
+  "tooltipBalanceCheckMode": "将账单余额与 Firefly 进行比较",
+  "tooltipBalanceCheckIncludePending": "包含在余额核对中",
+  "tooltipBalanceCheckExcludeReconciled": "从余额核对中排除",
+  "transactionReconciled": "已对账",
+  "partiallyReconciled": "部分对账",
+  "tooltipTransactionReconciled": "已与银行账单核对",
+  "transactionReconciledUpdated": "对账状态已更新",
+  "failedToUpdateReconciliation": "更新对账状态失败：{error}",
+  "@failedToUpdateReconciliation": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciledFilter": "对账",
+  "reconciledFilterAll": "全部交易",
+  "reconciledFilterReconciled": "仅已对账",
+  "reconciledFilterUnreconciled": "仅未对账",
+  "reconcile": "对账",
+  "reconcileExpectedBalance": "预期余额：{amount}",
+  "@reconcileExpectedBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconcileClickHint": "点击对账",
+  "reconciliationTitle": "对账",
+  "reconciliationSubtitle": "将账单与 Firefly III 核对",
+  "reconciliationAccount": "账户",
+  "reconciliationStartDate": "开始日期",
+  "reconciliationEndDate": "结束日期",
+  "reconciliationStartBalance": "期初余额",
+  "reconciliationEndBalance": "期末余额",
+  "reconciliationStart": "开始对账",
+  "reconciliationRestart": "重新开始",
+  "reconciliationOptions": "对账选项",
+  "reconciliationGapZero": "已勾选交易与账单一致。",
+  "reconciliationGapPositive": "Firefly 比账单少 {amount}。",
+  "@reconciliationGapPositive": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationGapNegative": "Firefly 比账单多 {amount}。",
+  "@reconciliationGapNegative": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationStore": "保存对账",
+  "reconciliationStoreTitle": "保存对账？",
+  "reconciliationStoreBody": "将 {count} 笔交易标记为已对账。",
+  "@reconciliationStoreBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reconciliationCreateCorrectionTitle": "创建调整交易？",
+  "reconciliationCreateCorrectionBody": "仍有 {amount} 差额。FireRacoon 将创建一笔对账调整交易。",
+  "@reconciliationCreateCorrectionBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationStored": "对账已保存",
+  "reconciliationStoreFailed": "保存对账失败：{error}",
+  "@reconciliationStoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationSelectAccount": "请选择资产账户",
+  "reconciliationInvalidBalances": "请输入有效的期初和期末余额",
+  "reconciliationInvalidDateRange": "结束日期必须不早于开始日期",
+  "reconciliationSelectTransactions": "请至少勾选账单上的一笔交易",
+  "reconciliationNoTransactions": "该期间没有交易",
+  "reconciliationUnreconciled": "未对账",
+  "reconciliationFutureTransaction": "期间结束之后",
+  "futureTransactions": "未来交易",
+  "reconciliationOpenWizard": "对账",
+  "tooltipReconciliationWizard": "将交易与银行账单核对",
+  "reconciliationUseFireflyBalances": "使用 Firefly 余额",
+  "reconciliationLoadingBalances": "正在从 Firefly 加载余额…",
+  "reconciliationBalancesFilled": "已从 Firefly 填入余额",
+  "reconciliationBalancesFailed": "无法加载余额：{error}",
+  "@reconciliationBalancesFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notAvailable": "不可用",
+  "groupBy": "分组方式",
+  "groupByDate": "按日期分组",
+  "groupByAccount": "按账户分组",
+  "groupByPayee": "按收款方分组",
+  "groupByType": "按类型分组",
+  "groupByCategory": "按类别分组",
+  "filterAccount": "筛选账户",
+  "amount": "金额",
+  "accounts": "账户",
+  "description": "描述",
+  "sourceAccount": "来源账户",
+  "destinationAccount": "目标账户",
+  "payee": "收款人",
+  "savingNotSupported": "只读模式下不支持保存。",
+  "transactionDateCategory": "日期 / 类别",
+  "@transactionDateCategory": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "foreignAmount": "（{amount}）",
+  "@foreignAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsTitle": "预算",
+  "subscriptionsTitle": "订阅与定期",
+  "newSubscription": "新建订阅",
+  "createSubscription": "创建订阅",
+  "editSubscription": "编辑订阅",
+  "subscriptionCreated": "订阅已创建。",
+  "subscriptionDeleted": "订阅「{name}」已删除。",
+  "@subscriptionDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateSubscription": "创建订阅失败：{error}",
+  "@failedToCreateSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateSubscription": "更新订阅失败：{error}",
+  "@failedToUpdateSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteSubscription": "删除订阅失败：{error}",
+  "@failedToDeleteSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteSubscription": "删除订阅",
+  "deleteSubscriptionConfirmBody": "确定要删除订阅「{name}」吗？此操作无法撤销。",
+  "@deleteSubscriptionConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noSubscriptionsFound": "未找到订阅。",
+  "subscriptionInactive": "未激活",
+  "subscriptionActive": "已激活",
+  "mandatoryFields": "必填信息",
+  "optionalFields": "选填信息",
+  "minimumAmount": "最低金额",
+  "maximumAmount": "最高金额",
+  "startDate": "开始日期",
+  "repeats": "重复",
+  "skip": "跳过",
+  "skipHelp": "使用跳过可创建双月（skip = 1）或其他自定义间隔。",
+  "endDate": "结束日期",
+  "endDateHelp": "选填。订阅预计在此日期结束。",
+  "extensionDate": "延期日期",
+  "extensionDateHelp": "选填。订阅须在此日期前延期（或取消）。",
+  "group": "分组",
+  "notesMarkdownHint": "此字段支持 Markdown。",
+  "repeatWeekly": "每周",
+  "repeatMonthly": "每月",
+  "repeatQuarterly": "每季度",
+  "repeatHalfYear": "每半年",
+  "repeatYearly": "每年",
+  "subscriptionAmountRange": "{min} – {max}",
+  "@subscriptionAmountRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "tabSubscriptions": "订阅",
+  "tabRecurringTransactions": "定期交易",
+  "badgeSubscription": "订阅",
+  "badgeRecurringTransaction": "定期交易",
+  "addSubscription": "订阅",
+  "addRecurringTransaction": "定期",
+  "noSubscriptionsOrRecurrencesFound": "未找到订阅或定期交易。",
+  "newRecurringTransaction": "新建定期交易",
+  "createRecurringTransaction": "创建定期交易",
+  "editRecurringTransaction": "编辑定期交易",
+  "recurringTransactionCreated": "定期交易已创建。",
+  "recurringTransactionDeleted": "定期交易「{name}」已删除。",
+  "@recurringTransactionDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateRecurringTransaction": "创建定期交易失败：{error}",
+  "@failedToCreateRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateRecurringTransaction": "更新定期交易失败：{error}",
+  "@failedToUpdateRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteRecurringTransaction": "删除定期交易失败：{error}",
+  "@failedToDeleteRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteRecurringTransaction": "删除定期交易",
+  "deleteRecurringTransactionConfirmBody": "确定要删除定期交易「{name}」吗？此操作无法撤销。",
+  "@deleteRecurringTransactionConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noRecurringTransactionsFound": "未找到定期交易。",
+  "recurringTransactionInactive": "未激活",
+  "mandatoryRecurrenceFields": "必填定期信息",
+  "optionalRecurrenceFields": "选填定期信息",
+  "mandatoryTransactionFields": "必填交易信息",
+  "optionalTransactionFields": "选填交易信息",
+  "recurrenceTitle": "标题",
+  "firstDate": "首次日期",
+  "firstDateHelp": "填写首次预计重复日期，须为未来日期。",
+  "typeOfRepetition": "重复类型",
+  "typeOfRepetitionHelp": "更改首次日期以查看更多选项。",
+  "weekendHandling": "周末",
+  "weekendCreateAnyway": "照常创建交易",
+  "weekendSkip": "不创建交易",
+  "weekendPreviousFriday": "提前至上周五",
+  "weekendNextMonday": "推迟至下周一",
+  "weekendHelp": "当定期交易落在周六或周日时，Firefly III 应如何处理？",
+  "repetitionEnds": "重复结束",
+  "repeatForever": "永久重复",
+  "repeatUntilDate": "重复至指定日期",
+  "repeatCount": "重复固定次数",
+  "numberOfRepetitions": "重复次数",
+  "applyRules": "应用规则",
+  "applyRulesHelp": "是否在每次创建交易后触发规则。",
+  "recurrenceDescription": "定期交易描述",
+  "repeatDaily": "每天",
+  "repeatNdom": "每月第 N 个工作日",
+  "recurrenceAmount": "{amount}",
+  "@recurrenceAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipOpenSubscriptions": "打开周期订阅和账单。",
+  "subscriptionsTitleRacoon": "定期突袭与计划",
+  "newSubscriptionRacoon": "新建定期突袭",
+  "piggyBanksTitle": "存钱罐",
+  "newPiggyBank": "新建存钱罐",
+  "createPiggyBank": "创建存钱罐",
+  "editPiggyBank": "编辑存钱罐",
+  "piggyBankCreated": "存钱罐已创建。",
+  "piggyBankDeleted": "存钱罐「{name}」已删除。",
+  "@piggyBankDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreatePiggyBank": "创建存钱罐失败：{error}",
+  "@failedToCreatePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdatePiggyBank": "更新存钱罐失败：{error}",
+  "@failedToUpdatePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeletePiggyBank": "删除存钱罐失败：{error}",
+  "@failedToDeletePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePiggyBank": "删除存钱罐",
+  "deletePiggyBankConfirmBody": "确定要删除存钱罐「{name}」吗？此操作无法撤销。",
+  "@deletePiggyBankConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noPiggyBanksFound": "未找到存钱罐。",
+  "targetAmount": "目标金额",
+  "piggyBankCurrencyHelp": "存钱罐只能以单一货币储蓄。",
+  "saveOnAccounts": "存入账户",
+  "piggyBankAccountsHelp": "仅接受使用所选货币的账户。",
+  "targetDate": "目标日期",
+  "targetDateHelp": "您计划完成储蓄的日期。",
+  "accountGroupDefaultAssets": "默认资产账户",
+  "accountGroupSavings": "储蓄账户",
+  "accountGroupCash": "现金钱包",
+  "accountGroupLiabilities": "负债",
+  "selectAtLeastOneAccount": "请至少选择一个账户。",
+  "piggyBankProgress": "{current} / {target}",
+  "@piggyBankProgress": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "piggyBanksTitleRacoon": "迷你藏匿处",
+  "newPiggyBankRacoon": "新建迷你藏匿处",
+  "newBudget": "新建预算",
+  "deleteBudget": "删除预算",
+  "deleteBudgetMessage": "确定要删除「{name}」吗？",
+  "@deleteBudgetMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetDeleted": "预算「{name}」已删除。",
+  "@budgetDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteBudget": "删除预算失败：{error}",
+  "@failedToDeleteBudget": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "spent": "已花费",
+  "ofAmount": "共 {amount}",
+  "@ofAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "overBudget": "超出预算 {amount}",
+  "@overBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "leftInBudget": "剩余 {amount}",
+  "@leftInBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetPerPeriod": "每{period} {amount}",
+  "@budgetPerPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetLimitForPeriod": "{period} {amount}",
+  "@budgetLimitForPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetCadenceDaily": "天",
+  "budgetCadenceWeekly": "周",
+  "budgetCadenceMonthly": "月",
+  "budgetCadenceQuarterly": "季度",
+  "budgetCadenceHalfYear": "半年",
+  "budgetCadenceYearly": "年",
+  "viewPeriod": "查看周期",
+  "budgetAmount": "预算金额",
+  "editBudget": "编辑预算",
+  "createBudget": "创建预算",
+  "createPayee": "创建收款人",
+  "createCategory": "创建类别",
+  "budgetLimit": "预算限额",
+  "autoBudget": "自动预算金额",
+  "budgetAmountMode": "限额类型",
+  "budgetAmountModeAuto": "重复周期",
+  "budgetAmountModeDateRange": "固定日期范围",
+  "budgetAmountModeNone": "无金额",
+  "budgetRepeatPeriod": "重复周期",
+  "budgetAutoType": "自动预算行为",
+  "budgetAutoTypeReset": "每期重置",
+  "budgetAutoTypeRollover": "结转未用金额",
+  "budgetAutoTypeAdjusted": "按支出调整",
+  "budgetAutoTypeNone": "无",
+  "budgetActive": "启用",
+  "budgetPeriodDaily": "每天",
+  "budgetPeriodWeekly": "每周",
+  "budgetPeriodMonthly": "每月",
+  "budgetPeriodQuarterly": "每季度",
+  "budgetPeriodHalfYear": "每半年",
+  "budgetPeriodYearly": "每年",
+  "tooltipBudgetAmountMode": "重复自动预算、固定日期范围或不设限额",
+  "tooltipBudgetRepeatPeriod": "预算金额的适用频率（如每月）",
+  "tooltipBudgetAutoType": "每个预算周期开始时的行为",
+  "tooltipBudgetStartDate": "此预算限额的起始日",
+  "tooltipBudgetEndDate": "此预算限额的结束日",
+  "tooltipBudgetActive": "Firefly 默认隐藏未启用的预算",
+  "tooltipBudgetNotes": "预算的可选备注",
+  "tooltipBudgetCurrency": "预算金额的货币",
+  "expensesTitle": "支出",
+  "clearFilters": "清除筛选",
+  "overview": "概览",
+  "byCategory": "按类别",
+  "allCategories": "所有类别",
+  "allTypes": "所有类型",
+  "expensesFilter": "支出",
+  "transfers": "转账",
+  "expensePeriodWeek": "本周",
+  "expensePeriodMonth": "本月",
+  "expensePeriodQuarter": "本季度",
+  "expensePeriodSemester": "本学期",
+  "expensePeriodYear": "今年",
+  "expensePeriodAll": "全部",
+  "dashboardPeriodThisWeek": "本周",
+  "dashboardPeriodLastWeek": "上周",
+  "dashboardPeriodThisMonth": "本月",
+  "dashboardPeriodLastMonth": "上月",
+  "dashboardPeriodThisQuarter": "本季度",
+  "dashboardPeriodLastQuarter": "上季度",
+  "dashboardPeriodThisYear": "今年",
+  "dashboardPeriodLastYear": "去年",
+  "dashboardPeriodLast2Years": "过去 2 年",
+  "dashboardPeriodLast5Years": "过去 5 年",
+  "dashboardPeriodLast10Years": "过去 10 年",
+  "dashboardPeriodAll": "全部",
+  "deltaComparisonPreviousWeek": "上周",
+  "deltaComparisonPreviousMonth": "上月",
+  "deltaComparisonPreviousQuarter": "上季度",
+  "deltaComparisonPreviousYear": "去年",
+  "deltaComparisonPrevious2Years": "前 2 年",
+  "deltaComparisonPrevious5Years": "前 5 年",
+  "deltaComparisonPrevious10Years": "前 10 年",
+  "deltaComparisonCustomPeriod": "上一时段",
+  "noChangeVsComparisonPeriod": "与{period}相比无变化",
+  "@noChangeVsComparisonPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "newActivityVsComparisonPeriod": "与{period}相比为新活动",
+  "@newActivityVsComparisonPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "percentVsComparisonPeriod": "较{period} {arrow}{percent}%",
+  "@percentVsComparisonPeriod": {
+    "placeholders": {
+      "arrow": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "dateRangeSeparator": "–",
+  "dateEllipsis": "…",
+  "projectionTitle": "预测",
+  "projectedBalance": "预计余额",
+  "visualization": "可视化",
+  "parameters": "参数",
+  "predictedBalances": "预计余额 · {period}",
+  "@predictedBalances": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountsLoaded": "未加载账户",
+  "scenarioSummary": "情景摘要",
+  "nowAmount": "当前 {amount}",
+  "@nowAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "worstCase": "最坏情况",
+  "expected": "预期",
+  "bestCase": "最好情况",
+  "moveSliderToSeeImpact": "拖动滑块查看影响",
+  "whatIfImpact": "{period} 内 +{amount}",
+  "@whatIfImpact": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "projectionPeriod3Months": "3 个月",
+  "projectionPeriod6Months": "6 个月",
+  "projectionPeriod1Year": "1 年",
+  "projectionPeriod3Years": "3 年",
+  "projectionTypeSavings": "储蓄率",
+  "projectionTypeCompound": "复利增长",
+  "projectionTypePortfolio": "投资组合（波动）",
+  "projectionTypeCashflow": "现金流",
+  "projectionTypeSavingsDesc": "基于历史净储蓄的线性预测",
+  "projectionTypeCompoundDesc": "余额随复利和投入增长",
+  "projectionTypePortfolioDesc": "预期回报及基于波动性的最差/最好区间",
+  "projectionTypeCashflowDesc": "收入减去支出，含可自由支配调整",
+  "chartStyleFan": "扇形图",
+  "chartStyleLines": "三条线",
+  "chartStyleScenarios": "情景卡片",
+  "whatIfSpending": "假设支出",
+  "annualReturn": "年回报率",
+  "volatility": "波动性",
+  "projectionAlertLiability": "在最坏情况下，{name} 可能早于预期达到 {balance}。",
+  "@projectionAlertLiability": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "projectionAlertBelowZero": "最坏情况预测在所选时段内降至零以下。",
+  "projectionAlertActionLiability": "考虑从储蓄账户转移资金。",
+  "projectionAlertActionSpending": "审查可自由支配支出或增加储蓄。",
+  "confirmTypeWord": "输入 ",
+  "confirmToConfirm": " 以确认：",
+  "confirmHint": "输入上方词语…",
+  "currencyPair": "{name}（{symbol}）",
+  "@currencyPair": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetSpentFraction": "{spent} / {total}",
+  "@budgetSpentFraction": {
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "editAccount": "编辑账户",
+  "editAction": "编辑",
+  "filterAllShort": "全部",
+  "filterAssetsShort": "资产",
+  "filterLiabilitiesShort": "负债",
+  "showInactiveAccounts": "显示已停用账户",
+  "showInactiveAccountsShort": "已停用",
+  "accountInactive": "已停用",
+  "unknown": "未知",
+  "showingTransactionsOfTotal": "显示 {loaded} / {total} 笔交易",
+  "@showingTransactionsOfTotal": {
+    "placeholders": {
+      "loaded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "transactionsCount": "{count} 笔交易",
+  "@transactionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneTransaction": "1 笔交易",
+  "deleteBudgetConfirmBody": "确定要删除预算「{name}」吗？此操作无法撤销。",
+  "@deleteBudgetConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "scrollForMore": "向下滚动查看更多…",
+  "noTransactionsMatchFilters": "没有符合当前筛选条件的交易。",
+  "category": "类别",
+  "totalSpentPeriod": "本时段总支出",
+  "totalIncomePeriod": "本时段总收入",
+  "totalTransferredPeriod": "本时段总转账",
+  "totalPeriod": "本时段总计",
+  "volatilityUncertainty": "波动性 / 不确定性",
+  "editTransaction": "编辑交易",
+  "newDeposit": "新建存入",
+  "editDeposit": "编辑存入",
+  "newWithdrawal": "新建支出",
+  "editWithdrawal": "编辑支出",
+  "newTransfer": "新建转账",
+  "editTransfer": "编辑转账",
+  "revenueAccount": "收入账户",
+  "assetAccount": "资产账户",
+  "expenseAccount": "支出账户",
+  "expenseLabel": "支出",
+  "transactionTypeDeposit": "存款",
+  "transactionTypeWithdrawal": "取款",
+  "transactionTypeTransfer": "转账",
+  "dataAndLoading": "数据与加载",
+  "transactionPageSize": "每页交易数",
+  "transactionPageSizeDescription": "每次滚动加载的交易数量。适用于交易列表。",
+  "transactionPageSizeValue": "每页 {count} 笔",
+  "@transactionPageSizeValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultPeriod": "默认期间",
+  "defaultPeriodDescription": "打开仪表盘、支出、收入、转账和交易页面时应用。",
+  "customDateRange": "自定义范围",
+  "pickDates": "选择日期",
+  "budgetStatusOnTrack": "正常",
+  "budgetStatusOver": "超出预算",
+  "whatIfCutSpending": "如果我将可自由支配支出减少 {percent}% 会怎样？",
+  "@whatIfCutSpending": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "usesAveragePatterns": "使用交易中的平均收入和支出模式。",
+  "historicalNetSavingsNote": "基于历史净储蓄。调整不确定性以扩大或缩小区间。",
+  "accountFilterLabel": "账户",
+  "noTransactionsForBudget": "此预算暂无交易。",
+  "noTransactionsForAccount": "此账户暂无交易。",
+  "deleteAccount": "删除账户",
+  "deleteAccountConfirmBody": "确定要删除账户“{name}”吗？此操作无法撤销。",
+  "@deleteAccountConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accountDeleted": "账户“{name}”已删除。",
+  "@accountDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteAccount": "删除账户失败：{error}",
+  "@failedToDeleteAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetNameHint": "预算名称",
+  "budgetAmountWithSymbol": "预算金额（{symbol}）",
+  "@budgetAmountWithSymbol": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "chartLegendActual": "实际",
+  "chartLegendWorst": "最差",
+  "chartLegendBest": "最好",
+  "chartLegendWorstBest": "最差 ↔ 最好",
+  "today": "今天",
+  "mcpServer": "MCP 服务器",
+  "mcpStatusFailed": "失败：{error}",
+  "@mcpStatusFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpStatusRunning": "运行于端口 {port}",
+  "@mcpStatusRunning": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "mcpStatusStarting": "启动中…",
+  "transactionDate": "日期",
+  "moreOptions": "更多",
+  "foreignAmountLabel": "外币金额",
+  "budgetLabel": "预算",
+  "piggyBank": "存钱罐",
+  "noPiggyBank": "（无存钱罐）",
+  "tags": "标签",
+  "subscription": "订阅",
+  "interestDate": "利息日期",
+  "attachments": "附件",
+  "notes": "备注",
+  "none": "（无）",
+  "attachmentsNotSupported": "此应用尚不支持附件。",
+  "deleteTransaction": "删除交易",
+  "deleteTransactionConfirmBody": "确定要删除「{description}」吗？此操作无法撤销。",
+  "@deleteTransactionConfirmBody": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionDeleted": "交易已删除。",
+  "failedToDeleteTransaction": "删除交易失败：{error}",
+  "@failedToDeleteTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionSaved": "交易已保存。",
+  "failedToSaveTransaction": "保存交易失败：{error}",
+  "@failedToSaveTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionDuplicated": "交易已复制。",
+  "failedToDuplicateTransaction": "复制交易失败：{error}",
+  "@failedToDuplicateTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "duplicate": "复制",
+  "newTransaction": "新建交易",
+  "transactionCreated": "交易已创建。",
+  "failedToCreateTransaction": "创建交易失败：{error}",
+  "@failedToCreateTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionFormIncomplete": "请填写描述、金额和两个账户。",
+  "transactionInformation": "交易信息",
+  "addAnotherSplit": "添加分拆",
+  "splitLabel": "Split {number}",
+  "@splitLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "removeSplit": "移除分拆",
+  "splitCount": "{count} splits",
+  "@splitCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "splitCategoriesCount": "{count} categories",
+  "@splitCategoriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "splitTotalLabel": "Split total: {amount}",
+  "@splitTotalLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitRemainder": "Remainder: {amount}",
+  "@splitRemainder": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitsTotalMismatch": "分拆金额合计须为 {expected}。",
+  "@splitsTotalMismatch": {
+    "placeholders": {
+      "expected": {
+        "type": "String"
+      }
+    }
+  },
+  "splitOptionalFields": "选填字段",
+  "foreignCurrency": "外币",
+  "noSubscriptionsHint": "您还没有订阅。请在订阅页面创建以关联定期支出。",
+  "incomeTitle": "收入",
+  "transfersTitle": "转账",
+  "newTransferAction": "新建转账",
+  "liabilitiesTitle": "负债",
+  "newIncome": "新建收入",
+  "newIncomeRacoon": "新建截获",
+  "create": "创建",
+  "accountCreated": "账户已创建。",
+  "liabilityCreated": "负债已创建。",
+  "budgetCreated": "预算已创建。",
+  "failedToCreateAccount": "创建账户失败：{error}",
+  "@failedToCreateAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateBudget": "创建预算失败：{error}",
+  "@failedToCreateBudget": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noLiabilitiesFound": "未找到负债。",
+  "liabilityType": "负债类型",
+  "liabilityTypeDebt": "债务",
+  "liabilityTypeLoan": "贷款",
+  "liabilityTypeMortgage": "抵押",
+  "liabilityDirection": "负债方向",
+  "liabilityDirectionOwe": "我欠他人",
+  "liabilityDirectionOwed": "他人欠我",
+  "amountOwed": "欠款金额",
+  "debtStartDate": "债务开始日期",
+  "interestRate": "利率",
+  "interestPeriod": "计息周期",
+  "interestPeriodDaily": "每日",
+  "includeInNetWorth": "计入净资产",
+  "accountNumber": "账号",
+  "iban": "IBAN",
+  "bic": "BIC",
+  "liabilityCurrencyHelp": "此负债账户的默认货币。",
+  "interestPeriodHelp": "仅作展示 — Firefly III 不会自动计算利息。",
+  "failedToCreateLiability": "创建负债失败：{error}",
+  "@failedToCreateLiability": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "navIncomeRacoon": "截获",
+  "navTransfersRacoon": "藏匿转移",
+  "navLiabilitiesRacoon": "欠债",
+  "incomeTitleRacoon": "截获资金",
+  "transfersTitleRacoon": "藏匿转移",
+  "newTransferActionRacoon": "新建藏匿转移",
+  "liabilitiesTitleRacoon": "所欠债务",
+  "tooltipOpenSection": "打开{section}。",
+  "@tooltipOpenSection": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipOpenDashboard": "打开仪表盘与关键指标。",
+  "tooltipOpenAccounts": "打开您的账户和余额。",
+  "tooltipOpenTransactions": "打开全部交易和筛选条件。",
+  "tooltipOpenBudgets": "打开预算与支出进度。",
+  "tooltipOpenPiggyBanks": "打开储蓄目标和存钱罐。",
+  "tooltipOpenExpenses": "打开支出分析。",
+  "tooltipOpenIncome": "打开收入分析。",
+  "tooltipOpenTransfers": "打开转账历史与分析。",
+  "tooltipOpenLiabilities": "打开负债和债务概览。",
+  "tooltipOpenProjection": "打开预测场景和预估。",
+  "tooltipOpenPrognosis": "打开月末账户余额预测。",
+  "projectionTabLongTerm": "长期预测",
+  "tooltipOpenSettings": "打开应用设置和 Firefly 连接。",
+  "tooltipToggleSidebar": "展开或收起侧边栏。",
+  "tooltipSearchTransactions": "在当前页面按文本搜索。",
+  "tooltipToggleViewMode": "在列表视图和网格视图间切换。",
+  "viewModeCards": "卡片",
+  "viewModeRows": "行",
+  "viewModeTightRows": "紧凑行",
+  "columnSelection": "选择列",
+  "columnDate": "日期",
+  "columnAccount": "账户",
+  "columnType": "类型",
+  "columnPayee": "收款人",
+  "columnDescription": "备注",
+  "columnCategory": "分类",
+  "columnBudget": "预算",
+  "columnAmount": "金额",
+  "columnReconciled": "已对账",
+  "columnBalance": "余额",
+  "tooltipTransactionType": "选择交易类型。",
+  "tooltipFieldDescription": "这笔交易发生了什么。",
+  "tooltipFieldSourceAccount": "资金来源账户。",
+  "tooltipFieldDestinationAccount": "资金去向账户。",
+  "tooltipFieldDate": "交易日期和时间。",
+  "tooltipFieldAmount": "所选货币下的主金额。",
+  "tooltipFieldCurrency": "该分录的主货币。",
+  "tooltipFieldForeignAmount": "可选的外币金额。",
+  "tooltipFieldForeignCurrency": "外币金额使用的货币。",
+  "tooltipFieldBudget": "将该分录关联到预算。",
+  "tooltipFieldCategory": "用于报表和筛选的分类。",
+  "tooltipFieldPiggyBank": "将该分录关联到存钱罐。",
+  "tooltipFieldTags": "用逗号分隔标签，便于快速筛选。",
+  "tooltipFieldSubscription": "将该分录关联到订阅。",
+  "tooltipFieldInterestDate": "可选的计息或入账日期。",
+  "tooltipFieldAttachments": "可显示附件，但暂不支持上传。",
+  "tooltipFieldNotes": "补充备注，便于后续查看。",
+  "tooltipAddSplit": "为该交易新增一个分录。",
+  "tooltipRemoveSplit": "移除此分录行。",
+  "tooltipCancelTransaction": "放弃更改并关闭。",
+  "tooltipSaveTransaction": "保存这笔交易。",
+  "tooltipCancel": "放弃更改并关闭，不保存。",
+  "tooltipSave": "保存您的更改。",
+  "tooltipCreate": "创建新项目。",
+  "tooltipConfirmDelete": "永久删除此项目。",
+  "tooltipConfirmChallenge": "输入挑战词以确认删除。",
+  "tooltipExpandDetails": "显示更多详情。",
+  "tooltipCollapseDetails": "隐藏额外详情。",
+  "tooltipClearDate": "移除所选日期。",
+  "tooltipAccountName": "在列表和报表中显示的名称。",
+  "tooltipAccountCurrentBalance": "截至今天的 Firefly 当前余额。",
+  "tooltipAccountEndOfMonthBalance": "本月末预计余额，包含已安排交易、定期规则和账单。",
+  "tooltipBudgetName": "此支出预算的名称。",
+  "tooltipBudgetAmount": "此预算周期的限额金额。",
+  "tooltipSubscriptionName": "定期账单或订阅的名称。",
+  "tooltipSubscriptionCurrency": "预期金额使用的货币。",
+  "tooltipSubscriptionAmountMin": "每周期最低预期费用。",
+  "tooltipSubscriptionAmountMax": "每周期最高预期费用。",
+  "tooltipSubscriptionStartDate": "订阅开始或首次记录的日期。",
+  "tooltipSubscriptionRepeats": "此订阅重复的频率。",
+  "tooltipSubscriptionSkip": "在再次扣款前跳过接下来 N 次。",
+  "tooltipSubscriptionEndDate": "订阅结束的可选日期。",
+  "tooltipSubscriptionExtensionDate": "延长或暂停计费的可选日期。",
+  "tooltipSubscriptionGroup": "用于整理订阅的可选分组标签。",
+  "tooltipSubscriptionActive": "此订阅当前是否处于活动状态。",
+  "tooltipPiggyBankName": "此储蓄目标的名称。",
+  "tooltipPiggyBankTargetAmount": "您希望储蓄的总金额。",
+  "tooltipPiggyBankCurrency": "目标和跟踪储蓄使用的货币。",
+  "tooltipPiggyBankAccounts": "余额计入此目标的账户。",
+  "tooltipPiggyBankAccount": "将 {name} 纳入此存钱罐。",
+  "@tooltipPiggyBankAccount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipPiggyBankStartDate": "开始跟踪此目标的日期。",
+  "tooltipPiggyBankTargetDate": "达成目标的可选截止日期。",
+  "tooltipPiggyBankGroup": "用于整理存钱罐的可选分组标签。",
+  "tooltipThemeLight": "使用浅色配色方案。",
+  "tooltipThemeDark": "使用深色配色方案。",
+  "tooltipThemePaletteClassic": "受 Firefly 启发的经典调色板。",
+  "tooltipThemePaletteSpectrum": "鲜艳的多色分类调色板。",
+  "tooltipThemePaletteRaccoon": "有趣的浣熊主题调色板。",
+  "tooltipThemeAccent": "按钮、链接和高亮的强调色。",
+  "tooltipThemeAccentOption": "将 {name} 设为强调色。",
+  "@tooltipThemeAccentOption": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipThemeDone": "关闭并保留所选主题。",
+  "repeatIntervalLabel": "间隔",
+  "repeatIntervalHelp": "重复频率，例如每 3 个月一次。",
+  "repeatEveryNDays": "每 {count} 天",
+  "repeatEveryNWeeks": "每 {count} 周",
+  "repeatEveryNMonths": "每 {count} 个月",
+  "repeatEveryNYears": "每 {count} 年",
+  "writeAheadDays": "提前写入定期交易",
+  "writeAheadDaysDescription": "提前这么多天创建即将发生的定期交易。",
+  "writeAheadOff": "关闭",
+  "writeAheadNDays": "{count} 天",
+  "plannedLabel": "计划中",
+  "navHistory": "历史",
+  "navHistoryRacoon": "行动回放",
+  "tooltipOpenHistory": "打开撤销/重做历史。",
+  "tooltipUndo": "撤销上一步操作。",
+  "tooltipRedo": "重做上一步撤销的操作。",
+  "undo": "撤销",
+  "redo": "重做",
+  "clear": "清除",
+  "advanced": "高级",
+  "undoHistorySize": "撤销/重做历史大小",
+  "undoHistoryStoredEntries": "已存储条目：{count} / {limit}",
+  "openHistoryScreen": "打开历史页面",
+  "undoHistoryLimitRange": "最小 {min}  •  默认 {defaultValue}  •  最大 {max}",
+  "searchHistory": "搜索历史",
+  "allActions": "全部操作",
+  "noHistoryEntriesMatchFilters": "没有符合筛选条件的历史条目。",
+  "historyExportedTo": "历史已导出至 {path}",
+  "historyExportedAndShared": "历史已导出并打开分享面板",
+  "exportJson": "导出 JSON",
+  "exportAndShare": "导出并分享",
+  "jumpToCurrent": "跳转到当前项",
+  "historyExportSubject": "历史导出",
+  "historyExportText": "FireRacoon 历史导出",
+  "historySectionToday": "今天",
+  "historySectionYesterday": "昨天",
+  "historySectionOlder": "更早",
+  "historyEntriesCount": "{count} / {limit}",
+  "undoActionTypeThemeMode": "主题模式",
+  "undoActionTypeThemePalette": "主题调色板",
+  "undoActionTypeThemeAccent": "主题强调色",
+  "undoActionTypeThemeFunMode": "趣味模式",
+  "undoActionTypeLocale": "语言",
+  "undoActionTypeViewMode": "视图模式",
+  "undoActionTypeTransactionPageSize": "每页交易数",
+  "undoActionTypePrognosisMode": "预测视图模式",
+  "undoActionTypePrognosisHorizon": "预测时间范围",
+  "undoActionTypePrognosisInclusion": "预测包含项",
+  "undoActionTypePrognosisMarginPercent": "预测余量",
+  "undoActionTypeAccountCreate": "账户已创建",
+  "undoActionTypeAccountUpdate": "账户已更新",
+  "undoActionTypeAccountDelete": "账户已删除",
+  "undoActionTypeBudgetCreate": "预算已创建",
+  "undoActionTypeBudgetUpdate": "预算已更新",
+  "undoActionTypeBudgetDelete": "预算已删除",
+  "undoActionTypeTransactionCreate": "交易已创建",
+  "undoActionTypeTransactionUpdate": "交易已更新",
+  "undoActionTypeTransactionDelete": "交易已删除",
+  "undoActionTypeBillCreate": "订阅已创建",
+  "undoActionTypeBillUpdate": "订阅已更新",
+  "undoActionTypeBillDelete": "订阅已删除",
+  "undoActionTypeRecurrenceCreate": "周期交易已创建",
+  "undoActionTypeRecurrenceUpdate": "周期交易已更新",
+  "undoActionTypeRecurrenceDelete": "周期交易已删除",
+  "undoActionTypePiggyBankCreate": "存钱罐已创建",
+  "undoActionTypePiggyBankUpdate": "存钱罐已更新",
+  "undoActionTypePiggyBankDelete": "存钱罐已删除",
+  "undoActionTypeLiabilityCreate": "负债已创建",
+  "searchHintTitle": "输入以开始搜索",
+  "searchHintSubtitle": "按描述、账户、分类、标签、备注或金额搜索。",
+  "noSuggestions": "无匹配建议",
+  "invalidAmount": "金额必须是大于0的有效数字。",
+  "invalidForeignAmount": "外币金额必须是大于0的有效数字。",
+  "missingDescription": "请输入描述。",
+  "missingAmount": "请输入金额。",
+  "missingAccounts": "请同时选择来源账户和目标账户。",
+  "appUsers": "应用用户",
+  "enableAppUsers": "启用应用用户",
+  "enableAppUsersDescription": "Add password-protected profiles for the people who use this app. Everyone still shares the same Firefly III data.",
+  "createAdmin": "创建管理员账户",
+  "createAdminDescription": "You will be the first admin. You can add more accounts afterwards.",
+  "addUser": "添加用户",
+  "editUser": "编辑用户",
+  "deleteUser": "删除用户",
+  "role": "角色",
+  "roleAdmin": "管理员",
+  "roleUser": "用户",
+  "roleViewer": "查看者",
+  "roleAdminDescription": "Full access, including Firefly settings and user management.",
+  "roleUserDescription": "Can add and edit financial data.",
+  "roleViewerDescription": "Read-only access.",
+  "requireLogin": "每次启动都需要登录",
+  "requireLoginDescription": "When off, signed-in users stay signed in between launches.",
+  "switchUser": "Switch user",
+  "selectUserSubtitle": "Choose whose profile to use. No password needed while login is not required.",
+  "assignPerson": "关联的人",
+  "noPersonAssigned": "无",
+  "myAccount": "我的账户",
+  "changePassword": "修改密码",
+  "currentPassword": "当前密码",
+  "newPassword": "新密码",
+  "confirmNewPassword": "确认新密码",
+  "logout": "退出登录",
+  "login": "登录",
+  "username": "用户名",
+  "password": "密码",
+  "loginSubtitle": "登录以继续使用 FireRacoon。",
+  "loginMissingFields": "请输入用户名和密码。",
+  "loginInvalidCredentials": "用户名或密码不正确。",
+  "passwordTooWeak": "Password must be at least 10 characters and include an uppercase letter, a lowercase letter, a digit, and a special character.",
+  "passwordRequirements": "At least 10 characters, with uppercase, lowercase, a digit, and a special character.",
+  "passwordMissingRequirements": "Password is missing {requirements}.",
+  "@passwordMissingRequirements": {
+    "placeholders": {
+      "requirements": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordReqMinLength": "at least 10 characters",
+  "passwordReqUpper": "an uppercase letter",
+  "passwordReqLower": "a lowercase letter",
+  "passwordReqDigit": "a digit",
+  "passwordReqSpecial": "a special character",
+  "passwordPwned": "This password has appeared in a known data breach. Please choose another one.",
+  "passwordsDoNotMatch": "两次输入的密码不一致。",
+  "usernameTaken": "该用户名已被使用。",
+  "currentPasswordIncorrect": "当前密码不正确。",
+  "userCreated": "用户已创建。",
+  "userUpdated": "用户已更新。",
+  "userDeleted": "用户已删除。",
+  "passwordChanged": "密码已更新。",
+  "deleteUserConfirmTitle": "删除用户",
+  "deleteUserConfirmMessage": "This removes {username}'s app profile. Their Firefly III data is not affected.",
+  "@deleteUserConfirmMessage": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "signedInAs": "已登录：{username}",
+  "@signedInAs": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "usernameRequired": "请输入用户名。",
+  "unlockWithBiometrics": "使用生物识别解锁",
+  "unlockWithBiometricsDescription": "在登录界面使用面容、指纹或设备 PIN。",
+  "biometricUnlockReason": "解锁 FireRacoon",
+  "biometricEnableReason": "确认以启用生物识别解锁",
+  "biometricUnlockFailed": "生物识别解锁已取消或失败。"
+}

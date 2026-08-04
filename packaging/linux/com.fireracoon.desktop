@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=FireRacoon
+GenericName=Personal finance
+Comment=Firefly III client with on-device projections
+Exec=fireracoon
+Icon=fireracoon
+Terminal=false
+Type=Application
+Categories=Office;Finance;
+Keywords=finance;budget;firefly;
+StartupNotify=true

@@ -1,0 +1,11 @@
+# FireRacoon only — point Settings at an existing Firefly URL.
+# Usage: docker compose -f docs/examples/compose.fireracoon-only.yml up -d
+services:
+  fireracoon:
+    image: ghcr.io/kodsama/fireracoon:latest
+    # Or build from this repo instead of GHCR:
+    # build:
+    #   context: ../..
+    ports:
+      - "127.0.0.1:8082:80"
+    restart: unless-stopped

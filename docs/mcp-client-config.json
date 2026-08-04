@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "fireracoon": {
+      "command": "dart",
+      "args": [
+        "run",
+        "packages/mcp/bin/fireracoon_mcp.dart"
+      ],
+      "env": {
+        "FIREFLY_URL": "http://localhost:8081",
+        "FIREFLY_TOKEN": "YOUR_PERSONAL_ACCESS_TOKEN"
+      }
+    }
+  }
+}

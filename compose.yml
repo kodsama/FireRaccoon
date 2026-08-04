@@ -1,0 +1,44 @@
+services:
+  # Demo stack — default passwords are for localhost only (see docs/deployment.md).
+  fireracoon:
+    build: .
+    ports:
+      # Loopback only: nothing here is meant to be reachable from the LAN.
+      - "127.0.0.1:8082:80"
+    restart: unless-stopped
+
+  firefly-app:
+    image: fireflyiii/core:latest
+    restart: unless-stopped
+    container_name: firefly_app
+    ports:
+      - '8081:8080'
+    depends_on:
+      - firefly-db
+    environment:
+      - APP_KEY=12345678901234567890123456789012
+      - DB_CONNECTION=mysql
+      - DB_HOST=firefly-db
+      - DB_PORT=3306
+      - DB_DATABASE=firefly
+      - DB_USERNAME=firefly
+      - DB_PASSWORD=secret_firefly_password
+      - TZ=UTC
+    volumes:
+      - firefly_upload:/var/www/html/storage/upload
+
+  firefly-db:
+    image: mariadb:10.11
+    restart: always
+    container_name: firefly_db
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_USER=firefly
+      - MYSQL_PASSWORD=secret_firefly_password
+      - MYSQL_DATABASE=firefly
+    volumes:
+      - firefly_db:/var/lib/mysql
+
+volumes:
+  firefly_upload:
+  firefly_db:

@@ -1,0 +1,40 @@
+{
+  "services": {
+    "FireRacoon": {
+      "container_name": "FireRacoon",
+      "image": "ghcr.io/kodsama/fireracoon:latest",
+      "environment": [
+        "TZ=Europe/Stockholm"
+      ],
+      "labels": {
+        "cosmos-auto-update": "true",
+        "cosmos-force-network-mode": "cosmos-Firefly-III-default",
+        "cosmos-icon": "https://raw.githubusercontent.com/kodsama/fireracoon/main/assets/fireracoon_logo.png",
+        "cosmos.stack": "Firefly-III"
+      },
+      "ports": [],
+      "volumes": [],
+      "networks": {
+        "cosmos-Firefly-III-default": {}
+      },
+      "routes": [
+        {
+          "name": "FireRacoon",
+          "description": "FireRacoon web UI",
+          "useHost": true,
+          "target": "http://FireRacoon:80",
+          "mode": "SERVAPP",
+          "Timeout": 14400000,
+          "ThrottlePerMinute": 12000,
+          "BlockCommonBots": true,
+          "SmartShield": {
+            "Enabled": true
+          }
+        }
+      ],
+      "restart": "unless-stopped",
+      "network_mode": "cosmos-Firefly-III-default",
+      "mem_limit": "536870912"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+# flutter_distributor .deb config.
+display_name: FireRacoon
+package_name: fireracoon
+maintainer:
+  name: Kodsama
+  email: support@kodsama.ai
+# Flutter Linux links against system GTK3 at runtime. An empty Depends list
+# renders a valueless "Depends:" line that dpkg-deb rejects.
+dependencies:
+  - libgtk-3-0
+  - libsecret-1-0
+# Advisory disk-usage metadata (KiB). Required as a non-null int by
+# flutter_app_packager's MakeDebConfig.fromJson.
+installed_size: 120000
+icon: packaging/linux/icon_256.png
+generic_name: Personal finance
+keywords:
+  - Finance
+  - Budget
+  - Firefly
+categories:
+  - Office
+  - Finance
+priority: optional
+section: utils

@@ -1,0 +1,1711 @@
+{
+  "@@locale": "sv",
+  "appTitle": "FireRacoon",
+  "appTagline": "Den smartaste banditen för din budget.",
+  "appNameFire": "Fire",
+  "appNameRacoon": "Racoon",
+  "navDashboard": "Översikt",
+  "navDashboardShort": "Övers.",
+  "navAccounts": "Konton",
+  "navTransactions": "Transaktioner",
+  "navBudgets": "Budgetar",
+  "navSubscriptions": "Subscriptions & Recurring",
+  "navPiggyBanks": "Piggy banks",
+  "navExpenses": "Utgifter",
+  "navIncome": "Income",
+  "navTransfers": "Transfers",
+  "navLiabilities": "Liabilities",
+  "navProjection": "Prognos",
+  "navPrognosis": "Prognosis",
+  "navSettings": "Inställningar",
+  "netWorth": "Nettoförmögenhet",
+  "search": "Sök...",
+  "loading": "Laddar…",
+  "fireflyUser": "Firefly-användare",
+  "fireflyConnected": "Firefly III · ansluten",
+  "fireflyDisconnected": "Firefly III · frånkopplad",
+  "fireflyConnectionChecking": "Firefly III · kontrollerar…",
+  "settingsTitle": "Inställningar",
+  "appVersion": "Version {version}",
+  "language": "Språk",
+  "selectLanguage": "Välj språk",
+  "languageEnglish": "English",
+  "languageFrench": "Français",
+  "languageSwedish": "Svenska",
+  "languagePortuguese": "Português",
+  "languageChinese": "简体中文",
+  "languageJapanese": "日本語",
+  "defaultCurrency": "Standardvaluta",
+  "selectCurrency": "Välj valuta",
+  "primaryCurrencyChangeWarning": "Firefly III kan räkna om sparade belopp när standardvalutan ändras.",
+  "primaryCurrencyChanged": "Standardvaluta satt till {code}",
+  "@primaryCurrencyChanged": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSetPrimaryCurrency": "Kunde inte ange standardvaluta: {error}",
+  "@failedToSetPrimaryCurrency": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "primaryCurrencyCurrent": "Aktuell",
+  "changePrimaryCurrencyTitle": "Byt standardvaluta",
+  "changePrimaryCurrencyMessage": "Byt standardvaluta till {code}? {warning}",
+  "@changePrimaryCurrencyMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "warning": {
+        "type": "String"
+      }
+    }
+  },
+  "changePrimaryCurrencyConfirm": "Byt",
+  "connectToFireflyToLoad": "Anslut Firefly III för att ladda",
+  "managedInFirefly": "Hanteras i Firefly III",
+  "appearance": "Utseende",
+  "racoonMode": "Racoon-läge",
+  "themeStyle": "Temastil",
+  "themeStyleSubtitle": "Välj palett, accentfärg och ljusstyrka. Ändringar tillämpas direkt.",
+  "systemDefault": "Systemstandard",
+  "themeBrightness": "Ljusstyrka",
+  "themeLight": "Ljust",
+  "themeDark": "Mörkt",
+  "themePalette": "Palett",
+  "paletteClassic": "Klassisk",
+  "paletteSpectrum": "Spektrum",
+  "paletteRaccoon": "Tvättbjörn",
+  "themeAccentColor": "Accentfärg",
+  "themePreview": "Förhandsvisning",
+  "done": "Klar",
+  "accentGreen": "Grön",
+  "accentTeal": "Blågrön",
+  "accentBlue": "Blå",
+  "accentOrange": "Orange",
+  "accentRed": "Röd",
+  "accentViolet": "Violett",
+  "accentLime": "Lime",
+  "accentSky": "Himmel",
+  "accentCharcoal": "Kol",
+  "accentSilver": "Silver",
+  "accentTan": "Beige",
+  "accentAmber": "Bärnsten",
+  "accentSlate": "Skiffer",
+  "accentMidnight": "Midnatt",
+  "accentSmoke": "Rök",
+  "accentPearl": "Pärla",
+  "backendConnection": "Backend-anslutning (Firefly III)",
+  "serverUrl": "Server-URL",
+  "notConnected": "Ej ansluten",
+  "oauth2Connection": "OAuth2-anslutning",
+  "personalAccessToken": "Personlig åtkomsttoken",
+  "notSet": "Ej angiven",
+  "disconnect": "Koppla från",
+  "fireflyConnectionTitle": "Firefly III-anslutning",
+  "serverUrlLabel": "Server-URL (t.ex. https://firefly.min-domän.se)",
+  "allowHttpConnections": "Tillåt HTTP-anslutningar",
+  "authenticationMethod": "Autentiseringsmetod",
+  "oauth2": "OAuth2",
+  "oauthClientId": "OAuth-klient-ID",
+  "testConnection": "Testa anslutning",
+  "connectionSuccessful": "Anslutning lyckades!",
+  "connectionFailed": "Anslutning misslyckades. Kontrollera URL och token.",
+  "loginViaBrowser": "Logga in via webbläsare",
+  "cancel": "Avbryt",
+  "save": "Spara",
+  "delete": "Radera",
+  "errorGeneric": "Fel: {error}",
+  "@errorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingData": "Fel vid inläsning: {error}",
+  "@errorLoadingData": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "tabInsights": "Insikter",
+  "tabAccounts": "Konton",
+  "tabFocus": "Fokus",
+  "totalBalance": "Totalsaldo",
+  "incomeMonth": "Inkomst · {month}",
+  "@incomeMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingMonth": "Utgifter · {month}",
+  "@spendingMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "savedMonth": "Sparat · {month}",
+  "@savedMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "snatchedFunds": "Snodda medel",
+  "burntCash": "Brändt kontant",
+  "stash": "Gömma",
+  "snatched": "Snoddat",
+  "burnt": "Bränt",
+  "navDashboardRacoon": "Unket",
+  "navDashboardShortRacoon": "Unke",
+  "navAccountsRacoon": "Gömmor",
+  "navTransactionsRacoon": "Kupploggen",
+  "navBudgetsRacoon": "Bytplans",
+  "navSubscriptionsRacoon": "Recurring Raids",
+  "navPiggyBanksRacoon": "Mini Stashes",
+  "navExpensesRacoon": "Brännrapport",
+  "navProjectionRacoon": "Kristallbyte",
+  "navPrognosisRacoon": "Month-end loot",
+  "navSettingsRacoon": "Unkregler",
+  "netWorthRacoon": "Totalt byte",
+  "searchRacoon": "Sniffa…",
+  "accountsTitleRacoon": "Gömmor",
+  "transactionsTitleRacoon": "Kupploggen",
+  "budgetsTitleRacoon": "Bytplans",
+  "expensesTitleRacoon": "Brännrapport",
+  "projectionTitleRacoon": "Kristallbyte",
+  "settingsTitleRacoon": "Unkregler",
+  "tabInsightsRacoon": "Byteinfo",
+  "tabAccountsRacoon": "Gömmor",
+  "tabFocusRacoon": "Kupp-HQ",
+  "totalBalanceRacoon": "Full gömma",
+  "incomeMonthRacoon": "Snoddat · {month}",
+  "@incomeMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingMonthRacoon": "Bränt · {month}",
+  "@spendingMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "savedMonthRacoon": "Gömt · {month}",
+  "@savedMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "cashFlowRacoon": "Byteflöde",
+  "whereMoneyGoesRacoon": "Vart bytet går",
+  "recentActivityRacoon": "Senaste kupper",
+  "yourAccountsRacoon": "Dina gömmor",
+  "budgetsAtGlanceRacoon": "Byte i korthet",
+  "viewAllAccountsRacoon": "Alla gömmor",
+  "assetAccountsRacoon": "Skattgömmor",
+  "liabilityAccountsRacoon": "Skulder & IOU",
+  "stocksAndFundsAccountsRacoon": "Börs gömmor",
+  "allAccountsRacoon": "Alla gömmor",
+  "accountsRacoon": "Gömmor",
+  "newTransactionRacoon": "Planera ett kupp",
+  "editTransactionRacoon": "Redigera kupp",
+  "transactionsCountRacoon": "{count} kupper",
+  "@transactionsCountRacoon": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneTransactionRacoon": "1 kupp",
+  "transactionTypeDepositRacoon": "Snatt",
+  "transactionTypeWithdrawalRacoon": "Bränn",
+  "transactionTypeTransferRacoon": "Gömmbyte",
+  "expenseLabelRacoon": "Bränn",
+  "spentRacoon": "Bränt",
+  "newBudgetRacoon": "Nytt bytplan",
+  "projectedBalanceRacoon": "Framtida byte",
+  "piggyBankRacoon": "Minigömma",
+  "transfersRacoon": "Gömmbyten",
+  "expensesFilterRacoon": "Bränningar",
+  "noTransactionsYetRacoon": "Inga kupper än",
+  "lookingAheadRacoon": "Kika framåt",
+  "openProjectionRacoon": "Spana in framtiden",
+  "editAccountRacoon": "Redigera gömma",
+  "accountNameRacoon": "Gömmanamn",
+  "filterAccountRacoon": "Filtrera gömma",
+  "sourceAccountRacoon": "Från gömma",
+  "destinationAccountRacoon": "Till gömma",
+  "totalSpentPeriodRacoon": "Totalt bränt under perioden",
+  "totalIncomePeriodRacoon": "Totalt snott under perioden",
+  "totalTransferredPeriodRacoon": "Total shuffled this period",
+  "newAccount": "New Account",
+  "newLiability": "New Liability",
+  "newExpense": "New Expense",
+  "newAccountRacoon": "Ny gömma",
+  "newLiabilityRacoon": "Ny skuld",
+  "newExpenseRacoon": "Planera en bränning",
+  "income": "Inkomst",
+  "spending": "Utgifter",
+  "saved": "Sparat",
+  "cashFlow": "Kassaflöde",
+  "whereMoneyGoes": "Vart pengarna går",
+  "noSpendingThisMonth": "Inga utgifter denna månad än",
+  "recentActivity": "Senaste aktivitet",
+  "viewAll": "Visa alla",
+  "noTransactionsYet": "Inga transaktioner än",
+  "lookingAhead": "Framåtblick",
+  "spendingPaceWarning": "Utgiftstakten kan överstiga inkomsten denna månad",
+  "openProjection": "Öppna prognos",
+  "yourAccounts": "Dina konton",
+  "budgetsAtGlance": "Budgetar i korthet",
+  "viewAllAccounts": "Visa alla konton",
+  "thirtyDayOutlook": "30-dagars utsikt",
+  "monthEndPrognosis": "Prognos i månadens slut",
+  "projectedEndOfMonth": "Månadens slut",
+  "includeCreditCardPayments": "Inkludera kreditkortsbetalningar",
+  "prognosisDeltaPositive": "+{amount} förväntat",
+  "@prognosisDeltaPositive": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisDeltaNegative": "{amount} förväntat",
+  "@prognosisDeltaNegative": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisLowBalanceWarning": "Prognostiserat saldo kan bli negativt",
+  "prognosisDebtWarning": "Prognostiserad skuld kan öka",
+  "openPrognosis": "Open prognosis",
+  "prognosisMarginLabel": "Margin of error",
+  "prognosisMarginDetail": "±{percent}% uncertainty on amounts",
+  "@prognosisMarginDetail": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisIncludeScheduled": "Scheduled transactions",
+  "prognosisIncludeRecurring": "Recurring transactions",
+  "prognosisIncludeBills": "Subscriptions",
+  "prognosisIncludeIncome": "Income",
+  "prognosisIncludeExpenses": "Expenses",
+  "prognosisIncludeTransfers": "Transfers",
+  "prognosisIncludeCreditCards": "Credit cards",
+  "prognosisEndOfNextMonth": "End of next month",
+  "prognosisMinBalance": "Min prognosis",
+  "prognosisMaxBalance": "Max prognosis",
+  "prognosisExpectedBalance": "Expected",
+  "prognosisSelectAccount": "Account",
+  "prognosisBandLegend": "Shaded band shows min–max range; line is expected",
+  "prognosisModeExpected": "Real projection",
+  "prognosisModeProjected": "Speculative projection",
+  "prognosisModeExpectedHint": "Month-end balances from current balances, scheduled transactions, recurring items, and bills",
+  "prognosisModeProjectedHint": "Trend-based forecast from historical net cash flow",
+  "prognosisHorizonLabel": "Horizon",
+  "prognosisHorizonEndOfMonth": "End of month",
+  "prognosisHorizonEndOfNextMonth": "Next month",
+  "prognosisHorizonTwoMonths": "2 months",
+  "prognosisHorizonThreeMonths": "3 months",
+  "prognosisHorizonSixMonths": "6 months",
+  "prognosisHorizonOneYear": "1 year",
+  "prognosisHorizonThreeYears": "3 years",
+  "prognosisHorizonFiveYears": "5 years",
+  "prognosisHorizonTenYears": "10 years",
+  "prognosisMilestoneThreeMonths": "End of 3 months",
+  "prognosisMilestoneSixMonths": "End of 6 months",
+  "prognosisMilestoneOneYear": "End of 1 year",
+  "prognosisIncludeSources": "Include in forecast",
+  "prognosisIncludeLiabilities": "Liabilities",
+  "prognosisNegativeOn": "Negative on {date}",
+  "@prognosisNegativeOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisCurrentBalance": "Current balance",
+  "prognosisPredictedBalances": "Predicted balances",
+  "todaysTimeline": "Dagens tidslinje",
+  "noActivityToday": "Ingen aktivitet idag",
+  "noChangeVsLastMonth": "Ingen förändring jämfört med förra månaden",
+  "newActivityThisMonth": "Ny aktivitet denna månad",
+  "percentVsLastMonth": "{arrow}{percent} % jämfört med förra månaden",
+  "@percentVsLastMonth": {
+    "placeholders": {
+      "arrow": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "projectedSavingsHeadline": "{amount} prognostiserat sparande denna månad",
+  "@projectedSavingsHeadline": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "onPaceDetail": "I takt för {amount} sparat vid månadens slut",
+  "@onPaceDetail": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingOutpacingDetail": "Utgifterna överstiger inkomsten med {amount}",
+  "@spendingOutpacingDetail": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "accountsTitle": "Konton",
+  "assetAccounts": "Tillgångskonton",
+  "stocksAndFundsAccounts": "Aktie- och fondkonton",
+  "liabilityAccounts": "Skuldkonton",
+  "noAccountsFound": "Inga konton hittades.",
+  "allAccounts": "Alla konton",
+  "assetsOnly": "Endast tillgångar",
+  "liabilitiesOnly": "Endast skulder",
+  "accountName": "Kontonamn",
+  "accountRoleDefault": "Betalkonto",
+  "accountRoleShared": "Delat konto",
+  "accountRoleSaving": "Sparkonto",
+  "accountRoleCreditCard": "Kreditkort",
+  "holdingAccountFundLabel": "(Fond)",
+  "holdingAccountStockLabel": "(Aktie)",
+  "failedToUpdate": "Kunde inte uppdatera: {error}",
+  "@failedToUpdate": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "name": "Namn",
+  "transactionsTitle": "Transaktioner",
+  "filteredBy": "Filtrerat på: {account}",
+  "@filteredBy": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "balance": "Saldo:",
+  "balanceCheckMode": "Kontrollera saldo",
+  "balanceCheckExpected": "Förväntat saldo",
+  "balanceCheckStatement": "Ditt saldo",
+  "balanceCheckStatementHint": "Ange saldo från kontoutdrag",
+  "balanceCheckMatch": "Saldona stämmer",
+  "balanceCheckDifference": "Skillnad: {amount}",
+  "@balanceCheckDifference": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceCheckEnterBalance": "Ange ett saldo att jämföra",
+  "balanceCheckInvalidAmount": "Ange ett giltigt belopp",
+  "balanceCheckSelectedBalance": "Saldo från valda transaktioner",
+  "balanceCheckReconcile": "Avstäm valda",
+  "balanceCheckReconciled": "Valda transaktioner avstämda",
+  "balanceCheckNothingToReconcile": "Inget att stämma av. Välj oavstämda transaktioner för att inkludera dem.",
+  "balanceCheckPaymentAccount": "Betalkonto",
+  "balanceCheckPaybackDate": "Återbetalningsdatum",
+  "balanceCheckSelectPaymentAccount": "Välj betalkonto",
+  "balanceCheckNoPaymentAccounts": "Inga giltiga betalkonton",
+  "balanceCheckPaybackSummary": "Återbetalning: {amount} från {account} den {date}",
+  "@balanceCheckPaybackSummary": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "account": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceCheckPaybackReconciled": "Köp avstämda och återbetalningsöverföring skapad",
+  "balanceCheckNoEligiblePurchases": "Välj minst ett kreditkortsköp",
+  "tooltipBalanceCheckMode": "Jämför kontoutdragssaldo med Firefly",
+  "tooltipBalanceCheckIncludePending": "Inkludera i saldokontroll",
+  "tooltipBalanceCheckExcludeReconciled": "Exkludera från saldokontroll",
+  "transactionReconciled": "Avstämd",
+  "partiallyReconciled": "Delvis avstämd",
+  "tooltipTransactionReconciled": "Verifierad mot ditt kontoutdrag",
+  "transactionReconciledUpdated": "Avstämning uppdaterad",
+  "failedToUpdateReconciliation": "Kunde inte uppdatera avstämning: {error}",
+  "@failedToUpdateReconciliation": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciledFilter": "Avstämning",
+  "reconciledFilterAll": "Alla transaktioner",
+  "reconciledFilterReconciled": "Endast avstämda",
+  "reconciledFilterUnreconciled": "Endast ej avstämda",
+  "reconcile": "Stäm av",
+  "reconcileExpectedBalance": "Förväntat saldo: {amount}",
+  "@reconcileExpectedBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconcileClickHint": "Klicka för att stämma av",
+  "reconciliationTitle": "Avstäm konto",
+  "reconciliationSubtitle": "Matcha kontoutdraget med Firefly III",
+  "reconciliationAccount": "Konto",
+  "reconciliationStartDate": "Startdatum",
+  "reconciliationEndDate": "Slutdatum",
+  "reconciliationStartBalance": "Ingående saldo",
+  "reconciliationEndBalance": "Utgående saldo",
+  "reconciliationStart": "Starta avstämning",
+  "reconciliationRestart": "Börja om",
+  "reconciliationOptions": "Avstämningsalternativ",
+  "reconciliationGapZero": "Markerade transaktioner matchar kontoutdraget.",
+  "reconciliationGapPositive": "Firefly har {amount} mindre än kontoutdraget.",
+  "@reconciliationGapPositive": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationGapNegative": "Firefly har {amount} mer än kontoutdraget.",
+  "@reconciliationGapNegative": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationStore": "Spara avstämning",
+  "reconciliationStoreTitle": "Spara avstämning?",
+  "reconciliationStoreBody": "Markera {count} transaktioner som avstämda.",
+  "@reconciliationStoreBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reconciliationCreateCorrectionTitle": "Skapa korrigeringstransaktion?",
+  "reconciliationCreateCorrectionBody": "Det återstår en skillnad på {amount}. FireRacoon skapar en avstämningspost.",
+  "@reconciliationCreateCorrectionBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationStored": "Avstämning sparad",
+  "reconciliationStoreFailed": "Kunde inte spara avstämning: {error}",
+  "@reconciliationStoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationSelectAccount": "Välj ett tillgångskonto",
+  "reconciliationInvalidBalances": "Ange giltiga ingående och utgående saldon",
+  "reconciliationInvalidDateRange": "Slutdatum måste vara samma dag eller senare än startdatum",
+  "reconciliationSelectTransactions": "Markera minst en transaktion från kontoutdraget",
+  "reconciliationNoTransactions": "Inga transaktioner hittades för perioden",
+  "reconciliationUnreconciled": "Ej avstämd",
+  "reconciliationFutureTransaction": "Efter periodens slut",
+  "futureTransactions": "Framtida transaktioner",
+  "reconciliationOpenWizard": "Avstäm konto",
+  "tooltipReconciliationWizard": "Matcha transaktioner mot kontoutdraget",
+  "reconciliationUseFireflyBalances": "Använd Firefly-saldon",
+  "reconciliationLoadingBalances": "Hämtar saldon från Firefly…",
+  "reconciliationBalancesFilled": "Saldon ifyllda från Firefly",
+  "reconciliationBalancesFailed": "Kunde inte hämta saldon: {error}",
+  "@reconciliationBalancesFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notAvailable": "Saknas",
+  "groupBy": "Gruppera efter",
+  "groupByDate": "Gruppera efter datum",
+  "groupByAccount": "Gruppera efter konto",
+  "groupByPayee": "Gruppera efter mottagare",
+  "groupByType": "Gruppera efter typ",
+  "groupByCategory": "Gruppera efter kategori",
+  "filterAccount": "Filtrera konto",
+  "amount": "Belopp",
+  "accounts": "Konton",
+  "description": "Beskrivning",
+  "sourceAccount": "Källkonto",
+  "destinationAccount": "Målkonto",
+  "payee": "Mottagare",
+  "savingNotSupported": "Sparning stöds inte i skrivskyddat läge.",
+  "transactionDateCategory": "{category} · {date}",
+  "@transactionDateCategory": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "foreignAmount": "({amount})",
+  "@foreignAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsTitle": "Budgetar",
+  "subscriptionsTitle": "Subscriptions & Recurring",
+  "newSubscription": "New Subscription",
+  "createSubscription": "Create Subscription",
+  "editSubscription": "Edit Subscription",
+  "subscriptionCreated": "Subscription created.",
+  "subscriptionDeleted": "Subscription \"{name}\" deleted.",
+  "@subscriptionDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateSubscription": "Failed to create subscription: {error}",
+  "@failedToCreateSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateSubscription": "Failed to update subscription: {error}",
+  "@failedToUpdateSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteSubscription": "Failed to delete subscription: {error}",
+  "@failedToDeleteSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteSubscription": "Delete Subscription",
+  "deleteSubscriptionConfirmBody": "Are you sure you want to delete the subscription \"{name}\"? This action cannot be undone.",
+  "@deleteSubscriptionConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noSubscriptionsFound": "No subscriptions found.",
+  "subscriptionInactive": "Inactive",
+  "subscriptionActive": "Active",
+  "mandatoryFields": "Mandatory fields",
+  "optionalFields": "Optional fields",
+  "minimumAmount": "Minimum amount",
+  "maximumAmount": "Maximum amount",
+  "startDate": "Start date",
+  "repeats": "Repeats",
+  "skip": "Skip",
+  "skipHelp": "Use skip to create bi-monthly (skip = 1) or other custom intervals.",
+  "endDate": "End date",
+  "endDateHelp": "Optional. The subscription is expected to end on this date.",
+  "extensionDate": "Extension date",
+  "extensionDateHelp": "Optional. The subscription must be extended (or cancelled) on or before this date.",
+  "group": "Group",
+  "notesMarkdownHint": "This field supports Markdown.",
+  "repeatWeekly": "Weekly",
+  "repeatMonthly": "Monthly",
+  "repeatQuarterly": "Quarterly",
+  "repeatHalfYear": "Half-year",
+  "repeatYearly": "Yearly",
+  "subscriptionAmountRange": "{min} – {max}",
+  "@subscriptionAmountRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "tabSubscriptions": "Subscriptions",
+  "tabRecurringTransactions": "Recurring transactions",
+  "badgeSubscription": "Subscription",
+  "badgeRecurringTransaction": "Recurring transaction",
+  "addSubscription": "Subscription",
+  "addRecurringTransaction": "Recurring",
+  "noSubscriptionsOrRecurrencesFound": "No subscriptions or recurring transactions found.",
+  "newRecurringTransaction": "New Recurring Transaction",
+  "createRecurringTransaction": "Create Recurring Transaction",
+  "editRecurringTransaction": "Edit Recurring Transaction",
+  "recurringTransactionCreated": "Recurring transaction created.",
+  "recurringTransactionDeleted": "Recurring transaction \"{name}\" deleted.",
+  "@recurringTransactionDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateRecurringTransaction": "Failed to create recurring transaction: {error}",
+  "@failedToCreateRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateRecurringTransaction": "Failed to update recurring transaction: {error}",
+  "@failedToUpdateRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteRecurringTransaction": "Failed to delete recurring transaction: {error}",
+  "@failedToDeleteRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteRecurringTransaction": "Delete Recurring Transaction",
+  "deleteRecurringTransactionConfirmBody": "Are you sure you want to delete the recurring transaction \"{name}\"? This action cannot be undone.",
+  "@deleteRecurringTransactionConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noRecurringTransactionsFound": "No recurring transactions found.",
+  "recurringTransactionInactive": "Inactive",
+  "mandatoryRecurrenceFields": "Mandatory recurrence information",
+  "optionalRecurrenceFields": "Optional recurrence information",
+  "mandatoryTransactionFields": "Mandatory transaction information",
+  "optionalTransactionFields": "Optional transaction information",
+  "recurrenceTitle": "Title",
+  "firstDate": "First date",
+  "firstDateHelp": "Indicate the first expected recurrence. This must be in the future.",
+  "typeOfRepetition": "Type of repetition",
+  "typeOfRepetitionHelp": "Change the first date to see more options.",
+  "weekendHandling": "Weekend",
+  "weekendCreateAnyway": "Just create the transaction",
+  "weekendSkip": "Do not create a transaction",
+  "weekendPreviousFriday": "Skip to the previous Friday",
+  "weekendNextMonday": "Skip to the next Monday",
+  "weekendHelp": "What should Firefly III do when the recurring transaction falls on a Saturday or Sunday?",
+  "repetitionEnds": "Repetition ends",
+  "repeatForever": "Repeat forever",
+  "repeatUntilDate": "Repeat until date",
+  "repeatCount": "Repeat a fixed number of times",
+  "numberOfRepetitions": "Number of repetitions",
+  "applyRules": "Apply rules",
+  "applyRulesHelp": "Whether to fire rules after creating each transaction.",
+  "recurrenceDescription": "Recurring transaction description",
+  "repeatDaily": "Daily",
+  "repeatNdom": "Monthly on nth weekday",
+  "recurrenceAmount": "{amount}",
+  "@recurrenceAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipOpenSubscriptions": "Öppna återkommande abonnemang och räkningar.",
+  "subscriptionsTitleRacoon": "Recurring Raids & Schedules",
+  "newSubscriptionRacoon": "New Recurring Raid",
+  "piggyBanksTitle": "Piggy banks",
+  "newPiggyBank": "New piggy bank",
+  "createPiggyBank": "Create piggy bank",
+  "editPiggyBank": "Edit piggy bank",
+  "piggyBankCreated": "Piggy bank created.",
+  "piggyBankDeleted": "Piggy bank \"{name}\" deleted.",
+  "@piggyBankDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreatePiggyBank": "Failed to create piggy bank: {error}",
+  "@failedToCreatePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdatePiggyBank": "Failed to update piggy bank: {error}",
+  "@failedToUpdatePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeletePiggyBank": "Failed to delete piggy bank: {error}",
+  "@failedToDeletePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePiggyBank": "Delete piggy bank",
+  "deletePiggyBankConfirmBody": "Are you sure you want to delete the piggy bank \"{name}\"? This action cannot be undone.",
+  "@deletePiggyBankConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noPiggyBanksFound": "No piggy banks found.",
+  "targetAmount": "Target amount",
+  "piggyBankCurrencyHelp": "Piggy banks can only save money in a single currency.",
+  "saveOnAccounts": "Save on account(s)",
+  "piggyBankAccountsHelp": "Only accounts that use the previously selected currency will be accepted.",
+  "targetDate": "Target date",
+  "targetDateHelp": "The date you intend to finish saving money.",
+  "accountGroupDefaultAssets": "Default asset accounts",
+  "accountGroupSavings": "Savings accounts",
+  "accountGroupCash": "Cash wallets",
+  "accountGroupLiabilities": "Liabilities",
+  "selectAtLeastOneAccount": "Select at least one account.",
+  "piggyBankProgress": "{current} / {target}",
+  "@piggyBankProgress": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "piggyBanksTitleRacoon": "Mini Stashes",
+  "newPiggyBankRacoon": "New Mini Stash",
+  "newBudget": "Ny budget",
+  "deleteBudget": "Radera budget",
+  "deleteBudgetMessage": "Är du säker på att du vill radera \"{name}\"?",
+  "@deleteBudgetMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetDeleted": "Budget \"{name}\" raderad.",
+  "@budgetDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteBudget": "Kunde inte radera budget: {error}",
+  "@failedToDeleteBudget": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "spent": "Spenderat",
+  "ofAmount": "av {amount}",
+  "@ofAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "overBudget": "{amount} över budget",
+  "@overBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "leftInBudget": "{amount} kvar",
+  "@leftInBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetPerPeriod": "{amount} per {period}",
+  "@budgetPerPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetLimitForPeriod": "{amount} för {period}",
+  "@budgetLimitForPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetCadenceDaily": "dag",
+  "budgetCadenceWeekly": "vecka",
+  "budgetCadenceMonthly": "månad",
+  "budgetCadenceQuarterly": "kvartal",
+  "budgetCadenceHalfYear": "halvår",
+  "budgetCadenceYearly": "år",
+  "viewPeriod": "Visningsperiod",
+  "budgetAmount": "Budgetbelopp",
+  "editBudget": "Redigera budget",
+  "createBudget": "Skapa budget",
+  "createPayee": "Skapa mottagare",
+  "createCategory": "Skapa kategori",
+  "budgetLimit": "Budgetgräns",
+  "autoBudget": "Auto-budgetbelopp",
+  "budgetAmountMode": "Gränstyp",
+  "budgetAmountModeAuto": "Återkommande period",
+  "budgetAmountModeDateRange": "Fast datumintervall",
+  "budgetAmountModeNone": "Inget belopp",
+  "budgetRepeatPeriod": "Upprepas varje",
+  "budgetAutoType": "Auto-budgetbeteende",
+  "budgetAutoTypeReset": "Återställ varje period",
+  "budgetAutoTypeRollover": "Rulla över oanvänt",
+  "budgetAutoTypeAdjusted": "Justera efter utgifter",
+  "budgetAutoTypeNone": "Ingen",
+  "budgetActive": "Aktiv",
+  "budgetPeriodDaily": "Dagligen",
+  "budgetPeriodWeekly": "Veckovis",
+  "budgetPeriodMonthly": "Månadsvis",
+  "budgetPeriodQuarterly": "Kvartalsvis",
+  "budgetPeriodHalfYear": "Halvårsvis",
+  "budgetPeriodYearly": "Årsvis",
+  "tooltipBudgetAmountMode": "Återkommande auto-budget, fast intervall eller ingen gräns",
+  "tooltipBudgetRepeatPeriod": "Hur ofta budgetbeloppet gäller (t.ex. månadsvis)",
+  "tooltipBudgetAutoType": "Vad som händer i början av varje budgetperiod",
+  "tooltipBudgetStartDate": "Första dag gränsen gäller",
+  "tooltipBudgetEndDate": "Sista dag gränsen gäller",
+  "tooltipBudgetActive": "Inaktiva budgetar döljs som standard i Firefly",
+  "tooltipBudgetNotes": "Valfria anteckningar för budgeten",
+  "tooltipBudgetCurrency": "Valuta för budgetbeloppet",
+  "expensesTitle": "Utgifter",
+  "clearFilters": "Rensa filter",
+  "overview": "Översikt",
+  "byCategory": "Per kategori",
+  "allCategories": "Alla kategorier",
+  "allTypes": "Alla typer",
+  "expensesFilter": "Utgifter",
+  "transfers": "Överföringar",
+  "expensePeriodWeek": "Denna vecka",
+  "expensePeriodMonth": "Denna månad",
+  "expensePeriodQuarter": "Detta kvartal",
+  "expensePeriodSemester": "Detta halvår",
+  "expensePeriodYear": "Detta år",
+  "expensePeriodAll": "All tid",
+  "dashboardPeriodThisWeek": "Denna vecka",
+  "dashboardPeriodLastWeek": "Förra veckan",
+  "dashboardPeriodThisMonth": "Denna månad",
+  "dashboardPeriodLastMonth": "Förra månaden",
+  "dashboardPeriodThisQuarter": "Detta kvartal",
+  "dashboardPeriodLastQuarter": "Förra kvartalet",
+  "dashboardPeriodThisYear": "I år",
+  "dashboardPeriodLastYear": "Förra året",
+  "dashboardPeriodLast2Years": "Senaste 2 åren",
+  "dashboardPeriodLast5Years": "Senaste 5 åren",
+  "dashboardPeriodLast10Years": "Senaste 10 åren",
+  "dashboardPeriodAll": "Allt",
+  "deltaComparisonPreviousWeek": "föregående vecka",
+  "deltaComparisonPreviousMonth": "föregående månad",
+  "deltaComparisonPreviousQuarter": "föregående kvartal",
+  "deltaComparisonPreviousYear": "föregående år",
+  "deltaComparisonPrevious2Years": "föregående 2 år",
+  "deltaComparisonPrevious5Years": "föregående 5 år",
+  "deltaComparisonPrevious10Years": "föregående 10 år",
+  "deltaComparisonCustomPeriod": "föregående period",
+  "noChangeVsComparisonPeriod": "Ingen förändring jämfört med {period}",
+  "@noChangeVsComparisonPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "newActivityVsComparisonPeriod": "Ny aktivitet jämfört med {period}",
+  "@newActivityVsComparisonPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "percentVsComparisonPeriod": "{arrow}{percent}% jämfört med {period}",
+  "@percentVsComparisonPeriod": {
+    "placeholders": {
+      "arrow": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "dateRangeSeparator": "–",
+  "dateEllipsis": "…",
+  "projectionTitle": "Prognos",
+  "projectedBalance": "Prognostiserat saldo",
+  "visualization": "Visualisering",
+  "parameters": "Parametrar",
+  "predictedBalances": "Prognostiserade saldon · {period}",
+  "@predictedBalances": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountsLoaded": "Inga konton inlästa",
+  "scenarioSummary": "Scenarioöversikt",
+  "nowAmount": "nu {amount}",
+  "@nowAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "worstCase": "Värsta fall",
+  "expected": "Förväntat",
+  "bestCase": "Bästa fall",
+  "moveSliderToSeeImpact": "Flytta reglaget för att se effekten",
+  "whatIfImpact": "+{amount} under {period}",
+  "@whatIfImpact": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "projectionPeriod3Months": "3 månader",
+  "projectionPeriod6Months": "6 månader",
+  "projectionPeriod1Year": "1 år",
+  "projectionPeriod3Years": "3 år",
+  "projectionTypeSavings": "Sparkvot",
+  "projectionTypeCompound": "Ränta på ränta",
+  "projectionTypePortfolio": "Portfölj (volatil)",
+  "projectionTypeCashflow": "Kassaflöde",
+  "projectionTypeSavingsDesc": "Linjär prognos baserad på ditt historiska nettosparande",
+  "projectionTypeCompoundDesc": "Saldo växer med ränta på ränta plus insättningar",
+  "projectionTypePortfolioDesc": "Förväntad avkastning med värsta/bästa band baserat på volatilitet",
+  "projectionTypeCashflowDesc": "Inkomst minus utgifter med diskretionära justeringar",
+  "chartStyleFan": "Solfjädersdiagram",
+  "chartStyleLines": "Tre linjer",
+  "chartStyleScenarios": "Scenariokort",
+  "whatIfSpending": "Tänk om-utgifter",
+  "annualReturn": "Årlig avkastning",
+  "volatility": "Volatilitet",
+  "projectionAlertLiability": "I värsta fall kan {name} nå {balance} tidigare än väntat.",
+  "@projectionAlertLiability": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "projectionAlertBelowZero": "Värsta prognosen går under noll inom vald period.",
+  "projectionAlertActionLiability": "Överväg att flytta medel från ett sparkonto.",
+  "projectionAlertActionSpending": "Granska diskretionära utgifter eller öka sparandet.",
+  "confirmTypeWord": "Skriv ",
+  "confirmToConfirm": " för att bekräfta:",
+  "confirmHint": "Skriv ordet ovan…",
+  "currencyPair": "{name} ({symbol})",
+  "@currencyPair": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetSpentFraction": "{spent} / {total}",
+  "@budgetSpentFraction": {
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "editAccount": "Redigera konto",
+  "editAction": "Redigera",
+  "filterAllShort": "Alla",
+  "filterAssetsShort": "Tillgångar",
+  "filterLiabilitiesShort": "Skulder",
+  "showInactiveAccounts": "Visa inaktiva konton",
+  "showInactiveAccountsShort": "Inaktiva",
+  "accountInactive": "Inaktiv",
+  "unknown": "Okänd",
+  "showingTransactionsOfTotal": "Visar {loaded} av {total} transaktioner",
+  "@showingTransactionsOfTotal": {
+    "placeholders": {
+      "loaded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "transactionsCount": "{count} transaktioner",
+  "@transactionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneTransaction": "1 transaktion",
+  "deleteBudgetConfirmBody": "Är du säker på att du vill radera budgeten \"{name}\"? Detta kan inte ångras.",
+  "@deleteBudgetConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "scrollForMore": "Scrolla för mer…",
+  "noTransactionsMatchFilters": "Inga transaktioner matchar de aktuella filtren.",
+  "category": "Kategori",
+  "totalSpentPeriod": "Totalt spenderat denna period",
+  "totalIncomePeriod": "Total inkomst denna period",
+  "totalTransferredPeriod": "Totalt överfört denna period",
+  "totalPeriod": "Totalt denna period",
+  "volatilityUncertainty": "Volatilitet / osäkerhet",
+  "editTransaction": "Redigera transaktion",
+  "newDeposit": "Create new deposit",
+  "editDeposit": "Edit deposit",
+  "newWithdrawal": "Create new withdrawal",
+  "editWithdrawal": "Edit withdrawal",
+  "newTransfer": "Create new transfer",
+  "editTransfer": "Edit transfer",
+  "revenueAccount": "Revenue account",
+  "assetAccount": "Asset account",
+  "expenseAccount": "Expense account",
+  "expenseLabel": "Utgift",
+  "transactionTypeDeposit": "Insättning",
+  "transactionTypeWithdrawal": "Uttag",
+  "transactionTypeTransfer": "Överföring",
+  "dataAndLoading": "Data och inläsning",
+  "transactionPageSize": "Transaktioner per sida",
+  "transactionPageSizeDescription": "Hur många transaktioner som laddas vid varje scroll. Gäller transaktionslistan.",
+  "transactionPageSizeValue": "{count} per sida",
+  "@transactionPageSizeValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultPeriod": "Default period",
+  "defaultPeriodDescription": "Applied when opening the dashboard, expenses, income, transfers, and transactions.",
+  "customDateRange": "Anpassat intervall",
+  "pickDates": "Välj datum",
+  "budgetStatusOnTrack": "Inom budget",
+  "budgetStatusOver": "Över budget",
+  "whatIfCutSpending": "Vad händer om jag minskar diskretionära utgifter med {percent} %?",
+  "@whatIfCutSpending": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "usesAveragePatterns": "Använder dina genomsnittliga inkomst- och utgiftsmönster från transaktioner.",
+  "historicalNetSavingsNote": "Baserat på historiskt nettobesparing. Justera osäkerheten för att bredda eller smalna av bandet.",
+  "accountFilterLabel": "Konto",
+  "noTransactionsForBudget": "Inga transaktioner för denna budget.",
+  "noTransactionsForAccount": "Inga transaktioner för detta konto.",
+  "deleteAccount": "Ta bort konto",
+  "deleteAccountConfirmBody": "Är du säker på att du vill ta bort kontot \"{name}\"? Detta kan inte ångras.",
+  "@deleteAccountConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accountDeleted": "Kontot \"{name}\" har tagits bort.",
+  "@accountDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteAccount": "Det gick inte att ta bort kontot: {error}",
+  "@failedToDeleteAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetNameHint": "Budgetnamn",
+  "budgetAmountWithSymbol": "Budgetbelopp ({symbol})",
+  "@budgetAmountWithSymbol": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "chartLegendActual": "Faktisk",
+  "chartLegendWorst": "Sämst",
+  "chartLegendBest": "Bäst",
+  "chartLegendWorstBest": "Sämst ↔ Bäst",
+  "today": "idag",
+  "mcpServer": "MCP-server",
+  "mcpStatusFailed": "Misslyckades: {error}",
+  "@mcpStatusFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpStatusRunning": "Kör på port {port}",
+  "@mcpStatusRunning": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "mcpStatusStarting": "Startar…",
+  "transactionDate": "Date",
+  "moreOptions": "More",
+  "foreignAmountLabel": "Foreign amount",
+  "budgetLabel": "Budget",
+  "piggyBank": "Piggy bank",
+  "noPiggyBank": "(no piggy bank)",
+  "tags": "Tags",
+  "subscription": "Subscription",
+  "interestDate": "Interest date",
+  "attachments": "Attachments",
+  "notes": "Notes",
+  "none": "(none)",
+  "attachmentsNotSupported": "Attachments are not supported in this app yet.",
+  "deleteTransaction": "Delete Transaction",
+  "deleteTransactionConfirmBody": "Are you sure you want to delete \"{description}\"? This action cannot be undone.",
+  "@deleteTransactionConfirmBody": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionDeleted": "Transaction deleted.",
+  "failedToDeleteTransaction": "Failed to delete transaction: {error}",
+  "@failedToDeleteTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionSaved": "Transaction saved.",
+  "failedToSaveTransaction": "Failed to save transaction: {error}",
+  "@failedToSaveTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionDuplicated": "Transaction duplicated.",
+  "failedToDuplicateTransaction": "Failed to duplicate transaction: {error}",
+  "@failedToDuplicateTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "duplicate": "Duplicate",
+  "newTransaction": "New Transaction",
+  "transactionCreated": "Transaction created.",
+  "failedToCreateTransaction": "Failed to create transaction: {error}",
+  "@failedToCreateTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionFormIncomplete": "Please fill in description, amount, and both accounts.",
+  "transactionInformation": "Transaction information",
+  "addAnotherSplit": "Add another split",
+  "splitLabel": "Split {number}",
+  "@splitLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "removeSplit": "Remove split",
+  "splitCount": "{count} splits",
+  "@splitCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "splitCategoriesCount": "{count} categories",
+  "@splitCategoriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "splitTotalLabel": "Split total: {amount}",
+  "@splitTotalLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitRemainder": "Remainder: {amount}",
+  "@splitRemainder": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitsTotalMismatch": "Split amounts must total {expected}.",
+  "@splitsTotalMismatch": {
+    "placeholders": {
+      "expected": {
+        "type": "String"
+      }
+    }
+  },
+  "splitOptionalFields": "Optional fields",
+  "foreignCurrency": "Foreign currency",
+  "noSubscriptionsHint": "You have no subscriptions yet. Create some on the Subscriptions page to link recurring expenses.",
+  "incomeTitle": "Income",
+  "transfersTitle": "Transfers",
+  "newTransferAction": "New Transfer",
+  "liabilitiesTitle": "Liabilities",
+  "newIncome": "New Income",
+  "newIncomeRacoon": "New Snatch",
+  "create": "Create",
+  "accountCreated": "Account created.",
+  "liabilityCreated": "Liability created.",
+  "budgetCreated": "Budget created.",
+  "failedToCreateAccount": "Failed to create account: {error}",
+  "@failedToCreateAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateBudget": "Failed to create budget: {error}",
+  "@failedToCreateBudget": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noLiabilitiesFound": "No liabilities found.",
+  "liabilityType": "Liability type",
+  "liabilityTypeDebt": "Debt",
+  "liabilityTypeLoan": "Loan",
+  "liabilityTypeMortgage": "Mortgage",
+  "liabilityDirection": "Liability in/out",
+  "liabilityDirectionOwe": "I owe this debt to somebody else",
+  "liabilityDirectionOwed": "Somebody owes this debt to me",
+  "amountOwed": "I owe amount",
+  "debtStartDate": "Start date of debt",
+  "interestRate": "Interest",
+  "interestPeriod": "Interest period",
+  "interestPeriodDaily": "Per day",
+  "includeInNetWorth": "Include in net worth",
+  "accountNumber": "Account number",
+  "iban": "IBAN",
+  "bic": "BIC",
+  "liabilityCurrencyHelp": "Default currency for this liability account.",
+  "interestPeriodHelp": "Cosmetic only — Firefly III does not calculate interest automatically.",
+  "failedToCreateLiability": "Failed to create liability: {error}",
+  "@failedToCreateLiability": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "navIncomeRacoon": "Snatched",
+  "navTransfersRacoon": "Stash Shuffles",
+  "navLiabilitiesRacoon": "Debts",
+  "incomeTitleRacoon": "Snatched Funds",
+  "transfersTitleRacoon": "Stash Shuffles",
+  "newTransferActionRacoon": "New Stash Shuffle",
+  "liabilitiesTitleRacoon": "Debts Owed",
+  "tooltipOpenSection": "Öppna {section}.",
+  "@tooltipOpenSection": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipOpenDashboard": "Öppna översikten med dina viktigaste nyckeltal.",
+  "tooltipOpenAccounts": "Öppna dina konton och saldon.",
+  "tooltipOpenTransactions": "Öppna alla transaktioner och filter.",
+  "tooltipOpenBudgets": "Öppna budgetar och utgiftsprogress.",
+  "tooltipOpenPiggyBanks": "Öppna sparmål och sparbössor.",
+  "tooltipOpenExpenses": "Öppna utgiftsanalyser.",
+  "tooltipOpenIncome": "Öppna inkomstanalyser.",
+  "tooltipOpenTransfers": "Öppna historik och analys av överföringar.",
+  "tooltipOpenLiabilities": "Öppna översikt över skulder och åtaganden.",
+  "tooltipOpenProjection": "Öppna prognoser och scenarier.",
+  "tooltipOpenPrognosis": "Öppna prognos för kontosaldo vid månadsslut.",
+  "projectionTabLongTerm": "Long-term forecast",
+  "tooltipOpenSettings": "Öppna inställningar och Firefly-anslutning.",
+  "tooltipToggleSidebar": "Expandera eller fäll ihop sidofältet.",
+  "tooltipSearchTransactions": "Sök text på den aktuella sidan.",
+  "tooltipToggleViewMode": "Växla mellan list- och rutnätsvy.",
+  "viewModeCards": "Kort",
+  "viewModeRows": "Rader",
+  "viewModeTightRows": "Täta rader",
+  "columnSelection": "Välj kolumner",
+  "columnDate": "Datum",
+  "columnAccount": "Konto",
+  "columnType": "Läge",
+  "columnPayee": "Mottagare",
+  "columnDescription": "Kommentar",
+  "columnCategory": "Kategori",
+  "columnBudget": "Budget",
+  "columnAmount": "Belopp",
+  "columnReconciled": "Avstämd",
+  "columnBalance": "Saldo",
+  "tooltipTransactionType": "Välj transaktionstyp.",
+  "tooltipFieldDescription": "Vad den här transaktionen gäller.",
+  "tooltipFieldSourceAccount": "Konto pengarna kommer från.",
+  "tooltipFieldDestinationAccount": "Konto pengarna går till.",
+  "tooltipFieldDate": "Datum och tid för transaktionen.",
+  "tooltipFieldAmount": "Huvudbelopp i vald valuta.",
+  "tooltipFieldCurrency": "Primär valuta för den här raden.",
+  "tooltipFieldForeignAmount": "Valfritt belopp i annan valuta.",
+  "tooltipFieldForeignCurrency": "Valuta för det utländska beloppet.",
+  "tooltipFieldBudget": "Koppla raden till en budget.",
+  "tooltipFieldCategory": "Kategori för rapporter och filter.",
+  "tooltipFieldPiggyBank": "Koppla raden till en sparbössa.",
+  "tooltipFieldTags": "Taggar separerade med kommatecken för snabb filtrering.",
+  "tooltipFieldSubscription": "Koppla raden till ett abonnemang.",
+  "tooltipFieldInterestDate": "Valfritt ränte- eller bokföringsdatum.",
+  "tooltipFieldAttachments": "Bilagor visas, men uppladdning stöds inte ännu.",
+  "tooltipFieldNotes": "Extra anteckningar för senare referens.",
+  "tooltipAddSplit": "Lägg till ytterligare en splitrad.",
+  "tooltipRemoveSplit": "Ta bort den här splitraden.",
+  "tooltipCancelTransaction": "Avbryt ändringar och stäng.",
+  "tooltipSaveTransaction": "Spara transaktionen.",
+  "tooltipCancel": "Kasta ändringar och stäng utan att spara.",
+  "tooltipSave": "Spara dina ändringar.",
+  "tooltipCreate": "Skapa det nya objektet.",
+  "tooltipConfirmDelete": "Ta bort detta objekt permanent.",
+  "tooltipConfirmChallenge": "Skriv utmaningsordet för att bekräfta borttagning.",
+  "tooltipExpandDetails": "Visa fler detaljer.",
+  "tooltipCollapseDetails": "Dölj extra detaljer.",
+  "tooltipClearDate": "Ta bort det valda datumet.",
+  "tooltipAccountName": "Visningsnamn i listor och rapporter.",
+  "tooltipAccountCurrentBalance": "Aktuellt saldo från Firefly per idag.",
+  "tooltipAccountEndOfMonthBalance": "Prognostiserat saldo vid månadens slut, inklusive schemalagda transaktioner, återkommande poster och räkningar.",
+  "tooltipBudgetName": "Namn på denna utgiftsbudget.",
+  "tooltipBudgetAmount": "Gränsbelopp för denna budgetperiod.",
+  "tooltipSubscriptionName": "Namn på återkommande räkning eller prenumeration.",
+  "tooltipSubscriptionCurrency": "Valuta för förväntade belopp.",
+  "tooltipSubscriptionAmountMin": "Lägsta förväntade kostnad per period.",
+  "tooltipSubscriptionAmountMax": "Högsta förväntade kostnad per period.",
+  "tooltipSubscriptionStartDate": "Datum då prenumerationen börjar eller registrerades.",
+  "tooltipSubscriptionRepeats": "Hur ofta denna prenumeration upprepas.",
+  "tooltipSubscriptionSkip": "Hoppa över nästa N förekomster innan debitering.",
+  "tooltipSubscriptionEndDate": "Valfritt datum när prenumerationen avslutas.",
+  "tooltipSubscriptionExtensionDate": "Valfritt datum för förlängning eller paus.",
+  "tooltipSubscriptionGroup": "Valfri gruppetikett för att organisera prenumerationer.",
+  "tooltipSubscriptionActive": "Om denna prenumeration är aktiv just nu.",
+  "tooltipPiggyBankName": "Namn på detta sparmål.",
+  "tooltipPiggyBankTargetAmount": "Totalt belopp du vill spara.",
+  "tooltipPiggyBankCurrency": "Valuta för mål och spårad besparing.",
+  "tooltipPiggyBankAccounts": "Konton vars saldon räknas mot detta mål.",
+  "tooltipPiggyBankAccount": "Inkludera {name} i denna spargris.",
+  "@tooltipPiggyBankAccount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipPiggyBankStartDate": "När du började följa detta mål.",
+  "tooltipPiggyBankTargetDate": "Valfri deadline för att nå målet.",
+  "tooltipPiggyBankGroup": "Valfri gruppetikett för att organisera spargrisar.",
+  "tooltipThemeLight": "Använd ljust färgschema.",
+  "tooltipThemeDark": "Använd mörkt färgschema.",
+  "tooltipThemePaletteClassic": "Klassisk palett inspirerad av Firefly.",
+  "tooltipThemePaletteSpectrum": "Livfull flerfärgad kategoripalett.",
+  "tooltipThemePaletteRaccoon": "Lekfull tvättbjörnstema-palett.",
+  "tooltipThemeAccent": "Accentfärg för knappar, länkar och markeringar.",
+  "tooltipThemeAccentOption": "Använd {name} som accentfärg.",
+  "@tooltipThemeAccentOption": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipThemeDone": "Stäng och behåll valt tema.",
+  "repeatIntervalLabel": "Intervall",
+  "repeatIntervalHelp": "Hur ofta upprepningen sker, t.ex. var tredje månad.",
+  "repeatEveryNDays": "Var {count}:e dag",
+  "repeatEveryNWeeks": "Var {count}:e vecka",
+  "repeatEveryNMonths": "Var {count}:e månad",
+  "repeatEveryNYears": "Vart {count}:e år",
+  "writeAheadDays": "Skriv återkommande transaktioner i förväg",
+  "writeAheadDaysDescription": "Skapa kommande återkommande transaktioner så här många dagar i förväg.",
+  "writeAheadOff": "Av",
+  "writeAheadNDays": "{count} dagar",
+  "plannedLabel": "Planerad",
+  "navHistory": "Historik",
+  "navHistoryRacoon": "Kaptr replay",
+  "tooltipOpenHistory": "Öppna historik för ångra/gör om.",
+  "tooltipUndo": "Ångra den senaste åtgärden.",
+  "tooltipRedo": "Gör om den senast ångrade åtgärden.",
+  "undo": "Ångra",
+  "redo": "Gör om",
+  "clear": "Rensa",
+  "advanced": "Avancerat",
+  "undoHistorySize": "Storlek på ångra/gör om-historik",
+  "undoHistoryStoredEntries": "Lagrade poster: {count} / {limit}",
+  "openHistoryScreen": "Öppna historikskärmen",
+  "undoHistoryLimitRange": "Min {min}  •  Standard {defaultValue}  •  Max {max}",
+  "searchHistory": "Sök i historik",
+  "allActions": "Alla åtgärder",
+  "noHistoryEntriesMatchFilters": "Inga poster matchar filtren.",
+  "historyExportedTo": "Historik exporterad till {path}",
+  "historyExportedAndShared": "Historik exporterad och delningsvy öppnad",
+  "exportJson": "Exportera JSON",
+  "exportAndShare": "Exportera och dela",
+  "jumpToCurrent": "Hoppa till aktuell",
+  "historyExportSubject": "Historikexport",
+  "historyExportText": "FireRacoon-historikexport",
+  "historySectionToday": "Idag",
+  "historySectionYesterday": "Igår",
+  "historySectionOlder": "Äldre",
+  "historyEntriesCount": "{count} / {limit}",
+  "undoActionTypeThemeMode": "Temaläge",
+  "undoActionTypeThemePalette": "Temapalett",
+  "undoActionTypeThemeAccent": "Temaccent",
+  "undoActionTypeThemeFunMode": "Roligt läge",
+  "undoActionTypeLocale": "Språk",
+  "undoActionTypeViewMode": "Visningsläge",
+  "undoActionTypeTransactionPageSize": "Transaktioner per sida",
+  "undoActionTypePrognosisMode": "Prognosvisningsläge",
+  "undoActionTypePrognosisHorizon": "Prognoshorisont",
+  "undoActionTypePrognosisInclusion": "Prognosinkludering",
+  "undoActionTypePrognosisMarginPercent": "Prognosmarginal",
+  "undoActionTypeAccountCreate": "Konto skapat",
+  "undoActionTypeAccountUpdate": "Konto uppdaterat",
+  "undoActionTypeAccountDelete": "Konto raderat",
+  "undoActionTypeBudgetCreate": "Budget skapat",
+  "undoActionTypeBudgetUpdate": "Budget uppdaterat",
+  "undoActionTypeBudgetDelete": "Budget raderat",
+  "undoActionTypeTransactionCreate": "Transaktion skapad",
+  "undoActionTypeTransactionUpdate": "Transaktion uppdaterad",
+  "undoActionTypeTransactionDelete": "Transaktion raderad",
+  "undoActionTypeBillCreate": "Abonnemang skapat",
+  "undoActionTypeBillUpdate": "Abonnemang uppdaterat",
+  "undoActionTypeBillDelete": "Abonnemang raderat",
+  "undoActionTypeRecurrenceCreate": "Återkommande transaktion skapad",
+  "undoActionTypeRecurrenceUpdate": "Återkommande transaktion uppdaterad",
+  "undoActionTypeRecurrenceDelete": "Återkommande transaktion raderad",
+  "undoActionTypePiggyBankCreate": "Spargris skapad",
+  "undoActionTypePiggyBankUpdate": "Spargris uppdaterad",
+  "undoActionTypePiggyBankDelete": "Spargris raderad",
+  "undoActionTypeLiabilityCreate": "Skuld skapad",
+  "searchHintTitle": "Börja skriva för att söka",
+  "searchHintSubtitle": "Skriv för att filtrera efter beskrivning, konto, kategori, tagg, anteckning eller belopp.",
+  "noSuggestions": "Inga matchande förslag",
+  "invalidAmount": "Beloppet måste vara ett giltigt tal större än 0.",
+  "invalidForeignAmount": "Utländska beloppet måste vara ett giltigt tal större än 0.",
+  "missingDescription": "Ange en beskrivning.",
+  "missingAmount": "Ange ett belopp.",
+  "missingAccounts": "Välj både käll- och destinationskonto.",
+  "appUsers": "Appanvändare",
+  "enableAppUsers": "Aktivera appanvändare",
+  "enableAppUsersDescription": "Add password-protected profiles for the people who use this app. Everyone still shares the same Firefly III data.",
+  "createAdmin": "Skapa administratörskonto",
+  "createAdminDescription": "You will be the first admin. You can add more accounts afterwards.",
+  "addUser": "Lägg till användare",
+  "editUser": "Redigera användare",
+  "deleteUser": "Ta bort användare",
+  "role": "Roll",
+  "roleAdmin": "Administratör",
+  "roleUser": "Användare",
+  "roleViewer": "Granskare",
+  "roleAdminDescription": "Full access, including Firefly settings and user management.",
+  "roleUserDescription": "Can add and edit financial data.",
+  "roleViewerDescription": "Read-only access.",
+  "requireLogin": "Kräv inloggning vid varje start",
+  "requireLoginDescription": "When off, signed-in users stay signed in between launches.",
+  "switchUser": "Switch user",
+  "selectUserSubtitle": "Choose whose profile to use. No password needed while login is not required.",
+  "assignPerson": "Kopplad person",
+  "noPersonAssigned": "Ingen",
+  "myAccount": "Mitt konto",
+  "changePassword": "Byt lösenord",
+  "currentPassword": "Nuvarande lösenord",
+  "newPassword": "Nytt lösenord",
+  "confirmNewPassword": "Bekräfta nytt lösenord",
+  "logout": "Logga ut",
+  "login": "Logga in",
+  "username": "Användarnamn",
+  "password": "Lösenord",
+  "loginSubtitle": "Logga in för att fortsätta till FireRacoon.",
+  "loginMissingFields": "Ange användarnamn och lösenord.",
+  "loginInvalidCredentials": "Fel användarnamn eller lösenord.",
+  "passwordTooWeak": "Password must be at least 10 characters and include an uppercase letter, a lowercase letter, a digit, and a special character.",
+  "passwordRequirements": "At least 10 characters, with uppercase, lowercase, a digit, and a special character.",
+  "passwordMissingRequirements": "Password is missing {requirements}.",
+  "@passwordMissingRequirements": {
+    "placeholders": {
+      "requirements": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordReqMinLength": "at least 10 characters",
+  "passwordReqUpper": "an uppercase letter",
+  "passwordReqLower": "a lowercase letter",
+  "passwordReqDigit": "a digit",
+  "passwordReqSpecial": "a special character",
+  "passwordPwned": "This password has appeared in a known data breach. Please choose another one.",
+  "passwordsDoNotMatch": "Lösenorden matchar inte.",
+  "usernameTaken": "Användarnamnet är redan taget.",
+  "currentPasswordIncorrect": "Nuvarande lösenord är felaktigt.",
+  "userCreated": "Användare skapad.",
+  "userUpdated": "Användare uppdaterad.",
+  "userDeleted": "Användare borttagen.",
+  "passwordChanged": "Lösenord uppdaterat.",
+  "deleteUserConfirmTitle": "Ta bort användare",
+  "deleteUserConfirmMessage": "This removes {username}'s app profile. Their Firefly III data is not affected.",
+  "@deleteUserConfirmMessage": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "signedInAs": "Inloggad som {username}",
+  "@signedInAs": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "usernameRequired": "Ange ett användarnamn.",
+  "unlockWithBiometrics": "Lås upp med biometri",
+  "unlockWithBiometricsDescription": "Använd Face ID, Touch ID, fingeravtryck eller enhetens PIN på inloggningsskärmen.",
+  "biometricUnlockReason": "Lås upp FireRacoon",
+  "biometricEnableReason": "Bekräfta för att aktivera biometrisk upplåsning",
+  "biometricUnlockFailed": "Biometrisk upplåsning avbröts eller misslyckades."
+}

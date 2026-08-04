@@ -1,0 +1,1786 @@
+{
+  "@@locale": "ja",
+  "appTitle": "FireRacoon",
+  "appTagline": "予算を守る、いちばん賢い仲間。",
+  "appNameFire": "Fire",
+  "appNameRacoon": "Racoon",
+  "navDashboard": "ダッシュボード",
+  "navDashboardShort": "概要",
+  "navAccounts": "口座",
+  "navTransactions": "取引",
+  "navBudgets": "予算",
+  "navSubscriptions": "サブスクリプションと定期取引",
+  "navPiggyBanks": "貯金箱",
+  "navExpenses": "支出",
+  "navIncome": "収入",
+  "navTransfers": "振替",
+  "navLiabilities": "負債",
+  "navProjection": "予測",
+  "navPrognosis": "見通し",
+  "navSettings": "設定",
+  "netWorth": "純資産",
+  "search": "検索...",
+  "loading": "読み込み中…",
+  "fireflyUser": "Firefly ユーザー",
+  "fireflyConnected": "Firefly III · 接続済み",
+  "fireflyDisconnected": "Firefly III · 未接続",
+  "fireflyConnectionChecking": "Firefly III · 確認中…",
+  "settingsTitle": "設定",
+  "appVersion": "バージョン {version}",
+  "language": "言語",
+  "selectLanguage": "言語を選択",
+  "languageEnglish": "English",
+  "languageFrench": "Français",
+  "languageSwedish": "Svenska",
+  "languagePortuguese": "Português",
+  "languageChinese": "简体中文",
+  "languageJapanese": "日本語",
+  "defaultCurrency": "デフォルト通貨",
+  "selectCurrency": "通貨を選択",
+  "primaryCurrencyChangeWarning": "デフォルト通貨を変更すると、Firefly III が保存済みの金額を再計算する場合があります。",
+  "primaryCurrencyChanged": "デフォルト通貨を {code} に設定しました",
+  "@primaryCurrencyChanged": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSetPrimaryCurrency": "デフォルト通貨の設定に失敗しました: {error}",
+  "@failedToSetPrimaryCurrency": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "primaryCurrencyCurrent": "現在",
+  "changePrimaryCurrencyTitle": "デフォルト通貨を変更",
+  "changePrimaryCurrencyMessage": "デフォルト通貨を {code} に変更しますか？{warning}",
+  "@changePrimaryCurrencyMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "warning": {
+        "type": "String"
+      }
+    }
+  },
+  "changePrimaryCurrencyConfirm": "変更",
+  "connectToFireflyToLoad": "Firefly III に接続して読み込み",
+  "managedInFirefly": "Firefly III で管理",
+  "appearance": "外観",
+  "racoonMode": "アライグマモード",
+  "themeStyle": "テーマスタイル",
+  "themeStyleSubtitle": "パレット、アクセントカラー、明るさを選択します。変更はすぐに反映されます。",
+  "systemDefault": "システムのデフォルト",
+  "themeBrightness": "明るさ",
+  "themeLight": "ライト",
+  "themeDark": "ダーク",
+  "themePalette": "パレット",
+  "paletteClassic": "クラシック",
+  "paletteSpectrum": "スペクトラム",
+  "paletteRaccoon": "アライグマ",
+  "themeAccentColor": "アクセントカラー",
+  "themePreview": "プレビュー",
+  "done": "完了",
+  "accentGreen": "グリーン",
+  "accentTeal": "ティール",
+  "accentBlue": "ブルー",
+  "accentOrange": "オレンジ",
+  "accentRed": "レッド",
+  "accentViolet": "バイオレット",
+  "accentLime": "ライム",
+  "accentSky": "スカイ",
+  "accentCharcoal": "チャコール",
+  "accentSilver": "シルバー",
+  "accentTan": "タン",
+  "accentAmber": "アンバー",
+  "accentSlate": "スレート",
+  "accentMidnight": "ミッドナイト",
+  "accentSmoke": "スモーク",
+  "accentPearl": "パール",
+  "backendConnection": "バックエンド接続（Firefly III）",
+  "serverUrl": "サーバー URL",
+  "notConnected": "未接続",
+  "oauth2Connection": "OAuth2 接続",
+  "personalAccessToken": "パーソナルアクセストークン",
+  "notSet": "未設定",
+  "disconnect": "切断",
+  "fireflyConnectionTitle": "Firefly III 接続",
+  "serverUrlLabel": "サーバー URL（例: https://firefly.my-domain.com）",
+  "allowHttpConnections": "HTTP 接続を許可",
+  "authenticationMethod": "認証方法",
+  "oauth2": "OAuth2",
+  "oauthClientId": "OAuth クライアント ID",
+  "testConnection": "接続をテスト",
+  "connectionSuccessful": "接続に成功しました！",
+  "connectionFailed": "接続に失敗しました。URL とトークンを確認してください。",
+  "loginViaBrowser": "ブラウザでログイン",
+  "cancel": "キャンセル",
+  "save": "保存",
+  "delete": "削除",
+  "errorGeneric": "エラー: {error}",
+  "@errorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingData": "データの読み込みエラー: {error}",
+  "@errorLoadingData": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "tabInsights": "インサイト",
+  "tabAccounts": "口座",
+  "tabFocus": "フォーカス",
+  "totalBalance": "合計残高",
+  "incomeMonth": "収入 · {month}",
+  "@incomeMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingMonth": "支出 · {month}",
+  "@spendingMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "savedMonth": "貯蓄 · {month}",
+  "@savedMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "snatchedFunds": "ゲットした資金",
+  "burntCash": "使い切った現金",
+  "stash": "隠し場所",
+  "snatched": "ゲット",
+  "burnt": "消費",
+  "navDashboardRacoon": "アジト",
+  "navDashboardShortRacoon": "アジト",
+  "navAccountsRacoon": "隠し場所",
+  "navTransactionsRacoon": "作戦ログ",
+  "navBudgetsRacoon": "宝物計画",
+  "navSubscriptionsRacoon": "定期レイド",
+  "navPiggyBanksRacoon": "ミニ隠し場所",
+  "navExpensesRacoon": "消費レポート",
+  "navProjectionRacoon": "水晶の宝物庫",
+  "navPrognosisRacoon": "月末の戦利品",
+  "navSettingsRacoon": "アジトのルール",
+  "netWorthRacoon": "総宝物",
+  "searchRacoon": "嗅ぎ回る…",
+  "accountsTitleRacoon": "隠し場所",
+  "transactionsTitleRacoon": "作戦ログ",
+  "budgetsTitleRacoon": "宝物計画",
+  "expensesTitleRacoon": "消費レポート",
+  "projectionTitleRacoon": "水晶の宝物庫",
+  "settingsTitleRacoon": "アジトのルール",
+  "tabInsightsRacoon": "戦利品情報",
+  "tabAccountsRacoon": "隠し場所",
+  "tabFocusRacoon": "作戦本部",
+  "totalBalanceRacoon": "全隠し場所",
+  "incomeMonthRacoon": "ゲット · {month}",
+  "@incomeMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingMonthRacoon": "消費 · {month}",
+  "@spendingMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "savedMonthRacoon": "隠匿 · {month}",
+  "@savedMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "cashFlowRacoon": "戦利品の流れ",
+  "whereMoneyGoesRacoon": "戦利品の行き先",
+  "recentActivityRacoon": "最近のレイド",
+  "yourAccountsRacoon": "あなたの隠し場所",
+  "budgetsAtGlanceRacoon": "宝物の概要",
+  "viewAllAccountsRacoon": "すべての隠し場所",
+  "assetAccountsRacoon": "宝物の隠し場所",
+  "liabilityAccountsRacoon": "借金と未払い",
+  "stocksAndFundsAccountsRacoon": "市場の隠し場所",
+  "allAccountsRacoon": "すべての隠し場所",
+  "accountsRacoon": "隠し場所",
+  "newTransactionRacoon": "作戦を計画",
+  "editTransactionRacoon": "作戦を編集",
+  "transactionsCountRacoon": "{count} 件の作戦",
+  "@transactionsCountRacoon": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneTransactionRacoon": "1 件の作戦",
+  "transactionTypeDepositRacoon": "ゲット",
+  "transactionTypeWithdrawalRacoon": "消費",
+  "transactionTypeTransferRacoon": "隠し場所の移動",
+  "expenseLabelRacoon": "消費",
+  "spentRacoon": "消費済み",
+  "newBudgetRacoon": "新しい宝物計画",
+  "projectedBalanceRacoon": "未来の宝物",
+  "piggyBankRacoon": "ミニ隠し場所",
+  "transfersRacoon": "隠し場所の移動",
+  "expensesFilterRacoon": "消費",
+  "noTransactionsYetRacoon": "まだ作戦はありません",
+  "lookingAheadRacoon": "先をのぞく",
+  "openProjectionRacoon": "未来をのぞく",
+  "editAccountRacoon": "隠し場所を編集",
+  "accountNameRacoon": "隠し場所の名前",
+  "filterAccountRacoon": "隠し場所で絞り込み",
+  "sourceAccountRacoon": "送り元の隠し場所",
+  "destinationAccountRacoon": "送り先の隠し場所",
+  "totalSpentPeriodRacoon": "この期間の消費合計",
+  "totalIncomePeriodRacoon": "この期間のゲット合計",
+  "totalTransferredPeriodRacoon": "この期間の移動合計",
+  "newAccount": "新しい口座",
+  "newLiability": "新しい負債",
+  "newExpense": "新しい支出",
+  "newAccountRacoon": "新しい隠し場所",
+  "newLiabilityRacoon": "新しい借金",
+  "newExpenseRacoon": "消費を計画",
+  "income": "収入",
+  "spending": "支出",
+  "saved": "貯蓄",
+  "cashFlow": "キャッシュフロー",
+  "whereMoneyGoes": "お金の行き先",
+  "noSpendingThisMonth": "今月はまだ支出がありません",
+  "recentActivity": "最近のアクティビティ",
+  "viewAll": "すべて表示",
+  "noTransactionsYet": "まだ取引がありません",
+  "lookingAhead": "先を見る",
+  "spendingPaceWarning": "今月は支出のペースが収入を上回る可能性があります",
+  "openProjection": "予測を開く",
+  "yourAccounts": "あなたの口座",
+  "budgetsAtGlance": "予算の概要",
+  "viewAllAccounts": "すべての口座を表示",
+  "thirtyDayOutlook": "30 日間の見通し",
+  "monthEndPrognosis": "月末の見通し",
+  "projectedEndOfMonth": "月末",
+  "includeCreditCardPayments": "クレジットカードの支払いを含める",
+  "prognosisDeltaPositive": "+{amount} 見込み",
+  "@prognosisDeltaPositive": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisDeltaNegative": "{amount} 見込み",
+  "@prognosisDeltaNegative": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisLowBalanceWarning": "予測残高がマイナスになる可能性があります",
+  "prognosisDebtWarning": "予測負債が増加する可能性があります",
+  "openPrognosis": "見通しを開く",
+  "prognosisMarginLabel": "誤差の範囲",
+  "prognosisMarginDetail": "金額の不確実性 ±{percent}%",
+  "@prognosisMarginDetail": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisIncludeScheduled": "予定取引",
+  "prognosisIncludeRecurring": "定期取引",
+  "prognosisIncludeBills": "サブスクリプション",
+  "prognosisIncludeIncome": "収入",
+  "prognosisIncludeExpenses": "支出",
+  "prognosisIncludeTransfers": "振替",
+  "prognosisIncludeCreditCards": "クレジットカード",
+  "prognosisEndOfNextMonth": "翌月末",
+  "prognosisMinBalance": "最小見通し",
+  "prognosisMaxBalance": "最大見通し",
+  "prognosisExpectedBalance": "予想",
+  "prognosisSelectAccount": "口座",
+  "prognosisBandLegend": "影付きの帯は最小〜最大の範囲、線は予想値を示します",
+  "prognosisModeExpected": "実際の予測",
+  "prognosisModeProjected": "推測的な予測",
+  "prognosisModeExpectedHint": "現在残高、予定取引、定期項目、請求から算出した月末残高",
+  "prognosisModeProjectedHint": "過去の純キャッシュフローに基づくトレンド予測",
+  "prognosisHorizonLabel": "期間",
+  "prognosisHorizonEndOfMonth": "月末",
+  "prognosisHorizonEndOfNextMonth": "翌月",
+  "prognosisHorizonTwoMonths": "2 か月",
+  "prognosisHorizonThreeMonths": "3 か月",
+  "prognosisHorizonSixMonths": "6 か月",
+  "prognosisHorizonOneYear": "1 年",
+  "prognosisHorizonThreeYears": "3 年",
+  "prognosisHorizonFiveYears": "5 年",
+  "prognosisHorizonTenYears": "10 年",
+  "prognosisMilestoneThreeMonths": "3 か月後",
+  "prognosisMilestoneSixMonths": "6 か月後",
+  "prognosisMilestoneOneYear": "1 年後",
+  "prognosisIncludeSources": "予測に含める",
+  "prognosisIncludeLiabilities": "負債",
+  "prognosisNegativeOn": "{date} にマイナス",
+  "@prognosisNegativeOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisCurrentBalance": "現在残高",
+  "prognosisPredictedBalances": "予測残高",
+  "todaysTimeline": "今日のタイムライン",
+  "noActivityToday": "今日のアクティビティはありません",
+  "noChangeVsLastMonth": "先月と変化なし",
+  "newActivityThisMonth": "今月の新しいアクティビティ",
+  "percentVsLastMonth": "{arrow}{percent}% 先月比",
+  "@percentVsLastMonth": {
+    "placeholders": {
+      "arrow": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "projectedSavingsHeadline": "今月の予測貯蓄 {amount}",
+  "@projectedSavingsHeadline": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "onPaceDetail": "月末までに {amount} 貯蓄のペース",
+  "@onPaceDetail": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingOutpacingDetail": "支出が収入を {amount} 上回っています",
+  "@spendingOutpacingDetail": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "accountsTitle": "口座",
+  "assetAccounts": "資産口座",
+  "stocksAndFundsAccounts": "株式・投信口座",
+  "liabilityAccounts": "負債口座",
+  "noAccountsFound": "口座が見つかりません。",
+  "allAccounts": "すべての口座",
+  "assetsOnly": "資産のみ",
+  "liabilitiesOnly": "負債のみ",
+  "accountName": "口座名",
+  "accountRoleDefault": "当座預金",
+  "accountRoleShared": "共有口座",
+  "accountRoleSaving": "普通預金",
+  "accountRoleCreditCard": "クレジットカード",
+  "holdingAccountFundLabel": "(投信)",
+  "holdingAccountStockLabel": "(株式)",
+  "failedToUpdate": "更新に失敗しました: {error}",
+  "@failedToUpdate": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "name": "名前",
+  "transactionsTitle": "取引",
+  "filteredBy": "絞り込み: {account}",
+  "@filteredBy": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "balance": "残高:",
+  "balanceCheckMode": "残高を確認",
+  "balanceCheckExpected": "想定残高",
+  "balanceCheckStatement": "あなたの残高",
+  "balanceCheckStatementHint": "明細書の残高を入力",
+  "balanceCheckMatch": "残高が一致しました",
+  "balanceCheckDifference": "差額: {amount}",
+  "@balanceCheckDifference": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceCheckEnterBalance": "比較する残高を入力してください",
+  "balanceCheckInvalidAmount": "有効な金額を入力してください",
+  "balanceCheckSelectedBalance": "選択した残高",
+  "balanceCheckReconcile": "選択項目を照合",
+  "balanceCheckReconciled": "選択した取引を照合済みにしました",
+  "balanceCheckNothingToReconcile": "照合する取引がありません。未照合の取引を選択して含めてください。",
+  "balanceCheckPaymentAccount": "支払口座",
+  "balanceCheckPaybackDate": "返済日",
+  "balanceCheckSelectPaymentAccount": "支払口座を選択",
+  "balanceCheckNoPaymentAccounts": "利用できる支払口座がありません",
+  "balanceCheckPaybackSummary": "返済: {amount}（{account} から {date}）",
+  "@balanceCheckPaybackSummary": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "account": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceCheckPaybackReconciled": "購入を照合し、返済振替を作成しました",
+  "balanceCheckNoEligiblePurchases": "クレジットカードの購入を1件以上選択してください",
+  "tooltipBalanceCheckMode": "明細書の残高と Firefly を比較",
+  "tooltipBalanceCheckIncludePending": "残高比較に含める",
+  "tooltipBalanceCheckExcludeReconciled": "残高比較から除外する",
+  "transactionReconciled": "照合済み",
+  "partiallyReconciled": "一部照合済み",
+  "tooltipTransactionReconciled": "銀行明細と照合済み",
+  "transactionReconciledUpdated": "照合状態を更新しました",
+  "failedToUpdateReconciliation": "照合の更新に失敗しました: {error}",
+  "@failedToUpdateReconciliation": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciledFilter": "照合",
+  "reconciledFilterAll": "すべての取引",
+  "reconciledFilterReconciled": "照合済みのみ",
+  "reconciledFilterUnreconciled": "未照合のみ",
+  "reconcile": "照合",
+  "reconcileExpectedBalance": "想定残高: {amount}",
+  "@reconcileExpectedBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconcileClickHint": "クリックして照合",
+  "reconciliationTitle": "口座を照合",
+  "reconciliationSubtitle": "明細書と Firefly III を照合",
+  "reconciliationAccount": "口座",
+  "reconciliationStartDate": "開始日",
+  "reconciliationEndDate": "終了日",
+  "reconciliationStartBalance": "期首残高",
+  "reconciliationEndBalance": "期末残高",
+  "reconciliationStart": "照合を開始",
+  "reconciliationRestart": "やり直す",
+  "reconciliationOptions": "照合オプション",
+  "reconciliationGapZero": "チェックした取引は明細書と一致しています。この照合を保存できます。",
+  "reconciliationGapPositive": "Firefly は明細書より {amount} 少ないです。保存時に修正取引を作成できます。",
+  "@reconciliationGapPositive": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationGapNegative": "Firefly は明細書より {amount} 多いです。保存時に修正取引を作成できます。",
+  "@reconciliationGapNegative": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationStore": "照合を保存",
+  "reconciliationStoreTitle": "照合を保存しますか？",
+  "reconciliationStoreBody": "{count} 件の取引を照合済みにします。",
+  "@reconciliationStoreBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reconciliationCreateCorrectionTitle": "修正取引を作成しますか？",
+  "reconciliationCreateCorrectionBody": "残りの差額は {amount} です。FireRacoon が修正取引を作成します。",
+  "@reconciliationCreateCorrectionBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationStored": "照合を保存しました",
+  "reconciliationStoreFailed": "照合の保存に失敗しました: {error}",
+  "@reconciliationStoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationSelectAccount": "照合する資産口座を選択",
+  "reconciliationInvalidBalances": "有効な期首・期末残高を入力してください",
+  "reconciliationInvalidDateRange": "終了日は開始日以降である必要があります",
+  "reconciliationSelectTransactions": "明細書から少なくとも 1 件の取引をチェックしてください",
+  "reconciliationNoTransactions": "この期間の取引はありません",
+  "reconciliationUnreconciled": "未照合",
+  "reconciliationFutureTransaction": "期間終了後",
+  "futureTransactions": "将来の取引",
+  "reconciliationOpenWizard": "口座を照合",
+  "tooltipReconciliationWizard": "銀行明細と取引を照合",
+  "reconciliationUseFireflyBalances": "Firefly の残高を使用",
+  "reconciliationLoadingBalances": "Firefly から残高を読み込み中…",
+  "reconciliationBalancesFilled": "Firefly から残高を入力しました",
+  "reconciliationBalancesFailed": "残高を読み込めませんでした: {error}",
+  "@reconciliationBalancesFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notAvailable": "N/A",
+  "groupBy": "グループ化",
+  "groupByDate": "日付でグループ化",
+  "groupByAccount": "口座でグループ化",
+  "groupByPayee": "支払先でグループ化",
+  "groupByType": "種類でグループ化",
+  "groupByCategory": "カテゴリでグループ化",
+  "filterAccount": "口座で絞り込み",
+  "amount": "金額",
+  "accounts": "口座",
+  "description": "説明",
+  "sourceAccount": "送金元口座",
+  "destinationAccount": "送金先口座",
+  "payee": "支払先",
+  "savingNotSupported": "読み取り専用モードでは保存できません。",
+  "transactionDateCategory": "{category} · {date}",
+  "@transactionDateCategory": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "foreignAmount": "({amount})",
+  "@foreignAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsTitle": "予算",
+  "subscriptionsTitle": "サブスクリプションと定期取引",
+  "newSubscription": "新しいサブスクリプション",
+  "createSubscription": "サブスクリプションを作成",
+  "editSubscription": "サブスクリプションを編集",
+  "subscriptionCreated": "サブスクリプションを作成しました。",
+  "subscriptionDeleted": "サブスクリプション「{name}」を削除しました。",
+  "@subscriptionDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateSubscription": "サブスクリプションの作成に失敗しました: {error}",
+  "@failedToCreateSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateSubscription": "サブスクリプションの更新に失敗しました: {error}",
+  "@failedToUpdateSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteSubscription": "サブスクリプションの削除に失敗しました: {error}",
+  "@failedToDeleteSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteSubscription": "サブスクリプションを削除",
+  "deleteSubscriptionConfirmBody": "サブスクリプション「{name}」を削除してもよろしいですか？この操作は元に戻せません。",
+  "@deleteSubscriptionConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noSubscriptionsFound": "サブスクリプションが見つかりません。",
+  "subscriptionInactive": "無効",
+  "subscriptionActive": "有効",
+  "mandatoryFields": "必須項目",
+  "optionalFields": "任意項目",
+  "minimumAmount": "最小金額",
+  "maximumAmount": "最大金額",
+  "startDate": "開始日",
+  "repeats": "繰り返し",
+  "skip": "スキップ",
+  "skipHelp": "スキップを使って隔月（スキップ = 1）などの間隔を設定できます。",
+  "endDate": "終了日",
+  "endDateHelp": "任意。この日付でサブスクリプションが終了する予定です。",
+  "extensionDate": "延長日",
+  "extensionDateHelp": "任意。この日付までに延長（または解約）が必要です。",
+  "group": "グループ",
+  "notesMarkdownHint": "このフィールドは Markdown に対応しています。",
+  "repeatWeekly": "毎週",
+  "repeatMonthly": "毎月",
+  "repeatQuarterly": "四半期ごと",
+  "repeatHalfYear": "半年ごと",
+  "repeatYearly": "毎年",
+  "subscriptionAmountRange": "{min} – {max}",
+  "@subscriptionAmountRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "tabSubscriptions": "サブスクリプション",
+  "tabRecurringTransactions": "定期取引",
+  "badgeSubscription": "サブスクリプション",
+  "badgeRecurringTransaction": "定期取引",
+  "addSubscription": "サブスクリプション",
+  "addRecurringTransaction": "定期",
+  "noSubscriptionsOrRecurrencesFound": "サブスクリプションまたは定期取引が見つかりません。",
+  "newRecurringTransaction": "新しい定期取引",
+  "createRecurringTransaction": "定期取引を作成",
+  "editRecurringTransaction": "定期取引を編集",
+  "recurringTransactionCreated": "定期取引を作成しました。",
+  "recurringTransactionDeleted": "定期取引「{name}」を削除しました。",
+  "@recurringTransactionDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateRecurringTransaction": "定期取引の作成に失敗しました: {error}",
+  "@failedToCreateRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateRecurringTransaction": "定期取引の更新に失敗しました: {error}",
+  "@failedToUpdateRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteRecurringTransaction": "定期取引の削除に失敗しました: {error}",
+  "@failedToDeleteRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteRecurringTransaction": "定期取引を削除",
+  "deleteRecurringTransactionConfirmBody": "定期取引「{name}」を削除してもよろしいですか？この操作は元に戻せません。",
+  "@deleteRecurringTransactionConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noRecurringTransactionsFound": "定期取引が見つかりません。",
+  "recurringTransactionInactive": "無効",
+  "mandatoryRecurrenceFields": "必須の繰り返し情報",
+  "optionalRecurrenceFields": "任意の繰り返し情報",
+  "mandatoryTransactionFields": "必須の取引情報",
+  "optionalTransactionFields": "任意の取引情報",
+  "recurrenceTitle": "タイトル",
+  "firstDate": "最初の日付",
+  "firstDateHelp": "最初の繰り返し予定日を指定します。未来の日付である必要があります。",
+  "typeOfRepetition": "繰り返しの種類",
+  "typeOfRepetitionHelp": "最初の日付を変更すると、より多くのオプションが表示されます。",
+  "weekendHandling": "週末",
+  "weekendCreateAnyway": "そのまま取引を作成",
+  "weekendSkip": "取引を作成しない",
+  "weekendPreviousFriday": "前の金曜日にずらす",
+  "weekendNextMonday": "次の月曜日にずらす",
+  "weekendHelp": "定期取引が土曜日または日曜日に当たる場合、Firefly III はどうしますか？",
+  "repetitionEnds": "繰り返しの終了",
+  "repeatForever": "無期限に繰り返す",
+  "repeatUntilDate": "日付まで繰り返す",
+  "repeatCount": "固定回数繰り返す",
+  "numberOfRepetitions": "繰り返し回数",
+  "applyRules": "ルールを適用",
+  "applyRulesHelp": "各取引作成後にルールを実行するかどうか。",
+  "recurrenceDescription": "定期取引の説明",
+  "repeatDaily": "毎日",
+  "repeatNdom": "毎月第 n 曜日",
+  "recurrenceAmount": "{amount}",
+  "@recurrenceAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipOpenSubscriptions": "サブスクリプションと定期取引を開く。",
+  "subscriptionsTitleRacoon": "定期レイドとスケジュール",
+  "newSubscriptionRacoon": "新しい定期レイド",
+  "piggyBanksTitle": "貯金箱",
+  "newPiggyBank": "新しい貯金箱",
+  "createPiggyBank": "貯金箱を作成",
+  "editPiggyBank": "貯金箱を編集",
+  "piggyBankCreated": "貯金箱を作成しました。",
+  "piggyBankDeleted": "貯金箱「{name}」を削除しました。",
+  "@piggyBankDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreatePiggyBank": "貯金箱の作成に失敗しました: {error}",
+  "@failedToCreatePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdatePiggyBank": "貯金箱の更新に失敗しました: {error}",
+  "@failedToUpdatePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeletePiggyBank": "貯金箱の削除に失敗しました: {error}",
+  "@failedToDeletePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePiggyBank": "貯金箱を削除",
+  "deletePiggyBankConfirmBody": "貯金箱「{name}」を削除してもよろしいですか？この操作は元に戻せません。",
+  "@deletePiggyBankConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noPiggyBanksFound": "貯金箱が見つかりません。",
+  "targetAmount": "目標金額",
+  "piggyBankCurrencyHelp": "貯金箱は 1 つの通貨でのみ貯蓄できます。",
+  "saveOnAccounts": "貯蓄する口座",
+  "piggyBankAccountsHelp": "先に選択した通貨を使用する口座のみ受け付けられます。",
+  "targetDate": "目標日",
+  "targetDateHelp": "貯蓄を完了する予定日。",
+  "accountGroupDefaultAssets": "デフォルトの資産口座",
+  "accountGroupSavings": "普通預金口座",
+  "accountGroupCash": "現金ウォレット",
+  "accountGroupLiabilities": "負債",
+  "selectAtLeastOneAccount": "少なくとも 1 つの口座を選択してください。",
+  "piggyBankProgress": "{current} / {target}",
+  "@piggyBankProgress": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "piggyBanksTitleRacoon": "ミニ隠し場所",
+  "newPiggyBankRacoon": "新しいミニ隠し場所",
+  "newBudget": "新しい予算",
+  "deleteBudget": "予算を削除",
+  "deleteBudgetMessage": "「{name}」を削除してもよろしいですか？",
+  "@deleteBudgetMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetDeleted": "予算「{name}」を削除しました。",
+  "@budgetDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteBudget": "予算の削除に失敗しました: {error}",
+  "@failedToDeleteBudget": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "spent": "使用済み",
+  "ofAmount": "{amount} 中",
+  "@ofAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "overBudget": "予算超過 {amount}",
+  "@overBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "leftInBudget": "残り {amount}",
+  "@leftInBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetPerPeriod": "{period} あたり {amount}",
+  "@budgetPerPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetLimitForPeriod": "{period} で {amount}",
+  "@budgetLimitForPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetCadenceDaily": "日",
+  "budgetCadenceWeekly": "週",
+  "budgetCadenceMonthly": "月",
+  "budgetCadenceQuarterly": "四半期",
+  "budgetCadenceHalfYear": "半年",
+  "budgetCadenceYearly": "年",
+  "viewPeriod": "表示期間",
+  "budgetAmount": "予算額",
+  "editBudget": "予算を編集",
+  "createBudget": "予算を作成",
+  "createPayee": "支払先を作成",
+  "createCategory": "カテゴリを作成",
+  "budgetLimit": "予算上限",
+  "autoBudget": "自動予算額",
+  "budgetAmountMode": "上限の種類",
+  "budgetAmountModeAuto": "繰り返し期間",
+  "budgetAmountModeDateRange": "固定日付範囲",
+  "budgetAmountModeNone": "金額なし",
+  "budgetRepeatPeriod": "繰り返し間隔",
+  "budgetAutoType": "自動予算の動作",
+  "budgetAutoTypeReset": "各期間でリセット",
+  "budgetAutoTypeRollover": "未使用分を繰り越し",
+  "budgetAutoTypeAdjusted": "支出に合わせて調整",
+  "budgetAutoTypeNone": "なし",
+  "budgetActive": "有効",
+  "budgetPeriodDaily": "毎日",
+  "budgetPeriodWeekly": "毎週",
+  "budgetPeriodMonthly": "毎月",
+  "budgetPeriodQuarterly": "四半期ごと",
+  "budgetPeriodHalfYear": "半年ごと",
+  "budgetPeriodYearly": "毎年",
+  "tooltipBudgetAmountMode": "繰り返し自動予算、固定日付範囲、上限なしから選択",
+  "tooltipBudgetRepeatPeriod": "予算額が適用される頻度（例: 毎月）",
+  "tooltipBudgetAutoType": "各予算期間の開始時に何が起こるか",
+  "tooltipBudgetStartDate": "この予算上限が適用される最初の日",
+  "tooltipBudgetEndDate": "この予算上限が適用される最後の日",
+  "tooltipBudgetActive": "無効な予算は Firefly のデフォルト表示から非表示になります",
+  "tooltipBudgetNotes": "予算と一緒に保存されるメモ",
+  "tooltipBudgetCurrency": "予算額の通貨",
+  "expensesTitle": "支出",
+  "clearFilters": "フィルターをクリア",
+  "overview": "概要",
+  "byCategory": "カテゴリ別",
+  "allCategories": "すべてのカテゴリ",
+  "allTypes": "すべての種類",
+  "expensesFilter": "支出",
+  "transfers": "振替",
+  "expensePeriodWeek": "今週",
+  "expensePeriodMonth": "今月",
+  "expensePeriodQuarter": "今四半期",
+  "expensePeriodSemester": "今半期",
+  "expensePeriodYear": "今年",
+  "expensePeriodAll": "全期間",
+  "dashboardPeriodThisWeek": "今週",
+  "dashboardPeriodLastWeek": "先週",
+  "dashboardPeriodThisMonth": "今月",
+  "dashboardPeriodLastMonth": "先月",
+  "dashboardPeriodThisQuarter": "今四半期",
+  "dashboardPeriodLastQuarter": "前四半期",
+  "dashboardPeriodThisYear": "今年",
+  "dashboardPeriodLastYear": "昨年",
+  "dashboardPeriodLast2Years": "過去 2 年",
+  "dashboardPeriodLast5Years": "過去 5 年",
+  "dashboardPeriodLast10Years": "過去 10 年",
+  "dashboardPeriodAll": "すべて",
+  "deltaComparisonPreviousWeek": "前週",
+  "deltaComparisonPreviousMonth": "前月",
+  "deltaComparisonPreviousQuarter": "前四半期",
+  "deltaComparisonPreviousYear": "前年",
+  "deltaComparisonPrevious2Years": "過去 2 年",
+  "deltaComparisonPrevious5Years": "過去 5 年",
+  "deltaComparisonPrevious10Years": "過去 10 年",
+  "deltaComparisonCustomPeriod": "前期間",
+  "noChangeVsComparisonPeriod": "{period} と変化なし",
+  "@noChangeVsComparisonPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "newActivityVsComparisonPeriod": "{period} と比べて新しいアクティビティ",
+  "@newActivityVsComparisonPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "percentVsComparisonPeriod": "{arrow}{percent}% {period}比",
+  "@percentVsComparisonPeriod": {
+    "placeholders": {
+      "arrow": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "dateRangeSeparator": "–",
+  "dateEllipsis": "…",
+  "projectionTitle": "予測",
+  "projectedBalance": "予測残高",
+  "visualization": "可視化",
+  "parameters": "パラメーター",
+  "predictedBalances": "予測残高 · {period}",
+  "@predictedBalances": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountsLoaded": "口座が読み込まれていません",
+  "scenarioSummary": "シナリオ概要",
+  "nowAmount": "現在 {amount}",
+  "@nowAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "worstCase": "最悪ケース",
+  "expected": "予想",
+  "bestCase": "最良ケース",
+  "moveSliderToSeeImpact": "スライダーを動かして影響を確認",
+  "whatIfImpact": "{period} で +{amount}",
+  "@whatIfImpact": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "projectionPeriod3Months": "3 か月",
+  "projectionPeriod6Months": "6 か月",
+  "projectionPeriod1Year": "1 年",
+  "projectionPeriod3Years": "3 年",
+  "projectionTypeSavings": "貯蓄率",
+  "projectionTypeCompound": "複利成長",
+  "projectionTypePortfolio": "ポートフォリオ（変動あり）",
+  "projectionTypeCashflow": "キャッシュフロー",
+  "projectionTypeSavingsDesc": "過去の純貯蓄からの線形予測",
+  "projectionTypeCompoundDesc": "複利と拠出による残高の成長",
+  "projectionTypePortfolioDesc": "ボラティリティに基づく最悪/最良の予想リターン",
+  "projectionTypeCashflowDesc": "収入から支出を引いた自由調整",
+  "chartStyleFan": "ファンチャート",
+  "chartStyleLines": "3 本線",
+  "chartStyleScenarios": "シナリオカード",
+  "whatIfSpending": "仮想支出",
+  "annualReturn": "年間リターン",
+  "volatility": "ボラティリティ",
+  "projectionAlertLiability": "最悪ケースでは、{name} が予想より早く {balance} に達する可能性があります。",
+  "@projectionAlertLiability": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "projectionAlertBelowZero": "最悪ケースの予測が選択期間内にゼロを下回ります。",
+  "projectionAlertActionLiability": "普通預金口座から資金を移すことを検討してください。",
+  "projectionAlertActionSpending": "自由支出を見直すか、貯蓄を増やしてください。",
+  "confirmTypeWord": "確認のため",
+  "confirmToConfirm": " と入力:",
+  "confirmHint": "上の単語を入力…",
+  "currencyPair": "{name} ({symbol})",
+  "@currencyPair": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetSpentFraction": "{spent} / {total}",
+  "@budgetSpentFraction": {
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "editAccount": "口座を編集",
+  "editAction": "編集",
+  "filterAllShort": "すべて",
+  "filterAssetsShort": "資産",
+  "filterLiabilitiesShort": "負債",
+  "showInactiveAccounts": "無効な口座を表示",
+  "showInactiveAccountsShort": "無効",
+  "accountInactive": "無効",
+  "unknown": "不明",
+  "showingTransactionsOfTotal": "{total} 件中 {loaded} 件を表示",
+  "@showingTransactionsOfTotal": {
+    "placeholders": {
+      "loaded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "transactionsCount": "{count} 件の取引",
+  "@transactionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneTransaction": "1 件の取引",
+  "deleteBudgetConfirmBody": "予算「{name}」を削除してもよろしいですか？この操作は元に戻せません。",
+  "@deleteBudgetConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "scrollForMore": "スクロールして続きを表示…",
+  "noTransactionsMatchFilters": "現在のフィルターに一致する取引はありません。",
+  "category": "カテゴリ",
+  "totalSpentPeriod": "この期間の支出合計",
+  "totalIncomePeriod": "この期間の収入合計",
+  "totalTransferredPeriod": "この期間の振替合計",
+  "totalPeriod": "この期間の合計",
+  "volatilityUncertainty": "ボラティリティ / 不確実性",
+  "editTransaction": "取引を編集",
+  "newDeposit": "入金を作成",
+  "editDeposit": "入金を編集",
+  "newWithdrawal": "出金を作成",
+  "editWithdrawal": "出金を編集",
+  "newTransfer": "振替を作成",
+  "editTransfer": "振替を編集",
+  "revenueAccount": "収入口座",
+  "assetAccount": "資産口座",
+  "expenseAccount": "支出口座",
+  "expenseLabel": "支出",
+  "transactionTypeDeposit": "入金",
+  "transactionTypeWithdrawal": "出金",
+  "transactionTypeTransfer": "振替",
+  "dataAndLoading": "データと読み込み",
+  "transactionPageSize": "1 ページあたりの取引数",
+  "transactionPageSizeDescription": "スクロールするたびに読み込む取引数。取引一覧に適用されます。",
+  "transactionPageSizeValue": "1 ページ {count} 件",
+  "@transactionPageSizeValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultPeriod": "デフォルト期間",
+  "defaultPeriodDescription": "ダッシュボード、支出、収入、振替、取引を開いたときに適用されます。",
+  "customDateRange": "カスタム範囲",
+  "pickDates": "日付を選択",
+  "budgetStatusOnTrack": "順調",
+  "budgetStatusOver": "予算超過",
+  "whatIfCutSpending": "自由支出を {percent}% 削減したら？",
+  "@whatIfCutSpending": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "usesAveragePatterns": "取引から算出した平均的な収入・支出パターンを使用します。",
+  "historicalNetSavingsNote": "過去の純貯蓄に基づきます。不確実性を調整して帯の幅を変更できます。",
+  "accountFilterLabel": "口座",
+  "noTransactionsForBudget": "この予算の取引はありません。",
+  "noTransactionsForAccount": "この口座の取引はありません。",
+  "deleteAccount": "口座を削除",
+  "deleteAccountConfirmBody": "口座「{name}」を削除してもよろしいですか？この操作は元に戻せません。",
+  "@deleteAccountConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accountDeleted": "口座「{name}」を削除しました。",
+  "@accountDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteAccount": "口座の削除に失敗しました: {error}",
+  "@failedToDeleteAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetNameHint": "予算名",
+  "budgetAmountWithSymbol": "予算額（{symbol}）",
+  "@budgetAmountWithSymbol": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "chartLegendActual": "実績",
+  "chartLegendWorst": "最悪",
+  "chartLegendBest": "最良",
+  "chartLegendWorstBest": "最悪 ↔ 最良",
+  "today": "今日",
+  "mcpServer": "MCP サーバー",
+  "mcpStatusFailed": "失敗: {error}",
+  "@mcpStatusFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpStatusRunning": "ポート {port} で実行中",
+  "@mcpStatusRunning": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "mcpStatusStarting": "起動中…",
+  "transactionDate": "日付",
+  "moreOptions": "その他",
+  "foreignAmountLabel": "外貨金額",
+  "budgetLabel": "予算",
+  "piggyBank": "貯金箱",
+  "noPiggyBank": "（貯金箱なし）",
+  "tags": "タグ",
+  "subscription": "サブスクリプション",
+  "interestDate": "利息日",
+  "attachments": "添付ファイル",
+  "notes": "メモ",
+  "none": "（なし）",
+  "attachmentsNotSupported": "このアプリでは添付ファイルはまだサポートされていません。",
+  "deleteTransaction": "取引を削除",
+  "deleteTransactionConfirmBody": "「{description}」を削除してもよろしいですか？この操作は元に戻せません。",
+  "@deleteTransactionConfirmBody": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionDeleted": "取引を削除しました。",
+  "failedToDeleteTransaction": "取引の削除に失敗しました: {error}",
+  "@failedToDeleteTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionSaved": "取引を保存しました。",
+  "failedToSaveTransaction": "取引の保存に失敗しました: {error}",
+  "@failedToSaveTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionDuplicated": "取引を複製しました。",
+  "failedToDuplicateTransaction": "取引の複製に失敗しました: {error}",
+  "@failedToDuplicateTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "duplicate": "複製",
+  "newTransaction": "新しい取引",
+  "transactionCreated": "取引を作成しました。",
+  "failedToCreateTransaction": "取引の作成に失敗しました: {error}",
+  "@failedToCreateTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionFormIncomplete": "説明、金額、両方の口座を入力してください。",
+  "transactionInformation": "取引情報",
+  "addAnotherSplit": "分割を追加",
+  "splitLabel": "分割 {number}",
+  "@splitLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "removeSplit": "分割を削除",
+  "splitCount": "{count} 件の分割",
+  "@splitCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "splitCategoriesCount": "{count} カテゴリ",
+  "@splitCategoriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "splitTotalLabel": "分割合計: {amount}",
+  "@splitTotalLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitRemainder": "残り: {amount}",
+  "@splitRemainder": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitsTotalMismatch": "分割金額の合計は {expected} である必要があります。",
+  "@splitsTotalMismatch": {
+    "placeholders": {
+      "expected": {
+        "type": "String"
+      }
+    }
+  },
+  "splitOptionalFields": "任意項目",
+  "foreignCurrency": "外貨",
+  "noSubscriptionsHint": "サブスクリプションはまだありません。サブスクリプションページで作成して、定期支出をリンクしてください。",
+  "incomeTitle": "収入",
+  "transfersTitle": "振替",
+  "newTransferAction": "新しい振替",
+  "liabilitiesTitle": "負債",
+  "newIncome": "新しい収入",
+  "newIncomeRacoon": "新しいゲット",
+  "create": "作成",
+  "accountCreated": "口座を作成しました。",
+  "liabilityCreated": "負債を作成しました。",
+  "budgetCreated": "予算を作成しました。",
+  "failedToCreateAccount": "口座の作成に失敗しました: {error}",
+  "@failedToCreateAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateBudget": "予算の作成に失敗しました: {error}",
+  "@failedToCreateBudget": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noLiabilitiesFound": "負債が見つかりません。",
+  "liabilityType": "負債の種類",
+  "liabilityTypeDebt": "借金",
+  "liabilityTypeLoan": "ローン",
+  "liabilityTypeMortgage": "住宅ローン",
+  "liabilityDirection": "負債の方向",
+  "liabilityDirectionOwe": "自分が誰かに借りている",
+  "liabilityDirectionOwed": "誰かが自分に借りている",
+  "amountOwed": "借入額",
+  "debtStartDate": "借入開始日",
+  "interestRate": "金利",
+  "interestPeriod": "金利期間",
+  "interestPeriodDaily": "1 日あたり",
+  "includeInNetWorth": "純資産に含める",
+  "accountNumber": "口座番号",
+  "iban": "IBAN",
+  "bic": "BIC",
+  "liabilityCurrencyHelp": "この負債口座のデフォルト通貨。",
+  "interestPeriodHelp": "表示のみ — Firefly III は金利を自動計算しません。",
+  "failedToCreateLiability": "負債の作成に失敗しました: {error}",
+  "@failedToCreateLiability": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "navIncomeRacoon": "ゲット",
+  "navTransfersRacoon": "隠し場所の移動",
+  "navLiabilitiesRacoon": "借金",
+  "incomeTitleRacoon": "ゲットした資金",
+  "transfersTitleRacoon": "隠し場所の移動",
+  "newTransferActionRacoon": "新しい隠し場所の移動",
+  "liabilitiesTitleRacoon": "借金一覧",
+  "tooltipOpenSection": "{section} を開く。",
+  "@tooltipOpenSection": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipOpenDashboard": "主要 KPI のダッシュボードを開く。",
+  "tooltipOpenAccounts": "口座と残高を開く。",
+  "tooltipOpenTransactions": "すべての取引とフィルターを開く。",
+  "tooltipOpenBudgets": "予算と支出の進捗を開く。",
+  "tooltipOpenPiggyBanks": "貯蓄目標と貯金箱を開く。",
+  "tooltipOpenExpenses": "支出分析と内訳を開く。",
+  "tooltipOpenIncome": "収入分析とトレンドを開く。",
+  "tooltipOpenTransfers": "振替分析と履歴を開く。",
+  "tooltipOpenLiabilities": "負債と借金の概要を開く。",
+  "tooltipOpenProjection": "予測シナリオと見通しを開く。",
+  "tooltipOpenPrognosis": "月末の口座残高見通しを開く。",
+  "projectionTabLongTerm": "長期予測",
+  "tooltipOpenSettings": "アプリ設定と Firefly 接続を開く。",
+  "tooltipToggleSidebar": "サイドバーを展開または折りたたむ。",
+  "tooltipSearchTransactions": "現在のページでテキスト検索。",
+  "tooltipToggleViewMode": "リスト表示とグリッド表示を切り替える。",
+  "viewModeCards": "カード",
+  "viewModeRows": "行",
+  "viewModeTightRows": "タイト行",
+  "columnSelection": "列の選択",
+  "columnDate": "日付",
+  "columnAccount": "口座",
+  "columnType": "種別",
+  "columnPayee": "支払先",
+  "columnDescription": "メモ",
+  "columnCategory": "カテゴリ",
+  "columnBudget": "予算",
+  "columnAmount": "金額",
+  "columnReconciled": "照合済み",
+  "columnBalance": "残高",
+  "tooltipTransactionType": "取引の種類を選択。",
+  "tooltipFieldDescription": "この取引で何が起きたか。",
+  "tooltipFieldSourceAccount": "お金の送り元口座。",
+  "tooltipFieldDestinationAccount": "お金の送り先口座。",
+  "tooltipFieldDate": "取引の日付と時刻。",
+  "tooltipFieldAmount": "選択した通貨での主な金額。",
+  "tooltipFieldCurrency": "この分割の主通貨。",
+  "tooltipFieldForeignAmount": "別通貨での任意金額。",
+  "tooltipFieldForeignCurrency": "外貨金額に使用する通貨。",
+  "tooltipFieldBudget": "この分割を予算に割り当てる。",
+  "tooltipFieldCategory": "レポートとフィルター用のカテゴリ。",
+  "tooltipFieldPiggyBank": "この分割を貯金箱にリンク。",
+  "tooltipFieldTags": "クイックフィルター用のカンマ区切りタグ。",
+  "tooltipFieldSubscription": "この分割をサブスクリプションにリンク。",
+  "tooltipFieldInterestDate": "任意の利息日または記帳日。",
+  "tooltipFieldAttachments": "添付ファイルは表示されますが、まだアップロードできません。",
+  "tooltipFieldNotes": "将来の参照用の追加詳細。",
+  "tooltipAddSplit": "この取引に分割を追加。",
+  "tooltipRemoveSplit": "この分割行を削除。",
+  "tooltipCancelTransaction": "変更を破棄して閉じる。",
+  "tooltipSaveTransaction": "この取引を保存。",
+  "tooltipCancel": "変更を破棄して保存せずに閉じる。",
+  "tooltipSave": "変更を保存。",
+  "tooltipCreate": "新しい項目を作成。",
+  "tooltipConfirmDelete": "この項目を完全に削除。",
+  "tooltipConfirmChallenge": "削除を確認するためにチャレンジワードを入力。",
+  "tooltipExpandDetails": "詳細を表示。",
+  "tooltipCollapseDetails": "追加詳細を非表示。",
+  "tooltipClearDate": "選択した日付を削除。",
+  "tooltipAccountName": "一覧とレポートに表示される名前。",
+  "tooltipAccountCurrentBalance": "本日時点の Firefly からの現在残高。",
+  "tooltipAccountEndOfMonthBalance": "予定取引、定期項目、請求を含む今月末の予測残高。",
+  "tooltipBudgetName": "この支出予算の名前。",
+  "tooltipBudgetAmount": "この予算期間の上限額。",
+  "tooltipSubscriptionName": "定期請求またはサブスクリプションの名前。",
+  "tooltipSubscriptionCurrency": "予想金額に使用する通貨。",
+  "tooltipSubscriptionAmountMin": "期間あたりの最低予想請求額。",
+  "tooltipSubscriptionAmountMax": "期間あたりの最高予想請求額。",
+  "tooltipSubscriptionStartDate": "サブスクリプションの開始日または最初の記録日。",
+  "tooltipSubscriptionRepeats": "このサブスクリプションの繰り返し頻度。",
+  "tooltipSubscriptionSkip": "次回請求までにスキップする回数。",
+  "tooltipSubscriptionEndDate": "このサブスクリプションが終了する任意の日付。",
+  "tooltipSubscriptionExtensionDate": "請求を延長または一時停止する任意の日付。",
+  "tooltipSubscriptionGroup": "サブスクリプション整理用の任意グループラベル。",
+  "tooltipSubscriptionActive": "このサブスクリプションが現在有効かどうか。",
+  "tooltipPiggyBankName": "この貯蓄目標の名前。",
+  "tooltipPiggyBankTargetAmount": "合計で貯めたい金額。",
+  "tooltipPiggyBankCurrency": "目標と追跡貯蓄の通貨。",
+  "tooltipPiggyBankAccounts": "この目標にカウントする口座の残高。",
+  "tooltipPiggyBankAccount": "この貯金箱に {name} を含める。",
+  "@tooltipPiggyBankAccount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipPiggyBankStartDate": "この目標の追跡を開始した日。",
+  "tooltipPiggyBankTargetDate": "目標達成の任意の期限。",
+  "tooltipPiggyBankGroup": "貯金箱整理用の任意グループラベル。",
+  "tooltipThemeLight": "ライトカラースキームを使用。",
+  "tooltipThemeDark": "ダークカラースキームを使用。",
+  "tooltipThemePaletteClassic": "Firefly 風のクラシックパレット。",
+  "tooltipThemePaletteSpectrum": "鮮やかな多色カテゴリパレット。",
+  "tooltipThemePaletteRaccoon": "遊び心のあるアライグマテーマパレット。",
+  "tooltipThemeAccent": "ボタン、リンク、ハイライトのアクセントカラー。",
+  "tooltipThemeAccentOption": "{name} をアクセントカラーとして使用。",
+  "@tooltipThemeAccentOption": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipThemeDone": "閉じて選択したテーマを保持。",
+  "repeatIntervalLabel": "間隔",
+  "repeatIntervalHelp": "繰り返しの頻度（例: 3 か月ごと）。",
+  "repeatEveryNDays": "{count} 日ごと",
+  "@repeatEveryNDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repeatEveryNWeeks": "{count} 週ごと",
+  "@repeatEveryNWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repeatEveryNMonths": "{count} か月ごと",
+  "@repeatEveryNMonths": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repeatEveryNYears": "{count} 年ごと",
+  "@repeatEveryNYears": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "writeAheadDays": "定期取引を事前に作成",
+  "writeAheadDaysDescription": "今後の定期取引をこの日数分先に作成します。",
+  "writeAheadOff": "オフ",
+  "writeAheadNDays": "{count} 日",
+  "@writeAheadNDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "plannedLabel": "予定",
+  "navHistory": "履歴",
+  "navHistoryRacoon": "作戦リプレイ",
+  "tooltipOpenHistory": "元に戻す/やり直し履歴を開く。",
+  "tooltipUndo": "最後の操作を元に戻す。",
+  "tooltipRedo": "最後に元に戻した操作をやり直す。",
+  "undo": "元に戻す",
+  "redo": "やり直す",
+  "clear": "クリア",
+  "advanced": "詳細",
+  "undoHistorySize": "元に戻す/やり直し履歴のサイズ",
+  "undoHistoryStoredEntries": "保存済みエントリ: {count} / {limit}",
+  "@undoHistoryStoredEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "openHistoryScreen": "履歴画面を開く",
+  "undoHistoryLimitRange": "最小 {min}  •  デフォルト {defaultValue}  •  最大 {max}",
+  "@undoHistoryLimitRange": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "defaultValue": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "searchHistory": "履歴を検索",
+  "allActions": "すべての操作",
+  "noHistoryEntriesMatchFilters": "フィルターに一致する履歴エントリはありません。",
+  "historyExportedTo": "履歴を {path} にエクスポートしました",
+  "@historyExportedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "historyExportedAndShared": "履歴をエクスポートして共有シートを開きました",
+  "exportJson": "JSON をエクスポート",
+  "exportAndShare": "エクスポートして共有",
+  "jumpToCurrent": "現在に移動",
+  "historyExportSubject": "履歴エクスポート",
+  "historyExportText": "FireRacoon 履歴エクスポート",
+  "historySectionToday": "今日",
+  "historySectionYesterday": "昨日",
+  "historySectionOlder": "それ以前",
+  "historyEntriesCount": "{count} / {limit}",
+  "@historyEntriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "undoActionTypeThemeMode": "テーマモード",
+  "undoActionTypeThemePalette": "テーマパレット",
+  "undoActionTypeThemeAccent": "テーマアクセント",
+  "undoActionTypeThemeFunMode": "ファンモード",
+  "undoActionTypeLocale": "言語",
+  "undoActionTypeViewMode": "表示モード",
+  "undoActionTypeTransactionPageSize": "取引ページサイズ",
+  "undoActionTypePrognosisMode": "予測表示モード",
+  "undoActionTypePrognosisHorizon": "予測期間",
+  "undoActionTypePrognosisInclusion": "予測の含める項目",
+  "undoActionTypePrognosisMarginPercent": "予測マージン",
+  "undoActionTypeAccountCreate": "口座を作成",
+  "undoActionTypeAccountUpdate": "口座を更新",
+  "undoActionTypeAccountDelete": "口座を削除",
+  "undoActionTypeBudgetCreate": "予算を作成",
+  "undoActionTypeBudgetUpdate": "予算を更新",
+  "undoActionTypeBudgetDelete": "予算を削除",
+  "undoActionTypeTransactionCreate": "取引を作成",
+  "undoActionTypeTransactionUpdate": "取引を更新",
+  "undoActionTypeTransactionDelete": "取引を削除",
+  "undoActionTypeBillCreate": "サブスクリプションを作成",
+  "undoActionTypeBillUpdate": "サブスクリプションを更新",
+  "undoActionTypeBillDelete": "サブスクリプションを削除",
+  "undoActionTypeRecurrenceCreate": "定期取引を作成",
+  "undoActionTypeRecurrenceUpdate": "定期取引を更新",
+  "undoActionTypeRecurrenceDelete": "定期取引を削除",
+  "undoActionTypePiggyBankCreate": "貯金箱を作成",
+  "undoActionTypePiggyBankUpdate": "貯金箱を更新",
+  "undoActionTypePiggyBankDelete": "貯金箱を削除",
+  "undoActionTypeLiabilityCreate": "負債を作成",
+  "searchHintTitle": "入力して検索",
+  "searchHintSubtitle": "説明、口座、カテゴリ、タグ、メモ、金額で検索できます。",
+  "noSuggestions": "該当する候補がありません",
+  "invalidAmount": "金額は0より大きい有効な数値である必要があります。",
+  "invalidForeignAmount": "外貨金額は0より大きい有効な数値である必要があります。",
+  "missingDescription": "説明を入力してください。",
+  "missingAmount": "金額を入力してください。",
+  "missingAccounts": "送金元口座と送金先口座の両方を選択してください。",
+  "appUsers": "アプリユーザー",
+  "enableAppUsers": "アプリユーザーを有効にする",
+  "enableAppUsersDescription": "Add password-protected profiles for the people who use this app. Everyone still shares the same Firefly III data.",
+  "createAdmin": "管理者アカウントを作成",
+  "createAdminDescription": "You will be the first admin. You can add more accounts afterwards.",
+  "addUser": "ユーザーを追加",
+  "editUser": "ユーザーを編集",
+  "deleteUser": "ユーザーを削除",
+  "role": "役割",
+  "roleAdmin": "管理者",
+  "roleUser": "ユーザー",
+  "roleViewer": "閲覧者",
+  "roleAdminDescription": "Full access, including Firefly settings and user management.",
+  "roleUserDescription": "Can add and edit financial data.",
+  "roleViewerDescription": "Read-only access.",
+  "requireLogin": "起動のたびにログインを要求する",
+  "requireLoginDescription": "When off, signed-in users stay signed in between launches.",
+  "switchUser": "Switch user",
+  "selectUserSubtitle": "Choose whose profile to use. No password needed while login is not required.",
+  "assignPerson": "関連付けられた人物",
+  "noPersonAssigned": "なし",
+  "myAccount": "マイアカウント",
+  "changePassword": "パスワードを変更",
+  "currentPassword": "現在のパスワード",
+  "newPassword": "新しいパスワード",
+  "confirmNewPassword": "新しいパスワードの確認",
+  "logout": "ログアウト",
+  "login": "ログイン",
+  "username": "ユーザー名",
+  "password": "パスワード",
+  "loginSubtitle": "続行するにはログインしてください。",
+  "loginMissingFields": "ユーザー名とパスワードを入力してください。",
+  "loginInvalidCredentials": "ユーザー名またはパスワードが正しくありません。",
+  "passwordTooWeak": "Password must be at least 10 characters and include an uppercase letter, a lowercase letter, a digit, and a special character.",
+  "passwordRequirements": "At least 10 characters, with uppercase, lowercase, a digit, and a special character.",
+  "passwordMissingRequirements": "Password is missing {requirements}.",
+  "@passwordMissingRequirements": {
+    "placeholders": {
+      "requirements": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordReqMinLength": "at least 10 characters",
+  "passwordReqUpper": "an uppercase letter",
+  "passwordReqLower": "a lowercase letter",
+  "passwordReqDigit": "a digit",
+  "passwordReqSpecial": "a special character",
+  "passwordPwned": "This password has appeared in a known data breach. Please choose another one.",
+  "passwordsDoNotMatch": "パスワードが一致しません。",
+  "usernameTaken": "このユーザー名はすでに使用されています。",
+  "currentPasswordIncorrect": "現在のパスワードが正しくありません。",
+  "userCreated": "ユーザーを作成しました。",
+  "userUpdated": "ユーザーを更新しました。",
+  "userDeleted": "ユーザーを削除しました。",
+  "passwordChanged": "パスワードを更新しました。",
+  "deleteUserConfirmTitle": "ユーザーを削除",
+  "deleteUserConfirmMessage": "This removes {username}'s app profile. Their Firefly III data is not affected.",
+  "@deleteUserConfirmMessage": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "signedInAs": "{username} としてサインイン中",
+  "@signedInAs": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "usernameRequired": "ユーザー名を入力してください。",
+  "unlockWithBiometrics": "生体認証でロック解除",
+  "unlockWithBiometricsDescription": "ログイン画面で Face ID、Touch ID、指紋、または端末の PIN を使います。",
+  "biometricUnlockReason": "FireRacoon のロックを解除",
+  "biometricEnableReason": "生体認証のロック解除を有効にするには確認してください",
+  "biometricUnlockFailed": "生体認証によるロック解除がキャンセルされたか失敗しました。"
+}

@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#
+# Pre-commit hook — mirrors CI lint/test gate locally.
+# Enable with: bash tool/setup-hooks.sh
+
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+section() {
+  printf '\n\033[1;34m==> %s\033[0m\n' "$1"
+}
+
+fail() {
+  printf '\n\033[1;31m✗ pre-commit failed: %s\033[0m\n' "$1" >&2
+  exit 1
+}
+
+SRC_DIRS="lib test packages/engine/lib packages/engine/test packages/mcp/lib packages/mcp/bin packages/mcp/test"
+
+section "1/5  Prepare CI environment"
+bash tool/setup-ci-env.sh
+
+section "2/5  dart format (check only)"
+# shellcheck disable=SC2086
+dart format --output=none --set-exit-if-changed $SRC_DIRS \
+  || fail "code is not formatted — run 'dart format $SRC_DIRS'"
+
+section "3/5  analyze"
+dart analyze packages/engine packages/mcp || fail "dart analyze reported issues"
+flutter analyze || fail "flutter analyze reported issues"
+
+section "4/5  tests"
+( cd packages/engine && dart test --coverage=coverage ) || fail "engine tests failed"
+dart test packages/mcp || fail "mcp tests failed"
+flutter test --coverage || fail "flutter tests failed"
+
+section "5/5  coverage gate"
+chmod +x tool/check_coverage.sh
+./tool/check_coverage.sh || fail "coverage gate failed"
+
+printf '\n\033[1;32m✓ pre-commit passed\033[0m\n'

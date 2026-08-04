@@ -1,0 +1,17 @@
+FireRacoon
+Copyright (c) 2026 FireRacoon contributors
+
+This project bundles the following third-party assets:
+
+Comfortaa (SIL Open Font License 1.1)
+  Files: assets/fonts/Comfortaa-*.ttf
+  License: assets/fonts/Comfortaa-OFL.txt
+  Source: https://github.com/alexeiva/comfortaa
+
+Roboto Slab (Apache License 2.0)
+  Files: assets/fonts/RobotoSlab-Variable.ttf
+  License: assets/fonts/RobotoSlab-LICENSE.txt
+  Source: https://github.com/googlefonts/robotoslab
+
+Firefly III is a separate project (AGPL-3.0). FireRacoon communicates with
+Firefly III over its REST API but does not include Firefly III source code.

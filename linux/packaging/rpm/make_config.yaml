@@ -1,0 +1,16 @@
+# flutter_distributor .rpm config.
+display_name: FireRacoon
+package_name: fireracoon
+license: GPL-3.0
+url: https://github.com/kodsama/FireRacoon
+icon: packaging/linux/icon_256.png
+generic_name: Personal finance
+keywords:
+  - Finance
+  - Budget
+  - Firefly
+categories:
+  - Office
+  - Finance
+group: Applications/Office
+summary: Firefly III client with on-device balance projections
