@@ -71,6 +71,8 @@ APP_LOGIC_TOPS = {
     "router",
     "theme",
     "fun_modes",
+    "deployment",
+    "store",
 }
 
 

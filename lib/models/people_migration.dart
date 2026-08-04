@@ -26,7 +26,7 @@ PeopleMigrationResult migrateAppUsersIntoPeople({
   PeopleAuthStorage? existingAuth,
 }) {
   if (legacyUsers == null || legacyUsers.users.isEmpty) {
-    final people = _ensureAdmin(existingPeople);
+    final people = ensureAtLeastOneAdmin(existingPeople);
     final auth = _authFromPeople(
       people,
       requirePasswordLogin: existingAuth?.requirePasswordLogin ?? false,
@@ -82,7 +82,7 @@ PeopleMigrationResult migrateAppUsersIntoPeople({
     }
   }
 
-  final people = _ensureAdmin(byId.values.toList());
+  final people = ensureAtLeastOneAdmin(byId.values.toList());
   final auth = _authFromPeople(
     people,
     requirePasswordLogin: legacyUsers.requireLogin,
@@ -114,13 +114,6 @@ PersonRole _toPersonRole(AppUserRole role) {
     case AppUserRole.viewer:
       return PersonRole.viewer;
   }
-}
-
-List<Person> _ensureAdmin(List<Person> people) {
-  if (people.isEmpty) return people;
-  if (people.any((p) => p.role == PersonRole.admin)) return people;
-  final first = people.first;
-  return [first.copyWith(role: PersonRole.admin), ...people.skip(1)];
 }
 
 PeopleAuthStorage _authFromPeople(

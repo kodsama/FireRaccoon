@@ -7,16 +7,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:fireracoon/deployment/deployment_providers.dart';
+import 'package:fireracoon/deployment/fireracoon_mode.dart';
 import 'package:fireracoon/providers/locale_provider.dart';
 import 'package:fireracoon/providers/prognosis_settings_provider.dart';
 import 'package:fireracoon/providers/data_providers.dart';
+import 'package:fireracoon/providers/auth_provider.dart';
+import 'package:fireracoon/providers/server_session_provider.dart';
 import 'package:fireracoon/providers/theme_provider.dart';
 import 'package:fireracoon/providers/transaction_page_size_provider.dart';
 import 'package:fireracoon/providers/undo_history_provider.dart';
 import 'package:fireracoon/fun_modes/fun_mode.dart';
+import 'package:fireracoon/store/remote_server_client.dart';
 import 'package:fireracoon/theme/app_colors.dart';
 import 'package:fireracoon/theme/theme_palette.dart';
 import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../helpers/mock_firefly_service.dart';
 
 void main() {
@@ -98,6 +106,278 @@ void main() {
 
     expect(state.entries, isEmpty);
     expect(state.isHydrated, isTrue);
+  });
+
+  group('server mode hydrate and persist', () {
+    Future<ProviderContainer> createServerContainer({
+      required RemoteServerClient client,
+    }) async {
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          deploymentConfigProvider.overrideWithValue(
+            const DeploymentConfig(
+              mode: FireracoonMode.server,
+              apiBase: 'http://example.test',
+            ),
+          ),
+          authProvider.overrideWith(
+            () => AuthNotifier(storage: const FlutterSecureStorage()),
+          ),
+          serverSessionProvider.overrideWith(
+            () => ServerSessionNotifier(
+              storage: const FlutterSecureStorage(),
+              clientFactory: (_) => client,
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      // Force server session build so UndoHistory can read `.client`.
+      await container.read(serverSessionProvider.future);
+      return container;
+    }
+
+    test('hydrates from server undo snapshot', () async {
+      final entry = UndoEntry(
+        id: 'srv-1',
+        timestampUtc: DateTime.utc(2026, 2, 1),
+        title: 'Server theme',
+        details: 'details',
+        type: UndoActionType.themeMode,
+        undoPayload: const {'mode': 'light'},
+        redoPayload: const {'mode': 'dark'},
+      );
+      final client = RemoteServerClient(
+        baseUrl: 'http://example.test',
+        sessionToken: 'sess',
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state')) {
+            return http.Response(
+              jsonEncode({
+                'undo': {
+                  'cursor': 0,
+                  'entries': [entry.toJson()],
+                },
+              }),
+              200,
+            );
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+
+      final container = await createServerContainer(client: client);
+      final state = await waitHydrated(container);
+      expect(state.entries, hasLength(1));
+      expect(state.entries.single.id, 'srv-1');
+      expect(state.isHydrated, isTrue);
+    });
+
+    test('hydrates empty when undo payload missing or fetch fails', () async {
+      var calls = 0;
+      final client = RemoteServerClient(
+        baseUrl: 'http://example.test',
+        sessionToken: 'sess',
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state')) {
+            calls++;
+            if (calls == 1) {
+              return http.Response(jsonEncode({'undo': null}), 200);
+            }
+            return http.Response('nope', 500);
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+
+      final first = await createServerContainer(client: client);
+      final emptyUndo = await waitHydrated(first);
+      expect(emptyUndo.entries, isEmpty);
+      expect(emptyUndo.isHydrated, isTrue);
+
+      // Second container with a client that fails fetchState.
+      final failing = RemoteServerClient(
+        baseUrl: 'http://example.test',
+        sessionToken: 'sess',
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          return http.Response(jsonEncode({'error': 'no'}), 500);
+        }),
+      );
+      final second = await createServerContainer(client: failing);
+      final failed = await waitHydrated(second);
+      expect(failed.isHydrated, isTrue);
+    });
+
+    test('hydrates using index when cursor is absent', () async {
+      final entry = UndoEntry(
+        id: 'idx-1',
+        timestampUtc: DateTime.utc(2026, 3, 1),
+        title: 'Indexed',
+        details: 'd',
+        type: UndoActionType.themeMode,
+        undoPayload: const {'mode': 'light'},
+        redoPayload: const {'mode': 'dark'},
+      );
+      final client = RemoteServerClient(
+        baseUrl: 'http://example.test',
+        sessionToken: 'sess',
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state')) {
+            return http.Response(
+              jsonEncode({
+                'undo': {
+                  'index': 0,
+                  'entries': [entry.toJson()],
+                },
+              }),
+              200,
+            );
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+      final container = await createServerContainer(client: client);
+      final state = await waitHydrated(container);
+      expect(state.cursor, 0);
+      expect(state.entries.single.id, 'idx-1');
+    });
+
+    test('persists undo payload to server on record', () async {
+      final putBodies = <String>[];
+      final client = RemoteServerClient(
+        baseUrl: 'http://example.test',
+        sessionToken: 'sess',
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state')) {
+            return http.Response(
+              jsonEncode({
+                'undo': {'cursor': -1, 'entries': []},
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state/undo')) {
+            putBodies.add(request.body);
+            return http.Response(jsonEncode({'ok': true}), 200);
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+
+      final container = await createServerContainer(client: client);
+      await waitHydrated(container);
+      container
+          .read(undoHistoryProvider.notifier)
+          .record(
+            title: 'Theme',
+            details: 'light → dark',
+            type: UndoActionType.themeMode,
+            undoPayload: const {'mode': 'light'},
+            redoPayload: const {'mode': 'dark'},
+          );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(putBodies, isNotEmpty);
+      final decoded = jsonDecode(putBodies.last) as Map<String, dynamic>;
+      expect(decoded['entries'], isA<List>());
+    });
+
+    test('survives putUndo failure without dropping memory state', () async {
+      final client = RemoteServerClient(
+        baseUrl: 'http://example.test',
+        sessionToken: 'sess',
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state')) {
+            return http.Response(
+              jsonEncode({
+                'undo': {'cursor': -1, 'entries': []},
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state/undo')) {
+            return http.Response(jsonEncode({'error': 'boom'}), 500);
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+
+      final container = await createServerContainer(client: client);
+      await waitHydrated(container);
+      container
+          .read(undoHistoryProvider.notifier)
+          .record(
+            title: 'Theme',
+            details: 'light → dark',
+            type: UndoActionType.themeMode,
+            undoPayload: const {'mode': 'light'},
+            redoPayload: const {'mode': 'dark'},
+          );
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      final state = container.read(undoHistoryProvider);
+      expect(state.entries, isNotEmpty);
+    });
   });
 
   test('hydrates empty state when file contains empty content', () async {

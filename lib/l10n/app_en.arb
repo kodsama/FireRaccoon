@@ -1822,6 +1822,8 @@
   "addPerson": "Add Person",
   "editPerson": "Edit Person",
   "deletePerson": "Delete Person",
+  "cannotDeleteOnlyAdmin": "Cannot delete the only admin. Promote someone else first.",
+  "cannotDemoteOnlyAdmin": "Cannot demote the only admin. Promote someone else first.",
   "personName": "Person Name",
   "selectOwners": "Assign Owners",
   "customSplit": "Custom Percentage Split",

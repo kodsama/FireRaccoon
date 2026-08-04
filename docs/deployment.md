@@ -52,10 +52,12 @@ Packaging configs: `distribute_options.yaml`, `windows/packaging/exe/`,
 
 ## Docker (web only)
 
-The Dockerfile is a multi-stage build: Flutter compiles `build/web` once on the
-builder host (arch-independent assets), then nginx serves those files. Release
-CI pushes a multi-arch manifest (`linux/amd64`, `linux/arm64`). Nothing from the
-host `./build/web` directory is mounted at runtime.
+The Dockerfile is a multi-stage build: Flutter compiles `build/web` (with
+`FIRERACOON_MODE=server`), then `packages/app_backend` is compiled to
+`fireracoon_server`. The runtime image runs that binary on port 8080 with
+`DATA_DIR=/data`. Release CI pushes a multi-arch manifest (`linux/amd64`,
+`linux/arm64`). Nothing from the host `./build/web` directory is mounted at
+runtime; app state belongs on the `fireracoon_data` volume.
 
 Tagged releases publish that image to GHCR (anonymous pull; package is public):
 
@@ -291,10 +293,27 @@ credential and enabling TLS.
 
 ### Credentials
 
-Credentials are never embedded in builds or images. Every web asset is
-downloadable by anyone who can reach the deployment, so a bundled token would
-be public. Users connect once via **Settings → Firefly III connection**;
-values are kept in platform secure storage and persist across redeployments.
+#### Local mode (`FIRERACOON_MODE=local`)
+
+Credentials are never embedded in builds or images. Users connect once via
+**Settings → Firefly III connection**; values stay in platform secure storage.
+
+#### Server mode (Docker, `FIRERACOON_MODE=server`)
+
+- Set `DATA_PASSWORD` in Compose / secrets. On every boot the server uses
+  it to **create** (empty `DATA_DIR`) or **unlock** the encrypted store.
+  End users then only enter their **account** password at `/login`.
+- If the store already exists and `DATA_PASSWORD` is missing, the UI
+  tells the operator to set the env var (optional emergency unlock only).
+- If `DATA_DIR` is empty and the env var is unset, a one-time create form
+  appears; after that, put the same password in `DATA_PASSWORD` so
+  restarts unlock automatically.
+- Mount durable state on volume `fireracoon_data` (default) or a bind path:
+  `./data/fireracoon:/data`.
+- Do not put the storage password inside `DATA_DIR`. Back up the volume and
+  keep `DATA_PASSWORD` safe separately.
+- After unlock, first visit runs admin setup (URL + token + admin user) unless
+  you bootstrap `FIREFLY_URL` / `FIREFLY_TOKEN`.
 
 ## Manual web build
 

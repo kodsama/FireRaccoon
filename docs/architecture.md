@@ -14,15 +14,17 @@ fireracoon/
 │   ├── router/             # go_router routes and deep-link query params
 │   ├── theme/              # Colors, typography, ThemeExtension tokens
 │   ├── l10n/               # ARB files and generated localizations
+│   ├── deployment/         # FIRERACOON_MODE local vs server
 │   └── utils/              # UI-adjacent helpers
 ├── packages/
 │   ├── engine/             # Pure Dart: models, Firefly client, projection
-│   └── mcp/                # MCP server exposing engine tools to LLMs
+│   ├── mcp/                # MCP server exposing engine tools to LLMs
+│   └── app_backend/        # Server mode: encrypted store + BFF + static UI
 ├── test/                   # Widget, unit, and router tests
 ├── assets/                 # Logo, Comfortaa & Roboto Slab fonts
 ├── docs/                   # Documentation (you are here)
-├── Dockerfile              # Multi-stage Flutter web → nginx
-└── compose.yml             # FireRacoon + Firefly III + MariaDB
+├── Dockerfile              # Flutter web + fireracoon_server
+└── compose.yml             # FireRacoon server mode + Firefly III + MariaDB
 ```
 
 ## Layer diagram
@@ -66,7 +68,10 @@ flowchart TB
 | `data_providers` | Accounts, transactions, budgets, categories |
 | `paginated_transactions_provider` | Paginated transaction lists |
 
-Preferences persist via `shared_preferences` and `flutter_secure_storage`.
+Preferences persist via `shared_preferences` and `flutter_secure_storage` in
+**local mode**. In **server mode** (`FIRERACOON_MODE=server`) the Docker
+backend stores the same concerns under an encrypted `DATA_DIR` volume and
+proxies Firefly through `/api/firefly`.
 
 ## Routing
 

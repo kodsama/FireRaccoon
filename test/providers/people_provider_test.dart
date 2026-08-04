@@ -350,6 +350,86 @@ void main() {
       },
     );
 
+    test('removePerson refuses to delete the only admin', () async {
+      final container = await containerWithAdminSignedIn();
+      addTearDown(container.dispose);
+      final admin = container.read(peopleProvider).people.single;
+
+      await expectLater(
+        container.read(peopleProvider.notifier).removePerson(admin.id),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('only admin'),
+          ),
+        ),
+      );
+      expect(container.read(peopleProvider).people, hasLength(1));
+      expect(
+        container.read(peopleProvider).people.single.role,
+        PersonRole.admin,
+      );
+    });
+
+    test('updatePerson refuses to demote the only admin', () async {
+      final container = await containerWithAdminSignedIn();
+      addTearDown(container.dispose);
+      final admin = container.read(peopleProvider).people.single;
+
+      await expectLater(
+        container
+            .read(peopleProvider.notifier)
+            .updatePerson(admin.copyWith(role: PersonRole.user)),
+        throwsA(
+          isA<StateError>().having(
+            (e) => e.message,
+            'message',
+            contains('only admin'),
+          ),
+        ),
+      );
+      expect(
+        container.read(peopleProvider).people.single.role,
+        PersonRole.admin,
+      );
+    });
+
+    test('hydrate promotes a person when no admin remains', () async {
+      SharedPreferences.setMockInitialValues({
+        kPeopleConfigPreferenceKey: AccountOwnershipConfig(
+          people: [
+            Person(
+              id: 'p1',
+              name: 'Alex',
+              colorValue: _kColor,
+              role: PersonRole.user,
+              createdAtIso: '2026-01-01T00:00:00.000Z',
+            ),
+          ],
+        ).encode(),
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          peopleProvider.overrideWith(
+            () => PeopleNotifier(
+              storage: const FlutterSecureStorage(),
+              biometricAuth: biometricAuth,
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await waitHydrated(container);
+
+      expect(
+        container.read(peopleProvider).people.single.role,
+        PersonRole.admin,
+      );
+    });
+
     test('changePassword rejects the wrong old password', () async {
       final container = await containerWithAdminSignedIn();
       addTearDown(container.dispose);

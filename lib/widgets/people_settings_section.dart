@@ -121,6 +121,9 @@ void showAddEditPersonDialog(
 
   final canManage = ref.read(canManagePeopleProvider);
   final isBootstrap = ref.read(peopleProvider).people.isEmpty;
+  final editingSoleAdmin =
+      personToEdit != null &&
+      isSoleAdmin(ref.read(peopleProvider).people, personToEdit.id);
 
   showDialog<void>(
     context: context,
@@ -427,16 +430,30 @@ void showAddEditPersonDialog(
                           .map(
                             (role) => DropdownMenuItem(
                               value: role,
+                              enabled:
+                                  !editingSoleAdmin || role == PersonRole.admin,
                               child: Text(_roleLabel(l10n, role)),
                             ),
                           )
                           .toList(),
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => selectedRole = value);
-                        }
-                      },
+                      onChanged: editingSoleAdmin
+                          ? null
+                          : (value) {
+                              if (value != null) {
+                                setState(() => selectedRole = value);
+                              }
+                            },
                     ),
+                    if (editingSoleAdmin) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        l10n.cannotDemoteOnlyAdmin,
+                        style: TextStyle(
+                          color: context.colors.text2,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 4),
                     Text(
                       _roleDescription(l10n, selectedRole),
@@ -553,14 +570,24 @@ void showAddEditPersonDialog(
           actions: [
             if (personToEdit != null && canManage)
               TextButton.icon(
-                onPressed: () async {
-                  await ref
-                      .read(peopleProvider.notifier)
-                      .removePerson(personToEdit.id);
-                  if (ctx.mounted) Navigator.of(ctx).pop();
-                },
+                onPressed: editingSoleAdmin
+                    ? null
+                    : () async {
+                        try {
+                          await ref
+                              .read(peopleProvider.notifier)
+                              .removePerson(personToEdit.id);
+                          if (ctx.mounted) Navigator.of(ctx).pop();
+                        } on StateError catch (e) {
+                          setState(() => errorText = e.message);
+                        }
+                      },
                 icon: const Icon(LucideIcons.trash2, size: 14),
-                label: Text(l10n.deletePerson),
+                label: Text(
+                  editingSoleAdmin
+                      ? l10n.cannotDeleteOnlyAdmin
+                      : l10n.deletePerson,
+                ),
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
               ),
             Row(

@@ -10,6 +10,12 @@ code comments, ADRs, and MCP descriptions.
 | **Firefly III** | External personal-finance API FireRacoon talks to |
 | **Engine** | `packages/engine` — models, Firefly client, projection/prognosis, stats |
 | **MCP surface** | Intentional subset of engine capabilities exposed as agent tools |
+| **Local mode** | `FIRERACOON_MODE=local` — FireRacoon state on device secure storage |
+| **Server mode** | `FIRERACOON_MODE=server` — Docker backend; encrypted `DATA_DIR` store |
+| **App store** | Persistence seam for people, prefs, avatars, undo, Firefly connection |
+| **BFF proxy** | Server-mode `/api/firefly/*` that attaches the server-held PAT |
+| **DATA_DIR** | Mounted directory for encrypted FireRacoon state (`fireracoon_data`) |
+| **DATA_PASSWORD** | Env password that creates/unlocks encrypted DATA_DIR on boot |
 | **Projection** | Coarse on-device forecast (`ProjectionService` / MCP `run_projection`) |
 | **Prognosis** | Rich account forecast in the UI (`AccountPrognosisService`) |
 | **Write-ahead** | Materializing upcoming recurrence occurrences as future transactions |

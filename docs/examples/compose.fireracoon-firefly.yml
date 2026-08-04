@@ -1,5 +1,6 @@
 # FireRacoon + Firefly III + MariaDB.
-# Demo credentials — change APP_KEY and DB passwords before any network exposure.
+# Demo credentials — change APP_KEY, DB passwords, and DATA_PASSWORD
+# before any network exposure.
 # Usage: docker compose -f docs/examples/compose.fireracoon-firefly.yml up -d
 #
 # FireRacoon → http://127.0.0.1:8082
@@ -11,7 +12,13 @@ services:
     # build:
     #   context: ../..
     ports:
-      - "127.0.0.1:8082:80"
+      - "127.0.0.1:8082:8080"
+    environment:
+      FIRERACOON_MODE: server
+      DATA_DIR: /data
+      DATA_PASSWORD: CHANGE_ME_DATA_PASSWORD
+    volumes:
+      - fireracoon_data:/data
     restart: unless-stopped
 
   firefly-app:
@@ -48,5 +55,6 @@ services:
     restart: unless-stopped
 
 volumes:
+  fireracoon_data:
   firefly_upload:
   firefly_db:

@@ -6016,6 +6016,18 @@ abstract class AppLocalizations {
   /// **'Delete Person'**
   String get deletePerson;
 
+  /// No description provided for @cannotDeleteOnlyAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot delete the only admin. Promote someone else first.'**
+  String get cannotDeleteOnlyAdmin;
+
+  /// No description provided for @cannotDemoteOnlyAdmin.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot demote the only admin. Promote someone else first.'**
+  String get cannotDemoteOnlyAdmin;
+
   /// No description provided for @personName.
   ///
   /// In en, this message translates to:

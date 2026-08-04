@@ -242,6 +242,19 @@ class PeopleNotifier extends Notifier<PeopleState> {
       await _persistAuth(auth);
     }
 
+    // Recover from a prior bug that allowed deleting the last admin.
+    if (config.people.isNotEmpty && !peopleHasAdmin(config.people)) {
+      config = config.copyWith(people: ensureAtLeastOneAdmin(config.people));
+      auth = PeopleAuthStorage(
+        byPersonId: {
+          for (final person in config.people) person.id: person.toAuthJson(),
+        },
+        requirePasswordLogin: auth.requirePasswordLogin,
+      );
+      await _persistConfig(config);
+      await _persistAuth(auth);
+    }
+
     final requirePasswordLogin = auth.requirePasswordLogin;
     final effectiveSessionId = requirePasswordLogin ? null : sessionId;
 
@@ -442,6 +455,13 @@ class PeopleNotifier extends Notifier<PeopleState> {
         'Cannot remove password while login with password is enabled.',
       );
     }
+    final existing = state.people.where((p) => p.id == updated.id).firstOrNull;
+    if (existing != null &&
+        existing.role == PersonRole.admin &&
+        updated.role != PersonRole.admin &&
+        isSoleAdmin(state.people, updated.id)) {
+      throw StateError('Cannot demote the only admin.');
+    }
     final people = state.people
         .map((p) => p.id == updated.id ? updated : p)
         .toList();
@@ -449,6 +469,9 @@ class PeopleNotifier extends Notifier<PeopleState> {
   }
 
   Future<void> removePerson(String personId) async {
+    if (isSoleAdmin(state.people, personId)) {
+      throw StateError('Cannot delete the only admin.');
+    }
     final updatedPeople = state.people.where((p) => p.id != personId).toList();
     final updatedOwnerships = <String, AccountOwnership>{};
     for (final entry in state.config.accountOwnerships.entries) {
@@ -609,7 +632,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
     final lastId = state.loggedInPersonId;
     state = state.copyWith(
       clearLoggedInPersonId: true,
-      lastSessionPersonId: lastId ?? state.lastSessionPersonId,
+      lastSessionPersonId: lastId,
     );
     await _persistSession(null);
     if (lastId != null) await _persistLastPerson(lastId);
@@ -737,18 +760,20 @@ class PeopleNotifier extends Notifier<PeopleState> {
     required Map<String, AccountOwnership> accountOwnerships,
     required bool requirePasswordLogin,
   }) async {
-    final sanitized = people.map((person) {
-      final kind = person.avatarKind == AvatarKind.custom
-          ? AvatarKind.none
-          : person.avatarKind;
-      return person.copyWith(
-        clearPassword: true,
-        biometricsEnabled: false,
-        avatarKind: kind,
-        clearAvatarValue: kind != AvatarKind.preset,
-        avatarValue: kind == AvatarKind.preset ? person.avatarValue : null,
-      );
-    }).toList();
+    final sanitized = ensureAtLeastOneAdmin(
+      people.map((person) {
+        final kind = person.avatarKind == AvatarKind.custom
+            ? AvatarKind.none
+            : person.avatarKind;
+        return person.copyWith(
+          clearPassword: true,
+          biometricsEnabled: false,
+          avatarKind: kind,
+          clearAvatarValue: kind != AvatarKind.preset,
+          avatarValue: kind == AvatarKind.preset ? person.avatarValue : null,
+        );
+      }).toList(),
+    );
 
     // Password hashes are never in the file; keep login-with-password off
     // until passwords are set on this device.

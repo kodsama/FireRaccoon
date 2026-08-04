@@ -248,6 +248,17 @@ class AuthNotifier extends Notifier<AuthSettings> {
     state = AuthSettings(isHydrated: true);
     _log.info('Auth settings cleared');
   }
+
+  /// Server-mode bridge: session token acts as the API bearer against the BFF.
+  void applyServerSession({required String url, required String token}) {
+    state = AuthSettings(
+      serverUrl: url,
+      apiToken: token,
+      authMode: AuthMode.token,
+      allowInsecure: true,
+      isHydrated: true,
+    );
+  }
 }
 
 final authProvider = NotifierProvider<AuthNotifier, AuthSettings>(

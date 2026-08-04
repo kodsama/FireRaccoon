@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../deployment/deployment_providers.dart';
 import '../l10n/l10n_extensions.dart';
 import '../models/people_models.dart';
 import '../providers/people_providers.dart';
+import '../providers/server_session_provider.dart';
 import '../theme/app_theme.dart';
 import '../widgets/fun_decorated_surface.dart';
 import '../widgets/person_avatar.dart';
@@ -73,6 +75,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       _isSubmitting = true;
       _error = null;
     });
+
+    if (ref.read(deploymentConfigProvider).isServer) {
+      try {
+        await ref
+            .read(serverSessionProvider.notifier)
+            .login(name: name, password: password);
+        if (!mounted) return;
+        setState(() => _isSubmitting = false);
+      } on Object {
+        if (!mounted) return;
+        setState(() {
+          _isSubmitting = false;
+          _error = l10n.loginInvalidCredentials;
+        });
+      }
+      return;
+    }
+
     final person = await ref
         .read(peopleProvider.notifier)
         .login(name, password);
@@ -116,8 +136,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final colors = context.colors;
+    final isServer = ref.watch(deploymentConfigProvider).isServer;
+    if (isServer) {
+      return _buildPasswordForm(context, canBiometric: false);
+    }
+
     final peopleState = ref.watch(peopleProvider);
     if (!peopleState.requirePasswordLogin) {
       return _buildPersonPicker(context, peopleState.people);
@@ -125,6 +148,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     final canBiometric =
         _biometricsAvailable && peopleState.canUnlockWithBiometrics;
+
+    return _buildPasswordForm(context, canBiometric: canBiometric);
+  }
+
+  Widget _buildPasswordForm(
+    BuildContext context, {
+    required bool canBiometric,
+  }) {
+    final l10n = context.l10n;
+    final colors = context.colors;
 
     return Scaffold(
       body: Center(
@@ -153,6 +186,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   autofillHints: const [AutofillHints.username],
                   textInputAction: TextInputAction.next,
                   decoration: InputDecoration(labelText: l10n.username),
+                  enabled: !_isSubmitting,
                 ),
                 const SizedBox(height: 12),
                 TextField(
@@ -172,6 +206,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
+                  enabled: !_isSubmitting,
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 12),

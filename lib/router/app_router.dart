@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../deployment/deployment_providers.dart';
 import '../providers/people_providers.dart';
+import '../providers/server_session_provider.dart';
 import '../screens/app_shell.dart';
 import '../screens/dashboard_screen.dart';
 import '../screens/login_screen.dart';
+import '../screens/server_setup_screen.dart';
+import '../screens/server_unlock_screen.dart';
 import '../screens/accounts_screen.dart';
 import '../screens/transactions_screen.dart';
 import '../screens/budgets_screen.dart';
@@ -33,6 +37,33 @@ String? resolvePeopleRedirect(PeopleState people, String matchedLocation) {
   return null;
 }
 
+/// Server-mode gate: unlock store, setup wizard, then login, then app.
+String? resolveServerRedirect({
+  required AsyncValue<ServerSession?> session,
+  required String matchedLocation,
+}) {
+  final goingUnlock = matchedLocation == '/unlock';
+  final goingSetup = matchedLocation == '/setup';
+  final goingLogin = matchedLocation == '/login';
+
+  if (session.isLoading) return null;
+  final value = session.asData?.value;
+
+  if (value?.storeLocked == true) {
+    return goingUnlock ? null : '/unlock';
+  }
+  if (value?.setupRequired == true && value?.isAuthenticated != true) {
+    if (goingUnlock) return '/setup';
+    return goingSetup ? null : '/setup';
+  }
+  if (value == null || !value.isAuthenticated) {
+    if (goingUnlock || goingSetup) return '/login';
+    return goingLogin ? null : '/login';
+  }
+  if (goingUnlock || goingSetup || goingLogin) return '/';
+  return null;
+}
+
 /// Back-compat alias for older tests/call sites.
 String? resolveAppUsersRedirect(PeopleState people, String matchedLocation) =>
     resolvePeopleRedirect(people, matchedLocation);
@@ -41,19 +72,44 @@ final routerProvider = Provider<GoRouter>((ref) {
   final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
   final shellNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'shell');
   final refresh = ValueNotifier<int>(0);
+  final isServer = ref.watch(deploymentConfigProvider).isServer;
+
   ref.listen<PeopleState>(peopleProvider, (_, _) {
     refresh.value++;
   });
+  if (isServer) {
+    ref.listen<AsyncValue<ServerSession?>>(serverSessionProvider, (_, _) {
+      refresh.value++;
+    });
+  }
   ref.onDispose(refresh.dispose);
 
   final router = GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/',
     refreshListenable: refresh,
-    redirect: (context, state) =>
-        resolvePeopleRedirect(ref.read(peopleProvider), state.matchedLocation),
+    redirect: (context, state) {
+      if (isServer) {
+        return resolveServerRedirect(
+          session: ref.read(serverSessionProvider),
+          matchedLocation: state.matchedLocation,
+        );
+      }
+      return resolvePeopleRedirect(
+        ref.read(peopleProvider),
+        state.matchedLocation,
+      );
+    },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(
+        path: '/unlock',
+        builder: (context, state) => const ServerUnlockScreen(),
+      ),
+      GoRoute(
+        path: '/setup',
+        builder: (context, state) => const ServerSetupScreen(),
+      ),
       ShellRoute(
         navigatorKey: shellNavigatorKey,
         builder: (context, state, child) {
