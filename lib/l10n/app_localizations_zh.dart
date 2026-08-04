@@ -3206,6 +3206,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deletePerson => 'Delete Person';
 
   @override
+  String get cannotDeleteOnlyAdmin =>
+      'Cannot delete the only admin. Promote someone else first.';
+
+  @override
+  String get cannotDemoteOnlyAdmin =>
+      'Cannot demote the only admin. Promote someone else first.';
+
+  @override
   String get personName => 'Person Name';
 
   @override

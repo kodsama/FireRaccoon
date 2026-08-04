@@ -66,6 +66,47 @@ void main() {
       );
       expect(person.hasPassword, isFalse);
     });
+
+    test('admin helpers keep at least one admin', () {
+      const alex = Person(
+        id: 'p1',
+        name: 'Alex',
+        colorValue: 0xFF3B82F6,
+        role: PersonRole.user,
+        createdAtIso: '2026-01-01T00:00:00.000Z',
+      );
+      const sam = Person(
+        id: 'p2',
+        name: 'Sam',
+        colorValue: 0xFF10B981,
+        role: PersonRole.admin,
+        createdAtIso: '2026-01-01T00:00:00.000Z',
+      );
+
+      expect(peopleHasAdmin(const [alex]), isFalse);
+      expect(peopleHasAdmin(const [alex, sam]), isTrue);
+      expect(isSoleAdmin(const [sam], 'p2'), isTrue);
+      expect(isSoleAdmin(const [alex, sam], 'p2'), isTrue);
+      expect(
+        isSoleAdmin(const [
+          alex,
+          sam,
+          Person(
+            id: 'p3',
+            name: 'Leo',
+            colorValue: 0xFFF59E0B,
+            role: PersonRole.admin,
+            createdAtIso: '2026-01-01T00:00:00.000Z',
+          ),
+        ], 'p2'),
+        isFalse,
+      );
+      expect(ensureAtLeastOneAdmin(const [alex]).single.role, PersonRole.admin);
+      expect(ensureAtLeastOneAdmin(const [alex, sam]).map((p) => p.role), [
+        PersonRole.user,
+        PersonRole.admin,
+      ]);
+    });
   });
 
   group('AccountOwnershipConfig ratio split calculations', () {

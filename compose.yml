@@ -4,7 +4,18 @@ services:
     build: .
     ports:
       # Loopback only: nothing here is meant to be reachable from the LAN.
-      - "127.0.0.1:8082:80"
+      - "127.0.0.1:8082:8080"
+    environment:
+      FIRERACOON_MODE: server
+      DATA_DIR: /data
+      # Unlocks (or creates) encrypted DATA_DIR on every boot so users only
+      # enter their account password in the UI — not the storage password.
+      DATA_PASSWORD: CHANGE_ME_DATA_PASSWORD
+      # Optional Firefly bootstrap (or complete setup in the UI):
+      # FIREFLY_URL: http://firefly-app:8080
+      # FIREFLY_TOKEN: ...
+    volumes:
+      - fireracoon_data:/data
     restart: unless-stopped
 
   firefly-app:
@@ -40,5 +51,6 @@ services:
       - firefly_db:/var/lib/mysql
 
 volumes:
+  fireracoon_data:
   firefly_upload:
   firefly_db:

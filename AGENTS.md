@@ -32,6 +32,15 @@ run projections, and compute dashboard KPIs without touching the GUI.
 Protocol version: `2025-06-18`. TCP clients must include `mcpToken` on
 `initialize`; stdio does not require it.
 
+## Deployment modes
+
+- `FIRERACOON_MODE=local` (default): device secure storage; browser/desktop PAT
+- `FIRERACOON_MODE=server` (Docker): encrypted `DATA_DIR`; set
+  `DATA_PASSWORD` to unlock on boot; users only enter account passwords;
+  volume `fireracoon_data`
+
+See `docs/adr/0002-local-vs-server-mode.md` and `docs/deployment.md`.
+
 ## Tools
 
 Intentional agent subset of `FireflyService` (not the full Firefly API). See

@@ -6,11 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fireracoon_engine/fireracoon_engine.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../deployment/deployment_providers.dart';
 import '../fun_modes/fun_mode.dart';
 import '../theme/app_colors.dart';
 import '../theme/theme_palette.dart';
 import '../providers/locale_provider.dart';
 import '../providers/prognosis_settings_provider.dart';
+import '../providers/server_session_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/transaction_page_size_provider.dart';
 import '../providers/view_mode_provider.dart';
@@ -174,6 +176,10 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
   }
 
   Future<void> _hydrate(int limit) async {
+    if (ref.read(deploymentConfigProvider).isServer) {
+      await _hydrateFromServer(limit);
+      return;
+    }
     final path = await _historyPath();
     if (!await jsonStoreExists(path)) {
       state = state.copyWith(isHydrated: true, limit: limit);
@@ -190,30 +196,67 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
         state = state.copyWith(isHydrated: true, limit: limit);
         return;
       }
-      final map = Map<String, Object?>.from(decoded);
-      final cursor = map['cursor'] is int ? map['cursor'] as int : -1;
-      final items = map['entries'] as List<Object?>? ?? const [];
-      final entries = items
-          .whereType<Map>()
-          .map((item) => UndoEntry.fromJson(Map<String, Object?>.from(item)))
-          .whereType<UndoEntry>()
-          .toList();
-      final normalizedEntries = entries.length > limit
-          ? entries.sublist(entries.length - limit)
-          : entries;
-      final adjustedCursor = normalizedEntries.isEmpty
-          ? -1
-          : cursor.clamp(-1, normalizedEntries.length - 1);
-      state = state.copyWith(
-        entries: normalizedEntries,
-        cursor: adjustedCursor,
-        isHydrated: true,
+      await _applyDecodedHistory(
+        Map<String, Object?>.from(decoded),
         limit: limit,
       );
-      await _persist();
     } on Object {
       state = state.copyWith(isHydrated: true, limit: limit);
     }
+  }
+
+  Future<void> _hydrateFromServer(int limit) async {
+    try {
+      // Yield so Notifier.build can finish before we touch [state].
+      await Future<void>.value();
+      final client = ref.read(serverSessionProvider.notifier).client;
+      if (client == null || client.sessionToken == null) {
+        state = state.copyWith(isHydrated: true, limit: limit);
+        return;
+      }
+      final snap = await client.fetchState();
+      final undo = snap['undo'];
+      if (undo is Map) {
+        await _applyDecodedHistory(
+          Map<String, Object?>.from(undo),
+          limit: limit,
+          persistAfter: false,
+        );
+        return;
+      }
+      state = state.copyWith(isHydrated: true, limit: limit);
+    } on Object {
+      state = state.copyWith(isHydrated: true, limit: limit);
+    }
+  }
+
+  Future<void> _applyDecodedHistory(
+    Map<String, Object?> map, {
+    required int limit,
+    bool persistAfter = true,
+  }) async {
+    final cursor = map['cursor'] is int
+        ? map['cursor'] as int
+        : (map['index'] is int ? map['index'] as int : -1);
+    final items = map['entries'] as List<Object?>? ?? const [];
+    final entries = items
+        .whereType<Map>()
+        .map((item) => UndoEntry.fromJson(Map<String, Object?>.from(item)))
+        .whereType<UndoEntry>()
+        .toList();
+    final normalizedEntries = entries.length > limit
+        ? entries.sublist(entries.length - limit)
+        : entries;
+    final adjustedCursor = normalizedEntries.isEmpty
+        ? -1
+        : cursor.clamp(-1, normalizedEntries.length - 1);
+    state = state.copyWith(
+      entries: normalizedEntries,
+      cursor: adjustedCursor,
+      isHydrated: true,
+      limit: limit,
+    );
+    if (persistAfter) await _persist();
   }
 
   Future<void> setLimit(int value) async {
@@ -968,12 +1011,24 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
   }
 
   Future<void> _persist() async {
-    final path = await _historyPath();
     final payload = <String, Object?>{
       'cursor': state.cursor,
+      'index': state.cursor,
       'limit': state.limit,
       'entries': state.entries.map((entry) => entry.toJson()).toList(),
     };
+    if (ref.read(deploymentConfigProvider).isServer) {
+      final client = ref.read(serverSessionProvider.notifier).client;
+      if (client != null && client.sessionToken != null) {
+        try {
+          await client.putUndo(payload);
+        } on Object {
+          // Keep in-memory history; next successful persist will sync.
+        }
+      }
+      return;
+    }
+    final path = await _historyPath();
     await jsonStoreWrite(path, jsonEncode(payload));
   }
 }

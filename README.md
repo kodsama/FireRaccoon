@@ -33,9 +33,15 @@
 
 ---
 
-FireRacoon talks to your existing Firefly III instance over the REST API. Data
-stays on your Firefly server; credentials live in platform secure storage and
-are never baked into builds.
+FireRacoon talks to your existing Firefly III instance over the REST API.
+Financial data stays on your Firefly server.
+
+**Local installs** (desktop, mobile, standalone web) keep FireRacoon
+credentials and preferences in platform secure storage.
+
+**Docker** runs **server mode** (`FIRERACOON_MODE=server`): FireRacoon state
+lives in an encrypted volume (`fireracoon_data`). Set `DATA_PASSWORD` so
+restarts unlock automatically; users only enter their account password.
 
 ## What it does
 
@@ -81,10 +87,16 @@ docker compose -f docs/examples/compose.fireracoon-firefly.yml up -d
 docker compose up --build
 ```
 
+Set `DATA_PASSWORD` so the container unlocks encrypted storage on every
+boot; users then only sign in with their account password. Default volume:
+`fireracoon_data` → `/data`. Bind-mount alternative: `- ./data/fireracoon:/data`.
+
 | Service | URL |
 |---------|-----|
 | FireRacoon | http://127.0.0.1:8082 |
-| Firefly III (full stack) | http://127.0.0.1:8082/firefly-local |
+| Firefly III (full stack) | http://127.0.0.1:8081 |
+
+First visit: admin setup (Firefly URL + token). Later users sign in on `/login`.
 
 Server and TLS: [Deployment](docs/deployment.md).
 
@@ -125,8 +137,8 @@ packages/engine/     Models, Firefly client, projection / prognosis
 packages/mcp/        Model Context Protocol server (stdio / TCP)
 test/                Unit and widget tests
 docs/                Guides and ADRs
-Dockerfile           Flutter web build → nginx
-compose.yml          Local demo: FireRacoon + Firefly III + MariaDB
+Dockerfile           Flutter web + fireracoon_server (encrypted DATA_DIR)
+compose.yml          Local demo: FireRacoon server mode + Firefly III + MariaDB
 openapi.yaml         Firefly REST subset + MCP tool mirrors
 ```
 

@@ -1,0 +1,76 @@
+import 'dart:convert';
+import 'dart:math';
+import 'dart:typed_data';
+
+import 'package:crypto/crypto.dart' as crypto_pkg;
+import 'package:cryptography/cryptography.dart';
+
+/// PBKDF2 helpers aligned with the Flutter client's password_policy.
+const int kPbkdf2Iterations = 100000;
+const int _kDerivedKeyLength = 32;
+const int _kSaltLength = 16;
+
+class PasswordHash {
+  const PasswordHash({required this.hash, required this.salt});
+
+  final String hash;
+  final String salt;
+}
+
+Future<PasswordHash> hashPassword(String password) async {
+  final saltBytes = Uint8List.fromList(
+    List<int>.generate(_kSaltLength, (_) => Random.secure().nextInt(256)),
+  );
+  final hashBytes = await _pbkdf2(password, saltBytes);
+  return PasswordHash(
+    hash: base64Encode(hashBytes),
+    salt: base64Encode(saltBytes),
+  );
+}
+
+Future<bool> verifyPassword({
+  required String password,
+  required String hash,
+  required String salt,
+}) async {
+  final saltBytes = base64Decode(salt);
+  final actual = await _pbkdf2(password, saltBytes);
+  final expected = base64Decode(hash);
+  if (actual.length != expected.length) return false;
+  var diff = 0;
+  for (var i = 0; i < actual.length; i++) {
+    diff |= actual[i] ^ expected[i];
+  }
+  return diff == 0;
+}
+
+Future<List<int>> _pbkdf2(String password, List<int> salt) async {
+  // Use cryptography package PBKDF2 for consistency with sealed store.
+  final pbkdf2 = Pbkdf2(
+    macAlgorithm: Hmac.sha256(),
+    iterations: kPbkdf2Iterations,
+    bits: _kDerivedKeyLength * 8,
+  );
+  final key = await pbkdf2.deriveKey(
+    secretKey: SecretKey(utf8.encode(password)),
+    nonce: salt,
+  );
+  final data = await key.extract();
+  return data.bytes;
+}
+
+String hashSessionToken(String token) {
+  return crypto_pkg.sha256.convert(utf8.encode(token)).toString();
+}
+
+String newId() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(16, (_) => random.nextInt(256));
+  return base64UrlEncode(bytes).replaceAll('=', '');
+}
+
+String newSessionToken() {
+  final random = Random.secure();
+  final bytes = List<int>.generate(32, (_) => random.nextInt(256));
+  return base64UrlEncode(bytes).replaceAll('=', '');
+}

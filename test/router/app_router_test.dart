@@ -1,12 +1,21 @@
+import 'dart:convert';
+
+import 'package:fireracoon/deployment/deployment_providers.dart';
+import 'package:fireracoon/deployment/fireracoon_mode.dart';
 import 'package:fireracoon/providers/people_providers.dart';
+import 'package:fireracoon/providers/server_session_provider.dart';
 import 'package:fireracoon/providers/theme_provider.dart';
 import 'package:fireracoon/router/app_router.dart';
+import 'package:fireracoon/store/remote_server_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -54,6 +63,79 @@ void main() {
     await tester.pumpAndSettle();
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pumpAndSettle();
+  });
+
+  testWidgets('server mode router builds unlock setup and prognosis redirect', (
+    tester,
+  ) async {
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(
+      {},
+    );
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        deploymentConfigProvider.overrideWithValue(
+          const DeploymentConfig(
+            mode: FireracoonMode.server,
+            apiBase: 'http://example.test',
+          ),
+        ),
+        serverSessionProvider.overrideWith(
+          () => ServerSessionNotifier(
+            storage: const FlutterSecureStorage(),
+            clientFactory: (_) => RemoteServerClient(
+              baseUrl: 'http://example.test',
+              httpClient: MockClient(
+                (_) async => http.Response(
+                  jsonEncode({
+                    'storeLocked': false,
+                    'storeExists': true,
+                    'setupRequired': false,
+                  }),
+                  200,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    await container.read(serverSessionProvider.future);
+    final router = container.read(routerProvider);
+    late BuildContext context;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (builderContext) {
+            context = builderContext;
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    for (final path in ['/unlock', '/setup', '/login']) {
+      final route = router.configuration.routes.whereType<GoRoute>().firstWhere(
+        (r) => r.path == path,
+      );
+      expect(route.builder!(context, _state(router, path)), isA<Widget>());
+    }
+
+    final shell = router.configuration.routes.whereType<ShellRoute>().single;
+    final prognosis = shell.routes.whereType<GoRoute>().firstWhere(
+      (r) => r.path == '/prognosis',
+    );
+    expect(
+      prognosis.redirect!(context, _state(router, '/prognosis')),
+      '/projection',
+    );
+
+    // Touch server redirect listener by updating session.
+    container.read(serverSessionProvider.notifier);
+    await tester.pump();
   });
 
   test('router keeps one GoRouter across people hydration', () async {

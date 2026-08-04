@@ -18,6 +18,23 @@ enum PersonRole {
   }
 }
 
+/// True when [people] contains at least one admin.
+bool peopleHasAdmin(Iterable<Person> people) =>
+    people.any((p) => p.role == PersonRole.admin);
+
+/// True when [personId] is an admin and the only one in [people].
+bool isSoleAdmin(List<Person> people, String personId) {
+  final admins = people.where((p) => p.role == PersonRole.admin).toList();
+  return admins.length == 1 && admins.single.id == personId;
+}
+
+/// Promotes the first person to admin when the list is non-empty and admin-less.
+List<Person> ensureAtLeastOneAdmin(List<Person> people) {
+  if (people.isEmpty || peopleHasAdmin(people)) return people;
+  final first = people.first;
+  return [first.copyWith(role: PersonRole.admin), ...people.skip(1)];
+}
+
 /// How a person's circular avatar is resolved.
 enum AvatarKind {
   none,

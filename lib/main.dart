@@ -7,22 +7,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fireracoon_engine/fireracoon_engine.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'deployment/deployment_providers.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/locale_provider.dart';
 import 'providers/mcp_provider.dart';
+import 'providers/server_session_provider.dart';
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
 import 'services/mcp_service.dart';
 import 'theme/app_theme.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _configureLogging();
   final prefs = await SharedPreferences.getInstance();
+  final deployment = await loadDeploymentConfig();
 
   runApp(
     ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        deploymentConfigProvider.overrideWithValue(deployment),
+      ],
       child: const FireRacoonApp(),
     ),
   );
@@ -47,7 +53,11 @@ void _configureLogging() {
     startupLog.shout('Uncaught platform error', error, stack);
     return true;
   };
-  startupLog.info('Logging configured at level ${level.name}');
+  const fromDefine = String.fromEnvironment('FIRERACOON_MODE');
+  startupLog.info(
+    'Logging configured at level ${level.name}; '
+    'FIRERACOON_MODE=${fromDefine.isEmpty ? 'local (default)' : fromDefine}',
+  );
 }
 
 class FireRacoonApp extends ConsumerWidget {
@@ -55,6 +65,10 @@ class FireRacoonApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final deployment = ref.watch(deploymentConfigProvider);
+    if (deployment.isServer) {
+      ref.watch(serverSessionProvider);
+    }
     final router = ref.watch(routerProvider);
     final themeSettings = ref.watch(themeProvider);
     final appLocale = ref.watch(localeProvider);

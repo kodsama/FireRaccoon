@@ -225,4 +225,29 @@ void main() {
 
     expect(find.text('Transaction created.'), findsOneWidget);
   });
+
+  testWidgets('deposit with cash-only accounts and no revenue', (tester) async {
+    final cashOnly = buildDialogFireflyService(
+      accounts: [
+        Account(
+          id: 'cash-1',
+          name: 'Wallet',
+          type: 'cash',
+          role: '',
+          currentBalance: 20,
+          currencySymbol: '€',
+          currencyCode: 'EUR',
+        ),
+      ],
+    );
+
+    await _openFlow(
+      tester,
+      fireflyService: cashOnly,
+      open: (context, ref) =>
+          openNewTransactionFlow(context, ref, type: 'deposit'),
+    );
+    expect(find.byType(TextField), findsWidgets);
+    await _dismissDialog(tester);
+  });
 }
