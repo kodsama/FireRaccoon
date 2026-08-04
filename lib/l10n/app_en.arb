@@ -1,0 +1,1852 @@
+{
+  "@@locale": "en",
+  "appTitle": "FireRacoon",
+  "appTagline": "The brightest bandit for your budget.",
+  "appNameFire": "Fire",
+  "appNameRacoon": "Racoon",
+  "navDashboard": "Dashboard",
+  "navDashboardShort": "Dash",
+  "navAccounts": "Accounts",
+  "navTransactions": "Transactions",
+  "navBudgets": "Budgets",
+  "navSubscriptions": "Subscriptions & Recurring",
+  "navPiggyBanks": "Piggy banks",
+  "navExpenses": "Expenses",
+  "navIncome": "Income",
+  "navTransfers": "Transfers",
+  "navLiabilities": "Liabilities",
+  "navProjection": "Projection",
+  "navPrognosis": "Prognosis",
+  "navSettings": "Settings",
+  "netWorth": "Net worth",
+  "search": "Search...",
+  "loading": "Loading…",
+  "fireflyUser": "Firefly user",
+  "fireflyConnected": "Firefly III · connected",
+  "fireflyDisconnected": "Firefly III · disconnected",
+  "fireflyConnectionChecking": "Firefly III · checking…",
+  "settingsTitle": "Settings",
+  "appVersion": "Version {version}",
+  "@appVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "language": "Language",
+  "selectLanguage": "Select language",
+  "languageEnglish": "English",
+  "languageFrench": "Français",
+  "languageSwedish": "Svenska",
+  "languagePortuguese": "Português",
+  "languageChinese": "简体中文",
+  "languageJapanese": "日本語",
+  "defaultCurrency": "Default Currency",
+  "selectCurrency": "Select currency",
+  "primaryCurrencyChangeWarning": "Firefly III may recalculate stored amounts when the default currency changes.",
+  "primaryCurrencyChanged": "Default currency set to {code}",
+  "@primaryCurrencyChanged": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToSetPrimaryCurrency": "Failed to set default currency: {error}",
+  "@failedToSetPrimaryCurrency": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "primaryCurrencyCurrent": "Current",
+  "changePrimaryCurrencyTitle": "Change default currency",
+  "changePrimaryCurrencyMessage": "Change the default currency to {code}? {warning}",
+  "@changePrimaryCurrencyMessage": {
+    "placeholders": {
+      "code": {
+        "type": "String"
+      },
+      "warning": {
+        "type": "String"
+      }
+    }
+  },
+  "changePrimaryCurrencyConfirm": "Change",
+  "connectToFireflyToLoad": "Connect to Firefly III to load",
+  "managedInFirefly": "Managed in Firefly III",
+  "appearance": "Appearance",
+  "racoonMode": "Racoon Mode",
+  "themeStyle": "Theme Style",
+  "themeStyleSubtitle": "Pick a palette, accent colour, and brightness. Changes apply instantly.",
+  "systemDefault": "System Default",
+  "themeBrightness": "Brightness",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "themePalette": "Palette",
+  "paletteClassic": "Classic",
+  "paletteSpectrum": "Spectrum",
+  "paletteRaccoon": "Raccoon",
+  "themeAccentColor": "Accent colour",
+  "themePreview": "Preview",
+  "done": "Done",
+  "accentGreen": "Green",
+  "accentTeal": "Teal",
+  "accentBlue": "Blue",
+  "accentOrange": "Orange",
+  "accentRed": "Red",
+  "accentViolet": "Violet",
+  "accentLime": "Lime",
+  "accentSky": "Sky",
+  "accentCharcoal": "Charcoal",
+  "accentSilver": "Silver",
+  "accentTan": "Tan",
+  "accentAmber": "Amber",
+  "accentSlate": "Slate",
+  "accentMidnight": "Midnight",
+  "accentSmoke": "Smoke",
+  "accentPearl": "Pearl",
+  "backendConnection": "Backend Connection (Firefly III)",
+  "serverUrl": "Server URL",
+  "notConnected": "Not connected",
+  "oauth2Connection": "OAuth2 Connection",
+  "personalAccessToken": "Personal Access Token",
+  "notSet": "Not set",
+  "disconnect": "Disconnect",
+  "fireflyConnectionTitle": "Firefly III Connection",
+  "serverUrlLabel": "Server URL (e.g. https://firefly.my-domain.com)",
+  "allowHttpConnections": "Allow HTTP connections",
+  "authenticationMethod": "Authentication Method",
+  "oauth2": "OAuth2",
+  "oauthClientId": "OAuth Client ID",
+  "testConnection": "Test Connection",
+  "connectionSuccessful": "Connection successful!",
+  "connectionFailed": "Connection failed. Please check your URL and Token.",
+  "loginViaBrowser": "Login via Browser",
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+  "errorGeneric": "Error: {error}",
+  "@errorGeneric": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingData": "Error loading data: {error}",
+  "@errorLoadingData": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "tabInsights": "Insights",
+  "tabAccounts": "Accounts",
+  "tabFocus": "Focus",
+  "totalBalance": "Total balance",
+  "incomeMonth": "Income · {month}",
+  "@incomeMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingMonth": "Spending · {month}",
+  "@spendingMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "savedMonth": "Saved · {month}",
+  "@savedMonth": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "snatchedFunds": "Snatched Funds",
+  "burntCash": "Burnt Cash",
+  "stash": "Stash",
+  "snatched": "Snatched",
+  "burnt": "Burnt",
+  "navDashboardRacoon": "The Den",
+  "navDashboardShortRacoon": "Den",
+  "navAccountsRacoon": "Stashes",
+  "navTransactionsRacoon": "Heist Log",
+  "navBudgetsRacoon": "Hoard Plans",
+  "navSubscriptionsRacoon": "Recurring Raids",
+  "navPiggyBanksRacoon": "Mini Stashes",
+  "navExpensesRacoon": "Burn Report",
+  "navProjectionRacoon": "Crystal Stash",
+  "navPrognosisRacoon": "Month-end loot",
+  "navSettingsRacoon": "Den Rules",
+  "netWorthRacoon": "Total Hoard",
+  "searchRacoon": "Sniff around…",
+  "accountsTitleRacoon": "Stashes",
+  "transactionsTitleRacoon": "Heist Log",
+  "budgetsTitleRacoon": "Hoard Plans",
+  "expensesTitleRacoon": "Burn Report",
+  "projectionTitleRacoon": "Crystal Stash",
+  "settingsTitleRacoon": "Den Rules",
+  "tabInsightsRacoon": "Loot Intel",
+  "tabAccountsRacoon": "Stashes",
+  "tabFocusRacoon": "Heist HQ",
+  "totalBalanceRacoon": "Full Stash",
+  "incomeMonthRacoon": "Snatched · {month}",
+  "@incomeMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingMonthRacoon": "Burnt · {month}",
+  "@spendingMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "savedMonthRacoon": "Stashed · {month}",
+  "@savedMonthRacoon": {
+    "placeholders": {
+      "month": {
+        "type": "String"
+      }
+    }
+  },
+  "cashFlowRacoon": "Loot Flow",
+  "whereMoneyGoesRacoon": "Where loot goes",
+  "recentActivityRacoon": "Recent Raids",
+  "yourAccountsRacoon": "Your Stashes",
+  "budgetsAtGlanceRacoon": "Hoard at a glance",
+  "viewAllAccountsRacoon": "All stashes",
+  "assetAccountsRacoon": "Treasure Stashes",
+  "liabilityAccountsRacoon": "Debts & IOUs",
+  "stocksAndFundsAccountsRacoon": "Market Stashes",
+  "allAccountsRacoon": "All Stashes",
+  "accountsRacoon": "Stashes",
+  "newTransactionRacoon": "Plan a Heist",
+  "editTransactionRacoon": "Edit Heist",
+  "transactionsCountRacoon": "{count} heists",
+  "@transactionsCountRacoon": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneTransactionRacoon": "1 heist",
+  "transactionTypeDepositRacoon": "Snatch",
+  "transactionTypeWithdrawalRacoon": "Burn",
+  "transactionTypeTransferRacoon": "Stash Shuffle",
+  "expenseLabelRacoon": "Burn",
+  "spentRacoon": "Burnt",
+  "newBudgetRacoon": "New Hoard Plan",
+  "projectedBalanceRacoon": "Future Hoard",
+  "piggyBankRacoon": "Mini Stash",
+  "transfersRacoon": "Stash Shuffles",
+  "expensesFilterRacoon": "Burns",
+  "noTransactionsYetRacoon": "No heists yet",
+  "lookingAheadRacoon": "Peeking Ahead",
+  "openProjectionRacoon": "Peek the Future",
+  "editAccountRacoon": "Edit Stash",
+  "accountNameRacoon": "Stash name",
+  "filterAccountRacoon": "Filter Stash",
+  "sourceAccountRacoon": "From Stash",
+  "destinationAccountRacoon": "To Stash",
+  "totalSpentPeriodRacoon": "Total burnt this period",
+  "totalIncomePeriodRacoon": "Total snatched this period",
+  "totalTransferredPeriodRacoon": "Total shuffled this period",
+  "newAccount": "New Account",
+  "newLiability": "New Liability",
+  "newExpense": "New Expense",
+  "newAccountRacoon": "New Stash",
+  "newLiabilityRacoon": "New IOU",
+  "newExpenseRacoon": "Plan a Burn",
+  "income": "Income",
+  "spending": "Spending",
+  "saved": "Saved",
+  "cashFlow": "Cash flow",
+  "whereMoneyGoes": "Where money goes",
+  "noSpendingThisMonth": "No spending this month yet",
+  "recentActivity": "Recent activity",
+  "viewAll": "View all",
+  "noTransactionsYet": "No transactions yet",
+  "lookingAhead": "Looking ahead",
+  "spendingPaceWarning": "Spending pace may exceed income this month",
+  "openProjection": "Open projection",
+  "yourAccounts": "Your Accounts",
+  "budgetsAtGlance": "Budgets at a glance",
+  "viewAllAccounts": "View all accounts",
+  "thirtyDayOutlook": "30-day outlook",
+  "monthEndPrognosis": "Month-end prognosis",
+  "projectedEndOfMonth": "End of month",
+  "includeCreditCardPayments": "Include credit card payments",
+  "prognosisDeltaPositive": "+{amount} expected",
+  "@prognosisDeltaPositive": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisDeltaNegative": "{amount} expected",
+  "@prognosisDeltaNegative": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisLowBalanceWarning": "Projected balance may go negative",
+  "prognosisDebtWarning": "Projected debt may increase",
+  "openPrognosis": "Open prognosis",
+  "prognosisMarginLabel": "Margin of error",
+  "prognosisMarginDetail": "±{percent}% uncertainty on amounts",
+  "@prognosisMarginDetail": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisIncludeScheduled": "Scheduled transactions",
+  "prognosisIncludeRecurring": "Recurring transactions",
+  "prognosisIncludeBills": "Subscriptions",
+  "prognosisIncludeIncome": "Income",
+  "prognosisIncludeExpenses": "Expenses",
+  "prognosisIncludeTransfers": "Transfers",
+  "prognosisIncludeCreditCards": "Credit cards",
+  "prognosisEndOfNextMonth": "End of next month",
+  "prognosisMinBalance": "Min prognosis",
+  "prognosisMaxBalance": "Max prognosis",
+  "prognosisExpectedBalance": "Expected",
+  "prognosisSelectAccount": "Account",
+  "prognosisBandLegend": "Shaded band shows min–max range; line is expected",
+  "prognosisModeExpected": "Real projection",
+  "prognosisModeProjected": "Speculative projection",
+  "prognosisModeExpectedHint": "Month-end balances from current balances, scheduled transactions, recurring items, and bills",
+  "prognosisModeProjectedHint": "Trend-based forecast from historical net cash flow",
+  "prognosisHorizonLabel": "Horizon",
+  "prognosisHorizonEndOfMonth": "End of month",
+  "prognosisHorizonEndOfNextMonth": "Next month",
+  "prognosisHorizonTwoMonths": "2 months",
+  "prognosisHorizonThreeMonths": "3 months",
+  "prognosisHorizonSixMonths": "6 months",
+  "prognosisHorizonOneYear": "1 year",
+  "prognosisHorizonThreeYears": "3 years",
+  "prognosisHorizonFiveYears": "5 years",
+  "prognosisHorizonTenYears": "10 years",
+  "prognosisMilestoneThreeMonths": "End of 3 months",
+  "prognosisMilestoneSixMonths": "End of 6 months",
+  "prognosisMilestoneOneYear": "End of 1 year",
+  "prognosisIncludeSources": "Include in forecast",
+  "prognosisIncludeLiabilities": "Liabilities",
+  "prognosisNegativeOn": "Negative on {date}",
+  "@prognosisNegativeOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "prognosisCurrentBalance": "Current balance",
+  "prognosisPredictedBalances": "Predicted balances",
+  "todaysTimeline": "Today's timeline",
+  "noActivityToday": "No activity today",
+  "noChangeVsLastMonth": "No change vs last month",
+  "newActivityThisMonth": "New activity this month",
+  "percentVsLastMonth": "{arrow}{percent}% vs last month",
+  "@percentVsLastMonth": {
+    "placeholders": {
+      "arrow": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "projectedSavingsHeadline": "{amount} projected savings this month",
+  "@projectedSavingsHeadline": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "onPaceDetail": "On pace for {amount} saved by month end",
+  "@onPaceDetail": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "spendingOutpacingDetail": "Spending is outpacing income by {amount}",
+  "@spendingOutpacingDetail": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "accountsTitle": "Accounts",
+  "assetAccounts": "Asset Accounts",
+  "stocksAndFundsAccounts": "Stocks & Funds Accounts",
+  "liabilityAccounts": "Liability Accounts",
+  "noAccountsFound": "No accounts found.",
+  "allAccounts": "All accounts",
+  "assetsOnly": "Assets only",
+  "liabilitiesOnly": "Liabilities only",
+  "accountName": "Account name",
+  "accountRoleDefault": "Checking account",
+  "accountRoleShared": "Shared account",
+  "accountRoleSaving": "Savings account",
+  "accountRoleCreditCard": "Credit card",
+  "holdingAccountFundLabel": "(Fund)",
+  "holdingAccountStockLabel": "(Stock)",
+  "failedToUpdate": "Failed to update: {error}",
+  "@failedToUpdate": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "name": "Name",
+  "transactionsTitle": "Transactions",
+  "filteredBy": "Filtered by: {account}",
+  "@filteredBy": {
+    "placeholders": {
+      "account": {
+        "type": "String"
+      }
+    }
+  },
+  "balance": "Balance:",
+  "balanceCheckMode": "Check balance",
+  "balanceCheckExpected": "Expected balance",
+  "balanceCheckStatement": "Your balance",
+  "balanceCheckStatementHint": "Enter balance from your statement",
+  "balanceCheckMatch": "Balances match",
+  "balanceCheckDifference": "Difference: {amount}",
+  "@balanceCheckDifference": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceCheckEnterBalance": "Enter a balance to compare",
+  "balanceCheckInvalidAmount": "Enter a valid amount",
+  "balanceCheckSelectedBalance": "Balance from selected",
+  "balanceCheckReconcile": "Reconcile selected",
+  "balanceCheckReconciled": "Selected transactions reconciled",
+  "balanceCheckNothingToReconcile": "Nothing to reconcile. Select unreconciled transactions to include them.",
+  "balanceCheckPaymentAccount": "Payment account",
+  "balanceCheckPaybackDate": "Payback date",
+  "balanceCheckSelectPaymentAccount": "Select payment account",
+  "balanceCheckNoPaymentAccounts": "No eligible payment accounts",
+  "balanceCheckPaybackSummary": "Payback: {amount} from {account} on {date}",
+  "@balanceCheckPaybackSummary": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "account": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "balanceCheckPaybackReconciled": "Purchases reconciled and payback transfer created",
+  "balanceCheckNoEligiblePurchases": "Select at least one credit card purchase",
+  "tooltipBalanceCheckMode": "Compare your statement balance with Firefly",
+  "tooltipBalanceCheckIncludePending": "Include in balance check",
+  "tooltipBalanceCheckExcludeReconciled": "Exclude from balance check",
+  "transactionReconciled": "Reconciled",
+  "partiallyReconciled": "Partially reconciled",
+  "tooltipTransactionReconciled": "Verified against your bank statement",
+  "transactionReconciledUpdated": "Reconciliation updated",
+  "failedToUpdateReconciliation": "Failed to update reconciliation: {error}",
+  "@failedToUpdateReconciliation": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciledFilter": "Reconciliation",
+  "reconciledFilterAll": "All transactions",
+  "reconciledFilterReconciled": "Reconciled only",
+  "reconciledFilterUnreconciled": "Unreconciled only",
+  "reconcile": "Reconcile",
+  "reconcileExpectedBalance": "Expected balance: {amount}",
+  "@reconcileExpectedBalance": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconcileClickHint": "Click to reconcile",
+  "reconciliationTitle": "Reconcile account",
+  "reconciliationSubtitle": "Match your statement with Firefly III",
+  "reconciliationAccount": "Account",
+  "reconciliationStartDate": "Start date",
+  "reconciliationEndDate": "End date",
+  "reconciliationStartBalance": "Opening balance",
+  "reconciliationEndBalance": "Closing balance",
+  "reconciliationStart": "Start reconciling",
+  "reconciliationRestart": "Restart",
+  "reconciliationOptions": "Reconciliation options",
+  "reconciliationGapZero": "Your checked transactions match the statement. You can store this reconciliation.",
+  "reconciliationGapPositive": "Firefly has {amount} less than your statement. A correction transaction can be created when you store.",
+  "@reconciliationGapPositive": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationGapNegative": "Firefly has {amount} more than your statement. A correction transaction can be created when you store.",
+  "@reconciliationGapNegative": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationStore": "Store reconciliation",
+  "reconciliationStoreTitle": "Store reconciliation?",
+  "reconciliationStoreBody": "Mark {count} transactions as reconciled.",
+  "@reconciliationStoreBody": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "reconciliationCreateCorrectionTitle": "Create correction transaction?",
+  "reconciliationCreateCorrectionBody": "There is a remaining difference of {amount}. FireRacoon will create a reconciliation transaction to correct it.",
+  "@reconciliationCreateCorrectionBody": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationStored": "Reconciliation stored",
+  "reconciliationStoreFailed": "Failed to store reconciliation: {error}",
+  "@reconciliationStoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "reconciliationSelectAccount": "Select an asset account to reconcile",
+  "reconciliationInvalidBalances": "Enter valid opening and closing balances",
+  "reconciliationInvalidDateRange": "End date must be on or after the start date",
+  "reconciliationSelectTransactions": "Check at least one transaction from your statement",
+  "reconciliationNoTransactions": "No transactions found for this period",
+  "reconciliationUnreconciled": "Unreconciled",
+  "reconciliationFutureTransaction": "After period end",
+  "futureTransactions": "Future transactions",
+  "reconciliationOpenWizard": "Reconcile account",
+  "tooltipReconciliationWizard": "Match transactions against your bank statement",
+  "reconciliationUseFireflyBalances": "Use Firefly balances",
+  "reconciliationLoadingBalances": "Loading balances from Firefly…",
+  "reconciliationBalancesFilled": "Balances filled from Firefly",
+  "reconciliationBalancesFailed": "Could not load balances: {error}",
+  "@reconciliationBalancesFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "notAvailable": "N/A",
+  "groupBy": "Group By",
+  "groupByDate": "Group by Date",
+  "groupByAccount": "Group by Account",
+  "groupByPayee": "Group by Payee",
+  "groupByType": "Group by Type",
+  "groupByCategory": "Group by Category",
+  "filterAccount": "Filter Account",
+  "amount": "Amount",
+  "accounts": "Accounts",
+  "description": "Description",
+  "sourceAccount": "Source Account",
+  "destinationAccount": "Destination Account",
+  "payee": "Payee",
+  "savingNotSupported": "Saving is not supported in read-only mode.",
+  "transactionDateCategory": "{category} · {date}",
+  "@transactionDateCategory": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "foreignAmount": "({amount})",
+  "@foreignAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsTitle": "Budgets",
+  "subscriptionsTitle": "Subscriptions & Recurring",
+  "newSubscription": "New Subscription",
+  "createSubscription": "Create Subscription",
+  "editSubscription": "Edit Subscription",
+  "subscriptionCreated": "Subscription created.",
+  "subscriptionDeleted": "Subscription \"{name}\" deleted.",
+  "@subscriptionDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateSubscription": "Failed to create subscription: {error}",
+  "@failedToCreateSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateSubscription": "Failed to update subscription: {error}",
+  "@failedToUpdateSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteSubscription": "Failed to delete subscription: {error}",
+  "@failedToDeleteSubscription": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteSubscription": "Delete Subscription",
+  "deleteSubscriptionConfirmBody": "Are you sure you want to delete the subscription \"{name}\"? This action cannot be undone.",
+  "@deleteSubscriptionConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noSubscriptionsFound": "No subscriptions found.",
+  "subscriptionInactive": "Inactive",
+  "subscriptionActive": "Active",
+  "mandatoryFields": "Mandatory fields",
+  "optionalFields": "Optional fields",
+  "minimumAmount": "Minimum amount",
+  "maximumAmount": "Maximum amount",
+  "startDate": "Start date",
+  "repeats": "Repeats",
+  "skip": "Skip",
+  "skipHelp": "Use skip to create bi-monthly (skip = 1) or other custom intervals.",
+  "endDate": "End date",
+  "endDateHelp": "Optional. The subscription is expected to end on this date.",
+  "extensionDate": "Extension date",
+  "extensionDateHelp": "Optional. The subscription must be extended (or cancelled) on or before this date.",
+  "group": "Group",
+  "notesMarkdownHint": "This field supports Markdown.",
+  "repeatWeekly": "Weekly",
+  "repeatMonthly": "Monthly",
+  "repeatQuarterly": "Quarterly",
+  "repeatHalfYear": "Half-year",
+  "repeatYearly": "Yearly",
+  "subscriptionAmountRange": "{min} – {max}",
+  "@subscriptionAmountRange": {
+    "placeholders": {
+      "min": {
+        "type": "String"
+      },
+      "max": {
+        "type": "String"
+      }
+    }
+  },
+  "tabSubscriptions": "Subscriptions",
+  "tabRecurringTransactions": "Recurring transactions",
+  "badgeSubscription": "Subscription",
+  "badgeRecurringTransaction": "Recurring transaction",
+  "addSubscription": "Subscription",
+  "addRecurringTransaction": "Recurring",
+  "noSubscriptionsOrRecurrencesFound": "No subscriptions or recurring transactions found.",
+  "newRecurringTransaction": "New Recurring Transaction",
+  "createRecurringTransaction": "Create Recurring Transaction",
+  "editRecurringTransaction": "Edit Recurring Transaction",
+  "recurringTransactionCreated": "Recurring transaction created.",
+  "recurringTransactionDeleted": "Recurring transaction \"{name}\" deleted.",
+  "@recurringTransactionDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateRecurringTransaction": "Failed to create recurring transaction: {error}",
+  "@failedToCreateRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdateRecurringTransaction": "Failed to update recurring transaction: {error}",
+  "@failedToUpdateRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteRecurringTransaction": "Failed to delete recurring transaction: {error}",
+  "@failedToDeleteRecurringTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteRecurringTransaction": "Delete Recurring Transaction",
+  "deleteRecurringTransactionConfirmBody": "Are you sure you want to delete the recurring transaction \"{name}\"? This action cannot be undone.",
+  "@deleteRecurringTransactionConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noRecurringTransactionsFound": "No recurring transactions found.",
+  "recurringTransactionInactive": "Inactive",
+  "mandatoryRecurrenceFields": "Mandatory recurrence information",
+  "optionalRecurrenceFields": "Optional recurrence information",
+  "mandatoryTransactionFields": "Mandatory transaction information",
+  "optionalTransactionFields": "Optional transaction information",
+  "recurrenceTitle": "Title",
+  "firstDate": "First date",
+  "firstDateHelp": "Indicate the first expected recurrence. This must be in the future.",
+  "typeOfRepetition": "Type of repetition",
+  "typeOfRepetitionHelp": "Change the first date to see more options.",
+  "weekendHandling": "Weekend",
+  "weekendCreateAnyway": "Just create the transaction",
+  "weekendSkip": "Do not create a transaction",
+  "weekendPreviousFriday": "Skip to the previous Friday",
+  "weekendNextMonday": "Skip to the next Monday",
+  "weekendHelp": "What should Firefly III do when the recurring transaction falls on a Saturday or Sunday?",
+  "repetitionEnds": "Repetition ends",
+  "repeatForever": "Repeat forever",
+  "repeatUntilDate": "Repeat until date",
+  "repeatCount": "Repeat a fixed number of times",
+  "numberOfRepetitions": "Number of repetitions",
+  "applyRules": "Apply rules",
+  "applyRulesHelp": "Whether to fire rules after creating each transaction.",
+  "recurrenceDescription": "Recurring transaction description",
+  "repeatDaily": "Daily",
+  "repeatNdom": "Monthly on nth weekday",
+  "recurrenceAmount": "{amount}",
+  "@recurrenceAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipOpenSubscriptions": "Open subscriptions and recurring transactions.",
+  "subscriptionsTitleRacoon": "Recurring Raids & Schedules",
+  "newSubscriptionRacoon": "New Recurring Raid",
+  "piggyBanksTitle": "Piggy banks",
+  "newPiggyBank": "New piggy bank",
+  "createPiggyBank": "Create piggy bank",
+  "editPiggyBank": "Edit piggy bank",
+  "piggyBankCreated": "Piggy bank created.",
+  "piggyBankDeleted": "Piggy bank \"{name}\" deleted.",
+  "@piggyBankDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreatePiggyBank": "Failed to create piggy bank: {error}",
+  "@failedToCreatePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToUpdatePiggyBank": "Failed to update piggy bank: {error}",
+  "@failedToUpdatePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeletePiggyBank": "Failed to delete piggy bank: {error}",
+  "@failedToDeletePiggyBank": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "deletePiggyBank": "Delete piggy bank",
+  "deletePiggyBankConfirmBody": "Are you sure you want to delete the piggy bank \"{name}\"? This action cannot be undone.",
+  "@deletePiggyBankConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "noPiggyBanksFound": "No piggy banks found.",
+  "targetAmount": "Target amount",
+  "piggyBankCurrencyHelp": "Piggy banks can only save money in a single currency.",
+  "saveOnAccounts": "Save on account(s)",
+  "piggyBankAccountsHelp": "Only accounts that use the previously selected currency will be accepted.",
+  "targetDate": "Target date",
+  "targetDateHelp": "The date you intend to finish saving money.",
+  "accountGroupDefaultAssets": "Default asset accounts",
+  "accountGroupSavings": "Savings accounts",
+  "accountGroupCash": "Cash wallets",
+  "accountGroupLiabilities": "Liabilities",
+  "selectAtLeastOneAccount": "Select at least one account.",
+  "piggyBankProgress": "{current} / {target}",
+  "@piggyBankProgress": {
+    "placeholders": {
+      "current": {
+        "type": "String"
+      },
+      "target": {
+        "type": "String"
+      }
+    }
+  },
+  "piggyBanksTitleRacoon": "Mini Stashes",
+  "newPiggyBankRacoon": "New Mini Stash",
+  "newBudget": "New Budget",
+  "deleteBudget": "Delete Budget",
+  "deleteBudgetMessage": "Are you sure you want to delete \"{name}\"?",
+  "@deleteBudgetMessage": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetDeleted": "Budget \"{name}\" deleted.",
+  "@budgetDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteBudget": "Failed to delete budget: {error}",
+  "@failedToDeleteBudget": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "spent": "Spent",
+  "ofAmount": "of {amount}",
+  "@ofAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "overBudget": "{amount} over budget",
+  "@overBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "leftInBudget": "{amount} left",
+  "@leftInBudget": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetPerPeriod": "{amount} per {period}",
+  "@budgetPerPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetLimitForPeriod": "{amount} for {period}",
+  "@budgetLimitForPeriod": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetCadenceDaily": "day",
+  "budgetCadenceWeekly": "week",
+  "budgetCadenceMonthly": "month",
+  "budgetCadenceQuarterly": "quarter",
+  "budgetCadenceHalfYear": "half-year",
+  "budgetCadenceYearly": "year",
+  "viewPeriod": "View period",
+  "budgetAmount": "Budget amount",
+  "editBudget": "Edit Budget",
+  "createBudget": "Create Budget",
+  "createPayee": "Create Payee",
+  "createCategory": "Create Category",
+  "budgetLimit": "Budget limit",
+  "autoBudget": "Auto-budget amount",
+  "budgetAmountMode": "Limit type",
+  "budgetAmountModeAuto": "Repeating period",
+  "budgetAmountModeDateRange": "Fixed date range",
+  "budgetAmountModeNone": "No amount",
+  "budgetRepeatPeriod": "Repeats every",
+  "budgetAutoType": "Auto-budget behavior",
+  "budgetAutoTypeReset": "Reset each period",
+  "budgetAutoTypeRollover": "Roll over unused",
+  "budgetAutoTypeAdjusted": "Adjust to spending",
+  "budgetAutoTypeNone": "None",
+  "budgetActive": "Active",
+  "budgetPeriodDaily": "Daily",
+  "budgetPeriodWeekly": "Weekly",
+  "budgetPeriodMonthly": "Monthly",
+  "budgetPeriodQuarterly": "Quarterly",
+  "budgetPeriodHalfYear": "Every half year",
+  "budgetPeriodYearly": "Yearly",
+  "tooltipBudgetAmountMode": "Choose a repeating auto-budget, a fixed date range, or no limit",
+  "tooltipBudgetRepeatPeriod": "How often the budget amount applies (e.g. monthly)",
+  "tooltipBudgetAutoType": "What happens at the start of each budget period",
+  "tooltipBudgetStartDate": "First day this budget limit applies",
+  "tooltipBudgetEndDate": "Last day this budget limit applies",
+  "tooltipBudgetActive": "Inactive budgets are hidden from default views in Firefly",
+  "tooltipBudgetNotes": "Optional notes stored with the budget",
+  "tooltipBudgetCurrency": "Currency for the budget amount",
+  "expensesTitle": "Expenses",
+  "clearFilters": "Clear filters",
+  "overview": "Overview",
+  "byCategory": "By Category",
+  "allCategories": "All Categories",
+  "allTypes": "All Types",
+  "expensesFilter": "Expenses",
+  "transfers": "Transfers",
+  "expensePeriodWeek": "This Week",
+  "expensePeriodMonth": "This Month",
+  "expensePeriodQuarter": "This Quarter",
+  "expensePeriodSemester": "This Semester",
+  "expensePeriodYear": "This Year",
+  "expensePeriodAll": "All Time",
+  "dashboardPeriodThisWeek": "This week",
+  "dashboardPeriodLastWeek": "Last week",
+  "dashboardPeriodThisMonth": "This month",
+  "dashboardPeriodLastMonth": "Last month",
+  "dashboardPeriodThisQuarter": "This quarter",
+  "dashboardPeriodLastQuarter": "Last quarter",
+  "dashboardPeriodThisYear": "This year",
+  "dashboardPeriodLastYear": "Last year",
+  "dashboardPeriodLast2Years": "Last 2 years",
+  "dashboardPeriodLast5Years": "Last 5 years",
+  "dashboardPeriodLast10Years": "Last 10 years",
+  "dashboardPeriodAll": "All",
+  "deltaComparisonPreviousWeek": "previous week",
+  "deltaComparisonPreviousMonth": "previous month",
+  "deltaComparisonPreviousQuarter": "previous quarter",
+  "deltaComparisonPreviousYear": "previous year",
+  "deltaComparisonPrevious2Years": "previous 2 years",
+  "deltaComparisonPrevious5Years": "previous 5 years",
+  "deltaComparisonPrevious10Years": "previous 10 years",
+  "deltaComparisonCustomPeriod": "previous period",
+  "noChangeVsComparisonPeriod": "No change vs {period}",
+  "@noChangeVsComparisonPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "newActivityVsComparisonPeriod": "New activity vs {period}",
+  "@newActivityVsComparisonPeriod": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "percentVsComparisonPeriod": "{arrow}{percent}% vs {period}",
+  "@percentVsComparisonPeriod": {
+    "placeholders": {
+      "arrow": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "dateRangeSeparator": "–",
+  "dateEllipsis": "…",
+  "projectionTitle": "Projection",
+  "projectedBalance": "Projected balance",
+  "visualization": "Visualization",
+  "parameters": "Parameters",
+  "predictedBalances": "Predicted balances · {period}",
+  "@predictedBalances": {
+    "placeholders": {
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "noAccountsLoaded": "No accounts loaded",
+  "scenarioSummary": "Scenario summary",
+  "nowAmount": "now {amount}",
+  "@nowAmount": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "worstCase": "Worst case",
+  "expected": "Expected",
+  "bestCase": "Best case",
+  "moveSliderToSeeImpact": "Move the slider to see impact",
+  "whatIfImpact": "+{amount} over {period}",
+  "@whatIfImpact": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "period": {
+        "type": "String"
+      }
+    }
+  },
+  "projectionPeriod3Months": "3 Months",
+  "projectionPeriod6Months": "6 Months",
+  "projectionPeriod1Year": "1 Year",
+  "projectionPeriod3Years": "3 Years",
+  "projectionTypeSavings": "Savings rate",
+  "projectionTypeCompound": "Compound growth",
+  "projectionTypePortfolio": "Portfolio (volatile)",
+  "projectionTypeCashflow": "Cash flow",
+  "projectionTypeSavingsDesc": "Linear projection from your historical net savings",
+  "projectionTypeCompoundDesc": "Balance grows with compound interest plus contributions",
+  "projectionTypePortfolioDesc": "Expected return with worst/best bands from volatility",
+  "projectionTypeCashflowDesc": "Income minus expenses with discretionary adjustments",
+  "chartStyleFan": "Fan chart",
+  "chartStyleLines": "Three lines",
+  "chartStyleScenarios": "Scenario cards",
+  "whatIfSpending": "What-if spending",
+  "annualReturn": "Annual return",
+  "volatility": "Volatility",
+  "projectionAlertLiability": "At worst case, {name} may reach {balance} sooner than expected.",
+  "@projectionAlertLiability": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "balance": {
+        "type": "String"
+      }
+    }
+  },
+  "projectionAlertBelowZero": "Worst-case projection dips below zero within the selected period.",
+  "projectionAlertActionLiability": "Consider moving funds from a savings account.",
+  "projectionAlertActionSpending": "Review discretionary spending or increase savings.",
+  "confirmTypeWord": "Type ",
+  "confirmToConfirm": " to confirm:",
+  "confirmHint": "Type the word above…",
+  "currencyPair": "{name} ({symbol})",
+  "@currencyPair": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetSpentFraction": "{spent} / {total}",
+  "@budgetSpentFraction": {
+    "placeholders": {
+      "spent": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "editAccount": "Edit Account",
+  "editAction": "Edit",
+  "filterAllShort": "All",
+  "filterAssetsShort": "Assets",
+  "filterLiabilitiesShort": "Liabilities",
+  "showInactiveAccounts": "Show inactive accounts",
+  "showInactiveAccountsShort": "Inactive",
+  "accountInactive": "Inactive",
+  "unknown": "Unknown",
+  "showingTransactionsOfTotal": "Showing {loaded} of {total} transactions",
+  "@showingTransactionsOfTotal": {
+    "placeholders": {
+      "loaded": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "transactionsCount": "{count} transactions",
+  "@transactionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "oneTransaction": "1 transaction",
+  "deleteBudgetConfirmBody": "Are you sure you want to delete the budget \"{name}\"? This action cannot be undone.",
+  "@deleteBudgetConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "scrollForMore": "Scroll for more…",
+  "noTransactionsMatchFilters": "No transactions match the current filters.",
+  "category": "Category",
+  "totalSpentPeriod": "Total spent this period",
+  "totalIncomePeriod": "Total income this period",
+  "totalTransferredPeriod": "Total transferred this period",
+  "totalPeriod": "Total this period",
+  "volatilityUncertainty": "Volatility / uncertainty",
+  "editTransaction": "Edit Transaction",
+  "newDeposit": "Create new deposit",
+  "editDeposit": "Edit deposit",
+  "newWithdrawal": "Create new withdrawal",
+  "editWithdrawal": "Edit withdrawal",
+  "newTransfer": "Create new transfer",
+  "editTransfer": "Edit transfer",
+  "revenueAccount": "Revenue account",
+  "assetAccount": "Asset account",
+  "expenseAccount": "Expense account",
+  "expenseLabel": "Expense",
+  "transactionTypeDeposit": "Deposit",
+  "transactionTypeWithdrawal": "Withdrawal",
+  "transactionTypeTransfer": "Transfer",
+  "dataAndLoading": "Data & loading",
+  "transactionPageSize": "Transactions per page",
+  "transactionPageSizeDescription": "How many transactions to load each time you scroll. Applies to the transactions list.",
+  "transactionPageSizeValue": "{count} per page",
+  "@transactionPageSizeValue": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "defaultPeriod": "Default period",
+  "defaultPeriodDescription": "Applied when opening the dashboard, expenses, income, transfers, and transactions.",
+  "customDateRange": "Custom Range",
+  "pickDates": "Pick Dates",
+  "budgetStatusOnTrack": "On track",
+  "budgetStatusOver": "Over budget",
+  "whatIfCutSpending": "What if I cut discretionary spending by {percent}%?",
+  "@whatIfCutSpending": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "usesAveragePatterns": "Uses your average income and expense patterns from transactions.",
+  "historicalNetSavingsNote": "Based on historical net savings. Adjust uncertainty to widen or narrow the band.",
+  "accountFilterLabel": "Account",
+  "noTransactionsForBudget": "No transactions for this budget.",
+  "noTransactionsForAccount": "No transactions for this account.",
+  "deleteAccount": "Delete Account",
+  "deleteAccountConfirmBody": "Are you sure you want to delete the account \"{name}\"? This action cannot be undone.",
+  "@deleteAccountConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "accountDeleted": "Account \"{name}\" deleted.",
+  "@accountDeleted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToDeleteAccount": "Failed to delete account: {error}",
+  "@failedToDeleteAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetNameHint": "Budget name",
+  "budgetAmountWithSymbol": "Budget Amount ({symbol})",
+  "@budgetAmountWithSymbol": {
+    "placeholders": {
+      "symbol": {
+        "type": "String"
+      }
+    }
+  },
+  "chartLegendActual": "Actual",
+  "chartLegendWorst": "Worst",
+  "chartLegendBest": "Best",
+  "chartLegendWorstBest": "Worst ↔ Best",
+  "today": "today",
+  "mcpServer": "MCP server",
+  "mcpStatusFailed": "Failed: {error}",
+  "@mcpStatusFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpStatusRunning": "Running on port {port}",
+  "@mcpStatusRunning": {
+    "placeholders": {
+      "port": {
+        "type": "int"
+      }
+    }
+  },
+  "mcpStatusStarting": "Starting…",
+  "transactionDate": "Date",
+  "moreOptions": "More",
+  "foreignAmountLabel": "Foreign amount",
+  "budgetLabel": "Budget",
+  "piggyBank": "Piggy bank",
+  "noPiggyBank": "(no piggy bank)",
+  "tags": "Tags",
+  "subscription": "Subscription",
+  "interestDate": "Interest date",
+  "attachments": "Attachments",
+  "notes": "Notes",
+  "none": "(none)",
+  "attachmentsNotSupported": "Attachments are not supported in this app yet.",
+  "deleteTransaction": "Delete Transaction",
+  "deleteTransactionConfirmBody": "Are you sure you want to delete \"{description}\"? This action cannot be undone.",
+  "@deleteTransactionConfirmBody": {
+    "placeholders": {
+      "description": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionDeleted": "Transaction deleted.",
+  "failedToDeleteTransaction": "Failed to delete transaction: {error}",
+  "@failedToDeleteTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionSaved": "Transaction saved.",
+  "failedToSaveTransaction": "Failed to save transaction: {error}",
+  "@failedToSaveTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionDuplicated": "Transaction duplicated.",
+  "failedToDuplicateTransaction": "Failed to duplicate transaction: {error}",
+  "@failedToDuplicateTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "duplicate": "Duplicate",
+  "newTransaction": "New Transaction",
+  "transactionCreated": "Transaction created.",
+  "failedToCreateTransaction": "Failed to create transaction: {error}",
+  "@failedToCreateTransaction": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "transactionFormIncomplete": "Please fill in description, amount, and both accounts.",
+  "transactionInformation": "Transaction information",
+  "addAnotherSplit": "Add another split",
+  "splitLabel": "Split {number}",
+  "@splitLabel": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "removeSplit": "Remove split",
+  "splitCount": "{count} splits",
+  "@splitCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "splitCategoriesCount": "{count} categories",
+  "@splitCategoriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "splitTotalLabel": "Split total: {amount}",
+  "@splitTotalLabel": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitRemainder": "Remainder: {amount}",
+  "@splitRemainder": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "splitsTotalMismatch": "Split amounts must total {expected}.",
+  "@splitsTotalMismatch": {
+    "placeholders": {
+      "expected": {
+        "type": "String"
+      }
+    }
+  },
+  "splitOptionalFields": "Optional fields",
+  "foreignCurrency": "Foreign currency",
+  "noSubscriptionsHint": "You have no subscriptions yet. Create some on the Subscriptions page to link recurring expenses.",
+  "incomeTitle": "Income",
+  "transfersTitle": "Transfers",
+  "newTransferAction": "New Transfer",
+  "liabilitiesTitle": "Liabilities",
+  "newIncome": "New Income",
+  "newIncomeRacoon": "New Snatch",
+  "create": "Create",
+  "accountCreated": "Account created.",
+  "liabilityCreated": "Liability created.",
+  "budgetCreated": "Budget created.",
+  "failedToCreateAccount": "Failed to create account: {error}",
+  "@failedToCreateAccount": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "failedToCreateBudget": "Failed to create budget: {error}",
+  "@failedToCreateBudget": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noLiabilitiesFound": "No liabilities found.",
+  "liabilityType": "Liability type",
+  "liabilityTypeDebt": "Debt",
+  "liabilityTypeLoan": "Loan",
+  "liabilityTypeMortgage": "Mortgage",
+  "liabilityDirection": "Liability in/out",
+  "liabilityDirectionOwe": "I owe this debt to somebody else",
+  "liabilityDirectionOwed": "Somebody owes this debt to me",
+  "amountOwed": "I owe amount",
+  "debtStartDate": "Start date of debt",
+  "interestRate": "Interest",
+  "interestPeriod": "Interest period",
+  "interestPeriodDaily": "Per day",
+  "includeInNetWorth": "Include in net worth",
+  "accountNumber": "Account number",
+  "iban": "IBAN",
+  "bic": "BIC",
+  "liabilityCurrencyHelp": "Default currency for this liability account.",
+  "interestPeriodHelp": "Cosmetic only — Firefly III does not calculate interest automatically.",
+  "failedToCreateLiability": "Failed to create liability: {error}",
+  "@failedToCreateLiability": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "navIncomeRacoon": "Snatched",
+  "navTransfersRacoon": "Stash Shuffles",
+  "navLiabilitiesRacoon": "Debts",
+  "incomeTitleRacoon": "Snatched Funds",
+  "transfersTitleRacoon": "Stash Shuffles",
+  "newTransferActionRacoon": "New Stash Shuffle",
+  "liabilitiesTitleRacoon": "Debts Owed",
+  "tooltipOpenSection": "Open {section}.",
+  "@tooltipOpenSection": {
+    "placeholders": {
+      "section": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipOpenDashboard": "Open the dashboard with your key KPIs.",
+  "tooltipOpenAccounts": "Open your accounts and balances.",
+  "tooltipOpenTransactions": "Open all transactions and filters.",
+  "tooltipOpenBudgets": "Open your budgets and spending progress.",
+  "tooltipOpenPiggyBanks": "Open your savings goals and piggy banks.",
+  "tooltipOpenExpenses": "Open expense analytics and breakdowns.",
+  "tooltipOpenIncome": "Open income analytics and trends.",
+  "tooltipOpenTransfers": "Open transfer analytics and history.",
+  "tooltipOpenLiabilities": "Open liabilities and debt overview.",
+  "tooltipOpenProjection": "Open projection scenarios and forecasts.",
+  "tooltipOpenPrognosis": "Open month-end account balance prognosis.",
+  "projectionTabLongTerm": "Long-term forecast",
+  "tooltipOpenSettings": "Open app settings and Firefly connection.",
+  "tooltipToggleSidebar": "Expand or collapse the sidebar.",
+  "tooltipSearchTransactions": "Search by text in the current page.",
+  "tooltipToggleViewMode": "Switch between list and grid view.",
+  "viewModeCards": "Cards",
+  "viewModeRows": "Rows",
+  "viewModeTightRows": "Tight rows",
+  "columnSelection": "Select columns",
+  "columnDate": "Date",
+  "columnAccount": "Account",
+  "columnType": "Mode",
+  "columnPayee": "Payee",
+  "columnDescription": "Comment",
+  "columnCategory": "Category",
+  "columnBudget": "Budget",
+  "columnAmount": "Amount",
+  "columnReconciled": "Reconciled",
+  "columnBalance": "Balance",
+  "tooltipTransactionType": "Choose the transaction type.",
+  "tooltipFieldDescription": "What happened in this transaction.",
+  "tooltipFieldSourceAccount": "Account money comes from.",
+  "tooltipFieldDestinationAccount": "Account money goes to.",
+  "tooltipFieldDate": "Date and time of the transaction.",
+  "tooltipFieldAmount": "Main amount in the selected currency.",
+  "tooltipFieldCurrency": "Primary currency of this split.",
+  "tooltipFieldForeignAmount": "Optional amount in another currency.",
+  "tooltipFieldForeignCurrency": "Currency used for foreign amount.",
+  "tooltipFieldBudget": "Assign this split to a budget.",
+  "tooltipFieldCategory": "Category for reporting and filters.",
+  "tooltipFieldPiggyBank": "Link this split to a piggy bank.",
+  "tooltipFieldTags": "Comma-separated tags for quick filtering.",
+  "tooltipFieldSubscription": "Link this split to a subscription.",
+  "tooltipFieldInterestDate": "Optional interest or booking date.",
+  "tooltipFieldAttachments": "Attachments are shown but not uploaded yet.",
+  "tooltipFieldNotes": "Extra details for future reference.",
+  "tooltipAddSplit": "Add another split to this transaction.",
+  "tooltipRemoveSplit": "Remove this split line.",
+  "tooltipCancelTransaction": "Discard changes and close.",
+  "tooltipSaveTransaction": "Save this transaction.",
+  "tooltipCancel": "Discard changes and close without saving.",
+  "tooltipSave": "Save your changes.",
+  "tooltipCreate": "Create the new item.",
+  "tooltipConfirmDelete": "Permanently delete this item.",
+  "tooltipConfirmChallenge": "Type the challenge word to confirm deletion.",
+  "tooltipExpandDetails": "Show more details.",
+  "tooltipCollapseDetails": "Hide extra details.",
+  "tooltipClearDate": "Remove the selected date.",
+  "tooltipAccountName": "Display name shown in lists and reports.",
+  "tooltipAccountCurrentBalance": "Current balance from Firefly as of today.",
+  "tooltipAccountEndOfMonthBalance": "Projected balance at the end of this month, including scheduled transactions, recurrences, and bills.",
+  "tooltipBudgetName": "Name for this spending budget.",
+  "tooltipBudgetAmount": "Limit amount for this budget period.",
+  "tooltipSubscriptionName": "Name of the recurring bill or subscription.",
+  "tooltipSubscriptionCurrency": "Currency used for expected amounts.",
+  "tooltipSubscriptionAmountMin": "Lowest expected charge per period.",
+  "tooltipSubscriptionAmountMax": "Highest expected charge per period.",
+  "tooltipSubscriptionStartDate": "Date the subscription begins or was first recorded.",
+  "tooltipSubscriptionRepeats": "How often this subscription repeats.",
+  "tooltipSubscriptionSkip": "Skip the next N occurrences before charging again.",
+  "tooltipSubscriptionEndDate": "Optional date when this subscription stops.",
+  "tooltipSubscriptionExtensionDate": "Optional date to extend or pause billing.",
+  "tooltipSubscriptionGroup": "Optional group label for organizing subscriptions.",
+  "tooltipSubscriptionActive": "Whether this subscription is currently active.",
+  "tooltipPiggyBankName": "Name of this savings goal.",
+  "tooltipPiggyBankTargetAmount": "Amount you want to save in total.",
+  "tooltipPiggyBankCurrency": "Currency for the target and tracked savings.",
+  "tooltipPiggyBankAccounts": "Accounts whose balances count toward this goal.",
+  "tooltipPiggyBankAccount": "Include {name} in this piggy bank.",
+  "@tooltipPiggyBankAccount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipPiggyBankStartDate": "When you started tracking this goal.",
+  "tooltipPiggyBankTargetDate": "Optional deadline to reach the target.",
+  "tooltipPiggyBankGroup": "Optional group label for organizing piggy banks.",
+  "tooltipThemeLight": "Use the light color scheme.",
+  "tooltipThemeDark": "Use the dark color scheme.",
+  "tooltipThemePaletteClassic": "Firefly-inspired classic palette.",
+  "tooltipThemePaletteSpectrum": "Vivid multi-color category palette.",
+  "tooltipThemePaletteRaccoon": "Playful raccoon-themed palette.",
+  "tooltipThemeAccent": "Accent color for buttons, links, and highlights.",
+  "tooltipThemeAccentOption": "Use {name} as the accent color.",
+  "@tooltipThemeAccentOption": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "tooltipThemeDone": "Close and keep the selected theme.",
+  "repeatIntervalLabel": "Interval",
+  "repeatIntervalHelp": "How often this repeats, e.g. every 3 months.",
+  "repeatEveryNDays": "Every {count} days",
+  "@repeatEveryNDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repeatEveryNWeeks": "Every {count} weeks",
+  "@repeatEveryNWeeks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repeatEveryNMonths": "Every {count} months",
+  "@repeatEveryNMonths": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "repeatEveryNYears": "Every {count} years",
+  "@repeatEveryNYears": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "writeAheadDays": "Write recurring transactions in advance",
+  "writeAheadDaysDescription": "Create upcoming recurring transactions this many days ahead.",
+  "writeAheadOff": "Off",
+  "writeAheadNDays": "{count} days",
+  "@writeAheadNDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "plannedLabel": "Planned",
+  "navHistory": "History",
+  "navHistoryRacoon": "Heist Replay",
+  "tooltipOpenHistory": "Open undo/redo history.",
+  "tooltipUndo": "Undo the last action.",
+  "tooltipRedo": "Redo the last undone action.",
+  "undo": "Undo",
+  "redo": "Redo",
+  "clear": "Clear",
+  "advanced": "Advanced",
+  "undoHistorySize": "Undo/Redo history size",
+  "undoHistoryStoredEntries": "Stored entries: {count} / {limit}",
+  "@undoHistoryStoredEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "openHistoryScreen": "Open history screen",
+  "undoHistoryLimitRange": "Min {min}  •  Default {defaultValue}  •  Max {max}",
+  "@undoHistoryLimitRange": {
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "defaultValue": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "searchHistory": "Search history",
+  "allActions": "All actions",
+  "noHistoryEntriesMatchFilters": "No history entries match your filters.",
+  "historyExportedTo": "History exported to {path}",
+  "@historyExportedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "historyExportedAndShared": "History exported and share sheet opened",
+  "exportJson": "Export JSON",
+  "exportAndShare": "Export & Share",
+  "jumpToCurrent": "Jump to current",
+  "historyExportSubject": "History export",
+  "historyExportText": "FireRacoon history export",
+  "historySectionToday": "Today",
+  "historySectionYesterday": "Yesterday",
+  "historySectionOlder": "Older",
+  "historyEntriesCount": "{count} / {limit}",
+  "@historyEntriesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "limit": {
+        "type": "int"
+      }
+    }
+  },
+  "undoActionTypeThemeMode": "Theme mode",
+  "undoActionTypeThemePalette": "Theme palette",
+  "undoActionTypeThemeAccent": "Theme accent",
+  "undoActionTypeThemeFunMode": "Fun mode",
+  "undoActionTypeLocale": "Language",
+  "undoActionTypeViewMode": "View mode",
+  "undoActionTypeTransactionPageSize": "Transaction page size",
+  "undoActionTypePrognosisMode": "Projection view mode",
+  "undoActionTypePrognosisHorizon": "Projection horizon",
+  "undoActionTypePrognosisInclusion": "Projection inclusion",
+  "undoActionTypePrognosisMarginPercent": "Projection margin",
+  "undoActionTypeAccountCreate": "Account created",
+  "undoActionTypeAccountUpdate": "Account updated",
+  "undoActionTypeAccountDelete": "Account deleted",
+  "undoActionTypeBudgetCreate": "Budget created",
+  "undoActionTypeBudgetUpdate": "Budget updated",
+  "undoActionTypeBudgetDelete": "Budget deleted",
+  "undoActionTypeTransactionCreate": "Transaction created",
+  "undoActionTypeTransactionUpdate": "Transaction updated",
+  "undoActionTypeTransactionDelete": "Transaction deleted",
+  "undoActionTypeBillCreate": "Subscription created",
+  "undoActionTypeBillUpdate": "Subscription updated",
+  "undoActionTypeBillDelete": "Subscription deleted",
+  "undoActionTypeRecurrenceCreate": "Recurring transaction created",
+  "undoActionTypeRecurrenceUpdate": "Recurring transaction updated",
+  "undoActionTypeRecurrenceDelete": "Recurring transaction deleted",
+  "undoActionTypePiggyBankCreate": "Piggy bank created",
+  "undoActionTypePiggyBankUpdate": "Piggy bank updated",
+  "undoActionTypePiggyBankDelete": "Piggy bank deleted",
+  "undoActionTypeLiabilityCreate": "Liability created",
+  "searchHintTitle": "Start typing to search",
+  "searchHintSubtitle": "Search by description, account, category, tag, note, or amount.",
+  "noSuggestions": "No matching suggestions",
+  "invalidAmount": "Amount must be a valid number greater than 0.",
+  "invalidForeignAmount": "Foreign amount must be a valid number greater than 0.",
+  "missingDescription": "Please enter a description.",
+  "missingAmount": "Please enter an amount.",
+  "missingAccounts": "Please select both source and destination accounts.",
+  "appUsers": "People",
+  "enableAppUsers": "Add people",
+  "enableAppUsersDescription": "Add household members who can use this app and own shares of accounts. Everyone still shares the same Firefly III data.",
+  "createAdmin": "Add first person",
+  "createAdminDescription": "The first person becomes an admin. You can add more people afterwards.",
+  "addUser": "Add person",
+  "editUser": "Edit person",
+  "deleteUser": "Delete person",
+  "role": "Role",
+  "roleAdmin": "Admin",
+  "roleUser": "User",
+  "roleViewer": "Viewer",
+  "roleAdminDescription": "Full access, including Firefly settings and people management.",
+  "roleUserDescription": "Can add and edit financial data.",
+  "roleViewerDescription": "Read-only access.",
+  "requireLogin": "Login with password",
+  "requireLoginDescription": "When on, every launch requires a password (or biometrics). Every person must have a password before this can be enabled.",
+  "switchUser": "Switch person",
+  "selectUserSubtitle": "Choose whose profile to use. No password needed while login with password is off.",
+  "assignPerson": "Linked person",
+  "noPersonAssigned": "None",
+  "myAccount": "My profile",
+  "changePassword": "Change password",
+  "setPassword": "Set password",
+  "clearPassword": "Remove password",
+  "passwordOptionalHint": "Optional. Leave blank to skip. Required only if login with password is enabled.",
+  "currentPassword": "Current password",
+  "newPassword": "New password",
+  "confirmNewPassword": "Confirm new password",
+  "logout": "Log out",
+  "login": "Log in",
+  "username": "Name",
+  "password": "Password",
+  "loginSubtitle": "Sign in to continue to FireRacoon.",
+  "loginMissingFields": "Enter your name and password.",
+  "loginInvalidCredentials": "Incorrect name or password.",
+  "passwordTooWeak": "Password must be at least 10 characters and include an uppercase letter, a lowercase letter, a digit, and a special character.",
+  "passwordRequirements": "At least 10 characters, with uppercase, lowercase, a digit, and a special character.",
+  "passwordMissingRequirements": "Password is missing {requirements}.",
+  "@passwordMissingRequirements": {
+    "placeholders": {
+      "requirements": {
+        "type": "String"
+      }
+    }
+  },
+  "passwordReqMinLength": "at least 10 characters",
+  "passwordReqUpper": "an uppercase letter",
+  "passwordReqLower": "a lowercase letter",
+  "passwordReqDigit": "a digit",
+  "passwordReqSpecial": "a special character",
+  "passwordPwned": "This password has appeared in a known data breach. Please choose another one.",
+  "passwordsDoNotMatch": "Passwords do not match.",
+  "usernameTaken": "That name is already taken.",
+  "currentPasswordIncorrect": "Current password is incorrect.",
+  "userCreated": "Person created.",
+  "userUpdated": "Person updated.",
+  "userDeleted": "Person deleted.",
+  "passwordChanged": "Password updated.",
+  "passwordCleared": "Password removed.",
+  "deleteUserConfirmTitle": "Delete person",
+  "deleteUserConfirmMessage": "This removes {username} and their ownership shares. Firefly III data is not affected.",
+  "@deleteUserConfirmMessage": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "signedInAs": "Signed in as {username}",
+  "@signedInAs": {
+    "placeholders": {
+      "username": {
+        "type": "String"
+      }
+    }
+  },
+  "usernameRequired": "Please enter a name.",
+  "unlockWithBiometrics": "Unlock with biometrics",
+  "unlockWithBiometricsDescription": "Use Face ID, Touch ID, fingerprint, or your device PIN on the login screen.",
+  "biometricUnlockReason": "Unlock FireRacoon",
+  "biometricEnableReason": "Confirm to enable biometric unlock",
+  "biometricUnlockFailed": "Biometric unlock was cancelled or failed.",
+  "peopleMissingPasswordsTitle": "Passwords required",
+  "peopleMissingPasswordsMessage": "Set a password for these people before enabling login with password: {names}.",
+  "@peopleMissingPasswordsMessage": {
+    "placeholders": {
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "hasPassword": "Password set",
+  "noPasswordSet": "No password",
+  "cropAvatarTitle": "Adjust photo",
+  "saveAvatar": "Save photo",
+  "chooseAvatar": "Profile picture",
+  "uploadAvatar": "Upload photo",
+  "avatarPresets": "Raccoon presets",
+  "avatarTooSmall": "Image is too small (minimum 10 KB).",
+  "avatarTooLarge": "Image is too large (maximum 5 MB).",
+  "avatarInvalidFormat": "Could not read image. Use a JPG or PNG file.",
+  "personAppearance": "Appearance",
+  "personLanguage": "Language",
+  "allPeople": "All People",
+  "filterByPersonTooltip": "Filter by Person",
+  "peopleAndOwnership": "People",
+  "peopleAndOwnershipSubtitle": "Profiles, roles, passwords, and account ownership",
+  "addPerson": "Add Person",
+  "editPerson": "Edit Person",
+  "deletePerson": "Delete Person",
+  "personName": "Person Name",
+  "selectOwners": "Assign Owners",
+  "customSplit": "Custom Percentage Split",
+  "accountAssignments": "Account Assignments & Split Ratios",
+  "colorBadge": "Color Badge",
+  "settingsBackup": "Backup & restore",
+  "exportSettings": "Export settings",
+  "exportSettingsDescription": "Save people, preferences, and layout to a JSON file. Passwords, Firefly tokens, and uploaded photos are not included.",
+  "importSettings": "Import settings",
+  "importSettingsDescription": "Replace settings on this device with a previously exported file.",
+  "importSettingsConfirmTitle": "Overwrite settings?",
+  "importSettingsConfirmMessage": "This replaces people, preferences, ownership, and layout on this device. Passwords and the Firefly connection are left unchanged. Custom profile photos are cleared.",
+  "settingsExportedTo": "Settings exported to {path}",
+  "@settingsExportedTo": {
+    "placeholders": {
+      "path": { "type": "String" }
+    }
+  },
+  "settingsImported": "Settings imported.",
+  "settingsImportFailed": "Could not import settings: {error}",
+  "@settingsImportFailed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+  "settingsExportSubject": "FireRacoon settings",
+  "settingsExportText": "FireRacoon settings backup"
+}

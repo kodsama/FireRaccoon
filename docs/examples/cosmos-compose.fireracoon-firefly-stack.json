@@ -1,0 +1,118 @@
+{
+  "services": {
+    "Firefly-III": {
+      "image": "fireflyiii/core:latest",
+      "container_name": "Firefly-III",
+      "hostname": "Firefly-III",
+      "restart": "unless-stopped",
+      "environment": [
+        "TZ=Europe/Stockholm",
+        "APP_KEY=CHANGE_ME_32_CHARS_OF_RANDOM_KEY",
+        "TRUSTED_PROXIES=**",
+        "DB_CONNECTION=mysql",
+        "DB_HOST=Firefly-III-db",
+        "DB_PORT=3306",
+        "DB_DATABASE=firefly",
+        "DB_USERNAME=firefly",
+        "DB_PASSWORD=CHANGE_ME_DB_PASSWORD"
+      ],
+      "labels": {
+        "cosmos-persistent-env": "APP_KEY, DB_DATABASE, DB_USERNAME, DB_PASSWORD",
+        "cosmos-force-network-secured": "true",
+        "cosmos-auto-update": "true",
+        "cosmos-icon": "https://azukaar.github.io/cosmos-servapps-official/servapps/Firefly-III/icon.png",
+        "cosmos.stack": "Firefly-III",
+        "cosmos-stack-main": "Firefly-III"
+      },
+      "networks": {
+        "Firefly-III": {}
+      },
+      "volumes": [
+        {
+          "source": "Firefly-III-upload",
+          "target": "/var/www/html/storage/upload",
+          "type": "volume"
+        }
+      ],
+      "routes": [
+        {
+          "name": "Firefly-III",
+          "description": "Firefly III",
+          "useHost": true,
+          "target": "http://Firefly-III:8080",
+          "mode": "SERVAPP",
+          "Timeout": 14400000,
+          "ThrottlePerMinute": 12000,
+          "BlockCommonBots": true,
+          "SmartShield": {
+            "Enabled": true
+          }
+        }
+      ]
+    },
+    "Firefly-III-db": {
+      "image": "mariadb:10.11",
+      "container_name": "Firefly-III-db",
+      "hostname": "Firefly-III-db",
+      "restart": "unless-stopped",
+      "networks": {
+        "Firefly-III": {}
+      },
+      "volumes": [
+        {
+          "source": "Firefly-III-db",
+          "target": "/var/lib/mysql",
+          "type": "volume"
+        }
+      ],
+      "environment": [
+        "MARIADB_DATABASE=firefly",
+        "MARIADB_USER=firefly",
+        "MARIADB_PASSWORD=CHANGE_ME_DB_PASSWORD",
+        "MARIADB_ROOT_PASSWORD=CHANGE_ME_ROOT_PASSWORD"
+      ],
+      "labels": {
+        "cosmos-persistent-env": "MARIADB_DATABASE, MARIADB_USER, MARIADB_PASSWORD, MARIADB_ROOT_PASSWORD",
+        "cosmos.stack": "Firefly-III",
+        "cosmos-stack-main": "Firefly-III"
+      }
+    },
+    "FireRacoon": {
+      "container_name": "FireRacoon",
+      "image": "ghcr.io/kodsama/fireracoon:latest",
+      "environment": [
+        "TZ=Europe/Stockholm"
+      ],
+      "labels": {
+        "cosmos-auto-update": "true",
+        "cosmos-icon": "https://raw.githubusercontent.com/kodsama/fireracoon/main/assets/fireracoon_logo.png",
+        "cosmos.stack": "Firefly-III"
+      },
+      "ports": [],
+      "volumes": [],
+      "networks": {
+        "Firefly-III": {}
+      },
+      "routes": [
+        {
+          "name": "FireRacoon",
+          "description": "FireRacoon web UI",
+          "useHost": true,
+          "target": "http://FireRacoon:80",
+          "mode": "SERVAPP",
+          "Timeout": 14400000,
+          "ThrottlePerMinute": 12000,
+          "BlockCommonBots": true,
+          "SmartShield": {
+            "Enabled": true
+          }
+        }
+      ],
+      "restart": "unless-stopped",
+      "mem_limit": "536870912"
+    }
+  },
+  "networks": {
+    "Firefly-III": {}
+  }
+}

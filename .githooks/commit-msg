@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Strip AI/tool attribution trailers Cursor (and similar) inject into commits.
+set -euo pipefail
+
+msg_file=$1
+
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' EXIT
+
+# Drop Co-authored-by / Made-with / Generated-with lines that name Cursor or agents.
+awk '
+  BEGIN { ignore_blank = 0 }
+  /^[[:space:]]*Co-authored-by:[[:space:]].*[Cc]ursor/ { ignore_blank = 1; next }
+  /^[[:space:]]*Co-authored-by:[[:space:]].*cursoragent@/ { ignore_blank = 1; next }
+  /^[[:space:]]*Made-with:[[:space:]].*[Cc]ursor/ { ignore_blank = 1; next }
+  /^[[:space:]]*Made with [Cc]ursor/ { ignore_blank = 1; next }
+  /^[[:space:]]*Generated with / { ignore_blank = 1; next }
+  {
+    if (ignore_blank && $0 ~ /^[[:space:]]*$/) { ignore_blank = 0; next }
+    ignore_blank = 0
+    print
+  }
+' "$msg_file" >"$tmp"
+
+# Trim trailing blank lines left after stripping trailers.
+# shellcheck disable=SC2016
+awk '
+  { lines[NR] = $0 }
+  END {
+    end = NR
+    while (end > 0 && lines[end] ~ /^[[:space:]]*$/) end--
+    for (i = 1; i <= end; i++) print lines[i]
+  }
+' "$tmp" >"$msg_file"

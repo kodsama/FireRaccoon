@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#1F8A5B"/><g transform="translate(30 26)" fill="none" stroke="#D4F5A6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 40 L4 8 L36 8"/><path d="M4 40 L14 24 L22 30 L36 10"/></g></svg></template>
+<style>
+@font-face{font-family:"Comfortaa";src:url("assets/fonts/Comfortaa-Light.ttf") format("truetype");font-weight:300;font-display:swap}
+@font-face{font-family:"Comfortaa";src:url("assets/fonts/Comfortaa-Regular.ttf") format("truetype");font-weight:400;font-display:swap}
+@font-face{font-family:"Comfortaa";src:url("assets/fonts/Comfortaa-Medium.ttf") format("truetype");font-weight:500;font-display:swap}
+@font-face{font-family:"Comfortaa";src:url("assets/fonts/Comfortaa-SemiBold.ttf") format("truetype");font-weight:600;font-display:swap}
+@font-face{font-family:"Comfortaa";src:url("assets/fonts/Comfortaa-Bold.ttf") format("truetype");font-weight:700;font-display:swap}
+@font-face{font-family:"Roboto Slab";src:url("assets/fonts/RobotoSlab-Variable.ttf") format("truetype");font-weight:100 900;font-display:swap}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:"Comfortaa","Trebuchet MS",system-ui,sans-serif;background:#ECF0F0;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:rgba(128,140,140,.45);border-radius:8px;border:3px solid transparent;background-clip:content-box}
+.fe-svg svg{width:18px;height:18px;stroke-width:1.9}
+@keyframes feIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+</style>
+<script src="https://unpkg.com/lucide@latest"></script>
+</helmet>
+<div style="{{ rootStyle }}">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside style="width:246px;flex:none;background:var(--fe-sidebar);color:var(--fe-sidebar-text);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:22px 16px">
+    <div style="display:flex;align-items:center;gap:11px;padding:4px 8px 22px">
+      <img src="assets/fireracoon_logo.png" alt="" style="width:34px;height:34px;background:var(--fe-acc-hi);border-radius:10px;padding:5px">
+      <div style="line-height:1.05">
+        <div style="font-weight:700;font-size:16px;letter-spacing:-0.02em">Fire<span style="color:var(--fe-acc-hi)">·</span>Racoon</div>
+        <div style="font-size:10.5px;color:var(--fe-sidebar-muted);letter-spacing:0.04em">personal finance</div>
+      </div>
+    </div>
+
+    <nav style="display:flex;flex-direction:column;gap:3px;margin-top:6px">
+      <sc-for list="{{ nav }}" as="item" hint-placeholder-count="6">
+        <button onClick="{{ item.go }}" style="{{ item.style }}">
+          <span class="fe-svg" style="display:flex"><i data-lucide="{{ item.icon }}"></i></span>
+          <span style="flex:1;text-align:left">{{ item.label }}</span>
+          <sc-if value="{{ item.badge }}" hint-placeholder-val=""><span style="font-size:10.5px;background:var(--fe-acc-hi);color:var(--fe-acc-hi-on);font-weight:600;padding:1px 7px;border-radius:20px">{{ item.badge }}</span></sc-if>
+        </button>
+      </sc-for>
+    </nav>
+
+    <div style="background:var(--fe-panel2);border-radius:14px;padding:14px 15px;margin-top:auto">
+      <div style="font-size:11px;color:var(--fe-sidebar-muted);letter-spacing:0.06em;text-transform:uppercase">Net worth</div>
+      <div style="font-family:'Roboto Slab',serif;font-size:25px;font-weight:700;margin-top:3px;letter-spacing:-0.01em;color:var(--fe-panel-text)">{{ netWorth }}</div>
+      <div style="display:flex;align-items:center;gap:5px;margin-top:4px;font-size:12px;color:var(--fe-acc-hi)"><span class="fe-svg" style="display:flex"><i data-lucide="trending-up"></i></span><span>{{ netDelta }} this month</span></div>
+    </div>
+    <button onClick="{{ goSettings }}" style="display:flex;align-items:center;gap:10px;padding:12px 8px 4px;background:none;border:none;cursor:pointer;font-family:inherit;text-align:left;margin-top:6px">
+      <div style="width:32px;height:32px;border-radius:50%;background:var(--fe-acc);color:var(--fe-on-acc);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px">MS</div>
+      <div style="line-height:1.15;flex:1"><div style="font-size:13px;font-weight:500;color:var(--fe-sidebar-text)">Marta Silva</div><div style="font-size:11px;color:var(--fe-sidebar-muted)">Firefly III · connected</div></div>
+      <span class="fe-svg" style="{{ gearStyle }}"><i data-lucide="settings"></i></span>
+    </button>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="position:sticky;top:0;z-index:20;background:var(--fe-header-bg);backdrop-filter:blur(8px);border-bottom:1px solid var(--fe-border);padding:16px 30px;display:flex;align-items:center;gap:18px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;color:var(--fe-text3);letter-spacing:0.04em">{{ crumb }}</div>
+        <h1 style="margin:0;font-size:24px;font-weight:600;letter-spacing:-0.02em;color:var(--fe-text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ pageTitle }}</h1>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:11px;padding:7px 12px;min-width:220px;color:var(--fe-text3)">
+        <span class="fe-svg" style="display:flex"><i data-lucide="search"></i></span>
+        <span style="font-size:13px">Search transactions…</span>
+      </div>
+      <div style="display:flex;background:var(--fe-surface2);border-radius:10px;padding:3px">
+        <sc-for list="{{ curOpts }}" as="c" hint-placeholder-count="3">
+          <button onClick="{{ c.set }}" style="{{ c.style }}">{{ c.label }}</button>
+        </sc-for>
+      </div>
+      <button onClick="{{ onAdd }}" style="display:flex;align-items:center;gap:7px;background:var(--fe-acc);color:var(--fe-on-acc);border:none;border-radius:11px;padding:10px 16px;font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer;box-shadow:0 2px 10px rgba(0,0,0,0.14)">
+        <span class="fe-svg" style="display:flex"><i data-lucide="plus"></i></span>Add
+      </button>
+    </header>
+
+    <div style="flex:1;padding:26px 30px 60px;animation:feIn .35s ease-out">
+
+      <!-- ===================== DASHBOARD ===================== -->
+      <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+        <div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+            <span style="font-size:12.5px;color:var(--fe-text3)">Layout direction</span>
+            <div style="display:flex;background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:10px;padding:3px">
+              <sc-for list="{{ dashOpts }}" as="d" hint-placeholder-count="3">
+                <button onClick="{{ d.set }}" style="{{ d.style }}">{{ d.label }}</button>
+              </sc-for>
+            </div>
+            <span style="font-size:12px;color:var(--fe-text3);margin-left:2px">{{ dashHint }}</span>
+          </div>
+
+          <!-- DIRECTION A -->
+          <sc-if value="{{ dashA }}" hint-placeholder-val="{{ true }}">
+            <div>
+              <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+                <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+                  <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:18px 18px 16px;box-shadow:var(--fe-shadow)">
+                    <div style="display:flex;align-items:center;justify-content:space-between"><span style="font-size:12.5px;color:var(--fe-text3)">{{ k.label }}</span><span class="fe-svg" style="{{ k.iconWrap }}"><i data-lucide="{{ k.icon }}"></i></span></div>
+                    <div style="font-family:'Roboto Slab',serif;font-size:27px;font-weight:700;margin-top:10px;letter-spacing:-0.01em;color:var(--fe-text)">{{ k.value }}</div>
+                    <div style="font-size:12px;margin-top:3px;color:{{ k.deltaColor }}">{{ k.delta }}</div>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1.55fr 1fr;gap:16px;margin-top:16px">
+                <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><div><div style="font-size:15px;font-weight:600;color:var(--fe-text)">Cash flow</div><div style="font-size:12px;color:var(--fe-text3)">Income vs. spending · last 6 months</div></div><div style="display:flex;gap:14px;font-size:12px;color:var(--fe-text2)"><span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:3px;background:var(--fe-acc)"></span>Income</span><span style="display:flex;align-items:center;gap:6px"><span style="width:9px;height:9px;border-radius:3px;background:var(--fe-track-strong)"></span>Spending</span></div></div>
+                  <div style="display:flex;align-items:flex-end;gap:18px;height:190px;padding-top:14px">
+                    <sc-for list="{{ cashflow }}" as="m" hint-placeholder-count="6">
+                      <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end">
+                        <div style="display:flex;align-items:flex-end;gap:5px;height:100%;width:100%;justify-content:center">
+                          <div style="width:26%;background:var(--fe-acc);border-radius:5px 5px 0 0;height:{{ m.inH }}%"></div>
+                          <div style="width:26%;background:var(--fe-track-strong);border-radius:5px 5px 0 0;height:{{ m.outH }}%"></div>
+                        </div>
+                        <span style="font-size:11.5px;color:var(--fe-text3)">{{ m.label }}</span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px">
+                  <div style="font-size:15px;font-weight:600;margin-bottom:2px;color:var(--fe-text)">Where money goes</div>
+                  <div style="font-size:12px;color:var(--fe-text3);margin-bottom:8px">This month by category</div>
+                  <div style="display:flex;align-items:center;gap:16px">
+                    <div style="flex:none">{{ donutEl }}</div>
+                    <div style="flex:1;display:flex;flex-direction:column;gap:9px">
+                      <sc-for list="{{ catTop }}" as="c" hint-placeholder-count="4">
+                        <div style="display:flex;align-items:center;gap:9px"><span style="width:10px;height:10px;border-radius:3px;background:{{ c.color }}"></span><span style="flex:1;font-size:13px;color:var(--fe-text2)">{{ c.name }}</span><span style="font-size:13px;font-weight:600;color:var(--fe-text)">{{ c.amt }}</span></div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+                <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px">
+                  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:15px;font-weight:600;color:var(--fe-text)">Recent activity</div><button onClick="{{ goTx }}" style="background:none;border:none;color:var(--fe-acc);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">View all</button></div>
+                  <div style="display:flex;flex-direction:column">
+                    <sc-for list="{{ recentTx }}" as="t" hint-placeholder-count="5">
+                      <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--fe-divider)">
+                        <span class="fe-svg" style="{{ t.iconWrap }}"><i data-lucide="{{ t.icon }}"></i></span>
+                        <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--fe-text)">{{ t.desc }}</div><div style="font-size:11.5px;color:var(--fe-text3)">{{ t.meta }}</div></div>
+                        <div style="font-size:13.5px;font-weight:600;color:{{ t.amtColor }}">{{ t.amt }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="background:var(--fe-panel);color:var(--fe-panel-text);border-radius:16px;padding:20px 22px">
+                  <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span class="fe-svg" style="display:flex;color:var(--fe-acc-hi)"><i data-lucide="sparkles"></i></span><span style="font-size:15px;font-weight:600">Looking ahead</span></div>
+                  <div style="font-size:12.5px;color:var(--fe-panel-muted);margin-bottom:16px">Projected end-of-month balance</div>
+                  <div style="font-family:'Roboto Slab',serif;font-size:34px;font-weight:700;letter-spacing:-0.01em">{{ projEom }}</div>
+                  <div style="font-size:12.5px;color:var(--fe-acc-hi);margin-top:2px">{{ projEomDelta }}</div>
+                  <div style="height:1px;background:var(--fe-panel2);margin:16px 0"></div>
+                  <div style="display:flex;align-items:flex-start;gap:9px;background:var(--fe-panel2);border-radius:11px;padding:11px 12px">
+                    <span class="fe-svg" style="display:flex;color:var(--fe-warn);flex:none;margin-top:1px"><i data-lucide="alert-triangle"></i></span>
+                    <div style="font-size:12.5px;line-height:1.45;color:var(--fe-panel-muted)">{{ dashAlert }}</div>
+                  </div>
+                  <button onClick="{{ goProj }}" style="width:100%;margin-top:14px;background:var(--fe-acc-hi);color:var(--fe-acc-hi-on);border:none;border-radius:11px;padding:11px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer">Open projection</button>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- DIRECTION B -->
+          <sc-if value="{{ dashB }}" hint-placeholder-val="">
+            <div>
+              <div style="display:grid;grid-template-columns:2fr 1fr;gap:16px">
+                <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:22px">
+                  <div style="font-size:15px;font-weight:600;margin-bottom:16px;color:var(--fe-text)">Your accounts</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                    <sc-for list="{{ accounts }}" as="a" hint-placeholder-count="6">
+                      <button onClick="{{ a.open }}" style="text-align:left;background:var(--fe-sunken);border:1px solid var(--fe-divider);border-radius:14px;padding:15px;cursor:pointer;font-family:inherit;display:flex;flex-direction:column;gap:2px">
+                        <div style="display:flex;align-items:center;gap:9px"><span class="fe-svg" style="{{ a.iconWrap }}"><i data-lucide="{{ a.icon }}"></i></span><span style="font-size:13px;font-weight:600;flex:1;color:var(--fe-text)">{{ a.name }}</span></div>
+                        <div style="font-family:'Roboto Slab',serif;font-size:20px;font-weight:700;margin-top:6px;color:{{ a.balColor }}">{{ a.balNative }}</div>
+                        <div style="font-size:11.5px;color:var(--fe-text3)">{{ a.sub }}</div>
+                      </button>
+                    </sc-for>
+                  </div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:16px">
+                  <div style="background:var(--fe-acc);color:var(--fe-on-acc);border-radius:16px;padding:20px">
+                    <div style="font-size:12.5px;opacity:0.82">Total balance</div>
+                    <div style="font-family:'Roboto Slab',serif;font-size:30px;font-weight:700;margin-top:4px">{{ netWorth }}</div>
+                    <div style="margin-top:12px">{{ netSpark }}</div>
+                  </div>
+                  <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:18px 20px;flex:1">
+                    <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--fe-text)">Upcoming bills</div>
+                    <div style="display:flex;flex-direction:column;gap:11px">
+                      <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="4">
+                        <div style="display:flex;align-items:center;gap:10px"><div style="width:38px;height:38px;border-radius:10px;background:var(--fe-sunken);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1"><span style="font-size:14px;font-weight:700;color:var(--fe-text)">{{ u.day }}</span><span style="font-size:8.5px;color:var(--fe-text3);text-transform:uppercase">{{ u.mon }}</span></div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--fe-text)">{{ u.name }}</div><div style="font-size:11px;color:var(--fe-text3)">{{ u.when }}</div></div><span style="font-size:13px;font-weight:600;color:{{ u.color }}">{{ u.amt }}</span></div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px;margin-top:16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"><div style="font-size:15px;font-weight:600;color:var(--fe-text)">Budgets at a glance</div><button onClick="{{ goBud }}" style="background:none;border:none;color:var(--fe-acc);font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer">Manage</button></div>
+                <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+                  <sc-for list="{{ budgets }}" as="b" hint-placeholder-count="4">
+                    <div>
+                      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px"><span style="font-weight:500;color:var(--fe-text2)">{{ b.name }}</span><span style="color:var(--fe-text3)">{{ b.pctLabel }}</span></div>
+                      <div style="height:8px;background:var(--fe-track);border-radius:6px;overflow:hidden"><div style="height:100%;border-radius:6px;width:{{ b.pct }}%;background:{{ b.color }}"></div></div>
+                      <div style="font-size:11.5px;color:var(--fe-text3);margin-top:6px">{{ b.remain }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+
+          <!-- DIRECTION C -->
+          <sc-if value="{{ dashC }}" hint-placeholder-val="">
+            <div style="display:grid;grid-template-columns:1fr 1.35fr;gap:16px">
+              <div style="background:var(--fe-panel);color:var(--fe-panel-text);border-radius:20px;padding:26px 26px 20px;display:flex;flex-direction:column">
+                <div style="font-size:13px;color:var(--fe-panel-muted);letter-spacing:0.04em">TOTAL NET WORTH</div>
+                <div style="font-family:'Roboto Slab',serif;font-size:46px;font-weight:700;letter-spacing:-0.02em;margin-top:6px">{{ netWorth }}</div>
+                <div style="display:flex;align-items:center;gap:6px;color:var(--fe-acc-hi);font-size:13px;margin-top:2px"><span class="fe-svg" style="display:flex"><i data-lucide="trending-up"></i></span>{{ netDelta }} this month</div>
+                <div style="margin:18px 0 8px">{{ netSparkLg }}</div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:auto">
+                  <div style="background:var(--fe-panel2);border-radius:12px;padding:13px 14px"><div style="font-size:11.5px;color:var(--fe-panel-muted)">Income · Jul</div><div style="font-size:18px;font-weight:600;font-family:'Roboto Slab',serif">{{ mIncome }}</div></div>
+                  <div style="background:var(--fe-panel2);border-radius:12px;padding:13px 14px"><div style="font-size:11.5px;color:var(--fe-panel-muted)">Spending · Jul</div><div style="font-size:18px;font-weight:600;font-family:'Roboto Slab',serif">{{ mSpend }}</div></div>
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:16px">
+                <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px">
+                  <div style="font-size:15px;font-weight:600;margin-bottom:4px;color:var(--fe-text)">30-day outlook</div>
+                  <div style="font-size:12px;color:var(--fe-text3);margin-bottom:6px">Projected balance across all accounts</div>
+                  {{ projEl }}
+                </div>
+                <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:18px 22px">
+                  <div style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--fe-text)">Today's timeline</div>
+                  <div style="display:flex;flex-direction:column">
+                    <sc-for list="{{ recentTx }}" as="t" hint-placeholder-count="4">
+                      <div style="display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--fe-divider)">
+                        <span class="fe-svg" style="{{ t.iconWrap }}"><i data-lucide="{{ t.icon }}"></i></span>
+                        <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:500;color:var(--fe-text)">{{ t.desc }}</div><div style="font-size:11px;color:var(--fe-text3)">{{ t.meta }}</div></div>
+                        <div style="font-size:13px;font-weight:600;color:{{ t.amtColor }}">{{ t.amt }}</div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <!-- ===================== ACCOUNTS ===================== -->
+      <sc-if value="{{ isAccounts }}" hint-placeholder-val="">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+            <sc-for list="{{ acctGroups }}" as="g" hint-placeholder-count="4">
+              <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:14px;padding:16px 18px"><div style="font-size:12px;color:var(--fe-text3)">{{ g.label }}</div><div style="font-family:'Roboto Slab',serif;font-size:22px;font-weight:700;margin-top:6px;color:{{ g.color }}">{{ g.total }}</div><div style="font-size:11.5px;color:var(--fe-text3)">{{ g.count }}</div></div>
+            </sc-for>
+          </div>
+          <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:2fr 1fr 1.4fr 1fr;gap:12px;padding:13px 22px;background:var(--fe-sunken);border-bottom:1px solid var(--fe-divider);font-size:11.5px;color:var(--fe-text3);letter-spacing:0.04em;text-transform:uppercase"><span>Account</span><span>Type</span><span>Trend (30d)</span><span style="text-align:right">Balance</span></div>
+            <sc-for list="{{ accounts }}" as="a" hint-placeholder-count="6">
+              <button onClick="{{ a.open }}" style="width:100%;display:grid;grid-template-columns:2fr 1fr 1.4fr 1fr;gap:12px;align-items:center;padding:14px 22px;border:none;border-bottom:1px solid var(--fe-divider);background:var(--fe-surface);cursor:pointer;font-family:inherit;text-align:left">
+                <span style="display:flex;align-items:center;gap:12px"><span class="fe-svg" style="{{ a.iconWrap }}"><i data-lucide="{{ a.icon }}"></i></span><span><span style="display:block;font-size:14px;font-weight:600;color:var(--fe-text)">{{ a.name }}</span><span style="font-size:11.5px;color:var(--fe-text3)">{{ a.bank }}</span></span></span>
+                <span style="font-size:12.5px;color:var(--fe-text2)">{{ a.typeLabel }}</span>
+                <span>{{ a.spark }}</span>
+                <span style="text-align:right"><span style="display:block;font-family:'Roboto Slab',serif;font-size:16px;font-weight:700;color:{{ a.balColor }}">{{ a.balNative }}</span><span style="font-size:11px;color:var(--fe-text3)">{{ a.balEur }}</span></span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== ACCOUNT DETAIL ===================== -->
+      <sc-if value="{{ isDetail }}" hint-placeholder-val="">
+        <div>
+          <button onClick="{{ goAccounts }}" style="display:flex;align-items:center;gap:6px;background:none;border:none;color:var(--fe-acc);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;margin-bottom:14px"><span class="fe-svg" style="display:flex"><i data-lucide="arrow-left"></i></span>All accounts</button>
+          <div style="display:grid;grid-template-columns:1fr 1.6fr;gap:16px">
+            <div style="background:var(--fe-panel);color:var(--fe-panel-text);border-radius:18px;padding:24px">
+              <div style="display:flex;align-items:center;gap:10px"><span class="fe-svg" style="display:flex;background:var(--fe-acc-hi);color:var(--fe-acc-hi-on);padding:8px;border-radius:11px"><i data-lucide="{{ det.icon }}"></i></span><div><div style="font-size:16px;font-weight:600">{{ det.name }}</div><div style="font-size:12px;color:var(--fe-panel-muted)">{{ det.bank }}</div></div></div>
+              <div style="font-family:'Roboto Slab',serif;font-size:38px;font-weight:700;margin-top:20px">{{ det.balNative }}</div>
+              <div style="font-size:12.5px;color:var(--fe-panel-muted)">{{ det.balEur }} · {{ det.typeLabel }}</div>
+              <div style="margin:18px 0 6px">{{ det.spark }}</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+                <div style="background:var(--fe-panel2);border-radius:11px;padding:11px 13px"><div style="font-size:11px;color:var(--fe-panel-muted)">In · 30d</div><div style="font-size:16px;font-weight:600;font-family:'Roboto Slab',serif">{{ det.in30 }}</div></div>
+                <div style="background:var(--fe-panel2);border-radius:11px;padding:11px 13px"><div style="font-size:11px;color:var(--fe-panel-muted)">Out · 30d</div><div style="font-size:16px;font-weight:600;font-family:'Roboto Slab',serif">{{ det.out30 }}</div></div>
+              </div>
+            </div>
+            <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px">
+              <div style="font-size:15px;font-weight:600;margin-bottom:8px;color:var(--fe-text)">Transactions</div>
+              <div style="display:flex;flex-direction:column">
+                <sc-for list="{{ det.tx }}" as="t" hint-placeholder-count="7">
+                  <div style="display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--fe-divider)">
+                    <span class="fe-svg" style="{{ t.iconWrap }}"><i data-lucide="{{ t.icon }}"></i></span>
+                    <div style="flex:1;min-width:0"><div style="font-size:13.5px;font-weight:500;color:var(--fe-text)">{{ t.desc }}</div><div style="font-size:11.5px;color:var(--fe-text3)">{{ t.meta }}</div></div>
+                    <div style="font-size:13.5px;font-weight:600;color:{{ t.amtColor }}">{{ t.amt }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== TRANSACTIONS ===================== -->
+      <sc-if value="{{ isTx }}" hint-placeholder-val="">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">
+            <div style="display:flex;background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:11px;padding:3px">
+              <sc-for list="{{ txFilters }}" as="f" hint-placeholder-count="4">
+                <button onClick="{{ f.set }}" style="{{ f.style }}">{{ f.label }}</button>
+              </sc-for>
+            </div>
+            <div style="flex:1"></div>
+            <button onClick="{{ onAdd }}" style="display:flex;align-items:center;gap:7px;background:var(--fe-surface);color:var(--fe-acc);border:1px solid var(--fe-acc);border-radius:11px;padding:9px 15px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer"><span class="fe-svg" style="display:flex"><i data-lucide="plus"></i></span>New transaction</button>
+          </div>
+          <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;overflow:hidden">
+            <sc-for list="{{ txGroups }}" as="grp" hint-placeholder-count="3">
+              <div>
+                <div style="display:flex;justify-content:space-between;padding:11px 22px;background:var(--fe-sunken);border-bottom:1px solid var(--fe-divider);font-size:12px"><span style="font-weight:600;color:var(--fe-text2)">{{ grp.date }}</span><span style="color:var(--fe-text3)">{{ grp.total }}</span></div>
+                <sc-for list="{{ grp.items }}" as="t" hint-placeholder-count="4">
+                  <div style="display:grid;grid-template-columns:auto 2fr 1.3fr 1fr;gap:14px;align-items:center;padding:13px 22px;border-bottom:1px solid var(--fe-divider)">
+                    <span class="fe-svg" style="{{ t.iconWrap }}"><i data-lucide="{{ t.icon }}"></i></span>
+                    <div style="min-width:0"><div style="font-size:13.5px;font-weight:500;color:var(--fe-text)">{{ t.desc }}</div><div style="font-size:11.5px;color:var(--fe-text3)">{{ t.category }}</div></div>
+                    <div style="font-size:12.5px;color:var(--fe-text2)">{{ t.account }}</div>
+                    <div style="text-align:right;font-size:14px;font-weight:600;color:{{ t.amtColor }}">{{ t.amt }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== BUDGETS ===================== -->
+      <sc-if value="{{ isBudgets }}" hint-placeholder-val="">
+        <div>
+          <div style="display:grid;grid-template-columns:1fr 2.4fr;gap:16px;margin-bottom:16px">
+            <div style="background:var(--fe-panel);color:var(--fe-panel-text);border-radius:16px;padding:22px;display:flex;flex-direction:column;align-items:center;text-align:center">
+              <div style="font-size:13px;color:var(--fe-panel-muted)">July budget used</div>
+              <div style="margin:14px 0">{{ budgetRing }}</div>
+              <div style="font-size:13px;color:var(--fe-panel-muted)">{{ budgetSummary }}</div>
+            </div>
+            <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px">
+              <div style="font-size:15px;font-weight:600;margin-bottom:14px;color:var(--fe-text)">This month's pacing</div>
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <sc-for list="{{ budgetsFull }}" as="b" hint-placeholder-count="6">
+                  <div>
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:7px"><span class="fe-svg" style="{{ b.iconWrap }}"><i data-lucide="{{ b.icon }}"></i></span><span style="font-size:13.5px;font-weight:500;flex:1;color:var(--fe-text)">{{ b.name }}</span><span style="font-size:13px;color:var(--fe-text2)">{{ b.spent }} <span style="color:var(--fe-text3)">/ {{ b.budget }}</span></span></div>
+                    <div style="height:9px;background:var(--fe-track);border-radius:6px;overflow:hidden"><div style="height:100%;border-radius:6px;width:{{ b.pct }}%;background:{{ b.color }}"></div></div>
+                    <div style="font-size:11.5px;margin-top:5px;color:{{ b.statusColor }}">{{ b.status }}</div>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== EXPENSES ===================== -->
+      <sc-if value="{{ isExpenses }}" hint-placeholder-val="">
+        <div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px">
+              <div style="font-size:15px;font-weight:600;margin-bottom:2px;color:var(--fe-text)">Spending by category</div>
+              <div style="font-size:12px;color:var(--fe-text3);margin-bottom:12px">July · {{ expTotal }} total</div>
+              <div style="display:flex;align-items:center;gap:22px">
+                <div style="flex:none">{{ donutBig }}</div>
+                <div style="flex:1;display:flex;flex-direction:column;gap:11px">
+                  <sc-for list="{{ catAll }}" as="c" hint-placeholder-count="6">
+                    <div style="display:flex;align-items:center;gap:10px"><span style="width:11px;height:11px;border-radius:3px;background:{{ c.color }}"></span><span style="flex:1;font-size:13px;color:var(--fe-text2)">{{ c.name }}</span><span style="font-size:12px;color:{{ c.chColor }}">{{ c.change }}</span><span style="font-size:13px;font-weight:600;width:64px;text-align:right;color:var(--fe-text)">{{ c.amt }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px">
+              <div style="font-size:15px;font-weight:600;margin-bottom:2px;color:var(--fe-text)">Monthly trend</div>
+              <div style="font-size:12px;color:var(--fe-text3);margin-bottom:12px">Total spending · last 6 months</div>
+              <div style="display:flex;align-items:flex-end;gap:16px;height:170px;padding-top:10px">
+                <sc-for list="{{ spendTrend }}" as="m" hint-placeholder-count="6">
+                  <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:8px;height:100%;justify-content:flex-end">
+                    <span style="font-size:11px;color:var(--fe-text2);font-weight:600">{{ m.amt }}</span>
+                    <div style="width:60%;background:{{ m.color }};border-radius:6px 6px 0 0;height:{{ m.h }}%"></div>
+                    <span style="font-size:11.5px;color:var(--fe-text3)">{{ m.label }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+          <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px;margin-top:16px">
+            <div style="font-size:15px;font-weight:600;margin-bottom:12px;color:var(--fe-text)">Top merchants</div>
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+              <sc-for list="{{ merchants }}" as="m" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:11px;background:var(--fe-sunken);border-radius:12px;padding:13px 15px"><span class="fe-svg" style="{{ m.iconWrap }}"><i data-lucide="{{ m.icon }}"></i></span><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--fe-text)">{{ m.name }}</div><div style="font-size:11px;color:var(--fe-text3)">{{ m.count }}</div></div><span style="font-size:13.5px;font-weight:600;color:var(--fe-text)">{{ m.amt }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== PROJECTION ===================== -->
+      <sc-if value="{{ isProj }}" hint-placeholder-val="">
+        <div>
+          <sc-if value="{{ hasAlert }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:12px;background:var(--fe-warn-bg);border:1px solid var(--fe-warn);border-radius:13px;padding:13px 18px;margin-bottom:16px">
+              <span class="fe-svg" style="display:flex;color:var(--fe-warn)"><i data-lucide="alert-triangle"></i></span>
+              <div style="flex:1;font-size:13.5px;color:var(--fe-text2)">{{ alertText }}</div>
+            </div>
+          </sc-if>
+          <div style="display:grid;grid-template-columns:1.7fr 1fr;gap:16px">
+            <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:20px 22px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <div><div style="font-size:15px;font-weight:600;color:var(--fe-text)">Projected balance</div><div style="font-size:12px;color:var(--fe-text3)">Based on your last 6 months of patterns</div></div>
+                <div style="display:flex;background:var(--fe-surface2);border-radius:10px;padding:3px">
+                  <sc-for list="{{ rangeOpts }}" as="r" hint-placeholder-count="3">
+                    <button onClick="{{ r.set }}" style="{{ r.style }}">{{ r.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display:flex;gap:16px;font-size:12px;margin-bottom:6px;color:var(--fe-text2)"><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:3px;border-radius:2px;background:var(--fe-acc)"></span>Actual</span><span style="display:flex;align-items:center;gap:6px"><span style="width:16px;height:0;border-top:3px dashed var(--fe-acc)"></span>Projected</span><span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:11px;border-radius:3px;background:var(--fe-band)"></span>Confidence band</span></div>
+              {{ projEl }}
+              <div style="display:flex;align-items:center;gap:12px;background:var(--fe-sunken);border-radius:12px;padding:14px 16px;margin-top:14px">
+                <span class="fe-svg" style="display:flex;color:var(--fe-acc)"><i data-lucide="sliders-horizontal"></i></span>
+                <div style="flex:1">
+                  <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;color:var(--fe-text2)"><span style="font-weight:500">What if I cut discretionary spending by <b style="color:var(--fe-acc)">{{ whatif }}%</b>?</span><span>{{ whatifImpact }}</span></div>
+                  <input type="range" min="0" max="40" step="5" value="{{ whatif }}" onInput="{{ onWhatif }}" style="{{ rangeInputStyle }}">
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:16px">
+              <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:18px 20px">
+                <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--fe-text)">Predicted balances · {{ rangeLabel }}</div>
+                <div style="display:flex;flex-direction:column;gap:11px">
+                  <sc-for list="{{ projAccounts }}" as="p" hint-placeholder-count="5">
+                    <div style="display:flex;align-items:center;gap:11px"><span class="fe-svg" style="{{ p.iconWrap }}"><i data-lucide="{{ p.icon }}"></i></span><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--fe-text)">{{ p.name }}</div><div style="font-size:11px;color:var(--fe-text3)">now {{ p.now }}</div></div><div style="text-align:right"><div style="font-size:13.5px;font-weight:600;color:{{ p.color }}">{{ p.pred }}</div><div style="font-size:11px;color:{{ p.chColor }}">{{ p.change }}</div></div></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:18px 20px">
+                <div style="font-size:14px;font-weight:600;margin-bottom:12px;color:var(--fe-text)">Upcoming recurring</div>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                  <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="5">
+                    <div style="display:flex;align-items:center;gap:10px"><div style="width:38px;height:38px;border-radius:10px;background:var(--fe-sunken);display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1"><span style="font-size:14px;font-weight:700;color:var(--fe-text)">{{ u.day }}</span><span style="font-size:8.5px;color:var(--fe-text3);text-transform:uppercase">{{ u.mon }}</span></div><div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--fe-text)">{{ u.name }}</div><div style="font-size:11px;color:var(--fe-text3)">{{ u.when }}</div></div><span style="font-size:13px;font-weight:600;color:{{ u.color }}">{{ u.amt }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ===================== SETTINGS ===================== -->
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="">
+        <div style="max-width:840px;display:flex;flex-direction:column;gap:16px">
+          <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:22px 24px">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px"><span class="fe-svg" style="display:flex;color:var(--fe-acc)"><i data-lucide="palette"></i></span><span style="font-size:16px;font-weight:600;color:var(--fe-text)">Appearance</span></div>
+            <div style="font-size:12.5px;color:var(--fe-text3);margin-bottom:18px">Personalise how FireRacoon looks. Saved on this device.</div>
+            <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:26px">
+              <div>
+                <div style="font-size:12px;color:var(--fe-text3);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:9px">Theme</div>
+                <div style="display:flex;background:var(--fe-surface2);border-radius:11px;padding:4px;gap:2px">
+                  <sc-for list="{{ modeOpts }}" as="m" hint-placeholder-count="2">
+                    <button onClick="{{ m.set }}" style="{{ m.style }}"><span class="fe-svg" style="display:flex"><i data-lucide="{{ m.icon }}"></i></span>{{ m.label }}</button>
+                  </sc-for>
+                </div>
+              </div>
+              <div>
+                <div style="font-size:12px;color:var(--fe-text3);letter-spacing:0.05em;text-transform:uppercase;margin-bottom:9px">Accent colour</div>
+                <div style="display:flex;gap:14px;flex-wrap:wrap">
+                  <sc-for list="{{ accentOpts }}" as="a" hint-placeholder-count="6">
+                    <button onClick="{{ a.set }}" style="{{ a.wrap }}"><span style="{{ a.dot }}"></span><span style="font-size:11.5px;color:var(--fe-text2)">{{ a.name }}</span></button>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:22px 24px">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:4px"><span class="fe-svg" style="display:flex;color:var(--fe-acc)"><i data-lucide="coins"></i></span><span style="font-size:16px;font-weight:600;color:var(--fe-text)">Display currency</span></div>
+            <div style="font-size:12.5px;color:var(--fe-text3);margin-bottom:16px">Totals across accounts are shown in this currency.</div>
+            <div style="display:flex;background:var(--fe-surface2);border-radius:11px;padding:4px;width:fit-content">
+              <sc-for list="{{ curOpts }}" as="c" hint-placeholder-count="3">
+                <button onClick="{{ c.set }}" style="{{ c.styleBig }}">{{ c.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:16px;padding:22px 24px">
+            <div style="display:flex;align-items:center;gap:9px;margin-bottom:16px"><span class="fe-svg" style="display:flex;color:var(--fe-acc)"><i data-lucide="link"></i></span><span style="font-size:16px;font-weight:600;color:var(--fe-text)">Firefly III connection</span></div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;gap:12px"><span style="font-size:12.5px;color:var(--fe-text3);width:130px">Instance URL</span><span style="flex:1;font-size:13px;color:var(--fe-text);font-family:ui-monospace,Menlo,monospace;background:var(--fe-sunken);padding:8px 12px;border-radius:9px">https://firefly.mydomain.eu</span></div>
+              <div style="display:flex;align-items:center;gap:12px"><span style="font-size:12.5px;color:var(--fe-text3);width:130px">Personal token</span><span style="flex:1;font-size:13px;color:var(--fe-text);font-family:ui-monospace,Menlo,monospace;background:var(--fe-sunken);padding:8px 12px;border-radius:9px">•••••••••••••••••••• 4f2a</span></div>
+              <div style="display:flex;align-items:center;gap:12px"><span style="font-size:12.5px;color:var(--fe-text3);width:130px">Status</span><span style="display:flex;align-items:center;gap:7px;font-size:13px;color:var(--fe-good);font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:var(--fe-good)"></span>Connected · synced 2 min ago</span></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <!-- ============ ADD TRANSACTION MODAL ============ -->
+  <sc-if value="{{ showTx }}" hint-placeholder-val="">
+    <div onClick="{{ closeTx }}" style="position:fixed;inset:0;background:var(--fe-overlay);backdrop-filter:blur(3px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px">
+      <div onClick="{{ stop }}" style="background:var(--fe-surface);border:1px solid var(--fe-border);border-radius:20px;width:460px;max-width:100%;padding:26px;box-shadow:0 24px 60px rgba(0,0,0,0.35);animation:feIn .25s ease-out">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px"><h2 style="margin:0;font-size:19px;font-weight:600;color:var(--fe-text)">New transaction</h2><button onClick="{{ closeTx }}" style="background:var(--fe-surface2);border:none;border-radius:9px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--fe-text2)"><span class="fe-svg" style="display:flex"><i data-lucide="x"></i></span></button></div>
+        <div style="display:flex;background:var(--fe-surface2);border-radius:11px;padding:3px;margin-bottom:16px">
+          <sc-for list="{{ txTypes }}" as="t" hint-placeholder-count="3">
+            <button onClick="{{ t.set }}" style="{{ t.style }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:13px">
+          <div><label style="font-size:12px;color:var(--fe-text3);display:block;margin-bottom:5px">Amount</label><div style="display:flex;align-items:center;gap:8px;border:1px solid var(--fe-border);border-radius:11px;padding:0 14px;background:var(--fe-surface)"><span style="font-family:'Roboto Slab',serif;font-size:20px;color:var(--fe-text)">€</span><input value="{{ formAmt }}" onInput="{{ onFormAmt }}" placeholder="0.00" style="flex:1;border:none;outline:none;font-family:'Roboto Slab',serif;font-size:22px;padding:12px 0;color:var(--fe-text);background:none"></div></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div><label style="font-size:12px;color:var(--fe-text3);display:block;margin-bottom:5px">Account</label><div style="border:1px solid var(--fe-border);border-radius:11px;padding:11px 13px;font-size:13.5px;display:flex;align-items:center;justify-content:space-between;color:var(--fe-text)">Millennium <span class="fe-svg" style="display:flex;color:var(--fe-text3)"><i data-lucide="chevron-down"></i></span></div></div>
+            <div><label style="font-size:12px;color:var(--fe-text3);display:block;margin-bottom:5px">Category</label><div style="border:1px solid var(--fe-border);border-radius:11px;padding:11px 13px;font-size:13.5px;display:flex;align-items:center;justify-content:space-between;color:var(--fe-text)">Groceries <span class="fe-svg" style="display:flex;color:var(--fe-text3)"><i data-lucide="chevron-down"></i></span></div></div>
+          </div>
+          <div><label style="font-size:12px;color:var(--fe-text3);display:block;margin-bottom:5px">Description</label><input value="{{ formDesc }}" onInput="{{ onFormDesc }}" placeholder="e.g. Continente groceries" style="width:100%;border:1px solid var(--fe-border);border-radius:11px;padding:11px 13px;font-family:inherit;font-size:13.5px;outline:none;color:var(--fe-text);background:var(--fe-surface)"></div>
+          <div><label style="font-size:12px;color:var(--fe-text3);display:block;margin-bottom:5px">Date</label><input value="{{ formDate }}" onInput="{{ onFormDate }}" style="width:100%;border:1px solid var(--fe-border);border-radius:11px;padding:11px 13px;font-family:inherit;font-size:13.5px;outline:none;color:var(--fe-text);background:var(--fe-surface)"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:22px"><button onClick="{{ closeTx }}" style="flex:1;background:var(--fe-surface2);color:var(--fe-text2);border:none;border-radius:11px;padding:12px;font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer">Cancel</button><button onClick="{{ saveTx }}" style="flex:1;background:var(--fe-acc);color:var(--fe-on-acc);border:none;border-radius:11px;padding:12px;font-family:inherit;font-weight:600;font-size:13.5px;cursor:pointer">Save transaction</button></div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1360,&quot;height&quot;:900},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light'|'dark'&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;green&quot;,&quot;teal&quot;,&quot;blue&quot;,&quot;orange&quot;,&quot;red&quot;,&quot;violet&quot;],&quot;default&quot;:&quot;green&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;}}">
+class Component extends DCLogic {
+  state = {
+    route: 'dashboard', dash: 'a', dispCur: this._ls('fe-cur','EUR'),
+    mode: this._ls('fe-mode', this.props.mode || 'light'),
+    accent: this._ls('fe-accent', this.props.accent || 'green'),
+    selAcct: 0, showTx: false, txFilter: 'all', txType: 'expense',
+    projRange: 90, whatif: 0,
+    formAmt: '', formDesc: '', formDate: '6 Jul 2026',
+  };
+  _ls(k, d){ try{ var v=localStorage.getItem(k); return v===null?d:v; }catch(e){ return d; } }
+  _save(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+
+  componentDidMount(){ this._icons(); }
+  componentDidUpdate(){ this._icons(); }
+  _icons(){ try{ window.lucide && window.lucide.createIcons(); }catch(e){} }
+
+  SYM = { EUR:'€', USD:'$', GBP:'£' };
+  TOEUR = { EUR:1, USD:0.92, GBP:1.17 };
+  ACCENTS = {
+    green:  {acc:'#1F8A5B', strong:'#177049', deep:'#103A2B', hi:'#D4F5A6', hiOn:'#0B3A26'},
+    teal:   {acc:'#028A93', strong:'#037780', deep:'#0B4650', hi:'#E7FFC8', hiOn:'#0B4650'},
+    blue:   {acc:'#2A6FDB', strong:'#2159BD', deep:'#132C4F', hi:'#CFE3FF', hiOn:'#0B2E63'},
+    orange: {acc:'#E07B29', strong:'#C4661A', deep:'#3C2A18', hi:'#FFE1BF', hiOn:'#5C3208'},
+    red:    {acc:'#D64A4A', strong:'#BB3A3A', deep:'#3B1E1E', hi:'#FFD9D9', hiOn:'#5C1414'},
+    violet: {acc:'#7A5AD6', strong:'#6547BD', deep:'#241C42', hi:'#E4DBFF', hiOn:'#2E1D63'},
+  };
+
+  mix(a,b,t){ a=a.replace('#','');b=b.replace('#','');function h(x){return parseInt(x,16);}
+    var ar=h(a.slice(0,2)),ag=h(a.slice(2,4)),ab=h(a.slice(4,6)),br=h(b.slice(0,2)),bg=h(b.slice(2,4)),bb=h(b.slice(4,6));
+    function m(x,y){return Math.round(x+(y-x)*t);} function p(n){return ('0'+n.toString(16)).slice(-2);}
+    return '#'+p(m(ar,br))+p(m(ag,bg))+p(m(ab,bb)); }
+  hexA(hex,al){ hex=hex.replace('#',''); return 'rgba('+parseInt(hex.slice(0,2),16)+','+parseInt(hex.slice(2,4),16)+','+parseInt(hex.slice(4,6),16)+','+al+')'; }
+
+  theme(){
+    var st=this.state, A=this.ACCENTS[st.accent]||this.ACCENTS.green, dark=st.mode==='dark';
+    var mix=this.mix.bind(this), hexA=this.hexA.bind(this);
+    var good='#33A76A', warn='#E0A93B', bad='#E05656';
+    var base = dark ? {
+      bg:'#0E1516', surface:'#161E1D', surface2:'#0B1211', sunken:'#121A19', border:'#2A3432', divider:'#222B29',
+      text:'#EAF1EF', text2:'#AEBCB9', text3:'#7C8A87', headerBg:'rgba(14,21,22,0.82)', shadow:'0 1px 3px rgba(0,0,0,0.35)',
+      track:'#232D2B', trackStrong:'#3A4644', overlay:'rgba(0,0,0,0.6)'
+    } : {
+      bg:'#ECF0F0', surface:'#FFFFFF', surface2:'#ECF0F0', sunken:'#F6F8F8', border:'#DCE3E3', divider:'#ECF0F0',
+      text:'#14201F', text2:'#3F4C4B', text3:'#8A9797', headerBg:'rgba(246,248,248,0.85)', shadow:'0 1px 3px rgba(11,70,80,0.05)',
+      track:'#ECF0F0', trackStrong:'#C2CCCC', overlay:'rgba(6,20,20,0.5)'
+    };
+    var t = Object.assign({}, base, {
+      mode:st.mode, acc:A.acc, accStrong:A.strong, onAcc:'#FFFFFF', accHi:A.hi, accHiOn:A.hiOn,
+      panel:A.deep, panel2:mix(A.deep,'#FFFFFF',0.09), panelText:'#FFFFFF', panelMuted:mix(A.acc,'#FFFFFF',0.60),
+      sidebar:A.deep, sidebarText:'#FFFFFF', sidebarMuted:mix(A.acc,'#FFFFFF',0.55),
+      good:good, warn:warn, bad:bad,
+      goodBg: dark?hexA(good,0.18):'#E7F5EC', warnBg: dark?hexA(warn,0.18):'#FBF1DC', badBg: dark?hexA(bad,0.18):'#FCE9E9',
+      mutedBg: dark?'rgba(255,255,255,0.08)':'#ECF0F0',
+      iconBg: dark?hexA(A.acc,0.20):mix(A.acc,'#FFFFFF',0.86), iconFg: dark?mix(A.acc,'#FFFFFF',0.32):A.acc,
+      band: dark?hexA(A.acc,0.24):mix(A.acc,'#FFFFFF',0.74), line: dark?mix(A.acc,'#FFFFFF',0.18):A.acc,
+    });
+    t.cats = [A.acc, mix(A.acc,'#FFFFFF',0.30), mix(A.acc,'#FFFFFF',0.54), mix(A.acc,'#FFFFFF',0.74), mix(A.acc,'#000000',0.30), mix(A.acc,'#000000',0.52)];
+    return t;
+  }
+
+  // ---------- data (cached) ----------
+  D(){
+    if(this._d) return this._d;
+    var accounts = [
+      {name:'Millennium',bank:'Current account',type:'asset',cur:'EUR',bal:4280.55,icon:'landmark'},
+      {name:'Revolut Savings',bank:'Savings',type:'asset',cur:'EUR',bal:12650.00,icon:'piggy-bank'},
+      {name:'Emergency Fund',bank:'Savings',type:'asset',cur:'EUR',bal:6000.00,icon:'shield'},
+      {name:'Visa Credit',bank:'Credit card',type:'liability',cur:'EUR',bal:-842.30,icon:'credit-card'},
+      {name:'Trading 212',bank:'Investment',type:'invest',cur:'USD',bal:8412.00,icon:'trending-up'},
+      {name:'Cash wallet',bank:'Cash',type:'cash',cur:'EUR',bal:215.00,icon:'wallet'},
+    ];
+    accounts.forEach(function(a){ a.eur = a.bal * (a.cur==='EUR'?1:(a.cur==='USD'?0.92:1.17)); });
+    var cats = [
+      {name:'Groceries',icon:'shopping-cart',amt:412,budget:500,change:-4},
+      {name:'Dining out',icon:'utensils',amt:286,budget:250,change:12},
+      {name:'Transport',icon:'car',amt:148,budget:200,change:-8},
+      {name:'Utilities',icon:'zap',amt:198,budget:220,change:2},
+      {name:'Shopping',icon:'shopping-bag',amt:174,budget:150,change:22},
+      {name:'Entertainment',icon:'clapperboard',amt:96,budget:120,change:-15},
+    ];
+    var tx = [
+      {desc:'Continente',cat:'Groceries',acct:'Millennium',amt:-64.20,cur:'EUR',icon:'shopping-cart',d:'Today'},
+      {desc:'Salary — Acme Lda',cat:'Income',acct:'Millennium',amt:3200.00,cur:'EUR',icon:'briefcase',d:'Today'},
+      {desc:'Uber',cat:'Transport',acct:'Visa Credit',amt:-11.40,cur:'EUR',icon:'car',d:'Today'},
+      {desc:'Spotify',cat:'Entertainment',acct:'Visa Credit',amt:-6.99,cur:'EUR',icon:'music',d:'Yesterday'},
+      {desc:'Tasca do Zé',cat:'Dining out',acct:'Millennium',amt:-38.50,cur:'EUR',icon:'utensils',d:'Yesterday'},
+      {desc:'Transfer to Savings',cat:'Transfer',acct:'Millennium',amt:-500.00,cur:'EUR',icon:'arrow-left-right',d:'Yesterday'},
+      {desc:'Amazon',cat:'Shopping',acct:'Visa Credit',amt:-42.99,cur:'EUR',icon:'shopping-bag',d:'4 Jul'},
+      {desc:'EDP electricity',cat:'Utilities',acct:'Millennium',amt:-78.30,cur:'EUR',icon:'zap',d:'4 Jul'},
+      {desc:'Pingo Doce',cat:'Groceries',acct:'Millennium',amt:-51.10,cur:'EUR',icon:'shopping-cart',d:'3 Jul'},
+      {desc:'Dividend — VWCE',cat:'Income',acct:'Trading 212',amt:24.10,cur:'USD',icon:'trending-up',d:'3 Jul'},
+      {desc:'Netflix',cat:'Entertainment',acct:'Visa Credit',amt:-13.49,cur:'EUR',icon:'clapperboard',d:'2 Jul'},
+      {desc:'Galp fuel',cat:'Transport',acct:'Visa Credit',amt:-58.00,cur:'EUR',icon:'car',d:'2 Jul'},
+    ];
+    tx.forEach(function(t){ t.type = t.cat==='Income'?'income':(t.cat==='Transfer'?'transfer':'expense'); });
+    var recurring = [
+      {name:'Rent',day:'1',mon:'Aug',when:'Monthly',amt:-950,icon:'home'},
+      {name:'Gym — Fitness Hut',day:'5',mon:'Aug',when:'Monthly',amt:-34.90,icon:'dumbbell'},
+      {name:'Internet — NOS',day:'8',mon:'Aug',when:'Monthly',amt:-39.99,icon:'wifi'},
+      {name:'Electricity — EDP',day:'10',mon:'Aug',when:'Monthly',amt:-78.30,icon:'zap'},
+      {name:'Netflix',day:'14',mon:'Aug',when:'Monthly',amt:-13.49,icon:'clapperboard'},
+      {name:'Salary',day:'25',mon:'Jul',when:'Monthly',amt:3200,icon:'briefcase'},
+    ];
+    this._d = {accounts:accounts, cats:cats, tx:tx, recurring:recurring};
+    return this._d;
+  }
+
+  fmtN(v, cur, dec){ dec=(dec===undefined)?2:dec;
+    var s=Math.abs(v).toLocaleString('en-IE',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+    return (v<0?'-':'')+this.SYM[cur]+s; }
+  fmtD(eur, dec){ var c=this.state.dispCur; return this.fmtN(eur/this.TOEUR[c], c, dec); }
+
+  // ---------- charts (theme-aware) ----------
+  sparkline(vals, color, w, h){ w=w||120; h=h||34;
+    var min=Math.min.apply(null,vals), max=Math.max.apply(null,vals), rng=(max-min)||1, e=React.createElement;
+    var pts=vals.map(function(v,i){ return ((i/(vals.length-1))*w)+','+(h-((v-min)/rng)*(h-6)-3); });
+    return e('svg',{width:'100%',height:h,viewBox:'0 0 '+w+' '+h,preserveAspectRatio:'none'},
+      e('path',{d:'M0,'+h+' L'+pts.join(' L')+' L'+w+','+h+' Z',fill:color,opacity:0.12}),
+      e('polyline',{points:pts.join(' '),fill:'none',stroke:color,strokeWidth:2,vectorEffect:'non-scaling-stroke',strokeLinecap:'round',strokeLinejoin:'round'})); }
+  donut(segs, th, size, sw){ size=size||150; sw=sw||20;
+    var r=(size-sw)/2, c=2*Math.PI*r, cx=size/2, off=0, e=React.createElement, self=this;
+    var total=segs.reduce(function(s,x){return s+x.amt;},0);
+    var circles=segs.map(function(s,i){ var len=c*(s.amt/total);
+      var el=e('circle',{key:i,cx:cx,cy:cx,r:r,fill:'none',stroke:s.color,strokeWidth:sw,strokeDasharray:len+' '+(c-len),strokeDashoffset:-off,transform:'rotate(-90 '+cx+' '+cx+')'});
+      off+=len; return el; });
+    return e('svg',{width:size,height:size,viewBox:'0 0 '+size+' '+size}, circles,
+      e('text',{x:cx,y:cx-4,textAnchor:'middle',fontSize:'11',fill:th.text3,fontFamily:'Comfortaa'},'Total'),
+      e('text',{x:cx,y:cx+15,textAnchor:'middle',fontSize:'16',fontWeight:'700',fill:th.text,fontFamily:'Roboto Slab'},self.fmtD(total,0))); }
+  ring(pct, th, size){ size=size||132; var sw=13, r=(size-sw)/2, c=2*Math.PI*r, cx=size/2, e=React.createElement;
+    var col=pct>100?th.bad:(pct>85?th.warn:th.accHi);
+    return e('svg',{width:size,height:size,viewBox:'0 0 '+size+' '+size},
+      e('circle',{cx:cx,cy:cx,r:r,fill:'none',stroke:th.panel2,strokeWidth:sw}),
+      e('circle',{cx:cx,cy:cx,r:r,fill:'none',stroke:col,strokeWidth:sw,strokeLinecap:'round',strokeDasharray:c*Math.min(pct,100)/100+' '+c,transform:'rotate(-90 '+cx+' '+cx+')'}),
+      e('text',{x:cx,y:cx-2,textAnchor:'middle',fontSize:'26',fontWeight:'700',fill:'#fff',fontFamily:'Roboto Slab'},pct+'%'),
+      e('text',{x:cx,y:cx+18,textAnchor:'middle',fontSize:'11',fill:th.panelMuted,fontFamily:'Comfortaa'},'of budget')); }
+  projectionChart(range, whatif, th){
+    var e=React.createElement, W=680, H=250, padL=8, padR=8, padT=14, padB=26, iw=W-padL-padR, ih=H-padT-padB, self=this;
+    var base=[3700,3820,3760,3980,4120,4050,4230,4180,4340,4280], histN=base.length;
+    var projWeeks=Math.round(range/7), start=base[base.length-1], weeklyNet=130, discWeekly=148;
+    var proj=[start], lo=[start], hi=[start];
+    for(var i=1;i<=projWeeks;i++){ var v=start+weeklyNet*i+discWeekly*(whatif/100)*i; proj.push(v); lo.push(v-i*55-40); hi.push(v+i*60+40); }
+    var all=base.concat(proj.slice(1));
+    var min=Math.min.apply(null,lo.concat(base))-150, max=Math.max.apply(null,hi.concat(base))+150, rng=max-min;
+    var X=function(idx){return padL+(idx/(all.length-1))*iw;}, Y=function(v){return padT+ih-((v-min)/rng)*ih;};
+    var grid=[]; for(var g=0;g<=3;g++){ var yy=padT+(ih/3)*g; grid.push(e('line',{key:'g'+g,x1:padL,y1:yy,x2:W-padR,y2:yy,stroke:th.divider,strokeWidth:1})); grid.push(e('text',{key:'gt'+g,x:padL+2,y:yy-4,fontSize:'9.5',fill:th.text3,fontFamily:'Comfortaa'},self.fmtD(max-(rng/3)*g,0))); }
+    var bandPts=[]; for(var i=0;i<hi.length;i++){ bandPts.push(X(histN-1+i)+','+Y(hi[i])); } for(var i=lo.length-1;i>=0;i--){ bandPts.push(X(histN-1+i)+','+Y(lo[i])); }
+    var histLine=base.map(function(v,i){return X(i)+','+Y(v);}).join(' ');
+    var projLine=proj.map(function(v,i){return X(histN-1+i)+','+Y(v);}).join(' ');
+    var todayX=X(histN-1), endIdx=all.length-1;
+    return e('svg',{width:'100%',height:H,viewBox:'0 0 '+W+' '+H}, grid,
+      e('polygon',{points:bandPts.join(' '),fill:th.band}),
+      e('line',{x1:todayX,y1:padT,x2:todayX,y2:padT+ih,stroke:th.trackStrong,strokeWidth:1,strokeDasharray:'3 3'}),
+      e('text',{x:todayX+4,y:padT+10,fontSize:'9.5',fill:th.text3,fontFamily:'Comfortaa'},'today'),
+      e('polyline',{points:histLine,fill:'none',stroke:th.line,strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round'}),
+      e('polyline',{points:projLine,fill:'none',stroke:th.line,strokeWidth:2.5,strokeDasharray:'6 5',strokeLinecap:'round',strokeLinejoin:'round'}),
+      e('circle',{cx:X(endIdx),cy:Y(all[endIdx]),r:4.5,fill:th.line}),
+      e('text',{x:X(endIdx)-4,y:Y(all[endIdx])-10,fontSize:'11',fontWeight:'700',fill:th.text,textAnchor:'end',fontFamily:'Roboto Slab'},self.fmtD(all[endIdx],0))); }
+
+  go(r){ this.setState({route:r, showTx:false}); }
+  setMode(m){ this._save('fe-mode',m); this.setState({mode:m}); }
+  setAccent(a){ this._save('fe-accent',a); this.setState({accent:a}); }
+  setCur(c){ this._save('fe-cur',c); this.setState({dispCur:c}); }
+
+  renderVals(){
+    var self=this, D=this.D(), st=this.state, e=React.createElement, th=this.theme();
+    var acc=D.accounts, cats=D.cats, tx=D.tx.slice(), rec=D.recurring;
+    if(this._saved) tx=this._saved.concat(tx);
+    var netEur=acc.reduce(function(s,a){return s+a.eur;},0), monthlyIncome=3224.10, monthlySpend=1314.87;
+
+    // style factories
+    var navStyle=function(active){ return {display:'flex',alignItems:'center',gap:'11px',width:'100%',padding:'10px 12px',border:'none',borderRadius:'11px',cursor:'pointer',fontFamily:'inherit',fontSize:'13.5px',background:active?th.acc:'transparent',color:active?th.onAcc:th.sidebarMuted,fontWeight:active?600:400}; };
+    var seg=function(active){ return {border:'none',borderRadius:'8px',padding:'7px 13px',cursor:'pointer',fontFamily:'inherit',fontSize:'12.5px',fontWeight:600,background:active?th.surface:'transparent',color:active?th.text:th.text3,boxShadow:active?'0 1px 3px rgba(0,0,0,0.12)':'none'}; };
+    var pill=function(active){ return {border:'none',borderRadius:'8px',padding:'6px 12px',cursor:'pointer',fontFamily:'inherit',fontSize:'12.5px',fontWeight:600,background:active?th.acc:'transparent',color:active?th.onAcc:th.text3}; };
+    var pillBig=function(active){ return {border:'none',borderRadius:'8px',padding:'9px 20px',cursor:'pointer',fontFamily:'inherit',fontSize:'13.5px',fontWeight:600,background:active?th.acc:'transparent',color:active?th.onAcc:th.text2}; };
+    var wrap=function(bg,fg){ return {display:'flex',background:bg,color:fg,padding:'8px',borderRadius:'11px',flex:'none'}; };
+    var iwAcc=wrap(th.iconBg,th.iconFg), iwGood=wrap(th.goodBg,th.good), iwWarn=wrap(th.warnBg,th.warn), iwBad=wrap(th.badBg,th.bad), iwMuted=wrap(th.mutedBg,th.text2);
+
+    // root CSS vars
+    var rootStyle={ display:'flex', minHeight:'100vh', width:'100%', background:th.bg, color:th.text, fontFamily:'"Comfortaa","Trebuchet MS",system-ui,sans-serif',
+      '--fe-acc':th.acc,'--fe-on-acc':th.onAcc,'--fe-acc-hi':th.accHi,'--fe-acc-hi-on':th.accHiOn,
+      '--fe-sidebar':th.sidebar,'--fe-sidebar-text':th.sidebarText,'--fe-sidebar-muted':th.sidebarMuted,
+      '--fe-panel':th.panel,'--fe-panel2':th.panel2,'--fe-panel-text':th.panelText,'--fe-panel-muted':th.panelMuted,
+      '--fe-bg':th.bg,'--fe-surface':th.surface,'--fe-surface2':th.surface2,'--fe-sunken':th.sunken,
+      '--fe-border':th.border,'--fe-divider':th.divider,'--fe-text':th.text,'--fe-text2':th.text2,'--fe-text3':th.text3,
+      '--fe-header-bg':th.headerBg,'--fe-shadow':th.shadow,'--fe-track':th.track,'--fe-track-strong':th.trackStrong,
+      '--fe-warn':th.warn,'--fe-warn-bg':th.warnBg,'--fe-good':th.good,'--fe-band':th.band,'--fe-overlay':th.overlay };
+
+    // nav
+    var navDefs=[['dashboard','Dashboard','layout-dashboard'],['accounts','Accounts','wallet'],['transactions','Transactions','arrow-left-right'],['budgets','Budgets','target'],['expenses','Expenses','pie-chart'],['projection','Projection','sparkles']];
+    var route=st.route, isDetail=(route==='accountDetail');
+    var nav=navDefs.map(function(n){ var active=(route===n[0]||(isDetail&&n[0]==='accounts')); return {key:n[0],label:n[1],icon:n[2],style:navStyle(active),badge:n[0]==='projection'?'1':'',go:function(){ self.go(n[0]); }}; });
+
+    var curOpts=['EUR','USD','GBP'].map(function(c){ return {label:c,style:pill(st.dispCur===c),styleBig:pillBig(st.dispCur===c),set:function(){ self.setCur(c); }}; });
+
+    var titles={dashboard:['Overview','Good afternoon, Marta'],accounts:['Accounts','All accounts'],accountDetail:['Accounts',acc[st.selAcct].name],transactions:['Transactions','All transactions'],budgets:['Budgets','July 2026'],expenses:['Analysis','Where your money goes'],projection:['Forecast','Balance projection'],settings:['Preferences','Settings']};
+    var tt=titles[route]||['',''];
+
+    var iconWrapFor=function(a){ return a.type==='liability'?iwBad:iwAcc; };
+    var typeLabels={asset:'Asset',liability:'Liability',invest:'Investment',cash:'Cash'};
+    var accountsVM=acc.map(function(a,i){ return {name:a.name,bank:a.bank,icon:a.icon,typeLabel:typeLabels[a.type],iconWrap:iconWrapFor(a),
+      balNative:self.fmtN(a.bal,a.cur),balEur:(a.cur!=='EUR'?'≈ '+self.fmtD(a.eur):''),balColor:a.bal<0?th.bad:th.text,sub:a.bank,
+      spark:self.sparkline([a.eur*0.94,a.eur*0.9,a.eur*0.97,a.eur*0.93,a.eur*1.0,a.eur*0.98,a.eur],a.bal<0?th.bad:th.acc),
+      open:function(){ self.setState({route:'accountDetail',selAcct:i}); }}; });
+
+    var sum=function(f){ return acc.filter(f).reduce(function(s,a){return s+a.eur;},0); };
+    var acctGroups=[
+      {label:'Cash & current',color:th.text,total:self.fmtD(sum(function(a){return a.type==='asset'||a.type==='cash';})),count:'4 accounts'},
+      {label:'Investments',color:th.text,total:self.fmtD(sum(function(a){return a.type==='invest';})),count:'1 account'},
+      {label:'Liabilities',color:th.bad,total:self.fmtD(sum(function(a){return a.type==='liability';})),count:'1 card'},
+      {label:'Net worth',color:th.acc,total:self.fmtD(netEur),count:'6 accounts'},
+    ];
+
+    var txIcon=function(t){ return t.type==='income'?iwGood:(t.type==='transfer'?iwMuted:iwAcc); };
+    var txAmt=function(t){ return {str:(t.amt>0?'+':'')+self.fmtN(t.amt,t.cur),color:t.amt>0?th.good:(t.type==='transfer'?th.text2:th.text)}; };
+    var recentTx=tx.slice(0,6).map(function(t){ var a=txAmt(t); return {desc:t.desc,meta:t.cat+' · '+t.acct,icon:t.icon,iconWrap:txIcon(t),amt:a.str,amtColor:a.color}; });
+
+    var txFilters=[['all','All'],['income','Income'],['expense','Expenses'],['transfer','Transfers']].map(function(f){ return {label:f[1],style:seg(st.txFilter===f[0]),set:function(){ self.setState({txFilter:f[0]}); }}; });
+    var filtered=tx.filter(function(t){ return st.txFilter==='all'||t.type===st.txFilter; });
+    var byDate={},order=[]; filtered.forEach(function(t){ if(!byDate[t.d]){byDate[t.d]=[];order.push(t.d);} byDate[t.d].push(t); });
+    var txGroups=order.map(function(d){ var items=byDate[d].map(function(t){ var a=txAmt(t); return {desc:t.desc,category:t.cat,account:t.acct,icon:t.icon,iconWrap:txIcon(t),amt:a.str,amtColor:a.color}; });
+      var tot=byDate[d].reduce(function(s,t){return s+t.amt*(t.cur==='EUR'?1:(t.cur==='USD'?0.92:1.17));},0); return {date:d,total:(tot>0?'+':'')+self.fmtD(tot),items:items}; });
+
+    var da=acc[st.selAcct];
+    var det={name:da.name,bank:da.bank,icon:da.icon,typeLabel:typeLabels[da.type],balNative:self.fmtN(da.bal,da.cur),balEur:(da.cur!=='EUR'?'≈ '+self.fmtD(da.eur):self.fmtD(da.eur)),
+      spark:self.sparkline([da.eur*0.9,da.eur*0.95,da.eur*0.92,da.eur*0.99,da.eur*0.96,da.eur*1.02,da.eur],th.accHi,260,60),
+      in30:self.fmtD(Math.abs(da.eur)*0.28,0),out30:self.fmtD(Math.abs(da.eur)*0.19,0),
+      tx:tx.filter(function(t){return t.acct===da.name;}).map(function(t){var a=txAmt(t);return {desc:t.desc,meta:t.cat+' · '+t.d,icon:t.icon,iconWrap:txIcon(t),amt:a.str,amtColor:a.color};})};
+    if(det.tx.length===0) det.tx=recentTx;
+
+    var catColored=cats.map(function(c,i){ return {name:c.name,icon:c.icon,amt:c.amt,budget:c.budget,change:c.change,color:th.cats[i]}; });
+    var kpis=[
+      {label:'Total balance',value:self.fmtD(netEur),delta:'+3.1% this month',deltaColor:th.good,icon:'wallet',iconWrap:iwAcc},
+      {label:'Income · July',value:self.fmtD(monthlyIncome),delta:'On track',deltaColor:th.text3,icon:'arrow-down-left',iconWrap:iwGood},
+      {label:'Spending · July',value:self.fmtD(monthlySpend),delta:'-6% vs. June',deltaColor:th.good,icon:'arrow-up-right',iconWrap:iwWarn},
+      {label:'Saved · July',value:self.fmtD(monthlyIncome-monthlySpend),delta:'59% of income',deltaColor:th.text3,icon:'piggy-bank',iconWrap:iwAcc},
+    ];
+    var cfRaw=[[2980,1620],[3100,1810],[3200,1490],[3050,1720],[3224,1390],[3224,1315]], cfLabels=['Feb','Mar','Apr','May','Jun','Jul'], cfMax=3400;
+    var cashflow=cfRaw.map(function(m,i){ return {label:cfLabels[i],inH:Math.round(m[0]/cfMax*100),outH:Math.round(m[1]/cfMax*100)}; });
+    var catTop=catColored.slice(0,4).map(function(c){ return {name:c.name,color:c.color,amt:self.fmtD(c.amt,0)}; });
+    var donutEl=self.donut(catColored,th,150,20);
+
+    var totBud=cats.reduce(function(s,c){return s+c.budget;},0), totSpent=cats.reduce(function(s,c){return s+c.amt;},0), budPct=Math.round(totSpent/totBud*100);
+    var budgets=catColored.slice(0,4).map(function(c){ var p=Math.round(c.amt/c.budget*100); return {name:c.name,color:c.amt>c.budget?th.bad:c.color,pct:Math.min(p,100),pctLabel:p+'%',remain:(c.budget-c.amt>=0?self.fmtD(c.budget-c.amt,0)+' left':self.fmtD(c.amt-c.budget,0)+' over')}; });
+    var pace=new Date('2026-07-06').getDate()/31;
+    var budgetsFull=catColored.map(function(c){ var p=Math.round(c.amt/c.budget*100), over=c.amt>c.budget, expected=Math.round(c.budget*pace), onPace=c.amt<=expected;
+      return {name:c.name,icon:c.icon,iconWrap:iwAcc,spent:self.fmtD(c.amt,0),budget:self.fmtD(c.budget,0),pct:Math.min(p,100),color:over?th.bad:(p>85?th.warn:c.color),
+        status:over?('Over by '+self.fmtD(c.amt-c.budget,0)):(onPace?'On pace — '+self.fmtD(c.budget-c.amt,0)+' left':'Spending fast — '+self.fmtD(c.budget-c.amt,0)+' left'),
+        statusColor:over?th.bad:(onPace?th.text3:th.warn)}; });
+
+    var expTotalN=cats.reduce(function(s,c){return s+c.amt;},0);
+    var catAll=catColored.map(function(c){ return {name:c.name,color:c.color,amt:self.fmtD(c.amt,0),change:(c.change>0?'+':'')+c.change+'%',chColor:c.change>0?th.bad:th.good}; });
+    var donutBig=self.donut(catColored,th,190,26);
+    var stRaw=[1620,1810,1490,1720,1390,1315], stMax=1900;
+    var spendTrend=stRaw.map(function(v,i){ return {label:cfLabels[i],amt:self.fmtD(v,0),h:Math.round(v/stMax*100),color:i===stRaw.length-1?th.acc:th.trackStrong}; });
+    var merchants=[['Continente','8 payments',214,'shopping-cart'],['Galp','3 payments',148,'car'],['Tasca do Zé','5 payments',132,'utensils'],['Amazon','4 payments',119,'shopping-bag']].map(function(m){ return {name:m[0],count:m[1],amt:self.fmtD(m[2],0),icon:m[3],iconWrap:iwAcc}; });
+
+    var months=Math.max(1,Math.round(st.projRange/30)), discMonthly=456, whatifSave=Math.round(discMonthly*(st.whatif/100)*months);
+    var rangeOpts=[[30,'30d'],[60,'60d'],[90,'90d']].map(function(r){ return {label:r[1],style:pill(st.projRange===r[0]),set:function(){ self.setState({projRange:r[0]}); }}; });
+    var projGrowth={30:0.011,60:0.023,90:0.036}, g=projGrowth[st.projRange];
+    var projAccounts=acc.map(function(a){ var pred=a.eur*(1+(a.type==='liability'?-g*0.4:g))+(a.type==='asset'&&a.name==='Millennium'?whatifSave:0), ch=pred-a.eur;
+      return {name:a.name,icon:a.icon,iconWrap:iconWrapFor(a),now:self.fmtD(a.eur,0),pred:self.fmtD(pred,0),change:(ch>=0?'+':'')+self.fmtD(ch,0),color:pred<0?th.bad:th.text,chColor:ch>=0?th.good:th.bad}; });
+    var upcoming=rec.map(function(u){ return {name:u.name,day:u.day,mon:u.mon,when:u.when,amt:(u.amt>0?'+':'')+self.fmtD(u.amt,0),color:u.amt>0?th.good:th.text}; });
+    var eomN=netEur*1.031+whatifSave, projEl=self.projectionChart(st.projRange,st.whatif,th);
+    var whatifImpact=st.whatif===0?'Move the slider':('+'+self.fmtD(whatifSave,0)+' by '+st.projRange+' days');
+
+    var dashOpts=[['a','Insights'],['b','Accounts'],['c','Focus']].map(function(d){ return {label:d[1],style:seg(st.dash===d[0]),set:function(){ self.setState({dash:d[0]}); }}; });
+    var dashHints={a:'KPIs, cash flow & category breakdown',b:'Accounts, bills & budgets forward',c:'One hero balance with live forecast'};
+    var txTypes=[['expense','Expense'],['income','Income'],['transfer','Transfer']].map(function(t){ return {label:t[1],style:seg(st.txType===t[0]),set:function(){ self.setState({txType:t[0]}); }}; });
+
+    // settings controls
+    var modeOpts=[['light','Light','sun'],['dark','Dark','moon']].map(function(m){ var active=st.mode===m[0];
+      return {label:m[1],icon:m[2],set:function(){ self.setMode(m[0]); },style:{flex:1,display:'flex',alignItems:'center',justifyContent:'center',gap:'7px',border:'none',borderRadius:'8px',padding:'10px',cursor:'pointer',fontFamily:'inherit',fontSize:'13px',fontWeight:600,background:active?th.surface:'transparent',color:active?th.text:th.text3,boxShadow:active?'0 1px 3px rgba(0,0,0,0.12)':'none'}}; });
+    var accentOpts=Object.keys(self.ACCENTS).map(function(key){ var A=self.ACCENTS[key], active=st.accent===key, names={green:'Green',teal:'Teal',blue:'Blue',orange:'Orange',red:'Red',violet:'Violet'};
+      return {name:names[key],set:function(){ self.setAccent(key); },
+        wrap:{display:'flex',flexDirection:'column',alignItems:'center',gap:'6px',background:'none',border:'none',cursor:'pointer',fontFamily:'inherit',padding:'2px'},
+        dot:{width:'32px',height:'32px',borderRadius:'50%',background:A.acc,boxShadow:active?('0 0 0 3px '+th.surface+', 0 0 0 5px '+A.acc):'none',display:'block'}}; });
+
+    return {
+      rootStyle:rootStyle,
+      nav:nav, curOpts:curOpts, crumb:tt[0], pageTitle:tt[1],
+      netWorth:self.fmtD(netEur), netDelta:'+'+self.fmtD(1180,0),
+      goSettings:function(){ self.go('settings'); }, gearStyle:{display:'flex',color:route==='settings'?th.acc:th.sidebarMuted},
+      onAdd:function(){ self.setState({showTx:true}); },
+      goTx:function(){ self.go('transactions'); }, goProj:function(){ self.go('projection'); }, goBud:function(){ self.go('budgets'); }, goAccounts:function(){ self.go('accounts'); },
+      isDash:route==='dashboard', isAccounts:route==='accounts', isDetail:isDetail, isTx:route==='transactions', isBudgets:route==='budgets', isExpenses:route==='expenses', isProj:route==='projection', isSettings:route==='settings',
+      dashOpts:dashOpts, dashHint:dashHints[st.dash], dashA:st.dash==='a', dashB:st.dash==='b', dashC:st.dash==='c',
+      kpis:kpis, cashflow:cashflow, catTop:catTop, donutEl:donutEl, recentTx:recentTx,
+      projEom:self.fmtD(eomN), projEomDelta:'+'+self.fmtD(eomN-netEur,0)+' expected',
+      dashAlert:'Visa Credit is due on the 20th (≈ '+self.fmtD(842,0)+'). Millennium stays positive.',
+      accounts:accountsVM, budgets:budgets, upcoming:upcoming,
+      netSpark:self.sparkline([11,11.4,11.2,12.1,11.8,12.4,12.9],th.onAcc,260,44),
+      netSparkLg:self.sparkline([31,32,31.5,33,32.6,34,netEur/1000],th.accHi,420,70),
+      mIncome:self.fmtD(monthlyIncome,0), mSpend:self.fmtD(monthlySpend,0), projEl:projEl,
+      acctGroups:acctGroups, det:det,
+      txFilters:txFilters, txGroups:txGroups,
+      budgetRing:self.ring(budPct,th), budgetSummary:self.fmtD(totSpent,0)+' of '+self.fmtD(totBud,0), budgetsFull:budgetsFull,
+      expTotal:self.fmtD(expTotalN,0), catAll:catAll, donutBig:donutBig, spendTrend:spendTrend, merchants:merchants,
+      hasAlert:true, alertText:'Heads up — at this pace Visa Credit reaches '+self.fmtD(-1180,0)+' around 20 Jul. Consider moving '+self.fmtD(400,0)+' from Revolut Savings.',
+      rangeOpts:rangeOpts, rangeLabel:st.projRange+' days', projAccounts:projAccounts,
+      whatif:st.whatif, whatifImpact:whatifImpact, onWhatif:function(ev){ self.setState({whatif:parseInt(ev.target.value,10)}); },
+      rangeInputStyle:{width:'100%',accentColor:th.acc},
+      modeOpts:modeOpts, accentOpts:accentOpts,
+      showTx:st.showTx, closeTx:function(){ self.setState({showTx:false}); }, stop:function(ev){ ev.stopPropagation(); },
+      txTypes:txTypes, formAmt:st.formAmt, formDesc:st.formDesc, formDate:st.formDate,
+      onFormAmt:function(ev){ self.setState({formAmt:ev.target.value}); }, onFormDesc:function(ev){ self.setState({formDesc:ev.target.value}); }, onFormDate:function(ev){ self.setState({formDate:ev.target.value}); },
+      saveTx:function(){ var amt=parseFloat(st.formAmt)||0; if(st.txType==='expense')amt=-Math.abs(amt); self._saved=(self._saved||[]); self._saved.unshift({desc:st.formDesc||'New transaction',cat:st.txType==='income'?'Income':'Uncategorised',acct:'Millennium',amt:amt,cur:'EUR',icon:'circle-dot',d:'Today',type:st.txType}); self.setState({showTx:false,formAmt:'',formDesc:'',route:'transactions'}); },
+    };
+  }
+}
+</script>
+</body>
+</html>

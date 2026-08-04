@@ -1,0 +1,40 @@
+name: GHCR package visibility
+
+# One-shot / occasional: make ghcr.io/<owner>/fireracoon public.
+# Release builds also attempt this after each Docker push.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  packages: write
+
+jobs:
+  public:
+    name: Set fireracoon package public
+    runs-on: ubuntu-latest
+    steps:
+      - name: Make GHCR package public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER}"
+          pkg="fireracoon"
+          for api in \
+            "users/${owner}/packages/container/${pkg}" \
+            "user/packages/container/${pkg}"
+          do
+            vis="$(gh api "$api" --jq .visibility 2>/dev/null || true)"
+            echo "${api}: visibility=${vis:-missing}"
+            if [ "$vis" = "public" ]; then
+              echo "Already public."
+              exit 0
+            fi
+            if [ -n "$vis" ]; then
+              gh api --method PATCH "$api" -f visibility=public
+              echo "Set ghcr.io/${owner}/${pkg} to public."
+              exit 0
+            fi
+          done
+          echo "::error::Package not found or token lacks packages access."
+          exit 1

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Minimal WiX v3 manifest for the FireRacoon .msi installer.
+
+  Compile after building the Windows Release. Invoke candle.exe with -arch x64,
+  this file, -out product.wixobj and -dSourceDir pointing at
+  build\windows\x64\runner\Release, then light.exe to emit
+  FireRacoon-windows-x64.msi. See .github/workflows/release.yml.
+
+  UpgradeCode and MainExecutable Guid are permanent. Never change them —
+  Windows Installer uses UpgradeCode for in-place upgrades across versions.
+  Product Id="*" auto-generates per build.
+-->
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*"
+           Name="FireRacoon"
+           Language="1033"
+           Version="1.0.0.0"
+           Manufacturer="Kodsama"
+           UpgradeCode="F7C0B686-0D05-4F15-8A64-1570ED1AB911">
+
+    <Package InstallerVersion="500"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Description="FireRacoon installer" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of FireRacoon is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="FireRacoon" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="FireRacoon" />
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="MainExecutable" Guid="2E725CBB-83CE-4FBE-AE6E-C6065793A60C">
+        <File Id="FireRacoonExe"
+              Source="$(var.SourceDir)\fireracoon.exe"
+              KeyPath="yes">
+          <Shortcut Id="StartMenuShortcut"
+                    Directory="ApplicationProgramsFolder"
+                    Name="FireRacoon"
+                    WorkingDirectory="INSTALLFOLDER"
+                    Advertise="yes" />
+        </File>
+      </Component>
+    </DirectoryRef>
+
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <!--
+        For a complete install, harvest the Release folder with heat.exe:
+          heat.exe dir build\windows\x64\runner\Release -cg AppFiles -gg ^
+            -srd -sfrag -dr INSTALLFOLDER -var var.SourceDir -out harvested.wxs
+        then add harvested.wxs to the candle invocation. MainExecutable alone
+        is enough for a minimally valid .msi.
+      -->
+    </ComponentGroup>
+
+    <Feature Id="MainFeature" Title="FireRacoon" Level="1">
+      <ComponentRef Id="MainExecutable" />
+      <ComponentGroupRef Id="AppFiles" />
+    </Feature>
+  </Product>
+</Wix>

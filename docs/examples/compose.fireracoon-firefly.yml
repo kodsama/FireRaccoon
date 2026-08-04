@@ -1,0 +1,52 @@
+# FireRacoon + Firefly III + MariaDB.
+# Demo credentials — change APP_KEY and DB passwords before any network exposure.
+# Usage: docker compose -f docs/examples/compose.fireracoon-firefly.yml up -d
+#
+# FireRacoon → http://127.0.0.1:8082
+# Firefly III → http://127.0.0.1:8081
+services:
+  fireracoon:
+    image: ghcr.io/kodsama/fireracoon:latest
+    # Or build from this repo instead of GHCR:
+    # build:
+    #   context: ../..
+    ports:
+      - "127.0.0.1:8082:80"
+    restart: unless-stopped
+
+  firefly-app:
+    image: fireflyiii/core:latest
+    container_name: firefly_app
+    ports:
+      - "127.0.0.1:8081:8080"
+    depends_on:
+      - firefly-db
+    environment:
+      APP_KEY: "CHANGE_ME_32_CHARS_OF_RANDOM_KEY"
+      DB_CONNECTION: mysql
+      DB_HOST: firefly-db
+      DB_PORT: "3306"
+      DB_DATABASE: firefly
+      DB_USERNAME: firefly
+      DB_PASSWORD: "CHANGE_ME_DB_PASSWORD"
+      TZ: UTC
+      TRUSTED_PROXIES: "**"
+    volumes:
+      - firefly_upload:/var/www/html/storage/upload
+    restart: unless-stopped
+
+  firefly-db:
+    image: mariadb:10.11
+    container_name: firefly_db
+    environment:
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      MYSQL_USER: firefly
+      MYSQL_PASSWORD: "CHANGE_ME_DB_PASSWORD"
+      MYSQL_DATABASE: firefly
+    volumes:
+      - firefly_db:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  firefly_upload:
+  firefly_db:

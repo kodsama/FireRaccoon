@@ -1,0 +1,522 @@
+name: Release
+
+# Triggered by pushing a bare version tag (e.g. 0.1, 1.0.0) on main — never
+# a v-prefixed tag. Each platform job builds release artifacts and attaches
+# them to a single GitHub Release.
+# The docker job also pushes a multi-arch (amd64+arm64) image to
+# ghcr.io/<owner>/fireracoon:<tag> (and :latest), then sets the package public.
+#
+# Platforms (issue #6 order): web Docker image, Android APK/AAB, Windows
+# zip + Inno .exe + WiX .msi, macOS .dmg, iOS unsigned IPA, plus Linux
+# AppImage/deb/rpm/tarball.
+#
+# OBFUSCATION: every native `flutter build` uses --release --obfuscate
+# --split-debug-info=build/symbols/<platform> (web does not support --obfuscate).
+# Keep those symbol artifacts per release to de-obfuscate crash stack traces.
+#
+# SIGNING: artifacts are UNSIGNED. Store distribution requires platform-specific
+# signing credentials configured as repository secrets.
+
+on:
+  push:
+    tags:
+      - '[0-9]*.[0-9]*'
+
+env:
+  FLUTTER_VERSION: 3.44.3
+
+jobs:
+  verify-version:
+    name: Verify tag matches pubspec
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Assert tag equals pubspec version name
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          line="$(grep -E '^version:' pubspec.yaml | head -n1 | tr -d '[:space:]')"
+          full="${line#version:}"
+          name="${full%%+*}"
+          echo "tag=${tag}"
+          echo "pubspec=${full} (name=${name})"
+          if [ "$tag" != "$name" ]; then
+            echo "::error::Git tag '${tag}' must match pubspec version name '${name}' (from '${full}'). Bump pubspec.yaml before tagging."
+            exit 1
+          fi
+
+  android:
+    name: Build Android (APK + AAB)
+    needs: [verify-version]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: flutter --version
+      - run: bash tool/setup-ci-env.sh
+      - run: flutter pub get
+
+      - name: Build APK (obfuscated)
+        run: >-
+          flutter build apk --release
+          --obfuscate --split-debug-info=build/symbols/android
+
+      - name: Build App Bundle (obfuscated)
+        run: >-
+          flutter build appbundle --release
+          --obfuscate --split-debug-info=build/symbols/android
+
+      - name: Collect artifacts
+        run: |
+          mkdir -p dist/bin
+          dart compile exe packages/mcp/bin/fireracoon_mcp.dart -o dist/bin/fireracoon_mcp-linux-x64
+          cp build/app/outputs/flutter-apk/app-release.apk dist/
+          cp build/app/outputs/bundle/release/app-release.aab dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-symbols
+          path: build/symbols/android
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-artifacts
+          path: |
+            dist/*.apk
+            dist/*.aab
+            dist/bin/*
+
+  ios:
+    name: Build iOS (unsigned IPA)
+    needs: [verify-version]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: flutter --version
+      - run: flutter config --no-enable-swift-package-manager
+      - run: bash tool/setup-ci-env.sh
+      - run: flutter pub get
+
+      - name: Build IPA (unsigned, obfuscated)
+        run: >-
+          flutter build ipa --no-codesign --release
+          --obfuscate --split-debug-info=build/symbols/ios
+
+      - name: Package unsigned IPA if needed
+        run: |
+          mkdir -p dist
+          if ls build/ios/ipa/*.ipa >/dev/null 2>&1; then
+            cp build/ios/ipa/*.ipa dist/
+          else
+            APP_PATH="$(find build/ios -name 'Runner.app' -type d | head -1)"
+            if [ -z "$APP_PATH" ]; then
+              echo "No Runner.app produced; failing." >&2
+              exit 1
+            fi
+            rm -rf Payload && mkdir -p Payload
+            cp -R "$APP_PATH" Payload/
+            ( cd "$(dirname Payload)" && zip -qr dist/fireracoon-unsigned.ipa Payload )
+            rm -rf Payload
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-symbols
+          path: build/symbols/ios
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-artifacts
+          path: dist/*.ipa
+
+  macos:
+    name: Build macOS (.dmg)
+    needs: [verify-version]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: flutter --version
+      - run: bash tool/setup-ci-env.sh
+      - run: flutter pub get
+
+      - name: Build macOS app (obfuscated)
+        run: >-
+          flutter build macos --release
+          --obfuscate --split-debug-info=build/symbols/macos
+
+      - name: Install create-dmg
+        run: brew install create-dmg
+
+      - name: Create DMG
+        run: |
+          mkdir -p dist/bin
+          dart compile exe packages/mcp/bin/fireracoon_mcp.dart -o dist/bin/fireracoon_mcp-macos
+          mkdir -p dist
+          APP="build/macos/Build/Products/Release/FireRacoon.app"
+          create-dmg \
+            --volname "FireRacoon" \
+            --window-size 600 400 \
+            --icon-size 100 \
+            --app-drop-link 450 150 \
+            "dist/FireRacoon-macos.dmg" \
+            "$APP" \
+          || create-dmg "dist/FireRacoon-macos.dmg" "$APP"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-symbols
+          path: build/symbols/macos
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: |
+            dist/*.dmg
+            dist/bin/*
+
+  windows:
+    name: Build Windows (.exe installer + .msi + zip)
+    needs: [verify-version]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: flutter --version
+      - run: bash tool/setup-ci-env.sh
+      - run: flutter pub get
+
+      - name: Build Windows app (obfuscated)
+        run: >-
+          flutter build windows --release
+          --obfuscate --split-debug-info=build/symbols/windows
+
+      - name: Zip raw Release folder
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/bin | Out-Null
+          dart compile exe packages/mcp/bin/fireracoon_mcp.dart -o dist/bin/fireracoon_mcp-windows-x64.exe
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path build/windows/x64/runner/Release/* `
+            -DestinationPath dist/FireRacoon-windows-x64.zip -Force
+
+      # Inno Setup .exe installer via flutter_distributor (windows/packaging/exe).
+      - name: Build .exe installer (Inno Setup via flutter_distributor)
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          dart pub global activate flutter_distributor
+          flutter_distributor package --platform windows --targets exe
+        continue-on-error: true
+
+      # WiX Toolset v3 .msi from packaging/windows/product.wxs.
+      - name: Build .msi (WiX v3)
+        shell: pwsh
+        run: |
+          choco install wixtoolset --no-progress -y
+          $wix = "${env:ProgramFiles(x86)}\WiX Toolset v3.14\bin"
+          if (-not (Test-Path $wix)) { $wix = (Get-ChildItem "${env:ProgramFiles(x86)}\WiX Toolset*\bin")[0].FullName }
+          $env:Path = "$wix;$env:Path"
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          candle.exe -arch x64 packaging\windows\product.wxs -out dist\product.wixobj `
+            -dSourceDir=build\windows\x64\runner\Release
+          light.exe dist\product.wixobj -out dist\FireRacoon-windows-x64.msi
+        continue-on-error: true
+
+      - name: Collect installer artifacts
+        shell: pwsh
+        run: |
+          Get-ChildItem -Recurse -Include *.exe -Path dist -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -notlike 'fireracoon_mcp*' } |
+            ForEach-Object { Copy-Item $_.FullName dist/ -Force }
+          if (Test-Path dist/inno) {
+            Get-ChildItem -Recurse dist/inno -Include *.exe |
+              Copy-Item -Destination dist/ -Force
+          }
+
+      - name: Verify installer artifacts
+        shell: pwsh
+        run: |
+          $installers = Get-ChildItem dist -Include *.exe,*.msi -Recurse -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -notlike 'fireracoon_mcp*' }
+          if (-not $installers) {
+            Write-Error "No installer produced; both Inno Setup and WiX builds failed."
+            exit 1
+          }
+
+      # NOTE: installers are UNSIGNED. SmartScreen will warn until a code-signing
+      # cert is added via secrets (WINDOWS_CERT_BASE64, WINDOWS_CERT_PASSWORD).
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-symbols
+          path: build/symbols/windows
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: |
+            dist/*.msi
+            dist/*.zip
+            dist/*.exe
+            dist/bin/*
+
+  linux:
+    name: Build Linux (.AppImage + .deb + .rpm + tarball)
+    needs: [verify-version]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - name: Install Linux build deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev \
+            libstdc++-12-dev libsecret-1-dev \
+            libwebkit2gtk-4.1-dev \
+            rpm patchelf locate fuse
+          # desktop_webview_window (via flutter_web_auth_2) still looks for the
+          # 4.0 pkg-config name; Ubuntu 24.04 only ships 4.1.
+          for pc in webkit2gtk javascriptcoregtk; do
+            src="/usr/lib/x86_64-linux-gnu/pkgconfig/${pc}-4.1.pc"
+            dst="/usr/lib/x86_64-linux-gnu/pkgconfig/${pc}-4.0.pc"
+            if [ -f "$src" ] && [ ! -f "$dst" ]; then
+              sudo ln -s "$src" "$dst"
+            fi
+          done
+
+      - run: flutter --version
+      - run: bash tool/setup-ci-env.sh
+      - run: flutter pub get
+
+      - name: Build Linux app (obfuscated)
+        run: >-
+          flutter build linux --release
+          --obfuscate --split-debug-info=build/symbols/linux
+
+      - name: Install appimagetool
+        run: |
+          sudo wget -qO /usr/local/bin/appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/1.9.1/appimagetool-x86_64.AppImage
+          echo "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0  /usr/local/bin/appimagetool" \
+            | sha256sum -c -
+          sudo chmod +x /usr/local/bin/appimagetool
+
+      - name: Build AppImage / deb / rpm (flutter_distributor)
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: 1
+        run: |
+          dart pub global activate flutter_distributor
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          flutter_distributor package --platform linux --targets appimage || true
+          flutter_distributor package --platform linux --targets deb || true
+          flutter_distributor package --platform linux --targets rpm || true
+
+      - name: Package Linux bundle tarball + MCP binary
+        run: |
+          mkdir -p dist/bin
+          dart compile exe packages/mcp/bin/fireracoon_mcp.dart -o dist/bin/fireracoon_mcp-linux-x64
+          tar -C build/linux/x64/release -czf dist/FireRacoon-linux-x64.tar.gz bundle
+          find dist -mindepth 2 -type f \( -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' \) \
+            -exec cp {} dist/ \; 2>/dev/null || true
+          ls -la dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-symbols
+          path: build/symbols/linux
+          if-no-files-found: warn
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.rpm
+            dist/*.tar.gz
+            dist/bin/*
+
+  web:
+    name: Build Web
+    needs: [verify-version]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+
+      - run: flutter --version
+      - run: bash tool/setup-ci-env.sh
+      - run: flutter pub get
+
+      - name: Build Web
+        run: flutter build web --release
+
+      - name: Package Web bundle
+        run: |
+          mkdir -p dist
+          tar -C build/web -czf dist/FireRacoon-web.tar.gz .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-artifacts
+          path: dist/*.tar.gz
+
+  docker:
+    name: Build Web Docker image (amd64 + arm64)
+    needs: [verify-version]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    # build-push-action uploads *.dockerbuild records by default; those break
+    # actions/download-artifact when a later job pulls "all" artifacts.
+    # https://github.com/docker/build-push-action#environment-variables
+    env:
+      DOCKER_BUILD_RECORD_UPLOAD: false
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Image metadata
+        id: meta
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER}/fireracoon" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
+            ${{ steps.meta.outputs.image }}:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=${{ steps.meta.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Make GHCR package public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER}"
+          pkg="fireracoon"
+          for api in \
+            "users/${owner}/packages/container/${pkg}" \
+            "user/packages/container/${pkg}"
+          do
+            vis="$(gh api "$api" --jq .visibility 2>/dev/null || true)"
+            if [ "$vis" = "public" ]; then
+              echo "ghcr.io/${owner}/${pkg} already public"
+              exit 0
+            fi
+            if [ -n "$vis" ]; then
+              gh api --method PATCH "$api" -f visibility=public
+              echo "ghcr.io/${owner}/${pkg} set to public"
+              exit 0
+            fi
+          done
+          echo "::warning::Could not set package visibility via API; set it once in Package settings."
+
+      - name: Write image digest
+        run: |
+          mkdir -p dist
+          {
+            echo "image=${{ steps.meta.outputs.image }}"
+            echo "tag=${{ steps.meta.outputs.tag }}"
+            echo "platforms=linux/amd64,linux/arm64"
+            echo "pull=${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}"
+          } > dist/FireRacoon-docker.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docker-artifacts
+          path: dist/FireRacoon-docker.txt
+
+  release:
+    name: Publish GitHub Release
+    needs: [android, ios, macos, windows, linux, web, docker]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # Skip buildx GHA cache blobs (*.dockerbuild); they are not release assets
+      # and can fail download-artifact when pulled with "all artifacts".
+      - name: Download release artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: '*-artifacts'
+
+      - name: Download symbol artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          pattern: '*-symbols'
+          if-no-files-found: warn
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          fail_on_unmatched_files: false
+          files: |
+            artifacts/**/*

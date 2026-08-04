@@ -1,0 +1,25 @@
+# Never bake local secrets into images: .env is a bundled Flutter asset and
+# would be served publicly by the web build.
+.env
+
+.git
+.githooks
+.github
+.idea
+.vscode
+*.iml
+
+# Ignore build artifacts across root and all subpackages
+build/
+**/build/
+.dart_tool/
+**/.dart_tool/
+coverage/
+**/coverage/
+
+# Ignore native platform directories not needed for web docker build
+android/
+ios/
+linux/
+macos/
+windows/
