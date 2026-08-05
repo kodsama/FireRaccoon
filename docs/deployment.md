@@ -52,18 +52,19 @@ Packaging configs: `distribute_options.yaml`, `windows/packaging/exe/`,
 
 ## Docker (web only)
 
-The Dockerfile is a multi-stage build: Flutter compiles `build/web` (with
-`FIRERACOON_MODE=server`), then `packages/app_backend` is compiled to
-`fireracoon_server`. The runtime image runs that binary on port 8080 with
-`DATA_DIR=/data`. Release CI pushes a multi-arch manifest (`linux/amd64`,
-`linux/arm64`). Nothing from the host `./build/web` directory is mounted at
-runtime; app state belongs on the `fireracoon_data` volume.
+The Dockerfile is a multi-stage build: Flutter compiles arch-independent
+`build/web` on the host (`BUILDPLATFORM`), then `fireracoon_server` is AOT-compiled
+on the image's target arch (`TARGETPLATFORM`, via QEMU when cross-building
+arm64). The runtime image runs that binary on port 8080 with `DATA_DIR=/data`.
+Release CI pushes a multi-arch manifest (`linux/amd64`, `linux/arm64`). Nothing
+from the host `./build/web` directory is mounted at runtime; app state belongs
+on the `fireracoon_data` volume.
 
 Tagged releases publish that image to GHCR (anonymous pull; package is public):
 
 ```bash
 docker pull ghcr.io/kodsama/fireracoon:latest
-docker run -p 8082:80 ghcr.io/kodsama/fireracoon:latest
+docker run -p 8082:8080 ghcr.io/kodsama/fireracoon:latest
 ```
 
 Pin a version with the release tag, e.g. `ghcr.io/kodsama/fireracoon:0.1`.
