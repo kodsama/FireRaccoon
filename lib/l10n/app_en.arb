@@ -1360,6 +1360,8 @@
       }
     }
   },
+  "splitMainAmount": "Total amount",
+  "tooltipSplitMainAmount": "Main transaction total. Split amounts must add up to this before saving.",
   "splitTotalLabel": "Split total: {amount}",
   "@splitTotalLabel": {
     "placeholders": {
@@ -1471,6 +1473,8 @@
   "tooltipToggleSidebar": "Expand or collapse the sidebar.",
   "tooltipSearchTransactions": "Search by text in the current page.",
   "tooltipToggleViewMode": "Switch between list and grid view.",
+  "refreshFromFirefly": "Refresh",
+  "tooltipRefreshFromFirefly": "Re-fetch data from Firefly III",
   "viewModeCards": "Cards",
   "viewModeRows": "Rows",
   "viewModeTightRows": "Tight rows",

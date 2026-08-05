@@ -44,6 +44,7 @@ class AccountsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.pageBg,
       body: accountsAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text(l10n.errorGeneric(e.toString()))),
         data: (_) {
@@ -125,6 +126,7 @@ class AccountsScreen extends ConsumerWidget {
               showLiabilities;
 
           return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

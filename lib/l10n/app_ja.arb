@@ -1353,6 +1353,8 @@
       }
     }
   },
+  "splitMainAmount": "合計金額",
+  "tooltipSplitMainAmount": "取引の合計金額。保存前に分割金額の合計がこれに一致する必要があります。",
   "splitTotalLabel": "分割合計: {amount}",
   "@splitTotalLabel": {
     "placeholders": {
@@ -1464,6 +1466,8 @@
   "tooltipToggleSidebar": "サイドバーを展開または折りたたむ。",
   "tooltipSearchTransactions": "現在のページでテキスト検索。",
   "tooltipToggleViewMode": "リスト表示とグリッド表示を切り替える。",
+  "refreshFromFirefly": "更新",
+  "tooltipRefreshFromFirefly": "Firefly III からデータを再取得",
   "viewModeCards": "カード",
   "viewModeRows": "行",
   "viewModeTightRows": "タイト行",

@@ -166,6 +166,7 @@ class _CombinedList extends StatelessWidget {
     }
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       child: EntityListLayout(
         gridItems: entries
             .map(

@@ -1124,138 +1124,148 @@ class _TightRowsHeaderRowState extends ConsumerState<TightRowsHeaderRow> {
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              for (int i = 0; i < visibleColumns.length; i++) ...[
-                DragTarget<int>(
-                  onWillAcceptWithDetails: (details) => details.data != i,
-                  onAcceptWithDetails: (details) {
-                    notifier.reorderColumn(details.data, i);
-                    setState(() => _draggingIndex = null);
-                  },
-                  builder: (context, candidateData, rejectedData) {
-                    final isDropTarget =
-                        candidateData.isNotEmpty && candidateData.first != i;
-                    final col = visibleColumns[i];
-                    final width = config.widths[col]!;
-                    return SizedBox(
-                      width: width,
-                      height: 36,
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            left: 0,
-                            top: 0,
-                            bottom: 0,
-                            right: 12,
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 120),
-                              decoration: BoxDecoration(
-                                color: isDropTarget
-                                    ? colors.surface2.withValues(alpha: 0.8)
-                                    : Colors.transparent,
-                                border: isDropTarget
-                                    ? Border(
-                                        left: BorderSide(
-                                          color: colors.text2,
-                                          width: 2,
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                              alignment: TightRowsHeaderRow.columnAlignment(
-                                col,
-                              ),
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              child: MouseRegion(
-                                cursor: SystemMouseCursors.grab,
-                                child: Draggable<int>(
-                                  data: i,
-                                  feedback: Material(
-                                    color: Colors.transparent,
-                                    child: Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 6,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: colors.surface,
-                                        borderRadius: BorderRadius.circular(6),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.black.withValues(
-                                              alpha: 0.2,
-                                            ),
-                                            blurRadius: 8,
-                                            offset: const Offset(0, 4),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final fitted = config.fittedWidths(
+              constraints.maxWidth,
+              visibleColumns,
+            );
+            return Row(
+              children: [
+                for (int i = 0; i < visibleColumns.length; i++) ...[
+                  DragTarget<int>(
+                    onWillAcceptWithDetails: (details) => details.data != i,
+                    onAcceptWithDetails: (details) {
+                      notifier.reorderColumn(details.data, i);
+                      setState(() => _draggingIndex = null);
+                    },
+                    builder: (context, candidateData, rejectedData) {
+                      final isDropTarget =
+                          candidateData.isNotEmpty && candidateData.first != i;
+                      final col = visibleColumns[i];
+                      final width = fitted[col]!;
+                      return SizedBox(
+                        width: width,
+                        height: 36,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              bottom: 0,
+                              right: tightRowResizeGutter,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 120),
+                                decoration: BoxDecoration(
+                                  color: isDropTarget
+                                      ? colors.surface2.withValues(alpha: 0.8)
+                                      : Colors.transparent,
+                                  border: isDropTarget
+                                      ? Border(
+                                          left: BorderSide(
+                                            color: colors.text2,
+                                            width: 2,
                                           ),
-                                        ],
-                                      ),
-                                      child: Text(
-                                        col.label(l10n),
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: colors.text,
+                                        )
+                                      : null,
+                                ),
+                                alignment: TightRowsHeaderRow.columnAlignment(
+                                  col,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.grab,
+                                  child: Draggable<int>(
+                                    data: i,
+                                    feedback: Material(
+                                      color: Colors.transparent,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: colors.surface,
+                                          borderRadius: BorderRadius.circular(
+                                            6,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.2,
+                                              ),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 4),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Text(
+                                          col.label(l10n),
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: colors.text,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  onDragStarted: () =>
-                                      setState(() => _draggingIndex = i),
-                                  onDragEnd: (_) =>
-                                      setState(() => _draggingIndex = null),
-                                  child: Opacity(
-                                    opacity: _draggingIndex == i ? 0.3 : 1.0,
-                                    child: columnLabel(col),
+                                    onDragStarted: () =>
+                                        setState(() => _draggingIndex = i),
+                                    onDragEnd: (_) =>
+                                        setState(() => _draggingIndex = null),
+                                    child: Opacity(
+                                      opacity: _draggingIndex == i ? 0.3 : 1.0,
+                                      child: columnLabel(col),
+                                    ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
-                          Positioned(
-                            right: 0,
-                            top: 4,
-                            bottom: 4,
-                            child: ResizeHandle(
-                              onDrag: (dx) => notifier.resizeColumn(col, dx),
+                            Positioned(
+                              right: 0,
+                              top: 4,
+                              bottom: 4,
+                              child: ResizeHandle(
+                                onDrag: (dx) => notifier.resizeColumn(col, dx),
+                              ),
                             ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+                const Spacer(),
+                SizedBox(
+                  width: TransactionColumnConfig.actionWidth,
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: Tooltip(
+                      message: l10n.columnSelection,
+                      child: InkWell(
+                        onTap: () => showDialog(
+                          context: context,
+                          builder: (_) =>
+                              const TightRowsColumnSelectionDialog(),
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                        child: Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: Icon(
+                            LucideIcons.slidersHorizontal,
+                            size: 14,
+                            color: colors.text3,
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ],
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 82,
-                child: Align(
-                  alignment: Alignment.centerRight,
-                  child: Tooltip(
-                    message: l10n.columnSelection,
-                    child: InkWell(
-                      onTap: () => showDialog(
-                        context: context,
-                        builder: (_) => const TightRowsColumnSelectionDialog(),
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                      child: Padding(
-                        padding: const EdgeInsets.all(4.0),
-                        child: Icon(
-                          LucideIcons.slidersHorizontal,
-                          size: 14,
-                          color: colors.text3,
                         ),
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -1403,43 +1413,50 @@ class _TransactionEntityTightRowState
 
             return Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  children: [
-                    for (final col in visibleColumns)
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final fitted = config.fittedWidths(
+                    constraints.maxWidth,
+                    visibleColumns,
+                  );
+                  return Row(
+                    children: [
+                      for (final col in visibleColumns)
+                        SizedBox(
+                          width: fitted[col],
+                          child: Padding(
+                            padding: const EdgeInsets.only(
+                              right: tightRowResizeGutter,
+                            ),
+                            child: _buildCell(
+                              col: col,
+                              t: t,
+                              dateStr: dateStr,
+                              accountStr: accountStr,
+                              payeeStr: payeeStr,
+                              signedAmount: signedAmount,
+                              isIncoming: isIncoming,
+                              format: format,
+                              colors: colors,
+                            ),
+                          ),
+                        ),
+                      const Spacer(),
                       SizedBox(
-                        width: config.widths[col],
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 12),
-                          child: _buildCell(
-                            col: col,
-                            t: t,
-                            dateStr: dateStr,
-                            accountStr: accountStr,
-                            payeeStr: payeeStr,
-                            signedAmount: signedAmount,
-                            isIncoming: isIncoming,
-                            format: format,
-                            colors: colors,
+                        width: TransactionColumnConfig.actionWidth,
+                        child: Align(
+                          alignment: Alignment.centerRight,
+                          child: EntityHeaderActions(
+                            iconSize: 14,
+                            onEdit: _openEdit,
+                            onDuplicate: _duplicate,
+                            onDelete: _delete,
                           ),
                         ),
                       ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 82,
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: EntityHeaderActions(
-                          iconSize: 14,
-                          onEdit: _openEdit,
-                          onDuplicate: _duplicate,
-                          onDelete: _delete,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  );
+                },
               ),
             );
           },

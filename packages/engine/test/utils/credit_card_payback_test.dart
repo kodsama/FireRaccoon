@@ -196,7 +196,7 @@ void main() {
 
       expect(transfer.type, 'transfer');
       expect(transfer.date, DateTime(2026, 7, 31));
-      expect(transfer.groupTitle, 'Credit card payback — Platinum');
+      expect(transfer.groupTitle, 'Platinum Payback');
       expect(transfer.isSplitGroup, isTrue);
       expect(transfer.splits, hasLength(2));
       expect(transfer.totalAmount, closeTo(163.8, 0.001));

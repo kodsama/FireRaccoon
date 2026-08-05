@@ -3,14 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fireracoon_engine/fireracoon_engine.dart';
 
 import '../l10n/l10n_extensions.dart';
+import '../providers/column_config_provider.dart';
 import '../providers/data_providers.dart';
 import '../providers/dashboard_stats_providers.dart';
+import '../providers/tight_rows_columns_provider.dart';
 import '../providers/view_mode_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/balance_check_selection.dart';
 import '../utils/locale_formatting.dart';
 import 'expandable_entity_shell.dart';
 import 'selection_check_control.dart';
+import 'tight_rows_table_shell.dart';
 import 'transaction_entity_card.dart';
 
 /// Month/period header shared by transactions and reconciliation lists.
@@ -233,6 +236,14 @@ class SliverCollapsibleTransactionGroup extends ConsumerWidget {
       accounts: accounts,
       prognosis: prognosis,
     );
+    final activeColumns = ref.watch(tightRowsColumnsProvider);
+    final columnConfig = ref.watch(transactionColumnConfigProvider);
+    final visibleColumns = columnConfig.order
+        .where(activeColumns.contains)
+        .toList();
+    final minContentWidth =
+        columnConfig.preferredContentWidth(visibleColumns) +
+        tightRowsHorizontalPadding * 2;
 
     return DecoratedSliver(
       decoration: BoxDecoration(
@@ -240,25 +251,24 @@ class SliverCollapsibleTransactionGroup extends ConsumerWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colors.border),
       ),
-      sliver: SliverMainAxisGroup(
-        slivers: [
-          const SliverToBoxAdapter(child: TightRowsHeaderRow()),
-          SliverList.separated(
-            itemCount: transactions.length,
-            itemBuilder: (context, index) {
-              final transaction = transactions[index];
-              return TransactionEntityTightRow(
-                key: ValueKey(transaction.id),
-                transaction: transaction,
-                filterAccount: filterAccount,
-                balanceCheckSelection: balanceCheckSelection,
-                runningBalance: runningBalances?[transaction.id],
-              );
-            },
-            separatorBuilder: (context, index) =>
-                Divider(color: colors.border, height: 1),
+      sliver: SliverToBoxAdapter(
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: TightRowsTableShell(
+            minContentWidth: minContentWidth,
+            header: const TightRowsHeaderRow(),
+            rows: [
+              for (final transaction in transactions)
+                TransactionEntityTightRow(
+                  key: ValueKey(transaction.id),
+                  transaction: transaction,
+                  filterAccount: filterAccount,
+                  balanceCheckSelection: balanceCheckSelection,
+                  runningBalance: runningBalances?[transaction.id],
+                ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

@@ -1353,6 +1353,8 @@
       }
     }
   },
+  "splitMainAmount": "Totalt belopp",
+  "tooltipSplitMainAmount": "Transaktionens totalsumma. Delbeloppen måste summera till detta innan sparande.",
   "splitTotalLabel": "Split total: {amount}",
   "@splitTotalLabel": {
     "placeholders": {
@@ -1464,6 +1466,8 @@
   "tooltipToggleSidebar": "Expandera eller fäll ihop sidofältet.",
   "tooltipSearchTransactions": "Sök text på den aktuella sidan.",
   "tooltipToggleViewMode": "Växla mellan list- och rutnätsvy.",
+  "refreshFromFirefly": "Uppdatera",
+  "tooltipRefreshFromFirefly": "Hämta om data från Firefly III",
   "viewModeCards": "Kort",
   "viewModeRows": "Rader",
   "viewModeTightRows": "Täta rader",

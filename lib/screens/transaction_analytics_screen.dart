@@ -60,6 +60,7 @@ class TransactionAnalyticsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.pageBg,
       body: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,

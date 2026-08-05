@@ -298,4 +298,159 @@ void main() {
     expect(find.text(format.formatMediumDate(dated)), findsOneWidget);
     expect(find.text(format.formatDateTime(dated)), findsNothing);
   });
+
+  Transaction splitTransaction() {
+    final food = Transaction(
+      id: 'split-1',
+      type: 'withdrawal',
+      date: DateTime(2026, 7, 1),
+      amount: 40,
+      description: 'Food',
+      sourceName: 'Checking',
+      destinationName: 'Store',
+      categoryName: 'Groceries',
+      currencySymbol: '€',
+      currencyCode: 'EUR',
+    );
+    final clothes = Transaction(
+      id: 'split-1',
+      type: 'withdrawal',
+      date: DateTime(2026, 7, 1),
+      amount: 60,
+      description: 'Clothes',
+      sourceName: 'Checking',
+      destinationName: 'Store',
+      categoryName: 'Shopping',
+      currencySymbol: '€',
+      currencyCode: 'EUR',
+    );
+    return food.copyWith(groupTitle: 'Shopping trip', splits: [food, clothes]);
+  }
+
+  testWidgets('split edit exposes editable total amount', (tester) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: splitTransaction(),
+              onCancel: () {},
+              onSave: (_) async {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Total amount'), findsOneWidget);
+    expect(find.byKey(const ValueKey('split_main_amount')), findsOneWidget);
+
+    final mainAmount = find.descendant(
+      of: find.byKey(const ValueKey('split_main_amount')),
+      matching: find.byType(TextField),
+    );
+    expect(tester.widget<TextField>(mainAmount).controller?.text, '100');
+
+    await tester.enterText(mainAmount, '120');
+    await tester.pump();
+
+    expect(tester.widget<TextField>(mainAmount).controller?.text, '120');
+    expect(find.textContaining('Remainder'), findsOneWidget);
+  });
+
+  testWidgets('split save blocked when total does not match split sum', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    var saved = false;
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: splitTransaction(),
+              onCancel: () {},
+              onSave: (_) async {
+                saved = true;
+              },
+            ),
+          ),
+        ),
+        fireflyService: FakeFireflyService(
+          accounts: sampleAccounts,
+          transactions: [splitTransaction()],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final mainAmount = find.descendant(
+      of: find.byKey(const ValueKey('split_main_amount')),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(mainAmount, '120');
+    await tester.pump();
+
+    await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(saved, isFalse);
+    expect(find.text('Split amounts must total €120.00.'), findsOneWidget);
+  });
+
+  testWidgets('split save succeeds when total matches split sum', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    Transaction? saved;
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: splitTransaction(),
+              onCancel: () {},
+              onSave: (tx) async {
+                saved = tx;
+              },
+            ),
+          ),
+        ),
+        fireflyService: FakeFireflyService(
+          accounts: sampleAccounts,
+          transactions: [splitTransaction()],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final mainAmount = find.descendant(
+      of: find.byKey(const ValueKey('split_main_amount')),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(mainAmount, '120');
+    await tester.pump();
+
+    // Split amounts are 40 and 60; raise the first to 60 so sum is 120.
+    final firstSplitAmount = find.widgetWithText(TextField, '40.0');
+    expect(firstSplitAmount, findsOneWidget);
+    await tester.enterText(firstSplitAmount, '60');
+    await tester.pump();
+
+    await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(saved, isNotNull);
+    expect(saved!.totalAmount, 120);
+  });
 }

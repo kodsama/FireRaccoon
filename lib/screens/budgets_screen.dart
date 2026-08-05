@@ -51,6 +51,7 @@ class BudgetsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.pageBg,
       body: budgetsAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text(l10n.errorGeneric(e.toString()))),
         data: (budgets) {
@@ -59,6 +60,7 @@ class BudgetsScreen extends ConsumerWidget {
               .toList();
           final metrics = metricsAsync.value;
           return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

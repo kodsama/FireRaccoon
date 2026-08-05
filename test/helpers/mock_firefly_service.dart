@@ -650,7 +650,56 @@ class FakeFireflyService implements FireflyService {
     final error = createTransactionError;
     if (error != null) throw error;
     _maybeThrow();
-    return transaction.copyWith(id: 'new-${transactions.length + 1}');
+    final created = transaction.copyWith(id: 'new-${transactions.length + 1}');
+    // Keep list/page fixtures in sync so post-create refreshes see the row.
+    // Fixture maps/lists may be const; ignore when they cannot grow.
+    try {
+      transactions.add(created);
+    } on UnsupportedError {
+      // Immutable fixture list.
+    }
+    try {
+      final pageOne = transactionPages[1];
+      if (pageOne != null) {
+        transactionPages[1] = TransactionPageResult(
+          transactions: [...pageOne.transactions, created],
+          currentPage: pageOne.currentPage,
+          totalPages: pageOne.totalPages,
+          total: pageOne.total + 1,
+        );
+      }
+    } on UnsupportedError {
+      // Immutable fixture map.
+    }
+    for (final accountId in {
+      if (created.sourceId != null && created.sourceId!.isNotEmpty)
+        created.sourceId!,
+      if (created.destinationId != null && created.destinationId!.isNotEmpty)
+        created.destinationId!,
+    }) {
+      try {
+        final pages = accountTransactionPages.putIfAbsent(accountId, () => {});
+        final accountPageOne = pages[1];
+        if (accountPageOne == null) {
+          pages[1] = TransactionPageResult(
+            transactions: [created],
+            currentPage: 1,
+            totalPages: 1,
+            total: 1,
+          );
+        } else {
+          pages[1] = TransactionPageResult(
+            transactions: [...accountPageOne.transactions, created],
+            currentPage: accountPageOne.currentPage,
+            totalPages: accountPageOne.totalPages,
+            total: accountPageOne.total + 1,
+          );
+        }
+      } on UnsupportedError {
+        // Immutable fixture map.
+      }
+    }
+    return created;
   }
 
   @override

@@ -97,6 +97,90 @@ class StateRepository {
     return person;
   }
 
+  /// Replaces people profiles, ownerships, and optional password updates.
+  ///
+  /// Existing password hashes are kept unless [passwordUpdates] supplies a
+  /// new plaintext password for that person id.
+  Future<void> replacePeopleConfig({
+    required List<Map<String, dynamic>> people,
+    required List<Map<String, dynamic>> accountOwnerships,
+    required bool requirePasswordLogin,
+    Map<String, String> passwordUpdates = const {},
+  }) async {
+    if (people.isEmpty) {
+      throw ArgumentError('At least one person is required');
+    }
+    final previousAuth = Map<String, dynamic>.from(_state.authByPersonId);
+    final nextAuth = <String, dynamic>{};
+    final nextPeople = <Map<String, dynamic>>[];
+
+    for (final raw in people) {
+      final id = (raw['id'] as String?)?.trim() ?? '';
+      final name = (raw['name'] as String?)?.trim() ?? '';
+      if (id.isEmpty || name.isEmpty) {
+        throw ArgumentError('Each person needs id and name');
+      }
+      final role = (raw['role'] as String?) ?? 'user';
+      final prev = previousAuth[id];
+      final prevMap = prev is Map
+          ? prev.map((k, v) => MapEntry(k.toString(), v))
+          : <String, dynamic>{};
+
+      var passwordHash = prevMap['passwordHash'] as String?;
+      var passwordSalt = prevMap['passwordSalt'] as String?;
+      final plaintext = passwordUpdates[id];
+      if (plaintext != null && plaintext.isNotEmpty) {
+        if (plaintext.length < 10) {
+          throw ArgumentError('Password must be at least 10 characters');
+        }
+        final hashed = await hashPassword(plaintext);
+        passwordHash = hashed.hash;
+        passwordSalt = hashed.salt;
+      }
+
+      nextPeople.add({
+        'id': id,
+        'name': name,
+        'colorValue': raw['colorValue'] as int? ?? 0xFF1565C0,
+        'avatarKind': raw['avatarKind'] as String? ?? 'none',
+        if (raw['avatarValue'] != null) 'avatarValue': raw['avatarValue'],
+        'role': role,
+        'createdAt':
+            raw['createdAt'] as String? ??
+            raw['createdAtIso'] as String? ??
+            DateTime.now().toUtc().toIso8601String(),
+        'preferences':
+            (raw['preferences'] as Map?)?.cast<String, dynamic>() ??
+            (prevMap['preferences'] as Map?)?.cast<String, dynamic>() ??
+            <String, dynamic>{},
+      });
+      nextAuth[id] = {
+        'role': role,
+        'passwordHash': ?passwordHash,
+        'passwordSalt': ?passwordSalt,
+        'preferences':
+            (raw['preferences'] as Map?)?.cast<String, dynamic>() ??
+            (prevMap['preferences'] as Map?)?.cast<String, dynamic>() ??
+            <String, dynamic>{},
+        'biometricsEnabled':
+            raw['biometricsEnabled'] as bool? ??
+            prevMap['biometricsEnabled'] == true,
+      };
+    }
+
+    if (!nextPeople.any((p) => p['role'] == 'admin')) {
+      throw ArgumentError('At least one admin is required');
+    }
+
+    _state.people = nextPeople;
+    _state.peopleAuth = {
+      'byPersonId': nextAuth,
+      'requirePasswordLogin': requirePasswordLogin,
+    };
+    _state.accountOwnerships = accountOwnerships;
+    await save();
+  }
+
   Future<({String token, Map<String, dynamic> person})> login({
     required String name,
     required String password,

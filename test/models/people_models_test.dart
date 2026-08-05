@@ -36,6 +36,36 @@ void main() {
       expect(person.avatarValue, 'raccoon_2');
     });
 
+    test('fromServerPublic maps admin bootstrap payload', () {
+      final person = Person.fromServerPublic({
+        'id': 'admin_1',
+        'name': 'Alex',
+        'colorValue': 0xFF1565C0,
+        'avatarKind': 'none',
+        'role': 'admin',
+        'createdAt': '2026-08-05T00:00:00.000Z',
+        'hasPassword': true,
+        'preferences': {'themeModeName': 'dark'},
+      });
+      expect(person.id, 'admin_1');
+      expect(person.role, PersonRole.admin);
+      expect(person.hasPassword, isTrue);
+      expect(person.createdAtIso, '2026-08-05T00:00:00.000Z');
+      expect(person.preferences.themeModeName, 'dark');
+    });
+
+    test('fromServerPublic accepts untyped preference maps', () {
+      final person = Person.fromServerPublic({
+        'id': 'p2',
+        'name': 'Sam',
+        'hasPassword': false,
+        'preferences': <dynamic, dynamic>{'themeModeName': 'system'},
+      });
+      expect(person.preferences.themeModeName, 'system');
+      expect(person.hasPassword, isFalse);
+      expect(person.createdAtIso, isNotEmpty);
+    });
+
     test('copyWith, color, and hashCode preserve value semantics', () {
       const person = Person(
         id: 'p1',

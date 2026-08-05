@@ -246,6 +246,38 @@ class Person {
     return Person.fromProfileAndAuth(profile: json, auth: json);
   }
 
+  /// Builds a [Person] from the server `/api/state` public person payload.
+  ///
+  /// Password material stays on the server; [hasPassword] is mirrored with
+  /// placeholders so UI gates that check [Person.hasPassword] keep working.
+  factory Person.fromServerPublic(Map<String, dynamic> json) {
+    final hasPassword = json['hasPassword'] == true;
+    final created =
+        json['createdAtIso'] as String? ??
+        json['createdAt'] as String? ??
+        DateTime.now().toUtc().toIso8601String();
+    final prefsRaw = json['preferences'];
+    return Person(
+      id: json['id'] as String? ?? '',
+      name: json['name'] as String? ?? 'Unnamed',
+      colorValue: json['colorValue'] as int? ?? 0xFF3B82F6,
+      avatarKind: AvatarKind.fromName(json['avatarKind'] as String?),
+      avatarValue: json['avatarValue'] as String?,
+      role: PersonRole.fromName(json['role'] as String?),
+      passwordHash: hasPassword ? 'server' : null,
+      salt: hasPassword ? 'server' : null,
+      createdAtIso: created,
+      preferences: prefsRaw is Map<String, dynamic>
+          ? PersonPreferences.fromJson(prefsRaw)
+          : prefsRaw is Map
+          ? PersonPreferences.fromJson(
+              prefsRaw.map((k, v) => MapEntry(k.toString(), v)),
+            )
+          : const PersonPreferences(),
+      biometricsEnabled: json['biometricsEnabled'] as bool? ?? false,
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

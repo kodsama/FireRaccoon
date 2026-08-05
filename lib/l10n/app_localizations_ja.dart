@@ -2264,6 +2264,12 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
+  String get splitMainAmount => '合計金額';
+
+  @override
+  String get tooltipSplitMainAmount => '取引の合計金額。保存前に分割金額の合計がこれに一致する必要があります。';
+
+  @override
   String splitTotalLabel(String amount) {
     return '分割合計: $amount';
   }
@@ -2463,6 +2469,12 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get tooltipToggleViewMode => 'リスト表示とグリッド表示を切り替える。';
+
+  @override
+  String get refreshFromFirefly => '更新';
+
+  @override
+  String get tooltipRefreshFromFirefly => 'Firefly III からデータを再取得';
 
   @override
   String get viewModeCards => 'カード';

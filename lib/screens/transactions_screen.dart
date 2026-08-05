@@ -25,7 +25,7 @@ import '../widgets/account_balance_check_panel.dart';
 import '../widgets/account_filter_dialog.dart';
 import '../widgets/entity_screen_header.dart';
 import '../widgets/small_loading_indicator.dart';
-import '../widgets/view_mode_switch.dart';
+import '../providers/firefly_data_refresh.dart';
 import '../widgets/selection_check_control.dart';
 import '../widgets/transaction_edit_panel.dart';
 import '../widgets/transaction_entity_card.dart';
@@ -48,6 +48,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
   Set<String> _balanceCheckIncludedIds = {};
   Set<String> _balanceCheckExcludedIds = {};
   bool _balanceCheckReconciling = false;
+  bool _refreshingFromFirefly = false;
   String? _paybackPaymentAccountId;
   DateTime _paybackDate = DateTime.now();
   bool _reconcileRouteApplied = false;
@@ -410,6 +411,17 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
           upsert: result.payback,
         );
       }
+      // Always re-fetch after creating a payback: patch-only can miss the new
+      // multi-split journal or leave sibling account lists stale.
+      await refreshTransactionLists(
+        ref,
+        filterAccount,
+        alsoRefreshAccounts: {
+          paymentAccount.name,
+          if (result.payback != null)
+            ...transactionAccountNames(result.payback!),
+        },
+      );
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -527,6 +539,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       );
       final scopedAsync = ref.watch(filteredTransactionListProvider(listKey));
       return scopedAsync.when(
+        skipLoadingOnReload: true,
         loading: () => _buildTransactionsScaffold(
           allTransactions: const [],
           filterAccount: filterAccount,
@@ -856,6 +869,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       backgroundColor: colors.pageBg,
       body: CustomScrollView(
         controller: _scrollController,
+        physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(30, 30, 30, 0),
@@ -960,7 +974,24 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                       );
                     },
                   ),
-                  const ViewModeSwitcher(),
+                  _FireflyRefreshButton(
+                    refreshing: _refreshingFromFirefly,
+                    onPressed: _refreshingFromFirefly
+                        ? null
+                        : () async {
+                            setState(() => _refreshingFromFirefly = true);
+                            try {
+                              await refreshFireflyData(
+                                ref,
+                                focusAccount: filterAccount,
+                              );
+                            } finally {
+                              if (mounted) {
+                                setState(() => _refreshingFromFirefly = false);
+                              }
+                            }
+                          },
+                  ),
                 ],
               ),
             ),
@@ -1610,6 +1641,65 @@ double _sumNonFutureTransactionBalance(List<Transaction> transactions) {
             ? sum + transaction.totalAmount
             : sum - transaction.totalAmount;
       });
+}
+
+class _FireflyRefreshButton extends StatelessWidget {
+  const _FireflyRefreshButton({
+    required this.refreshing,
+    required this.onPressed,
+  });
+
+  final bool refreshing;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = context.l10n;
+
+    return Tooltip(
+      message: l10n.tooltipRefreshFromFirefly,
+      child: Material(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onPressed,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colors.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (refreshing)
+                  SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.text,
+                    ),
+                  )
+                else
+                  Icon(LucideIcons.refreshCw, size: 16, color: colors.text),
+                const SizedBox(width: 8),
+                Text(
+                  l10n.refreshFromFirefly,
+                  style: TextStyle(
+                    color: colors.text,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ActiveFilterBubble extends StatelessWidget {

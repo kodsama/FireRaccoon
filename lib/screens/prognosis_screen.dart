@@ -94,6 +94,7 @@ class _PrognosisViewState extends ConsumerState<PrognosisView>
     final accountsAsync = ref.watch(accountsProvider);
 
     return accountsAsync.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) =>
           Center(child: Text(l10n.errorGeneric(error.toString()))),
@@ -118,6 +119,7 @@ class _PrognosisViewState extends ConsumerState<PrognosisView>
         }
 
         return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

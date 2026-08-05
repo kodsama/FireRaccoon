@@ -3,6 +3,43 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'tight_rows_columns_provider.dart';
 
+/// Space reserved on the trailing edge of each data column for the resize
+/// handle in the header. Data cells use the same inset so content lines up.
+const double tightRowResizeGutter = 12.0;
+
+/// Scales [preferred] widths so they fit in [availableWidth].
+///
+/// When the preferred total already fits, returns those widths unchanged so a
+/// trailing spacer can absorb leftover space. When it overflows, scales every
+/// column proportionally so the sum equals [availableWidth].
+Map<T, double> fitColumnWidths<T>({
+  required List<T> order,
+  required Map<T, double> preferred,
+  required double availableWidth,
+}) {
+  if (order.isEmpty) return {};
+  if (availableWidth <= 0) {
+    return {for (final c in order) c: 0.0};
+  }
+
+  var sum = 0.0;
+  for (final c in order) {
+    sum += preferred[c] ?? 0;
+  }
+
+  if (sum <= 0) {
+    final each = availableWidth / order.length;
+    return {for (final c in order) c: each};
+  }
+
+  if (sum <= availableWidth) {
+    return {for (final c in order) c: preferred[c]!};
+  }
+
+  final scale = availableWidth / sum;
+  return {for (final c in order) c: preferred[c]! * scale};
+}
+
 /// Identifies each data column in the accounts tight-rows table.
 enum AccountColumn { account, role, balance, endOfMonth }
 
@@ -19,6 +56,26 @@ class AccountColumnConfig {
   static const double minWidth = 60.0;
   static const double actionWidth =
       96.0; // fixed – buttons column, never resized
+
+  /// Sum of preferred column widths plus the actions column (no padding).
+  double get preferredContentWidth {
+    var sum = actionWidth;
+    for (final col in order) {
+      sum += widths[col]!;
+    }
+    return sum;
+  }
+
+  /// Effective per-column widths for a row whose content area is [contentWidth]
+  /// (already excluding horizontal padding). Reserves [actionWidth] for the
+  /// trailing actions column.
+  Map<AccountColumn, double> fittedWidths(double contentWidth) {
+    return fitColumnWidths(
+      order: order,
+      preferred: widths,
+      availableWidth: contentWidth - actionWidth,
+    );
+  }
 
   static const Map<AccountColumn, double> _defaultWidths = {
     AccountColumn.account: 200,
@@ -163,6 +220,29 @@ class TransactionColumnConfig {
 
   static const double minWidth = 60.0;
   static const double actionWidth = 96.0;
+
+  /// Sum of preferred widths for [visible] columns plus the actions column.
+  double preferredContentWidth(List<TightRowColumn> visible) {
+    var sum = actionWidth;
+    for (final col in visible) {
+      sum += widths[col]!;
+    }
+    return sum;
+  }
+
+  /// Effective per-column widths for a row whose content area is [contentWidth]
+  /// (already excluding horizontal padding). Reserves [actionWidth] for the
+  /// trailing actions column. Only [visible] columns participate.
+  Map<TightRowColumn, double> fittedWidths(
+    double contentWidth,
+    List<TightRowColumn> visible,
+  ) {
+    return fitColumnWidths(
+      order: visible,
+      preferred: widths,
+      availableWidth: contentWidth - actionWidth,
+    );
+  }
 
   static const Map<TightRowColumn, double> _defaultWidths = {
     TightRowColumn.date: 100,

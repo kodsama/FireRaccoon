@@ -1353,6 +1353,8 @@
       }
     }
   },
+  "splitMainAmount": "Montant total",
+  "tooltipSplitMainAmount": "Total de la transaction. Les montants des lignes doivent correspondre avant l'enregistrement.",
   "splitTotalLabel": "Split total: {amount}",
   "@splitTotalLabel": {
     "placeholders": {
@@ -1464,6 +1466,8 @@
   "tooltipToggleSidebar": "Déplier ou replier la barre latérale.",
   "tooltipSearchTransactions": "Rechercher du texte dans la page actuelle.",
   "tooltipToggleViewMode": "Basculer entre vue liste et grille.",
+  "refreshFromFirefly": "Actualiser",
+  "tooltipRefreshFromFirefly": "Recharger les données depuis Firefly III",
   "viewModeCards": "Cartes",
   "viewModeRows": "Lignes",
   "viewModeTightRows": "Lignes compactes",

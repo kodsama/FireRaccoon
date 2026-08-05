@@ -59,8 +59,9 @@ TransactionListGroups buildTransactionListGroups({
 
   for (final transaction in transactions) {
     if (activeAccountFilters.isNotEmpty &&
-        !activeAccountFilters.contains(transaction.sourceName) &&
-        !activeAccountFilters.contains(transaction.destinationName)) {
+        activeAccountFilters
+            .intersection(transactionAccountNames(transaction))
+            .isEmpty) {
       continue;
     }
     if (!transaction.matchesSearch(searchQuery)) continue;

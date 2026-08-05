@@ -101,6 +101,7 @@ class AppServer {
       ..put('/api/state/prognosis', _putPrognosis)
       ..put('/api/state/undo', _putUndo)
       ..put('/api/state/firefly', _putFirefly)
+      ..put('/api/state/people', _putPeople)
       ..get('/api/avatars/<personId>', _getAvatar)
       ..put('/api/avatars/<personId>', _putAvatar)
       ..all('/api/firefly/<path|.*>', _fireflyProxyTagged)
@@ -444,6 +445,87 @@ class AppServer {
         repository.state.firefly.allowInsecure =
             body['allowInsecure'] as bool? ?? false;
       });
+
+  Future<Response> _putPeople(Request request) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    final session = _session(request);
+    if (!repository.isAdmin(session)) {
+      return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
+    }
+    final body = jsonDecode(await request.readAsString());
+    if (body is! Map<String, dynamic>) {
+      return _json({'ok': false, 'error': 'Expected JSON object'}, status: 400);
+    }
+    final rawPeople = body['people'];
+    if (rawPeople is! List) {
+      return _json({
+        'ok': false,
+        'error': 'people must be a list',
+      }, status: 400);
+    }
+    final people = <Map<String, dynamic>>[];
+    for (final item in rawPeople) {
+      if (item is Map<String, dynamic>) {
+        people.add(item);
+      } else if (item is Map) {
+        people.add(item.map((k, v) => MapEntry(k.toString(), v)));
+      }
+    }
+
+    final ownerships = <Map<String, dynamic>>[];
+    final rawOwnerships = body['accountOwnerships'];
+    if (rawOwnerships is List) {
+      for (final item in rawOwnerships) {
+        if (item is Map<String, dynamic>) {
+          ownerships.add(item);
+        } else if (item is Map) {
+          ownerships.add(item.map((k, v) => MapEntry(k.toString(), v)));
+        }
+      }
+    } else if (rawOwnerships is Map) {
+      for (final entry in rawOwnerships.entries) {
+        final value = entry.value;
+        if (value is Map<String, dynamic>) {
+          ownerships.add({
+            'accountId': value['accountId'] ?? entry.key.toString(),
+            'personShares': value['personShares'] ?? const <String, dynamic>{},
+          });
+        } else if (value is Map) {
+          ownerships.add({
+            'accountId': value['accountId'] ?? entry.key.toString(),
+            'personShares': value['personShares'] ?? const <String, dynamic>{},
+          });
+        }
+      }
+    }
+
+    final passwordUpdates = <String, String>{};
+    final rawPasswords = body['passwordUpdates'];
+    if (rawPasswords is Map) {
+      for (final entry in rawPasswords.entries) {
+        final value = entry.value;
+        if (value is String && value.isNotEmpty) {
+          passwordUpdates[entry.key.toString()] = value;
+        }
+      }
+    }
+
+    try {
+      await repository.replacePeopleConfig(
+        people: people,
+        accountOwnerships: ownerships,
+        requirePasswordLogin: body['requirePasswordLogin'] as bool? ?? true,
+        passwordUpdates: passwordUpdates,
+      );
+    } on ArgumentError catch (error) {
+      return _json({'ok': false, 'error': '${error.message}'}, status: 400);
+    }
+    return _json({
+      'ok': true,
+      ...repository.snapshotForClient(sessionToken: session),
+    });
+  }
 
   Future<Response> _getAvatar(Request request, String personId) async {
     final locked = _lockedResponse();

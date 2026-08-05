@@ -2318,6 +2318,13 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
+  String get splitMainAmount => 'Valor total';
+
+  @override
+  String get tooltipSplitMainAmount =>
+      'Total da transação. Os valores das linhas devem somar este montante antes de guardar.';
+
+  @override
   String splitTotalLabel(String amount) {
     return 'Split total: $amount';
   }
@@ -2523,6 +2530,12 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tooltipToggleViewMode => 'Alternar entre vista de lista e grelha.';
+
+  @override
+  String get refreshFromFirefly => 'Atualizar';
+
+  @override
+  String get tooltipRefreshFromFirefly => 'Recarregar dados do Firefly III';
 
   @override
   String get viewModeCards => 'Cartões';

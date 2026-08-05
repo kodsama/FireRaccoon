@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fireracoon_engine/fireracoon_engine.dart';
 
 import '../fun_modes/fun_mode.dart';
+import '../deployment/deployment_providers.dart';
 import '../models/app_user_models.dart';
 import '../models/people_migration.dart';
 import '../models/people_models.dart';
@@ -19,6 +20,7 @@ import '../utils/password_policy.dart';
 import '../utils/person_permissions.dart' as permissions;
 import 'data_providers.dart';
 import 'locale_provider.dart';
+import 'server_session_provider.dart';
 import 'theme_provider.dart';
 
 const String kPeopleConfigPreferenceKey = 'fireracoon_people_config';
@@ -168,7 +170,15 @@ class PeopleNotifier extends Notifier<PeopleState> {
   /// overwrite a newer avatar/profile with an older payload.
   int _configWriteGeneration = 0;
 
+  /// Plaintext passwords awaiting a successful server `putPeople` (server mode).
+  final Map<String, String> _pendingServerPasswords = {};
+
   BiometricAuth get biometricAuth => _biometricAuth;
+
+  bool get _isServerMode {
+    if (!ref.mounted) return false;
+    return ref.read(deploymentConfigProvider).isServer;
+  }
 
   @override
   PeopleState build() {
@@ -176,6 +186,19 @@ class PeopleNotifier extends Notifier<PeopleState> {
     ref.listen(themeProvider, (_, _) => _syncPreferencesFromApp());
     ref.listen(localeProvider, (_, _) => _syncPreferencesFromApp());
     ref.listen(activePersonFilterProvider, (_, _) => _syncPreferencesFromApp());
+    ref.listen(serverSessionProvider, (previous, next) {
+      final session = next.asData?.value;
+      if (session == null || !session.isAuthenticated) return;
+      final prev = previous?.asData?.value;
+      if (prev?.token == session.token &&
+          prev?.person?['id'] == session.person?['id'] &&
+          state.people.isNotEmpty) {
+        return;
+      }
+      unawaited(
+        syncFromServerStore(loggedInPersonId: session.person?['id'] as String?),
+      );
+    });
     unawaited(_hydrate());
     return const PeopleState();
   }
@@ -273,10 +296,102 @@ class PeopleNotifier extends Notifier<PeopleState> {
     }
 
     unawaited(_fetchRemote());
+    if (_isServerMode) {
+      final session = ref.read(serverSessionProvider).asData?.value;
+      if (session != null && session.isAuthenticated) {
+        unawaited(
+          syncFromServerStore(
+            loggedInPersonId: session.person?['id'] as String?,
+          ),
+        );
+      }
+    }
     _log.info('People hydrated: ${config.people.length} person(s)');
   }
 
+  /// Loads people / ownership from the sealed server store (server mode).
+  Future<void> syncFromServerStore({String? loggedInPersonId}) async {
+    if (!_isServerMode) return;
+    final client = ref.read(serverSessionProvider.notifier).client;
+    if (client == null || client.sessionToken == null) return;
+    try {
+      final snap = await client.fetchState();
+      await _applyServerPeopleSnapshot(
+        snap,
+        loggedInPersonId: loggedInPersonId,
+      );
+    } on Object catch (error, stackTrace) {
+      _log.warning('Failed to sync people from server', error, stackTrace);
+    }
+  }
+
+  Future<void> _applyServerPeopleSnapshot(
+    Map<String, dynamic> snap, {
+    String? loggedInPersonId,
+  }) async {
+    final rawPeople = snap['people'];
+    if (rawPeople is! List) return;
+
+    final people = <Person>[];
+    for (final item in rawPeople) {
+      if (item is Map<String, dynamic>) {
+        people.add(Person.fromServerPublic(item));
+      } else if (item is Map) {
+        people.add(
+          Person.fromServerPublic(
+            item.map((k, v) => MapEntry(k.toString(), v)),
+          ),
+        );
+      }
+    }
+    if (people.isEmpty) return;
+
+    final ownerships = <String, AccountOwnership>{};
+    final rawOwnerships = snap['accountOwnerships'];
+    if (rawOwnerships is List) {
+      for (final item in rawOwnerships) {
+        if (item is! Map) continue;
+        final map = item.map((k, v) => MapEntry(k.toString(), v));
+        final ownership = AccountOwnership.fromJson(map);
+        if (ownership.accountId.isEmpty) continue;
+        ownerships[ownership.accountId] = ownership;
+      }
+    } else if (rawOwnerships is Map) {
+      for (final entry in rawOwnerships.entries) {
+        final value = entry.value;
+        if (value is! Map) continue;
+        final map = value.map((k, v) => MapEntry(k.toString(), v));
+        final ownership = AccountOwnership.fromJson({
+          'accountId': map['accountId'] ?? entry.key.toString(),
+          'personShares': map['personShares'] ?? const {},
+        });
+        ownerships[ownership.accountId] = ownership;
+      }
+    }
+
+    final requirePasswordLogin = snap['requirePasswordLogin'] as bool? ?? true;
+    final config = AccountOwnershipConfig(
+      people: people,
+      accountOwnerships: ownerships,
+    );
+    if (!ref.mounted) return;
+    state = state.copyWith(
+      config: config,
+      requirePasswordLogin: requirePasswordLogin,
+      loggedInPersonId: loggedInPersonId ?? state.loggedInPersonId,
+      lastSessionPersonId: loggedInPersonId ?? state.lastSessionPersonId,
+      isHydrated: true,
+    );
+    await _prefs.setString(kPeopleConfigPreferenceKey, config.encode());
+    final current = state.currentPerson;
+    if (current != null) {
+      _applyPersonSession(current);
+    }
+    _log.info('People synced from server: ${people.length} person(s)');
+  }
+
   Future<void> _fetchRemote() async {
+    if (_isServerMode) return;
     try {
       final service = ref.read(apiServiceProvider);
       if (service == null) return;
@@ -316,12 +431,18 @@ class PeopleNotifier extends Notifier<PeopleState> {
   Future<void> _persistConfig(AccountOwnershipConfig config) async {
     final generation = ++_configWriteGeneration;
     await _prefs.setString(kPeopleConfigPreferenceKey, config.encode());
+    if (!ref.mounted) return;
+    if (_isServerMode) {
+      await _persistConfigToServer(config);
+      return;
+    }
     try {
       final service = ref.read(apiServiceProvider);
       if (service == null) return;
       await service.setPreference(kPeopleConfigPreferenceKey, config.toJson());
       // A newer local write started while we awaited Firefly — do not leave
       // the remote on this older snapshot.
+      if (!ref.mounted) return;
       if (generation != _configWriteGeneration) {
         final latest = state.config;
         await service.setPreference(
@@ -330,6 +451,43 @@ class PeopleNotifier extends Notifier<PeopleState> {
         );
       }
     } catch (_) {}
+  }
+
+  Future<void> _persistConfigToServer(AccountOwnershipConfig config) async {
+    if (!ref.mounted) return;
+    final client = ref.read(serverSessionProvider.notifier).client;
+    if (client == null || client.sessionToken == null) return;
+    final passwordUpdates = Map<String, String>.from(_pendingServerPasswords);
+    try {
+      final snap = await client.putPeople(
+        people: config.people
+            .map(
+              (p) => {
+                ...p.toProfileJson(),
+                'role': p.role.name,
+                'createdAt': p.createdAtIso,
+                'preferences': p.preferences.toJson(),
+                'biometricsEnabled': p.biometricsEnabled,
+              },
+            )
+            .toList(),
+        accountOwnerships: config.accountOwnerships.map(
+          (key, value) => MapEntry(key, value.toJson()),
+        ),
+        requirePasswordLogin: state.requirePasswordLogin,
+        passwordUpdates: passwordUpdates,
+      );
+      if (!ref.mounted) return;
+      for (final id in passwordUpdates.keys) {
+        _pendingServerPasswords.remove(id);
+      }
+      await _applyServerPeopleSnapshot(
+        snap,
+        loggedInPersonId: state.loggedInPersonId,
+      );
+    } on Object catch (error, stackTrace) {
+      _log.warning('Failed to persist people to server', error, stackTrace);
+    }
   }
 
   Future<void> _persistAuth(PeopleAuthStorage auth) async {
@@ -426,6 +584,10 @@ class PeopleNotifier extends Notifier<PeopleState> {
       createdAtIso: DateTime.now().toIso8601String(),
       preferences: preferences ?? _seedPreferencesFromDevice(),
     );
+
+    if (_isServerMode && password != null && password.isNotEmpty) {
+      _pendingServerPasswords[person.id] = password;
+    }
 
     final updated = state.config.copyWith(people: [...state.people, person]);
     await _setConfig(updated);
@@ -648,17 +810,35 @@ class PeopleNotifier extends Notifier<PeopleState> {
       orElse: () => throw ArgumentError('Person not found.'),
     );
     if (!person.hasPassword) return false;
-    if (!verifyPassword(
-      oldPassword,
-      hash: person.passwordHash!,
-      salt: person.salt!,
-    )) {
-      return false;
+    // Server-hydrated people keep password material on the server; local
+    // placeholders cannot verify the old password.
+    if (!_isServerMode || person.salt != 'server') {
+      if (!verifyPassword(
+        oldPassword,
+        hash: person.passwordHash!,
+        salt: person.salt!,
+      )) {
+        return false;
+      }
+    } else {
+      final client = ref.read(serverSessionProvider.notifier).client;
+      if (client == null) return false;
+      final previousToken = client.sessionToken;
+      try {
+        await client.login(name: person.name, password: oldPassword);
+      } on Object {
+        return false;
+      } finally {
+        client.sessionToken = previousToken;
+      }
     }
     if (!validatePasswordPolicy(newPassword).isValid) {
       throw ArgumentError('Password does not meet the policy requirements.');
     }
     final hashed = hashPassword(newPassword);
+    if (_isServerMode) {
+      _pendingServerPasswords[personId] = newPassword;
+    }
     await updatePerson(
       person.copyWith(passwordHash: hashed.hash, salt: hashed.salt),
     );
@@ -675,6 +855,9 @@ class PeopleNotifier extends Notifier<PeopleState> {
       orElse: () => throw ArgumentError('Person not found.'),
     );
     final hashed = hashPassword(password);
+    if (_isServerMode) {
+      _pendingServerPasswords[personId] = password;
+    }
     await updatePerson(
       person.copyWith(passwordHash: hashed.hash, salt: hashed.salt),
     );
