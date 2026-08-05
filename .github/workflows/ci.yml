@@ -32,7 +32,9 @@ jobs:
         run: bash tool/setup-ci-env.sh
 
       - name: Resolve dependencies
-        run: flutter pub get
+        run: |
+          flutter pub get
+          ( cd packages/app_backend && dart pub get )
 
       - name: Format check
         run: >
@@ -40,9 +42,10 @@ jobs:
           lib test
           packages/engine/lib
           packages/mcp/lib packages/mcp/bin packages/mcp/test
+          packages/app_backend/lib packages/app_backend/bin packages/app_backend/test
 
       - name: Analyze Dart packages
-        run: dart analyze packages/engine packages/mcp
+        run: dart analyze packages/engine packages/mcp packages/app_backend
 
       - name: Analyze Flutter app
         run: flutter analyze
@@ -54,6 +57,10 @@ jobs:
       - name: Test MCP package
         working-directory: packages/mcp
         run: dart test --coverage=coverage
+
+      - name: Test app backend package
+        working-directory: packages/app_backend
+        run: dart test
 
       - name: Test Flutter app with coverage
         run: flutter test --coverage
