@@ -55,9 +55,11 @@ scratch_*.py
 # Local Firefly volume archives from tool/firefly_backup.sh
 /backups/
 
-# Global gitignores often drop every `bin/` directory; keep the MCP entrypoint.
+# Global gitignores often drop every `bin/` directory; keep package entrypoints.
 !packages/mcp/bin/
 !packages/mcp/bin/**
+!packages/app_backend/bin/
+!packages/app_backend/bin/**
 
 # Global macOS `Icon?` (custom folder icon) matches the `icons/` directory on
 # case-insensitive volumes. Keep Flutter web PWA / splash icons tracked.
