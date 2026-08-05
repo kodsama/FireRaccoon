@@ -2263,6 +2263,12 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get splitMainAmount => '总金额';
+
+  @override
+  String get tooltipSplitMainAmount => '交易总金额。保存前各分拆金额之和必须与此一致。';
+
+  @override
   String splitTotalLabel(String amount) {
     return 'Split total: $amount';
   }
@@ -2461,6 +2467,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get tooltipToggleViewMode => '在列表视图和网格视图间切换。';
+
+  @override
+  String get refreshFromFirefly => '刷新';
+
+  @override
+  String get tooltipRefreshFromFirefly => '从 Firefly III 重新拉取数据';
 
   @override
   String get viewModeCards => '卡片';

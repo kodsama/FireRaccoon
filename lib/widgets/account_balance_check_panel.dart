@@ -81,6 +81,14 @@ class _AccountBalanceCheckPanelState extends State<AccountBalanceCheckPanel> {
   final _focusNode = FocusNode();
 
   @override
+  void initState() {
+    super.initState();
+    // Rebuild so hintText can clear on focus. On web, Flutter's hint and the
+    // DOM input placeholder both paint when styles diverge, ghosting the text.
+    _focusNode.addListener(() => setState(() {}));
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
@@ -103,6 +111,11 @@ class _AccountBalanceCheckPanelState extends State<AccountBalanceCheckPanel> {
         (payback == null || payback.isReady);
 
     final status = _statusFor(result, colors, l10n);
+    final fieldStyle = TextStyle(
+      fontFamily: AppTypography.figureFont,
+      fontWeight: FontWeight.w600,
+      color: colors.text,
+    );
 
     return Container(
       width: widget.compact ? null : double.infinity,
@@ -163,13 +176,19 @@ class _AccountBalanceCheckPanelState extends State<AccountBalanceCheckPanel> {
               FilteringTextInputFormatter.allow(RegExp(r'[-0-9.,\s]')),
             ],
             decoration: InputDecoration(
-              hintText: l10n.balanceCheckStatementHint,
+              // Omit hint while focused so the web DOM placeholder cannot
+              // stack on top of Flutter's hint (double / ghosted text).
+              hintText: _focusNode.hasFocus
+                  ? null
+                  : l10n.balanceCheckStatementHint,
+              hintStyle: fieldStyle.copyWith(color: colors.text3),
               isDense: true,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
                 vertical: 10,
               ),
               prefixText: widget.currencySymbol,
+              prefixStyle: fieldStyle,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: colors.border),
@@ -183,11 +202,7 @@ class _AccountBalanceCheckPanelState extends State<AccountBalanceCheckPanel> {
                 borderSide: BorderSide(color: colors.accent.acc, width: 1.5),
               ),
             ),
-            style: TextStyle(
-              fontFamily: 'Roboto Slab',
-              fontWeight: FontWeight.w600,
-              color: colors.text,
-            ),
+            style: fieldStyle,
             onChanged: (_) => setState(() {}),
           ),
           if (status != null) ...[

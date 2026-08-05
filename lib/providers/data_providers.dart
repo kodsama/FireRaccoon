@@ -75,7 +75,8 @@ class AccountsNotifier extends AsyncNotifier<List<Account>> {
 
   Future<void> refresh() async {
     final service = _requireService(ref, 'accountsProvider');
-    state = const AsyncLoading<List<Account>>();
+    // Do not clear to AsyncLoading: keep the previous list visible while the
+    // round-trip runs so sidebar balances do not flash empty on refresh.
     state = await AsyncValue.guard(() => service.getAccounts());
   }
 

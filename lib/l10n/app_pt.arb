@@ -1353,6 +1353,8 @@
       }
     }
   },
+  "splitMainAmount": "Valor total",
+  "tooltipSplitMainAmount": "Total da transação. Os valores das linhas devem somar este montante antes de guardar.",
   "splitTotalLabel": "Split total: {amount}",
   "@splitTotalLabel": {
     "placeholders": {
@@ -1464,6 +1466,8 @@
   "tooltipToggleSidebar": "Expandir ou recolher a barra lateral.",
   "tooltipSearchTransactions": "Pesquisar texto na página atual.",
   "tooltipToggleViewMode": "Alternar entre vista de lista e grelha.",
+  "refreshFromFirefly": "Atualizar",
+  "tooltipRefreshFromFirefly": "Recarregar dados do Firefly III",
   "viewModeCards": "Cartões",
   "viewModeRows": "Linhas",
   "viewModeTightRows": "Linhas compactas",

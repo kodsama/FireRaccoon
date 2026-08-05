@@ -2319,6 +2319,13 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get splitMainAmount => 'Montant total';
+
+  @override
+  String get tooltipSplitMainAmount =>
+      'Total de la transaction. Les montants des lignes doivent correspondre avant l\'enregistrement.';
+
+  @override
   String splitTotalLabel(String amount) {
     return 'Split total: $amount';
   }
@@ -2528,6 +2535,13 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tooltipToggleViewMode => 'Basculer entre vue liste et grille.';
+
+  @override
+  String get refreshFromFirefly => 'Actualiser';
+
+  @override
+  String get tooltipRefreshFromFirefly =>
+      'Recharger les données depuis Firefly III';
 
   @override
   String get viewModeCards => 'Cartes';

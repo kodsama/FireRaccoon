@@ -71,6 +71,9 @@ class FireflyApiService implements FireflyService {
   Map<String, String> get _headers => {
     'Authorization': 'Bearer $apiToken',
     'Accept': 'application/vnd.api+json',
+    // Browsers may otherwise reuse a cached Firefly GET after an external edit.
+    'Cache-Control': 'no-cache',
+    'Pragma': 'no-cache',
   };
 
   String get _baseUrl => serverUrl.endsWith('/')

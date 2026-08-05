@@ -11,6 +11,7 @@ import '../providers/theme_provider.dart';
 import '../providers/undo_history_provider.dart';
 import '../fun_modes/fun_mode.dart';
 import '../providers/data_providers.dart';
+import '../providers/firefly_data_refresh.dart';
 import '../providers/suggestion_providers.dart';
 import '../providers/dashboard_stats_providers.dart';
 import '../providers/transactions_warmup_provider.dart';
@@ -65,6 +66,25 @@ final expandedSidebarGroupsProvider =
     NotifierProvider<ExpandedSidebarGroupsNotifier, Set<String>>(
       ExpandedSidebarGroupsNotifier.new,
     );
+
+/// Pull-to-refresh over any shell page that owns a vertical scrollable.
+class _RefreshableBody extends ConsumerWidget {
+  final Widget child;
+  const _RefreshableBody({required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return RefreshIndicator(
+      onRefresh: () {
+        final account = GoRouterState.of(
+          context,
+        ).uri.queryParameters['account'];
+        return refreshFireflyData(ref, focusAccount: account);
+      },
+      child: child,
+    );
+  }
+}
 
 class AppShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -126,7 +146,7 @@ class _AppShellState extends ConsumerState<AppShell> {
                     _Header(
                       onOpenMenu: () => _scaffoldKey.currentState?.openDrawer(),
                     ),
-                    Expanded(child: widget.child),
+                    Expanded(child: _RefreshableBody(child: widget.child)),
                   ],
                 )
               : Row(
@@ -142,7 +162,9 @@ class _AppShellState extends ConsumerState<AppShell> {
                       child: Column(
                         children: [
                           const _Header(),
-                          Expanded(child: widget.child),
+                          Expanded(
+                            child: _RefreshableBody(child: widget.child),
+                          ),
                         ],
                       ),
                     ),
@@ -247,7 +269,16 @@ class _Sidebar extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
         child: InkWell(
           onTap: () {
-            context.go(routePath);
+            // Re-selecting the current section re-fetches Firefly data so
+            // edits made outside the app show up without a full restart.
+            if (isActive) {
+              final account = GoRouterState.of(
+                context,
+              ).uri.queryParameters['account'];
+              unawaited(refreshFireflyData(ref, focusAccount: account));
+            } else {
+              context.go(routePath);
+            }
             if (inDrawer) Navigator.of(context).maybePop();
           },
           borderRadius: BorderRadius.circular(11),

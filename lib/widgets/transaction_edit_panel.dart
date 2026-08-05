@@ -144,6 +144,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
   late DateTime _date;
   late List<_SplitDraft> _splits;
   late TextEditingController _groupTitleController;
+  late TextEditingController _targetTotalController;
   bool _saving = false;
   double? _targetTotal;
   bool _optionalFieldsExpanded = false;
@@ -174,6 +175,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
     }
     _groupTitleController.text = t.groupTitle ?? t.description;
     _targetTotal = _resolveTargetTotal(t, sourceSplits);
+    _syncTargetTotalController();
   }
 
   double? _resolveTargetTotal(
@@ -184,6 +186,29 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       return transaction.totalAmount;
     }
     return transaction.amount > 0 ? transaction.amount : null;
+  }
+
+  void _syncTargetTotalController() {
+    final text = _targetTotal == null || _targetTotal == 0
+        ? ''
+        : _formatAmountInput(_targetTotal!);
+    if (_targetTotalController.text != text) {
+      _targetTotalController.text = text;
+    }
+  }
+
+  String _formatAmountInput(double amount) {
+    if (amount == amount.roundToDouble()) {
+      return amount.toInt().toString();
+    }
+    return amount.toString();
+  }
+
+  void _onTargetTotalChanged(String raw) {
+    setState(() {
+      final trimmed = raw.trim();
+      _targetTotal = trimmed.isEmpty ? null : double.tryParse(trimmed);
+    });
   }
 
   double _currentSplitSum() {
@@ -198,6 +223,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
     super.initState();
     _splits = [];
     _groupTitleController = TextEditingController();
+    _targetTotalController = TextEditingController();
     _loadFromTransaction(widget.transaction);
   }
 
@@ -216,6 +242,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       split.dispose();
     }
     _groupTitleController.dispose();
+    _targetTotalController.dispose();
     super.dispose();
   }
 
@@ -345,6 +372,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
         );
         if (amount != null && amount > 0) {
           _targetTotal = amount;
+          _syncTargetTotalController();
         }
       }
       final template = _splits.last;
@@ -530,16 +558,33 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       }
     }
 
-    if (_splits.length > 1 && _targetTotal != null) {
+    if (_splits.length > 1) {
+      final targetRaw = _targetTotalController.text.trim();
+      final target = double.tryParse(targetRaw);
+      if (targetRaw.isEmpty) {
+        setState(() => _saving = false);
+        messenger.showSnackBar(
+          SnackBar(content: Text(context.l10n.missingAmount)),
+        );
+        return;
+      }
+      if (target == null || target <= 0) {
+        setState(() => _saving = false);
+        messenger.showSnackBar(
+          SnackBar(content: Text(context.l10n.invalidAmount)),
+        );
+        return;
+      }
+      _targetTotal = target;
       final sum = _currentSplitSum();
-      if ((sum - _targetTotal!).abs() > 0.005) {
+      if ((sum - target).abs() > 0.005) {
         setState(() => _saving = false);
         messenger.showSnackBar(
           SnackBar(
             content: Text(
               context.l10n.splitsTotalMismatch(
                 context.format.formatMoney(
-                  _targetTotal!,
+                  target,
                   widget.transaction.currencySymbol,
                 ),
               ),
@@ -638,50 +683,67 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
     final mismatch = target != null && (sum - target).abs() > 0.005;
     final remainder = target == null ? null : target - sum;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      decoration: BoxDecoration(
-        color: mismatch
-            ? colors.danger.withValues(alpha: 0.08)
-            : colors.accent.acc.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: mismatch
-              ? colors.danger.withValues(alpha: 0.45)
-              : colors.accent.acc.withValues(alpha: 0.35),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _withTooltip(
+          l10n.tooltipSplitMainAmount,
+          AutocompleteTextField(
+            key: const ValueKey('split_main_amount'),
+            controller: _targetTotalController,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            suggestions: const [],
+            decoration: _fieldDecoration(l10n, l10n.splitMainAmount),
+            onChanged: _onTargetTotalChanged,
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              l10n.splitTotalLabel(
-                format.formatMoney(sum, widget.transaction.currencySymbol),
-              ),
-              style: TextStyle(
-                color: mismatch ? colors.danger : colors.text,
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
+        const SizedBox(height: 10),
+        Container(
+          margin: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: mismatch
+                ? colors.danger.withValues(alpha: 0.08)
+                : colors.accent.acc.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: mismatch
+                  ? colors.danger.withValues(alpha: 0.45)
+                  : colors.accent.acc.withValues(alpha: 0.35),
             ),
           ),
-          if (remainder != null && remainder.abs() > 0.005)
-            Text(
-              l10n.splitRemainder(
-                format.formatMoney(
-                  remainder.abs(),
-                  widget.transaction.currencySymbol,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.splitTotalLabel(
+                    format.formatMoney(sum, widget.transaction.currencySymbol),
+                  ),
+                  style: TextStyle(
+                    color: mismatch ? colors.danger : colors.text,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
                 ),
               ),
-              style: TextStyle(
-                color: mismatch ? colors.danger : colors.text3,
-                fontSize: 12,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-        ],
-      ),
+              if (remainder != null && remainder.abs() > 0.005)
+                Text(
+                  l10n.splitRemainder(
+                    format.formatMoney(
+                      remainder.abs(),
+                      widget.transaction.currencySymbol,
+                    ),
+                  ),
+                  style: TextStyle(
+                    color: mismatch ? colors.danger : colors.text3,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

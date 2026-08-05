@@ -2313,6 +2313,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get splitMainAmount => 'Total amount';
+
+  @override
+  String get tooltipSplitMainAmount =>
+      'Main transaction total. Split amounts must add up to this before saving.';
+
+  @override
   String splitTotalLabel(String amount) {
     return 'Split total: $amount';
   }
@@ -2517,6 +2524,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tooltipToggleViewMode => 'Switch between list and grid view.';
+
+  @override
+  String get refreshFromFirefly => 'Refresh';
+
+  @override
+  String get tooltipRefreshFromFirefly => 'Re-fetch data from Firefly III';
 
   @override
   String get viewModeCards => 'Cards';

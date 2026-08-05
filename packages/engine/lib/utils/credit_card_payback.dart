@@ -94,7 +94,7 @@ Transaction buildCreditCardPaybackTransfer({
     tags: first.tags,
     notes: first.notes,
     reconciled: true,
-    groupTitle: 'Credit card payback — ${creditCard.name}',
+    groupTitle: '${creditCard.name} Payback',
     splits: splits,
   );
 }

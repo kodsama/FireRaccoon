@@ -15,11 +15,16 @@ import 'transaction_search_provider.dart';
 /// lists are patched in place instead of refetched, so a single edit does not
 /// re-download the whole lookback window. Live account-filtered list
 /// instances for every account the transaction touches are patched too.
+///
+/// Without [upsert]/[remove], live lists are refetched from Firefly. Pass
+/// [alsoRefreshAccounts] to include extra account-filtered instances (for
+/// example the payment account after a credit-card payback).
 Future<void> refreshTransactionLists(
   WidgetRef ref,
   String? filterAccount, {
   Transaction? upsert,
   Transaction? remove,
+  Iterable<String> alsoRefreshAccounts = const [],
 }) async {
   ref.invalidate(scopedTransactionsProvider);
   ref.invalidate(filteredTransactionListProvider);
@@ -68,10 +73,12 @@ Future<void> refreshTransactionLists(
   }
 
   ref.invalidate(transactionsProvider);
+  final refreshAccounts = <String?>{null, filterAccount, ...alsoRefreshAccounts}
+    ..removeWhere(
+      (key) => key != null && !ref.exists(paginatedTransactionsProvider(key)),
+    );
   await Future.wait([
-    ref.read(paginatedTransactionsProvider(null).notifier).refresh(),
-    if (filterAccount != null &&
-        ref.exists(paginatedTransactionsProvider(filterAccount)))
-      ref.read(paginatedTransactionsProvider(filterAccount).notifier).refresh(),
+    for (final key in refreshAccounts)
+      ref.read(paginatedTransactionsProvider(key).notifier).refresh(),
   ]);
 }

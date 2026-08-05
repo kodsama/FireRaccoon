@@ -5,7 +5,6 @@ import 'package:fireracoon/providers/view_mode_provider.dart';
 import 'package:fireracoon/screens/transactions_screen.dart';
 import 'package:fireracoon/widgets/selection_check_control.dart';
 import 'package:fireracoon/widgets/small_loading_indicator.dart';
-import 'package:fireracoon/widgets/transaction_entity_card.dart';
 import 'package:fireracoon/widgets/transaction_month_header.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
@@ -582,21 +581,140 @@ void main() {
     },
   );
 
-  testWidgets('TransactionsScreen renders in tight rows mode', (tester) async {
+  testWidgets(
+    'TransactionsScreen shows Refresh instead of view mode switcher',
+    (tester) async {
+      configureLargeScreen(tester);
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(
+        await buildScreenTestApp(
+          child: const TransactionsScreen(),
+          fireflyService: transactionsFake(),
+          viewMode: ViewMode.compact,
+        ),
+      );
+      await pumpScreen(tester);
+
+      expect(find.text('Refresh'), findsOneWidget);
+      expect(find.byTooltip('Re-fetch data from Firefly III'), findsOneWidget);
+      // View mode lives in the app shell header, not on this filter bar.
+      expect(find.text('Rows'), findsNothing);
+    },
+  );
+
+  testWidgets('TransactionsScreen Refresh re-fetches from Firefly', (
+    tester,
+  ) async {
     configureLargeScreen(tester);
     addTearDown(tester.view.resetPhysicalSize);
+
+    final liveAccounts = List<Account>.from(sampleAccounts);
+    final liveTransactions = List<Transaction>.from(sampleTransactions);
+    final fake = _CountingTransactionsFake(
+      accounts: liveAccounts,
+      transactions: liveTransactions,
+    );
 
     await tester.pumpWidget(
       await buildScreenTestApp(
         child: const TransactionsScreen(),
-        fireflyService: transactionsFake(),
-        viewMode: ViewMode.tight,
+        fireflyService: fake,
+        viewMode: ViewMode.compact,
       ),
     );
     await pumpScreen(tester);
 
-    expect(find.text('Transactions'), findsOneWidget);
-    expect(find.byType(TightRowsHeaderRow), findsWidgets);
     expect(find.text('Salary'), findsWidgets);
+    final accountsAfterWarm = fake.accountReads;
+    final transactionsAfterWarm = fake.transactionReads;
+
+    liveAccounts
+      ..clear()
+      ..add(
+        sampleAccounts.first.copyWith(
+          name: 'Refreshed Checking',
+          currentBalance: 42,
+        ),
+      );
+    liveTransactions
+      ..clear()
+      ..add(
+        sampleTransactions.first.copyWith(description: 'Edited in Firefly'),
+      );
+    fake.transactionPages[1] = TransactionPageResult(
+      transactions: List<Transaction>.from(liveTransactions),
+      currentPage: 1,
+      totalPages: 1,
+      total: liveTransactions.length,
+    );
+
+    await tester.tap(find.text('Refresh'));
+    await tester.pump();
+    await tester.pumpAndSettle();
+
+    expect(fake.accountReads, greaterThan(accountsAfterWarm));
+    expect(fake.transactionReads, greaterThan(transactionsAfterWarm));
+    expect(find.text('Edited in Firefly'), findsWidgets);
+    expect(find.text('Salary'), findsNothing);
   });
+}
+
+class _CountingTransactionsFake extends FakeFireflyService {
+  _CountingTransactionsFake({
+    required super.accounts,
+    required super.transactions,
+  }) : super(
+         transactionPages: {
+           1: TransactionPageResult(
+             transactions: transactions,
+             currentPage: 1,
+             totalPages: 1,
+             total: transactions.length,
+           ),
+         },
+       );
+
+  int accountReads = 0;
+  int transactionReads = 0;
+
+  @override
+  Future<List<Account>> getAccounts({
+    List<String> types = const ['asset', 'liability'],
+  }) async {
+    accountReads++;
+    return super.getAccounts(types: types);
+  }
+
+  @override
+  Future<List<Transaction>> getTransactions({
+    DateTime? start,
+    DateTime? end,
+    String? type,
+    void Function(List<Transaction> firstPage)? onFirstPage,
+  }) async {
+    transactionReads++;
+    return super.getTransactions(
+      start: start,
+      end: end,
+      type: type,
+      onFirstPage: onFirstPage,
+    );
+  }
+
+  @override
+  Future<TransactionPageResult> getTransactionsPage({
+    required int page,
+    required int limit,
+    DateTime? start,
+    DateTime? end,
+  }) async {
+    transactionReads++;
+    return super.getTransactionsPage(
+      page: page,
+      limit: limit,
+      start: start,
+      end: end,
+    );
+  }
 }

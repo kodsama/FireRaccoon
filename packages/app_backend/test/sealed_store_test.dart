@@ -80,6 +80,40 @@ void main() {
     expect(snap['setupRequired'], isFalse);
     expect((snap['firefly'] as Map)['configured'], isTrue);
     expect((snap['firefly'] as Map).containsKey('token'), isFalse);
+    expect(snap['people'], hasLength(1));
+    expect((snap['people'] as List).first['name'], 'Alex');
+
+    await repo.replacePeopleConfig(
+      people: [
+        {
+          'id': login.person['id'],
+          'name': 'Alex',
+          'colorValue': 0xFF1565C0,
+          'avatarKind': 'none',
+          'role': 'admin',
+          'createdAt': DateTime.now().toUtc().toIso8601String(),
+          'preferences': <String, dynamic>{},
+        },
+        {
+          'id': 'person_sam',
+          'name': 'Sam',
+          'colorValue': 0xFF2E7D32,
+          'avatarKind': 'none',
+          'role': 'user',
+          'createdAt': DateTime.now().toUtc().toIso8601String(),
+          'preferences': <String, dynamic>{},
+        },
+      ],
+      accountOwnerships: const [],
+      requirePasswordLogin: true,
+      passwordUpdates: const {'person_sam': 'Password2!'},
+    );
+    final samLogin = await repo.login(name: 'Sam', password: 'Password2!');
+    expect(samLogin.person['role'], 'user');
+    expect(
+      repo.snapshotForClient(sessionToken: login.token)['people'],
+      hasLength(2),
+    );
 
     final enc = await File('${tmp.path}/state.enc').readAsString();
     expect(enc.contains('ff-token-secret'), isFalse);

@@ -105,6 +105,13 @@ void main() {
             if (request.url.path.endsWith('/api/state/firefly')) {
               return http.Response(jsonEncode({'ok': true}), 200);
             }
+            if (request.url.path.endsWith('/api/state/people')) {
+              final body = jsonDecode(request.body) as Map<String, dynamic>;
+              expect(body['people'], isA<List>());
+              expect(body['requirePasswordLogin'], isTrue);
+              expect(body['passwordUpdates'], isA<Map>());
+              return http.Response(jsonEncode({'ok': true}), 200);
+            }
             return http.Response('nope', 404);
           }),
         );
@@ -133,6 +140,20 @@ void main() {
         expect(state['undo'], isA<Map>());
         await client.putUndo({'entries': [], 'cursor': -1});
         await client.putFirefly(url: 'http://ff', token: 'tok');
+        final people = await client.putPeople(
+          people: [
+            {'id': 'a', 'name': 'Admin', 'role': 'admin'},
+          ],
+          accountOwnerships: {
+            'acc-1': {
+              'accountId': 'acc-1',
+              'personShares': {'a': 1.0},
+            },
+          },
+          requirePasswordLogin: true,
+          passwordUpdates: {'a': 'Password1!'},
+        );
+        expect(people['ok'], isTrue);
         expect(client.fireflyProxyBase, 'http://example.test/api/firefly');
         await client.logout();
         expect(client.sessionToken, isNull);

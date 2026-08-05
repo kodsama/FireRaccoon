@@ -155,6 +155,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final tab = filters.tab;
 
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.only(left: 30, right: 30, top: 26, bottom: 60),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -231,6 +232,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final transactionsAsync = ref.watch(transactionsProvider);
 
     return transactionsAsync.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.all(40),
@@ -584,6 +586,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final colors = context.colors;
 
     return accountsAsync.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.all(40),
@@ -758,6 +761,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final colors = context.colors;
 
     return accountsAsync.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.all(40),

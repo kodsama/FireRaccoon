@@ -1353,6 +1353,8 @@
       }
     }
   },
+  "splitMainAmount": "总金额",
+  "tooltipSplitMainAmount": "交易总金额。保存前各分拆金额之和必须与此一致。",
   "splitTotalLabel": "Split total: {amount}",
   "@splitTotalLabel": {
     "placeholders": {
@@ -1464,6 +1466,8 @@
   "tooltipToggleSidebar": "展开或收起侧边栏。",
   "tooltipSearchTransactions": "在当前页面按文本搜索。",
   "tooltipToggleViewMode": "在列表视图和网格视图间切换。",
+  "refreshFromFirefly": "刷新",
+  "tooltipRefreshFromFirefly": "从 Firefly III 重新拉取数据",
   "viewModeCards": "卡片",
   "viewModeRows": "行",
   "viewModeTightRows": "紧凑行",

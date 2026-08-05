@@ -44,6 +44,30 @@ void main() {
     expect(find.text('Balances match'), findsOneWidget);
   });
 
+  testWidgets('hides statement hint while the amount field is focused', (
+    tester,
+  ) async {
+    final format = LocaleFormatting(const Locale('en'));
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: AccountBalanceCheckPanel(
+          expectedBalance: 2500,
+          currencySymbol: 'kr',
+          format: format,
+        ),
+      ),
+    );
+    await pumpScreen(tester);
+
+    expect(find.text('Enter balance from your statement'), findsOneWidget);
+
+    await tester.tap(find.byType(TextField));
+    await tester.pump();
+
+    expect(find.text('Enter balance from your statement'), findsNothing);
+  });
+
   testWidgets('AccountBalanceCheckPanel shows difference on mismatch', (
     tester,
   ) async {

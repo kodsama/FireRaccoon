@@ -32,6 +32,7 @@ class PayeesScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.pageBg,
       body: payeesAsync.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, st) => Center(child: Text(l10n.errorGeneric(e.toString()))),
         data: (payees) {
@@ -48,6 +49,7 @@ class PayeesScreen extends ConsumerWidget {
               .toList();
 
           return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(30),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

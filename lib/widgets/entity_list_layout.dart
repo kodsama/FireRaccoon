@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/view_mode_provider.dart';
 import '../theme/app_theme.dart';
+import 'tight_rows_table_shell.dart';
 
 /// Switches between a bordered compact list and a spaced grid of cards.
 class EntityListLayout extends ConsumerWidget {
@@ -11,12 +12,17 @@ class EntityListLayout extends ConsumerWidget {
   final List<Widget>? tightItems;
   final Widget? tightHeader;
 
+  /// Minimum width for the tight-rows table (columns + actions + padding).
+  /// When the viewport is narrower, header and rows scroll horizontally together.
+  final double? tightMinContentWidth;
+
   const EntityListLayout({
     super.key,
     required this.gridItems,
     required this.compactItems,
     this.tightItems,
     this.tightHeader,
+    this.tightMinContentWidth,
   });
 
   @override
@@ -28,22 +34,15 @@ class EntityListLayout extends ConsumerWidget {
       final items = tightItems ?? compactItems;
       return Card(
         margin: EdgeInsets.zero,
+        clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
           side: BorderSide(color: colors.border),
         ),
-        child: Column(
-          children: [
-            ?tightHeader,
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: items.length,
-              separatorBuilder: (context, index) =>
-                  Divider(color: colors.border, height: 1),
-              itemBuilder: (context, index) => items[index],
-            ),
-          ],
+        child: TightRowsTableShell(
+          minContentWidth: tightMinContentWidth ?? 0,
+          header: tightHeader ?? const SizedBox.shrink(),
+          rows: items,
         ),
       );
     }

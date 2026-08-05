@@ -4240,6 +4240,18 @@ abstract class AppLocalizations {
   /// **'{count} categories'**
   String splitCategoriesCount(int count);
 
+  /// No description provided for @splitMainAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Total amount'**
+  String get splitMainAmount;
+
+  /// No description provided for @tooltipSplitMainAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Main transaction total. Split amounts must add up to this before saving.'**
+  String get tooltipSplitMainAmount;
+
   /// No description provided for @splitTotalLabel.
   ///
   /// In en, this message translates to:
@@ -4611,6 +4623,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Switch between list and grid view.'**
   String get tooltipToggleViewMode;
+
+  /// No description provided for @refreshFromFirefly.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refreshFromFirefly;
+
+  /// No description provided for @tooltipRefreshFromFirefly.
+  ///
+  /// In en, this message translates to:
+  /// **'Re-fetch data from Firefly III'**
+  String get tooltipRefreshFromFirefly;
 
   /// No description provided for @viewModeCards.
   ///

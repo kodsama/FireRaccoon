@@ -164,7 +164,7 @@ void main() {
       expect(created.type, 'transfer');
       expect(created.splits, hasLength(2));
       expect(created.totalAmount, 50);
-      expect(created.groupTitle, 'Credit card payback — Platinum');
+      expect(created.groupTitle, 'Platinum Payback');
     });
 
     test('rejects non-credit-card destination', () async {

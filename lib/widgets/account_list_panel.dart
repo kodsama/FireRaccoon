@@ -19,6 +19,7 @@ import '../widgets/entity_list_layout.dart';
 import '../widgets/expandable_entity_shell.dart';
 import '../widgets/resize_handle.dart';
 import '../widgets/simple_charts.dart';
+import '../widgets/tight_rows_table_shell.dart';
 import '../widgets/transactions_expanded_panel.dart';
 import '../router/transactions_route.dart';
 import 'account_edit_dialog.dart';
@@ -50,7 +51,7 @@ Widget _accountBalanceAmount({
 }) {
   return Tooltip(
     message: tooltip,
-    child: Text(text, style: style),
+    child: Text(text, style: style, overflow: TextOverflow.ellipsis),
   );
 }
 
@@ -81,8 +82,11 @@ class AccountListPanel extends ConsumerWidget {
     }
 
     final prognosis = ref.watch(accountPrognosisProvider);
+    final columnConfig = ref.watch(accountColumnConfigProvider);
 
     return EntityListLayout(
+      tightMinContentWidth:
+          columnConfig.preferredContentWidth + tightRowsHorizontalPadding * 2,
       gridItems: accounts
           .map(
             (acc) => AccountEntityCard(
@@ -781,66 +785,41 @@ class _AccountTightRowsHeaderRowState
     final notifier = ref.read(accountColumnConfigProvider.notifier);
 
     Widget columnLabel(AccountColumn col) {
-      return switch (col) {
-        AccountColumn.account => Row(
-          children: [
-            Icon(LucideIcons.landmark, size: 12, color: colors.text3),
-            const SizedBox(width: 4),
-            Text(
-              l10n.filterAccount,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: colors.text3,
-              ),
-            ),
-          ],
-        ),
-        AccountColumn.role => Row(
-          children: [
-            Icon(LucideIcons.shapes, size: 12, color: colors.text3),
-            const SizedBox(width: 4),
-            Text(
-              'Role',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: colors.text3,
-              ),
-            ),
-          ],
-        ),
-        AccountColumn.balance => Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Icon(LucideIcons.wallet, size: 12, color: colors.text3),
-            const SizedBox(width: 4),
-            Text(
-              l10n.balance,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: colors.text3,
-              ),
-            ),
-          ],
-        ),
-        AccountColumn.endOfMonth => Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            Icon(LucideIcons.calendar, size: 12, color: colors.text3),
-            const SizedBox(width: 4),
-            Text(
-              'End of Month',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: colors.text3,
-              ),
-            ),
-          ],
-        ),
+      final isRight =
+          col == AccountColumn.balance || col == AccountColumn.endOfMonth;
+      final label = switch (col) {
+        AccountColumn.account => l10n.filterAccount,
+        AccountColumn.role => 'Role',
+        AccountColumn.balance => l10n.balance,
+        AccountColumn.endOfMonth => 'End of Month',
       };
+      final icon = switch (col) {
+        AccountColumn.account => LucideIcons.landmark,
+        AccountColumn.role => LucideIcons.shapes,
+        AccountColumn.balance => LucideIcons.wallet,
+        AccountColumn.endOfMonth => LucideIcons.calendar,
+      };
+      return Row(
+        mainAxisAlignment: isRight
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
+        children: [
+          Icon(icon, size: 12, color: colors.text3),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: colors.text3,
+              ),
+              overflow: TextOverflow.ellipsis,
+              textAlign: isRight ? TextAlign.right : TextAlign.left,
+            ),
+          ),
+        ],
+      );
     }
 
     final columns = config.order;
@@ -852,100 +831,104 @@ class _AccountTightRowsHeaderRowState
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-        child: Row(
-          children: [
-            for (int i = 0; i < columns.length; i++) ...[
-              // ── Draggable column header ──────────────────────────
-              DragTarget<int>(
-                onWillAcceptWithDetails: (details) => details.data != i,
-                onAcceptWithDetails: (details) {
-                  notifier.reorderColumn(details.data, i);
-                  setState(() => _draggingIndex = null);
-                },
-                builder: (context, candidateData, rejectedData) {
-                  final isDropTarget =
-                      candidateData.isNotEmpty && candidateData.first != i;
-                  final col = columns[i];
-                  final width = config.widths[col]!;
-                  return SizedBox(
-                    width: width,
-                    height: 36,
-                    child: Stack(
-                      children: [
-                        // Column label – drag to reorder
-                        Positioned(
-                          left: 0,
-                          top: 0,
-                          bottom: 0,
-                          right: 12, // leave room for resize handle
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 120),
-                            decoration: BoxDecoration(
-                              color: isDropTarget
-                                  ? colors.surface2.withValues(alpha: 0.8)
-                                  : Colors.transparent,
-                              border: isDropTarget
-                                  ? Border(
-                                      left: BorderSide(
-                                        color: colors.text2,
-                                        width: 2,
-                                      ),
-                                    )
-                                  : null,
-                            ),
-                            alignment:
-                                (col == AccountColumn.balance ||
-                                    col == AccountColumn.endOfMonth)
-                                ? Alignment.centerRight
-                                : Alignment.centerLeft,
-                            padding: const EdgeInsets.symmetric(vertical: 8),
-                            child: MouseRegion(
-                              cursor: SystemMouseCursors.grab,
-                              child: Draggable<int>(
-                                data: i,
-                                feedback: Material(
-                                  elevation: 4,
-                                  borderRadius: BorderRadius.circular(6),
-                                  color: colors.surface2,
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    child: columnLabel(col),
-                                  ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final fitted = config.fittedWidths(constraints.maxWidth);
+            return Row(
+              children: [
+                for (int i = 0; i < columns.length; i++) ...[
+                  DragTarget<int>(
+                    onWillAcceptWithDetails: (details) => details.data != i,
+                    onAcceptWithDetails: (details) {
+                      notifier.reorderColumn(details.data, i);
+                      setState(() => _draggingIndex = null);
+                    },
+                    builder: (context, candidateData, rejectedData) {
+                      final isDropTarget =
+                          candidateData.isNotEmpty && candidateData.first != i;
+                      final col = columns[i];
+                      final width = fitted[col]!;
+                      return SizedBox(
+                        width: width,
+                        height: 36,
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              left: 0,
+                              top: 0,
+                              bottom: 0,
+                              right: tightRowResizeGutter,
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 120),
+                                decoration: BoxDecoration(
+                                  color: isDropTarget
+                                      ? colors.surface2.withValues(alpha: 0.8)
+                                      : Colors.transparent,
+                                  border: isDropTarget
+                                      ? Border(
+                                          left: BorderSide(
+                                            color: colors.text2,
+                                            width: 2,
+                                          ),
+                                        )
+                                      : null,
                                 ),
-                                onDragStarted: () =>
-                                    setState(() => _draggingIndex = i),
-                                onDragEnd: (_) =>
-                                    setState(() => _draggingIndex = null),
-                                child: Opacity(
-                                  opacity: _draggingIndex == i ? 0.3 : 1.0,
-                                  child: columnLabel(col),
+                                alignment:
+                                    (col == AccountColumn.balance ||
+                                        col == AccountColumn.endOfMonth)
+                                    ? Alignment.centerRight
+                                    : Alignment.centerLeft,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: MouseRegion(
+                                  cursor: SystemMouseCursors.grab,
+                                  child: Draggable<int>(
+                                    data: i,
+                                    feedback: Material(
+                                      elevation: 4,
+                                      borderRadius: BorderRadius.circular(6),
+                                      color: colors.surface2,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 8,
+                                        ),
+                                        child: columnLabel(col),
+                                      ),
+                                    ),
+                                    onDragStarted: () =>
+                                        setState(() => _draggingIndex = i),
+                                    onDragEnd: (_) =>
+                                        setState(() => _draggingIndex = null),
+                                    child: Opacity(
+                                      opacity: _draggingIndex == i ? 0.3 : 1.0,
+                                      child: columnLabel(col),
+                                    ),
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
+                            Positioned(
+                              right: 0,
+                              top: 0,
+                              bottom: 0,
+                              width: tightRowResizeGutter,
+                              child: ResizeHandle(
+                                onDrag: (dx) => notifier.resizeColumn(col, dx),
+                              ),
+                            ),
+                          ],
                         ),
-                        // Resize handle on the right edge
-                        Positioned(
-                          right: 0,
-                          top: 0,
-                          bottom: 0,
-                          width: 12,
-                          child: ResizeHandle(
-                            onDrag: (dx) => notifier.resizeColumn(col, dx),
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ],
-            const Spacer(),
-            const SizedBox(width: AccountColumnConfig.actionWidth),
-          ],
+                      );
+                    },
+                  ),
+                ],
+                const Spacer(),
+                const SizedBox(width: AccountColumnConfig.actionWidth),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -1150,34 +1133,44 @@ class _AccountEntityTightRowState extends ConsumerState<AccountEntityTightRow> {
 
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-            child: Row(
-              children: [
-                for (final col in config.order)
-                  SizedBox(
-                    width: config.widths[col],
-                    child: cellForColumn(col),
-                  ),
-                const Spacer(),
-                SizedBox(
-                  width: AccountColumnConfig.actionWidth,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      EntityHeaderActions(
-                        leading: [
-                          if (!acc.active) _inactiveAccountBadge(context),
-                        ],
-                        iconSize: 14,
-                        onEdit: widget.onEdit,
-                        onDelete: widget.onDelete,
-                        onReconcile: widget.onReconcile,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final fitted = config.fittedWidths(constraints.maxWidth);
+                return Row(
+                  children: [
+                    for (final col in config.order)
+                      SizedBox(
+                        width: fitted[col],
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                            right: tightRowResizeGutter,
+                          ),
+                          child: cellForColumn(col),
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      ExpandChevron(expanded: widget.isExpanded, size: 14),
-                    ],
-                  ),
-                ),
-              ],
+                    const Spacer(),
+                    SizedBox(
+                      width: AccountColumnConfig.actionWidth,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          EntityHeaderActions(
+                            leading: [
+                              if (!acc.active) _inactiveAccountBadge(context),
+                            ],
+                            iconSize: 14,
+                            onEdit: widget.onEdit,
+                            onDelete: widget.onDelete,
+                            onReconcile: widget.onReconcile,
+                          ),
+                          const SizedBox(width: 4),
+                          ExpandChevron(expanded: widget.isExpanded, size: 14),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           );
         },

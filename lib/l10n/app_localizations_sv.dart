@@ -2311,6 +2311,13 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
+  String get splitMainAmount => 'Totalt belopp';
+
+  @override
+  String get tooltipSplitMainAmount =>
+      'Transaktionens totalsumma. Delbeloppen måste summera till detta innan sparande.';
+
+  @override
   String splitTotalLabel(String amount) {
     return 'Split total: $amount';
   }
@@ -2517,6 +2524,12 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get tooltipToggleViewMode => 'Växla mellan list- och rutnätsvy.';
+
+  @override
+  String get refreshFromFirefly => 'Uppdatera';
+
+  @override
+  String get tooltipRefreshFromFirefly => 'Hämta om data från Firefly III';
 
   @override
   String get viewModeCards => 'Kort';

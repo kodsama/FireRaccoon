@@ -126,6 +126,25 @@ class RemoteServerClient {
     _decode(response);
   }
 
+  Future<Map<String, dynamic>> putPeople({
+    required List<Map<String, dynamic>> people,
+    required Object accountOwnerships,
+    required bool requirePasswordLogin,
+    Map<String, String> passwordUpdates = const {},
+  }) async {
+    final response = await _http.put(
+      _uri('/api/state/people'),
+      headers: _headers(jsonBody: true),
+      body: jsonEncode({
+        'people': people,
+        'accountOwnerships': accountOwnerships,
+        'requirePasswordLogin': requirePasswordLogin,
+        if (passwordUpdates.isNotEmpty) 'passwordUpdates': passwordUpdates,
+      }),
+    );
+    return _decode(response);
+  }
+
   /// Same-origin Firefly BFF base used by [FireflyApiService].
   String get fireflyProxyBase => '${_uri('/api/firefly')}';
 

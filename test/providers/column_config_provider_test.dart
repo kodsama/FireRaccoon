@@ -29,6 +29,94 @@ void main() {
     return container;
   }
 
+  group('fitColumnWidths', () {
+    test('keeps preferred widths when they fit', () {
+      final fitted = fitColumnWidths(
+        order: ['a', 'b'],
+        preferred: {'a': 100.0, 'b': 200.0},
+        availableWidth: 400,
+      );
+      expect(fitted, {'a': 100.0, 'b': 200.0});
+    });
+
+    test('scales proportionally when preferred widths overflow', () {
+      final fitted = fitColumnWidths(
+        order: ['a', 'b'],
+        preferred: {'a': 100.0, 'b': 300.0},
+        availableWidth: 200,
+      );
+      expect(fitted['a'], closeTo(50.0, 0.001));
+      expect(fitted['b'], closeTo(150.0, 0.001));
+      expect(fitted.values.fold(0.0, (s, w) => s + w), closeTo(200.0, 0.001));
+    });
+
+    test('returns zeros when available width is non-positive', () {
+      expect(
+        fitColumnWidths(
+          order: ['a'],
+          preferred: {'a': 100.0},
+          availableWidth: 0,
+        ),
+        {'a': 0.0},
+      );
+    });
+
+    test('returns empty map for empty order', () {
+      expect(
+        fitColumnWidths(
+          order: const <String>[],
+          preferred: const {},
+          availableWidth: 200,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('splits evenly when preferred sum is zero', () {
+      final fitted = fitColumnWidths(
+        order: ['a', 'b'],
+        preferred: {'a': 0.0, 'b': 0.0},
+        availableWidth: 100,
+      );
+      expect(fitted['a'], 50.0);
+      expect(fitted['b'], 50.0);
+    });
+
+    test('AccountColumnConfig.fittedWidths reserves action column', () {
+      final config = AccountColumnConfig.defaults;
+      final fitted = config.fittedWidths(400);
+      final sum = fitted.values.fold(0.0, (s, w) => s + w);
+      expect(sum, lessThanOrEqualTo(400 - AccountColumnConfig.actionWidth));
+      expect(sum, closeTo(400 - AccountColumnConfig.actionWidth, 0.001));
+    });
+
+    test('preferredContentWidth includes action column', () {
+      final config = AccountColumnConfig.defaults;
+      expect(
+        config.preferredContentWidth,
+        config.widths.values.fold(0.0, (s, w) => s + w) +
+            AccountColumnConfig.actionWidth,
+      );
+    });
+
+    test('TransactionColumnConfig.fittedWidths uses visible columns only', () {
+      final config = TransactionColumnConfig.defaults;
+      final visible = [TightRowColumn.date, TightRowColumn.amount];
+      final fitted = config.fittedWidths(300, visible);
+      expect(fitted.keys.toList(), visible);
+      expect(
+        fitted.values.fold(0.0, (s, w) => s + w),
+        lessThanOrEqualTo(300 - TransactionColumnConfig.actionWidth),
+      );
+      expect(
+        config.preferredContentWidth(visible),
+        config.widths[TightRowColumn.date]! +
+            config.widths[TightRowColumn.amount]! +
+            TransactionColumnConfig.actionWidth,
+      );
+    });
+  });
+
   group('AccountColumnConfig', () {
     test('JSON round-trip and defaults on bad input', () {
       final original = AccountColumnConfig.defaults.copyWith(

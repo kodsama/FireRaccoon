@@ -36,6 +36,7 @@ class CategoriesTagsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: colors.pageBg,
       body: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(30),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -105,6 +106,7 @@ class CategoriesTagsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             if (activeTab == CategoriesTagsTab.categories)
               categoriesAsync.when(
+                skipLoadingOnReload: true,
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, st) =>
                     Center(child: Text(l10n.errorGeneric(e.toString()))),
@@ -143,6 +145,7 @@ class CategoriesTagsScreen extends ConsumerWidget {
               )
             else
               tagsAsync.when(
+                skipLoadingOnReload: true,
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (e, st) =>
                     Center(child: Text(l10n.errorGeneric(e.toString()))),
