@@ -61,6 +61,16 @@ dart run build_runner build --delete-conflicting-outputs
 - **Public APIs** use `///` doc comments
 - Match existing naming and file layout when adding screens
 
+## Branching
+
+| Branch | Role |
+|--------|------|
+| `dev` | Integration branch for ongoing work |
+| `main` | Stable line; release tags must point here |
+
+Open a pull request from `dev` to `main` when ready to ship. Do not release
+from `dev` tip alone — see [Deployment](deployment.md#github-releases-01-100-).
+
 ## CI pipeline
 
 `.github/workflows/ci.yml`:
