@@ -6,28 +6,39 @@ releases also build Android, iOS, macOS, Windows, and Linux installers via
 
 ## GitHub Releases (`0.1`, `1.0.0`, …)
 
-One tag scheme only: the bare version name from `pubspec.yaml` (for example
-`0.1.1`). Never prefix with `v` (`v0.1.1` is wrong for this repo).
+Releases ship only from `main`. Integration work lands on `dev` and reaches
+`main` through a pull request — never by pushing a version tag from `dev`
+alone.
 
-Bump `version:` in root `pubspec.yaml` first (for example `0.1.1+1`). The
-part before `+` is the release name; the part after is the build number shown
-in Settings. Then push a tag that matches that name exactly:
+1. Land changes on `dev`.
+2. Open a PR `dev` → `main` and merge it.
+3. On `main`, bump `version:` in root `pubspec.yaml` (for example `0.1.1+1`)
+   if that bump was not already in the PR. The part before `+` is the release
+   name; the part after is the build number shown in Settings.
+4. Tag and push from `main` only, using the bare version name (never a `v`
+   prefix):
 
 ```bash
-# After committing pubspec version: 0.1.1+1
+git checkout main
+git pull
+# After pubspec version: 0.1.1+1
 git tag 0.1.1
 git push origin 0.1.1
 ```
 
-The release workflow fails early if the tag does not match the pubspec version
-name. Do not tag `0.1.1+1`; GitHub / GHCR use the name only (`0.1.1`).
+The release workflow fails early if:
+
+- the tagged commit is not on `main`, or
+- the tag does not match the pubspec version name
+
+Do not tag `0.1.1+1`; GitHub / GHCR use the name only (`0.1.1`).
 
 GitHub immutable releases permanently reserve a tag name once a release for it
 has been published. Deleting that release does not free the name; bump the
 version instead. Do not invent a `v`-prefixed twin of a burned tag.
 
-Pushing a version tag on `main` builds every platform in parallel and attaches
-artifacts to a GitHub Release for that tag:
+Pushing a version tag that points at `main` builds every platform in parallel
+and attaches artifacts to a GitHub Release for that tag:
 | Platform | Artifacts |
 |----------|-----------|
 | Android | `*.apk`, `*.aab`, Linux MCP binary |
