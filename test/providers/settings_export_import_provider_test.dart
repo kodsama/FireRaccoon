@@ -4,6 +4,7 @@ import 'package:fireracoon/models/account_prognosis.dart';
 import 'package:fireracoon/models/people_models.dart';
 import 'package:fireracoon/models/settings_bundle.dart';
 import 'package:fireracoon/providers/account_classification_provider.dart';
+import 'package:fireracoon/providers/auth_provider.dart';
 import 'package:fireracoon/providers/default_period_provider.dart';
 import 'package:fireracoon/providers/locale_provider.dart';
 import 'package:fireracoon/providers/people_providers.dart';
@@ -35,6 +36,7 @@ void main() {
 
   late Directory tempDir;
   const pathProviderChannel = MethodChannel('plugins.flutter.io/path_provider');
+  const passphrase = 'Correct-Horse9!';
 
   setUp(() async {
     tempDir = await Directory.systemTemp.createTemp('settings-export-test');
@@ -175,8 +177,8 @@ void main() {
         'recurrenceWriteAheadDays': 7,
         'undoHistoryLimit': 10,
       },
-      people: SettingsPeopleBundle(
-        people: const [
+      people: const SettingsPeopleBundle(
+        people: [
           Person(
             id: 'imported',
             name: 'Imported',
@@ -187,20 +189,20 @@ void main() {
           ),
         ],
         accountOwnerships: {
-          'acc_x': const AccountOwnership(
+          'acc_x': AccountOwnership(
             accountId: 'acc_x',
             personShares: {'imported': 1.0},
           ),
         },
         requirePasswordLogin: true,
       ),
-      accountClassifications: {'acc_x': 'asset'},
+      accountClassifications: const {'acc_x': 'asset'},
       sideMenu: existing.sideMenu,
       accountColumns: existing.accountColumns,
       transactionColumns: existing.transactionColumns,
       viewMode: 'standard',
-      tightRowsColumns: ['date'],
-      prognosis: {
+      tightRowsColumns: const ['date'],
+      prognosis: const {
         'mode': 'expected',
         'horizon': 'endOfNextMonth',
         'marginPercent': 15,
@@ -238,6 +240,91 @@ void main() {
     );
   });
 
+  test(
+    'sealed round-trip restores salted passwords and Firefly credentials',
+    () async {
+      final container = await buildContainer();
+      addTearDown(container.dispose);
+      await waitHydrated(container);
+
+      await container
+          .read(authProvider.notifier)
+          .saveSettings('https://firefly.example', 'ff-token-secret', true);
+
+      final notifier = container.read(peopleProvider.notifier);
+      final person = await notifier.addPerson(
+        name: 'Alex',
+        colorValue: 0xFF3B82F6,
+        password: passphrase,
+      );
+      await notifier.setRequirePasswordLogin(true);
+
+      final exported = container
+          .read(settingsExportImportProvider)
+          .buildBundle();
+      expect(exported.needsSecretsPassphrase, isTrue);
+      final sealed = await exported.encodeSealed(passphrase);
+      expect(sealed.contains('ff-token-secret'), isFalse);
+
+      await container.read(authProvider.notifier).clearSettings();
+      await notifier.importSettings(
+        people: const [
+          Person(
+            id: 'other',
+            name: 'Other',
+            colorValue: 0xFF10B981,
+            role: PersonRole.admin,
+            createdAtIso: '2026-01-01T00:00:00.000Z',
+          ),
+        ],
+        accountOwnerships: const {},
+        requirePasswordLogin: false,
+      );
+
+      final restored = await SettingsBundle.decode(
+        sealed,
+        passphrase: passphrase,
+      );
+      await container.read(settingsExportImportProvider).applyBundle(restored);
+
+      final auth = container.read(authProvider);
+      expect(auth.serverUrl, 'https://firefly.example');
+      expect(auth.apiToken, 'ff-token-secret');
+      expect(auth.allowInsecure, isTrue);
+
+      final state = container.read(peopleProvider);
+      expect(state.people.single.id, person.id);
+      expect(state.people.single.hasPassword, isTrue);
+      expect(state.requirePasswordLogin, isTrue);
+      expect(await notifier.login('Alex', passphrase), isNotNull);
+    },
+  );
+
+  test(
+    'applyBundle keeps destination Firefly when file omits connection',
+    () async {
+      final container = await buildContainer();
+      addTearDown(container.dispose);
+      await waitHydrated(container);
+
+      await container
+          .read(authProvider.notifier)
+          .saveSettings('https://keep.example', 'keep-token', false);
+
+      final bundle = SettingsBundle(
+        schemaVersion: kSettingsBundleSchemaVersion,
+        exportedAtIso: '2026-08-04T00:00:00.000Z',
+        device: const {},
+        people: const SettingsPeopleBundle(),
+      );
+      await container.read(settingsExportImportProvider).applyBundle(bundle);
+
+      final auth = container.read(authProvider);
+      expect(auth.serverUrl, 'https://keep.example');
+      expect(auth.apiToken, 'keep-token');
+    },
+  );
+
   test('applyBundle ignores unknown enum names with fallbacks', () async {
     final container = await buildContainer();
     addTearDown(container.dispose);
@@ -246,7 +333,7 @@ void main() {
     final bundle = SettingsBundle(
       schemaVersion: kSettingsBundleSchemaVersion,
       exportedAtIso: '2026-08-04T00:00:00.000Z',
-      device: {
+      device: const {
         'themeMode': 'not-a-mode',
         'paletteType': 'nope',
         'accentType': 'nope',
@@ -255,9 +342,13 @@ void main() {
       },
       people: const SettingsPeopleBundle(),
       viewMode: 'nope',
-      tightRowsColumns: ['nope'],
-      prognosis: {'mode': 'nope', 'horizon': 'nope', 'marginPercent': 'bad'},
-      accountClassifications: {'bad': 'not-a-category'},
+      tightRowsColumns: const ['nope'],
+      prognosis: const {
+        'mode': 'nope',
+        'horizon': 'nope',
+        'marginPercent': 'bad',
+      },
+      accountClassifications: const {'bad': 'not-a-category'},
     );
 
     await container.read(settingsExportImportProvider).applyBundle(bundle);

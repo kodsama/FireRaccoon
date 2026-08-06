@@ -231,4 +231,29 @@ void main() {
     expect(unlock.statusCode, 200);
     expect(restarted.isStoreLocked, isFalse);
   });
+
+  test('DATA_PASSWORD creates store on empty DATA_DIR', () async {
+    final server = await AppServer.open(
+      ServerConfig(
+        mode: FireracoonMode.server,
+        dataDir: tmp.path,
+        dataPassword: 'correct-horse',
+        port: 0,
+        webRoot: tmp.path,
+      ),
+    );
+    expect(server.isStoreLocked, isFalse);
+    expect(SealedStore.exists(tmp.path), isTrue);
+
+    final restarted = await AppServer.open(
+      ServerConfig(
+        mode: FireracoonMode.server,
+        dataDir: tmp.path,
+        dataPassword: 'correct-horse',
+        port: 0,
+        webRoot: tmp.path,
+      ),
+    );
+    expect(restarted.isStoreLocked, isFalse);
+  });
 }

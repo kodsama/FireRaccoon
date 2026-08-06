@@ -3339,7 +3339,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get exportSettingsDescription =>
-      'Save people, preferences, and layout to a JSON file. Passwords, Firefly tokens, and uploaded photos are not included.';
+      'Save people, preferences, layout, and the Firefly URL to a JSON file. The API token and salted password hashes are encrypted with a backup passphrase. Custom profile photos are not included.';
 
   @override
   String get importSettings => 'Import settings';
@@ -3353,7 +3353,33 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get importSettingsConfirmMessage =>
-      'This replaces people, preferences, ownership, and layout on this device. Passwords and the Firefly connection are left unchanged. Custom profile photos are cleared.';
+      'This replaces people, preferences, ownership, layout, and the Firefly connection on this device. Enter the backup passphrase to restore encrypted credentials. Without secrets (or if passwords are missing), password login stays off. Custom profile photos are cleared.';
+
+  @override
+  String get backupPassphraseExportTitle => 'Protect backup';
+
+  @override
+  String get backupPassphraseExportMessage =>
+      'Choose a passphrase to encrypt the Firefly API token and password hashes in this file. You will need the same passphrase to import.';
+
+  @override
+  String get backupPassphraseImportTitle => 'Unlock backup';
+
+  @override
+  String get backupPassphraseImportMessage =>
+      'Enter the passphrase used when this settings file was exported.';
+
+  @override
+  String get backupPassphrase => 'Backup passphrase';
+
+  @override
+  String get backupPassphraseRequired => 'Enter the backup passphrase.';
+
+  @override
+  String get backupPassphraseShow => 'Show passphrase';
+
+  @override
+  String get backupPassphraseHide => 'Hide passphrase';
 
   @override
   String settingsExportedTo(String path) {

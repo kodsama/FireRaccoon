@@ -120,23 +120,41 @@ class AuthNotifier extends Notifier<AuthSettings> {
   }
 
   Future<void> saveSettings(String url, String token, bool insecure) async {
-    // Apply in memory first so the session works even if persistence fails.
-    state = AuthSettings(
+    await applyImportedCredentials(
       serverUrl: url,
       apiToken: token,
       authMode: AuthMode.token,
       allowInsecure: insecure,
+    );
+  }
+
+  /// Restores Firefly connection fields from a settings backup.
+  Future<void> applyImportedCredentials({
+    required String serverUrl,
+    required String apiToken,
+    AuthMode authMode = AuthMode.token,
+    bool allowInsecure = false,
+  }) async {
+    // Apply in memory first so the session works even if persistence fails.
+    state = AuthSettings(
+      serverUrl: serverUrl,
+      apiToken: apiToken,
+      authMode: authMode,
+      allowInsecure: allowInsecure,
       isHydrated: true,
     );
     try {
-      await _storage.write(key: 'serverUrl', value: url);
-      await _storage.write(key: 'apiToken', value: token);
-      await _storage.write(key: 'authMode', value: 'token');
+      await _storage.write(key: 'serverUrl', value: serverUrl);
+      await _storage.write(key: 'apiToken', value: apiToken);
+      await _storage.write(
+        key: 'authMode',
+        value: authMode == AuthMode.oauth2 ? 'oauth2' : 'token',
+      );
       await _storage.write(
         key: 'allowInsecure',
-        value: insecure ? 'true' : 'false',
+        value: allowInsecure ? 'true' : 'false',
       );
-      _log.info('Token auth settings saved and applied');
+      _log.info('Auth settings saved and applied');
     } on Object catch (error, stackTrace) {
       // Secure storage may be unavailable in development (e.g. macOS Keychain
       // entitlement issues). Keep the in-memory credentials for this session

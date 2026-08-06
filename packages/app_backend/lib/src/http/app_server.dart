@@ -42,11 +42,14 @@ class AppServer {
 
   /// Starts unlocked when [config.dataPassword] is set; otherwise locked until
   /// [unlockStore] is called from the UI.
+  ///
+  /// Env [DATA_PASSWORD] is treated as confirmed: empty [DATA_DIR] creates a
+  /// new sealed store on boot (Docker first start).
   static Future<AppServer> open(ServerConfig config) async {
     final server = AppServer(config: config);
     final password = config.dataPassword;
     if (password != null && password.isNotEmpty) {
-      await server.unlockStore(password: password);
+      await server.unlockStore(password: password, confirmPassword: password);
     }
     return server;
   }
