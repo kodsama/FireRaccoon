@@ -2,6 +2,7 @@ import 'package:fireracoon_engine/utils/dashboard_period.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../deployment/deployment_providers.dart';
 import '../fun_modes/fun_mode.dart';
 import '../models/account_prognosis.dart';
 import '../models/settings_bundle.dart';
@@ -9,6 +10,7 @@ import '../models/side_menu_config.dart';
 import '../theme/app_colors.dart';
 import '../theme/theme_palette.dart';
 import 'account_classification_provider.dart';
+import 'auth_provider.dart';
 import 'column_config_provider.dart';
 import 'default_period_provider.dart';
 import 'locale_provider.dart';
@@ -22,7 +24,11 @@ import 'undo_history_provider.dart';
 import 'view_mode_provider.dart';
 import 'write_ahead_provider.dart';
 
-/// Builds and applies portable settings bundles (no passwords, tokens, or assets).
+/// Builds and applies portable settings bundles.
+///
+/// Firefly tokens and salted password hashes are carried in memory and sealed
+/// with a backup passphrase on disk. Omits biometrics and custom avatar bytes.
+/// Server mode skips Firefly (BFF session is not a PAT).
 class SettingsExportImport {
   SettingsExportImport(this._ref);
 
@@ -39,6 +45,18 @@ class SettingsExportImport {
     final viewMode = _ref.read(viewModeProvider);
     final tightColumns = _ref.read(tightRowsColumnsProvider);
     final prognosis = _ref.read(prognosisSettingsProvider);
+    final auth = _ref.read(authProvider);
+    final isServer = _ref.read(deploymentConfigProvider).isServer;
+
+    SettingsFireflyBundle? firefly;
+    if (!isServer && auth.serverUrl.isNotEmpty && auth.apiToken.isNotEmpty) {
+      firefly = SettingsFireflyBundle(
+        serverUrl: auth.serverUrl,
+        apiToken: auth.apiToken,
+        authMode: auth.authMode.name,
+        allowInsecure: auth.allowInsecure,
+      );
+    }
 
     return SettingsBundle(
       schemaVersion: kSettingsBundleSchemaVersion,
@@ -61,6 +79,7 @@ class SettingsExportImport {
         accountOwnerships: peopleState.config.accountOwnerships,
         requirePasswordLogin: peopleState.requirePasswordLogin,
       ),
+      firefly: firefly,
       accountClassifications: {
         for (final e in classifications.entries) e.key: e.value.name,
       },
@@ -89,8 +108,11 @@ class SettingsExportImport {
     );
   }
 
-  /// Overwrites local settings from [bundle]. Does not touch Firefly tokens
-  /// or passwords. Custom avatars become unset; password login is left off.
+  /// Overwrites local settings from [bundle].
+  ///
+  /// Restores Firefly credentials when the file includes them; otherwise
+  /// leaves the destination connection alone. Restores salted password hashes
+  /// and re-enables password login only when every imported person has one.
   Future<void> applyBundle(SettingsBundle bundle) async {
     final device = bundle.device;
 
@@ -161,6 +183,22 @@ class SettingsExportImport {
     final undoLimit = device['undoHistoryLimit'];
     if (undoLimit is int) {
       await _ref.read(undoHistoryProvider.notifier).setLimit(undoLimit);
+    }
+
+    final firefly = bundle.firefly;
+    if (firefly != null &&
+        firefly.isValid &&
+        !_ref.read(deploymentConfigProvider).isServer) {
+      await _ref
+          .read(authProvider.notifier)
+          .applyImportedCredentials(
+            serverUrl: firefly.serverUrl,
+            apiToken: firefly.apiToken,
+            authMode: firefly.authMode == 'oauth2'
+                ? AuthMode.oauth2
+                : AuthMode.token,
+            allowInsecure: firefly.allowInsecure,
+          );
     }
 
     await _ref

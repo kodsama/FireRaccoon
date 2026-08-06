@@ -12,16 +12,31 @@ import '../models/settings_bundle.dart';
 import '../providers/people_providers.dart';
 import '../providers/settings_export_import_provider.dart';
 import '../utils/json_file_store.dart';
+import '../utils/settings_secrets_crypto.dart';
+import 'backup_passphrase_dialog.dart';
 import 'confirmation_dialog.dart';
 
-/// Export / import FireRacoon settings (no passwords, tokens, or assets).
+/// Export / import FireRacoon settings.
+///
+/// Firefly tokens and salted password hashes are sealed with a backup
+/// passphrase (AES-256-GCM). Biometrics and custom avatar bytes are omitted.
 class SettingsBackupSection extends ConsumerWidget {
   const SettingsBackupSection({super.key});
 
   Future<void> _export(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final bundle = ref.read(settingsExportImportProvider).buildBundle();
-    final contents = bundle.encodePretty();
+
+    String? passphrase;
+    if (bundle.needsSecretsPassphrase) {
+      passphrase = await showBackupPassphraseDialog(
+        context: context,
+        confirm: true,
+      );
+      if (passphrase == null || !context.mounted) return;
+    }
+
+    final contents = await bundle.encodeSealed(passphrase);
     final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
     final fileName = 'fireracoon_settings_$timestamp.json';
     final path = await jsonStoreDocumentsPath(fileName);
@@ -64,12 +79,27 @@ class SettingsBackupSection extends ConsumerWidget {
 
     try {
       final raw = await file.readAsString();
-      final bundle = SettingsBundle.decode(raw);
+      if (!context.mounted) return;
+      String? passphrase;
+      if (SettingsBundle.sourceHasSecrets(raw)) {
+        passphrase = await showBackupPassphraseDialog(
+          context: context,
+          confirm: false,
+        );
+        if (passphrase == null || !context.mounted) return;
+      }
+
+      final bundle = await SettingsBundle.decode(raw, passphrase: passphrase);
       await ref.read(settingsExportImportProvider).applyBundle(bundle);
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.settingsImported)));
+    } on SettingsSecretsUnlockException catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error.message)));
     } on Object catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

@@ -6097,7 +6097,7 @@ abstract class AppLocalizations {
   /// No description provided for @exportSettingsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Save people, preferences, and layout to a JSON file. Passwords, Firefly tokens, and uploaded photos are not included.'**
+  /// **'Save people, preferences, layout, and the Firefly URL to a JSON file. The API token and salted password hashes are encrypted with a backup passphrase. Custom profile photos are not included.'**
   String get exportSettingsDescription;
 
   /// No description provided for @importSettings.
@@ -6121,8 +6121,56 @@ abstract class AppLocalizations {
   /// No description provided for @importSettingsConfirmMessage.
   ///
   /// In en, this message translates to:
-  /// **'This replaces people, preferences, ownership, and layout on this device. Passwords and the Firefly connection are left unchanged. Custom profile photos are cleared.'**
+  /// **'This replaces people, preferences, ownership, layout, and the Firefly connection on this device. Enter the backup passphrase to restore encrypted credentials. Without secrets (or if passwords are missing), password login stays off. Custom profile photos are cleared.'**
   String get importSettingsConfirmMessage;
+
+  /// No description provided for @backupPassphraseExportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Protect backup'**
+  String get backupPassphraseExportTitle;
+
+  /// No description provided for @backupPassphraseExportMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a passphrase to encrypt the Firefly API token and password hashes in this file. You will need the same passphrase to import.'**
+  String get backupPassphraseExportMessage;
+
+  /// No description provided for @backupPassphraseImportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlock backup'**
+  String get backupPassphraseImportTitle;
+
+  /// No description provided for @backupPassphraseImportMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the passphrase used when this settings file was exported.'**
+  String get backupPassphraseImportMessage;
+
+  /// No description provided for @backupPassphrase.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup passphrase'**
+  String get backupPassphrase;
+
+  /// No description provided for @backupPassphraseRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the backup passphrase.'**
+  String get backupPassphraseRequired;
+
+  /// No description provided for @backupPassphraseShow.
+  ///
+  /// In en, this message translates to:
+  /// **'Show passphrase'**
+  String get backupPassphraseShow;
+
+  /// No description provided for @backupPassphraseHide.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide passphrase'**
+  String get backupPassphraseHide;
 
   /// No description provided for @settingsExportedTo.
   ///

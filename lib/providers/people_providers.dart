@@ -14,6 +14,7 @@ import '../deployment/deployment_providers.dart';
 import '../models/app_user_models.dart';
 import '../models/people_migration.dart';
 import '../models/people_models.dart';
+import '../models/settings_bundle.dart';
 import '../services/biometric_auth.dart';
 import '../utils/avatar_file_store.dart';
 import '../utils/password_policy.dart';
@@ -937,7 +938,8 @@ class PeopleNotifier extends Notifier<PeopleState> {
   }
 
   /// Replaces people, ownership, and password-login policy from a settings
-  /// import. Passwords and custom avatar files are never imported.
+  /// import. Restores salted password hashes when present; custom avatars and
+  /// biometrics are cleared (device-bound / not in the file).
   Future<void> importSettings({
     required List<Person> people,
     required Map<String, AccountOwnership> accountOwnerships,
@@ -948,8 +950,12 @@ class PeopleNotifier extends Notifier<PeopleState> {
         final kind = person.avatarKind == AvatarKind.custom
             ? AvatarKind.none
             : person.avatarKind;
+        final portable = isPortablePasswordMaterial(
+          passwordHash: person.passwordHash,
+          salt: person.salt,
+        );
         return person.copyWith(
-          clearPassword: true,
+          clearPassword: !portable,
           biometricsEnabled: false,
           avatarKind: kind,
           clearAvatarValue: kind != AvatarKind.preset,
@@ -958,12 +964,14 @@ class PeopleNotifier extends Notifier<PeopleState> {
       }).toList(),
     );
 
-    // Password hashes are never in the file; keep login-with-password off
-    // until passwords are set on this device.
-    if (requirePasswordLogin) {
+    final canRequire =
+        requirePasswordLogin &&
+        sanitized.isNotEmpty &&
+        sanitized.every((p) => p.hasPassword);
+    if (requirePasswordLogin && !canRequire) {
       _log.info(
         'Imported settings had login-with-password on; leaving it off '
-        'because passwords are not transferred.',
+        'because not every person has a portable password hash.',
       );
     }
 
@@ -976,7 +984,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
         people: sanitized,
         accountOwnerships: accountOwnerships,
       ),
-      requirePasswordLogin: false,
+      requirePasswordLogin: canRequire,
       clearLoggedInPersonId: !stillExists,
       isHydrated: true,
     );
