@@ -33,6 +33,13 @@ Enable the local pre-commit hook (mirrors CI):
 bash tool/setup-hooks.sh
 ```
 
+## Branching and releases
+
+- Day-to-day work lands on `dev`.
+- Merge `dev` → `main` with a pull request (do not push straight to `main`).
+- Version tags and GitHub Releases come only from commits already on `main`.
+  See [Deployment](docs/deployment.md#github-releases-01-100-).
+
 ## Pull request checklist
 
 - [ ] `dart format` applied to changed Dart paths
