@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
+import 'package:fireracoon_app_backend/src/crypto/passwords.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
@@ -118,6 +119,128 @@ void main() {
     final enc = await File('${tmp.path}/state.enc').readAsString();
     expect(enc.contains('ff-token-secret'), isFalse);
     expect(enc.contains('Password1!'), isFalse);
+  });
+
+  test('replacePeopleConfig rejects stripping the last password', () async {
+    final sealed = await SealedStore.open(
+      dataDirPath: tmp.path,
+      password: 'correct-horse-battery',
+    );
+    final repo = StateRepository(sealed);
+    await repo.load();
+    await repo.setup(
+      adminName: 'Alex',
+      adminPassword: 'Password1!',
+      fireflyUrl: 'https://firefly.example',
+      fireflyToken: 'ff-token-secret',
+    );
+    final login = await repo.login(name: 'Alex', password: 'Password1!');
+    final adminId = login.person['id'] as String;
+
+    expect(
+      () => repo.replacePeopleConfig(
+        people: [
+          {
+            'id': 'person_unknown',
+            'name': 'Stranger',
+            'role': 'admin',
+            'createdAt': DateTime.now().toUtc().toIso8601String(),
+            'preferences': <String, dynamic>{},
+          },
+        ],
+        accountOwnerships: const [],
+        requirePasswordLogin: true,
+      ),
+      throwsA(
+        isA<ArgumentError>().having(
+          (e) => e.message,
+          'message',
+          contains('last remaining password'),
+        ),
+      ),
+    );
+
+    // Known id without passwordUpdates must keep the existing hash.
+    await repo.replacePeopleConfig(
+      people: [
+        {
+          'id': adminId,
+          'name': 'Alex',
+          'role': 'admin',
+          'createdAt': DateTime.now().toUtc().toIso8601String(),
+          'preferences': <String, dynamic>{},
+        },
+      ],
+      accountOwnerships: const [],
+      requirePasswordLogin: false,
+    );
+    final stillWorks = await repo.login(name: 'Alex', password: 'Password1!');
+    expect(stillWorks.person['id'], adminId);
+    expect(repo.state.requirePasswordLogin, isFalse);
+  });
+
+  test('backupSecretsForAdmin exposes PAT and salted hashes', () async {
+    final sealed = await SealedStore.open(
+      dataDirPath: tmp.path,
+      password: 'correct-horse-battery',
+    );
+    final repo = StateRepository(sealed);
+    await repo.load();
+    await repo.setup(
+      adminName: 'Alex',
+      adminPassword: 'Password1!',
+      fireflyUrl: 'https://firefly.example',
+      fireflyToken: 'ff-token-secret',
+    );
+    final login = await repo.login(name: 'Alex', password: 'Password1!');
+    final secrets = repo.backupSecretsForAdmin();
+    expect(
+      (secrets['firefly'] as Map<String, dynamic>)['token'],
+      'ff-token-secret',
+    );
+    expect(
+      (secrets['firefly'] as Map<String, dynamic>)['url'],
+      'https://firefly.example',
+    );
+    final peopleAuth = secrets['peopleAuth'] as Map<String, dynamic>;
+    final adminAuth = peopleAuth[login.person['id']] as Map<String, dynamic>;
+    expect(adminAuth['passwordHash'], isNotEmpty);
+    expect(adminAuth['salt'], isNotEmpty);
+    expect(adminAuth['passwordHash'], isNot(equals('server')));
+  });
+
+  test('replacePeopleConfig accepts portable authImports', () async {
+    final sealed = await SealedStore.open(
+      dataDirPath: tmp.path,
+      password: 'correct-horse-battery',
+    );
+    final repo = StateRepository(sealed);
+    await repo.load();
+    await repo.setup(
+      adminName: 'Alex',
+      adminPassword: 'Password1!',
+      fireflyUrl: 'https://firefly.example',
+      fireflyToken: 'ff-token-secret',
+    );
+    final hashed = await hashPassword('Imported9!!');
+    await repo.replacePeopleConfig(
+      people: [
+        {
+          'id': 'person_imported',
+          'name': 'Imported',
+          'role': 'admin',
+          'createdAt': DateTime.now().toUtc().toIso8601String(),
+          'preferences': <String, dynamic>{},
+        },
+      ],
+      accountOwnerships: const [],
+      requirePasswordLogin: true,
+      authImports: {
+        'person_imported': {'passwordHash': hashed.hash, 'salt': hashed.salt},
+      },
+    );
+    final login = await repo.login(name: 'Imported', password: 'Imported9!!');
+    expect(login.person['role'], 'admin');
   });
 
   test('ServerConfig allows missing password (UI unlock)', () {
@@ -255,5 +378,52 @@ void main() {
       ),
     );
     expect(restarted.isStoreLocked, isFalse);
+  });
+
+  test('backup-secrets is admin-only and returns PAT', () async {
+    final sealed = await SealedStore.open(
+      dataDirPath: tmp.path,
+      password: 'correct-horse-battery',
+    );
+    final repo = StateRepository(sealed);
+    await repo.load();
+    await repo.setup(
+      adminName: 'Alex',
+      adminPassword: 'Password1!',
+      fireflyUrl: 'https://firefly.example',
+      fireflyToken: 'ff-token-secret',
+    );
+    final login = await repo.login(name: 'Alex', password: 'Password1!');
+
+    final server = await AppServer.open(
+      ServerConfig(
+        mode: FireracoonMode.server,
+        dataDir: tmp.path,
+        dataPassword: 'correct-horse-battery',
+        port: 0,
+        webRoot: tmp.path,
+      ),
+    );
+
+    final forbidden = await server.handler(
+      Request('GET', Uri.parse('http://localhost/api/state/backup-secrets')),
+    );
+    expect(forbidden.statusCode, 403);
+
+    final ok = await server.handler(
+      Request(
+        'GET',
+        Uri.parse('http://localhost/api/state/backup-secrets'),
+        headers: {'x-fireracoon-session': login.token},
+      ),
+    );
+    expect(ok.statusCode, 200);
+    final body = jsonDecode(await ok.readAsString()) as Map<String, dynamic>;
+    expect(body['ok'], isTrue);
+    expect(
+      (body['firefly'] as Map<String, dynamic>)['token'],
+      'ff-token-secret',
+    );
+    expect(body['peopleAuth'], isA<Map<String, dynamic>>());
   });
 }

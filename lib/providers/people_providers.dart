@@ -250,8 +250,12 @@ class PeopleNotifier extends Notifier<PeopleState> {
         (legacyUsers != null && legacyUsers.users.isNotEmpty)) {
       config = config.copyWith(people: migration.people);
       auth = migration.auth;
-      await _persistConfig(config);
-      await _persistAuth(auth);
+      // Server mode: sealed store is source of truth — never push local
+      // hydrate repairs (default requirePasswordLogin: false would lock out).
+      if (!_isServerMode) {
+        await _persistConfig(config);
+        await _persistAuth(auth);
+      }
       try {
         await _storage.delete(key: _kLegacyAppUsersStorageKey);
         await _storage.delete(key: _kLegacyAppUsersSessionKey);
@@ -262,8 +266,10 @@ class PeopleNotifier extends Notifier<PeopleState> {
       final people = migration.people;
       config = config.copyWith(people: people);
       auth = migration.auth;
-      await _persistConfig(config);
-      await _persistAuth(auth);
+      if (!_isServerMode) {
+        await _persistConfig(config);
+        await _persistAuth(auth);
+      }
     }
 
     // Recover from a prior bug that allowed deleting the last admin.
@@ -275,8 +281,10 @@ class PeopleNotifier extends Notifier<PeopleState> {
         },
         requirePasswordLogin: auth.requirePasswordLogin,
       );
-      await _persistConfig(config);
-      await _persistAuth(auth);
+      if (!_isServerMode) {
+        await _persistConfig(config);
+        await _persistAuth(auth);
+      }
     }
 
     final requirePasswordLogin = auth.requirePasswordLogin;
@@ -459,6 +467,20 @@ class PeopleNotifier extends Notifier<PeopleState> {
     final client = ref.read(serverSessionProvider.notifier).client;
     if (client == null || client.sessionToken == null) return;
     final passwordUpdates = Map<String, String>.from(_pendingServerPasswords);
+    final authImports = <String, Map<String, String>>{};
+    for (final person in config.people) {
+      if (passwordUpdates.containsKey(person.id)) continue;
+      if (!isPortablePasswordMaterial(
+        passwordHash: person.passwordHash,
+        salt: person.salt,
+      )) {
+        continue;
+      }
+      authImports[person.id] = {
+        'passwordHash': person.passwordHash!,
+        'salt': person.salt!,
+      };
+    }
     try {
       final snap = await client.putPeople(
         people: config.people
@@ -477,6 +499,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
         ),
         requirePasswordLogin: state.requirePasswordLogin,
         passwordUpdates: passwordUpdates,
+        authImports: authImports,
       );
       if (!ref.mounted) return;
       for (final id in passwordUpdates.keys) {

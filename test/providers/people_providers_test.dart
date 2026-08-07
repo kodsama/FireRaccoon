@@ -690,8 +690,9 @@ void main() {
     Future<ProviderContainer> buildServerContainer({
       required http.Client httpClient,
       String? sessionToken = 'sess',
+      SharedPreferences? prefs,
     }) async {
-      final prefs = await freshPrefs();
+      final resolvedPrefs = prefs ?? await freshPrefs();
       if (sessionToken != null) {
         FlutterSecureStoragePlatform.instance =
             TestFlutterSecureStoragePlatform({
@@ -705,7 +706,7 @@ void main() {
       );
       final container = ProviderContainer(
         overrides: [
-          sharedPreferencesProvider.overrideWithValue(prefs),
+          sharedPreferencesProvider.overrideWithValue(resolvedPrefs),
           deploymentConfigProvider.overrideWithValue(
             const DeploymentConfig(
               mode: FireracoonMode.server,
@@ -768,6 +769,55 @@ void main() {
         1,
       );
       expect(state.loggedInPersonId, 'admin_1');
+    });
+
+    test('hydrate does not push local people repairs to the server', () async {
+      // Ownership-only prefs + empty auth used to seed defaults and PUT
+      // requirePasswordLogin: false from the still-empty PeopleState.
+      // No session: isolate hydrate from preference-sync PUT loops.
+      final encoded = AccountOwnershipConfig(
+        people: [
+          Person(
+            id: 'stale_local_id',
+            name: 'Alex',
+            colorValue: 0xFF3B82F6,
+            role: PersonRole.user,
+            createdAtIso: '2026-01-01T00:00:00.000Z',
+          ),
+        ],
+      ).encode();
+      SharedPreferences.setMockInitialValues({
+        kPeopleConfigPreferenceKey: encoded,
+      });
+      final prefs = await SharedPreferences.getInstance();
+
+      var putPeopleCalls = 0;
+      final container = await buildServerContainer(
+        prefs: prefs,
+        sessionToken: null,
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state/people')) {
+            putPeopleCalls++;
+            return http.Response(jsonEncode(serverPeopleState()), 200);
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+      await waitHydrated(container);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(putPeopleCalls, 0, reason: 'hydrate must not PUT people');
+      expect(container.read(peopleProvider).people.single.id, 'stale_local_id');
     });
 
     test('syncFromServerStore accepts map ownerships and typed maps', () async {

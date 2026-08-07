@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../deployment/deployment_providers.dart';
 import '../fun_modes/fun_mode.dart';
 import '../models/account_prognosis.dart';
+import '../models/people_models.dart';
 import '../models/settings_bundle.dart';
 import '../models/side_menu_config.dart';
 import '../theme/app_colors.dart';
@@ -16,6 +17,7 @@ import 'default_period_provider.dart';
 import 'locale_provider.dart';
 import 'people_providers.dart';
 import 'prognosis_settings_provider.dart';
+import 'server_session_provider.dart';
 import 'side_menu_config_provider.dart';
 import 'theme_provider.dart';
 import 'tight_rows_columns_provider.dart';
@@ -28,13 +30,14 @@ import 'write_ahead_provider.dart';
 ///
 /// Firefly tokens and salted password hashes are carried in memory and sealed
 /// with a backup passphrase on disk. Omits biometrics and custom avatar bytes.
-/// Server mode skips Firefly (BFF session is not a PAT).
+/// Local and server mode export the same secrets shape; server mode loads PAT
+/// and hashes from an admin-only backup endpoint.
 class SettingsExportImport {
   SettingsExportImport(this._ref);
 
   final Ref _ref;
 
-  SettingsBundle buildBundle() {
+  Future<SettingsBundle> buildBundle() async {
     final theme = _ref.read(themeProvider);
     final locale = _ref.read(localeProvider);
     final peopleState = _ref.read(peopleProvider);
@@ -47,9 +50,36 @@ class SettingsExportImport {
     final prognosis = _ref.read(prognosisSettingsProvider);
     final auth = _ref.read(authProvider);
     final isServer = _ref.read(deploymentConfigProvider).isServer;
+    final defaultPeriod = _ref.read(defaultDashboardPeriodProvider).name;
+    final transactionPageSize = _ref.read(transactionPageSizeProvider);
+    final writeAheadDays = _ref.read(writeAheadDaysProvider);
+    final undoHistoryLimit = _ref.read(undoHistoryProvider).limit;
 
     SettingsFireflyBundle? firefly;
-    if (!isServer && auth.serverUrl.isNotEmpty && auth.apiToken.isNotEmpty) {
+    var people = peopleState.people;
+    var requirePasswordLogin = peopleState.requirePasswordLogin;
+
+    if (isServer) {
+      final secrets = await _loadServerBackupSecrets();
+      if (secrets != null) {
+        final fireflyRaw = secrets['firefly'];
+        if (fireflyRaw is Map) {
+          final map = fireflyRaw.map((k, v) => MapEntry(k.toString(), v));
+          final url = map['url'] as String? ?? '';
+          final token = map['token'] as String? ?? '';
+          if (url.isNotEmpty && token.isNotEmpty) {
+            firefly = SettingsFireflyBundle(
+              serverUrl: url,
+              apiToken: token,
+              allowInsecure: map['allowInsecure'] == true,
+            );
+          }
+        }
+        requirePasswordLogin =
+            secrets['requirePasswordLogin'] as bool? ?? requirePasswordLogin;
+        people = _peopleWithImportedAuth(people, secrets['peopleAuth']);
+      }
+    } else if (auth.serverUrl.isNotEmpty && auth.apiToken.isNotEmpty) {
       firefly = SettingsFireflyBundle(
         serverUrl: auth.serverUrl,
         apiToken: auth.apiToken,
@@ -67,17 +97,15 @@ class SettingsExportImport {
         'accentType': theme.accentType.name,
         'funMode': theme.funMode.name,
         'locale': locale.languageCode,
-        'defaultDashboardPeriod': _ref
-            .read(defaultDashboardPeriodProvider)
-            .name,
-        'transactionPageSize': _ref.read(transactionPageSizeProvider),
-        'recurrenceWriteAheadDays': _ref.read(writeAheadDaysProvider),
-        'undoHistoryLimit': _ref.read(undoHistoryProvider).limit,
+        'defaultDashboardPeriod': defaultPeriod,
+        'transactionPageSize': transactionPageSize,
+        'recurrenceWriteAheadDays': writeAheadDays,
+        'undoHistoryLimit': undoHistoryLimit,
       },
       people: exportPeopleBundle(
-        people: peopleState.people,
+        people: people,
         accountOwnerships: peopleState.config.accountOwnerships,
-        requirePasswordLogin: peopleState.requirePasswordLogin,
+        requirePasswordLogin: requirePasswordLogin,
       ),
       firefly: firefly,
       accountClassifications: {
@@ -106,6 +134,38 @@ class SettingsExportImport {
         },
       },
     );
+  }
+
+  Future<Map<String, dynamic>?> _loadServerBackupSecrets() async {
+    final client = _ref.read(serverSessionProvider.notifier).client;
+    if (client == null || client.sessionToken == null) return null;
+    try {
+      return await client.fetchBackupSecrets();
+    } on Object {
+      return null;
+    }
+  }
+
+  List<Person> _peopleWithImportedAuth(
+    List<Person> people,
+    Object? peopleAuthRaw,
+  ) {
+    if (peopleAuthRaw is! Map) {
+      return [
+        for (final person in people) person.copyWith(clearPassword: true),
+      ];
+    }
+    return people.map((person) {
+      final raw = peopleAuthRaw[person.id];
+      if (raw is! Map) return person.copyWith(clearPassword: true);
+      final auth = raw.map((k, v) => MapEntry(k.toString(), v));
+      final hash = auth['passwordHash'] as String?;
+      final salt = auth['salt'] as String? ?? auth['passwordSalt'] as String?;
+      if (!isPortablePasswordMaterial(passwordHash: hash, salt: salt)) {
+        return person.copyWith(clearPassword: true);
+      }
+      return person.copyWith(passwordHash: hash, salt: salt);
+    }).toList();
   }
 
   /// Overwrites local settings from [bundle].
@@ -186,19 +246,28 @@ class SettingsExportImport {
     }
 
     final firefly = bundle.firefly;
-    if (firefly != null &&
-        firefly.isValid &&
-        !_ref.read(deploymentConfigProvider).isServer) {
-      await _ref
-          .read(authProvider.notifier)
-          .applyImportedCredentials(
-            serverUrl: firefly.serverUrl,
-            apiToken: firefly.apiToken,
-            authMode: firefly.authMode == 'oauth2'
-                ? AuthMode.oauth2
-                : AuthMode.token,
+    if (firefly != null && firefly.isValid) {
+      if (_ref.read(deploymentConfigProvider).isServer) {
+        final client = _ref.read(serverSessionProvider.notifier).client;
+        if (client != null && client.sessionToken != null) {
+          await client.putFirefly(
+            url: firefly.serverUrl,
+            token: firefly.apiToken,
             allowInsecure: firefly.allowInsecure,
           );
+        }
+      } else {
+        await _ref
+            .read(authProvider.notifier)
+            .applyImportedCredentials(
+              serverUrl: firefly.serverUrl,
+              apiToken: firefly.apiToken,
+              authMode: firefly.authMode == 'oauth2'
+                  ? AuthMode.oauth2
+                  : AuthMode.token,
+              allowInsecure: firefly.allowInsecure,
+            );
+      }
     }
 
     await _ref

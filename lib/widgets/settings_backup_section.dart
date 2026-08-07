@@ -25,7 +25,8 @@ class SettingsBackupSection extends ConsumerWidget {
 
   Future<void> _export(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
-    final bundle = ref.read(settingsExportImportProvider).buildBundle();
+    final bundle = await ref.read(settingsExportImportProvider).buildBundle();
+    if (!context.mounted) return;
 
     String? passphrase;
     if (bundle.needsSecretsPassphrase) {
