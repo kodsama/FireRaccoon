@@ -97,15 +97,45 @@ class StateRepository {
     return person;
   }
 
+  /// Admin-only backup payload: Firefly PAT + salted password hashes.
+  ///
+  /// Used by settings export so server mode can seal the same secrets blob as
+  /// local mode. Never include this in the public `/api/state` snapshot.
+  Map<String, dynamic> backupSecretsForAdmin() {
+    final peopleAuth = <String, Map<String, String>>{};
+    for (final entry in _state.authByPersonId.entries) {
+      final raw = entry.value;
+      if (raw is! Map) continue;
+      final auth = raw.map((k, v) => MapEntry(k.toString(), v));
+      final hash = auth['passwordHash'] as String?;
+      final salt = auth['passwordSalt'] as String?;
+      if (hash == null || hash.isEmpty || salt == null || salt.isEmpty) {
+        continue;
+      }
+      peopleAuth[entry.key] = {'passwordHash': hash, 'salt': salt};
+    }
+    return {
+      'firefly': {
+        'url': _state.firefly.url,
+        'token': _state.firefly.token,
+        'allowInsecure': _state.firefly.allowInsecure,
+      },
+      'requirePasswordLogin': _state.requirePasswordLogin,
+      'peopleAuth': peopleAuth,
+    };
+  }
+
   /// Replaces people profiles, ownerships, and optional password updates.
   ///
   /// Existing password hashes are kept unless [passwordUpdates] supplies a
-  /// new plaintext password for that person id.
+  /// new plaintext password for that person id, or [authImports] supplies a
+  /// portable hash/salt pair (settings import from local or another server).
   Future<void> replacePeopleConfig({
     required List<Map<String, dynamic>> people,
     required List<Map<String, dynamic>> accountOwnerships,
     required bool requirePasswordLogin,
     Map<String, String> passwordUpdates = const {},
+    Map<String, Map<String, String>> authImports = const {},
   }) async {
     if (people.isEmpty) {
       throw ArgumentError('At least one person is required');
@@ -136,6 +166,25 @@ class StateRepository {
         final hashed = await hashPassword(plaintext);
         passwordHash = hashed.hash;
         passwordSalt = hashed.salt;
+      } else {
+        final imported = authImports[id];
+        if (imported != null) {
+          final hash = imported['passwordHash']?.trim() ?? '';
+          final salt =
+              (imported['salt'] ?? imported['passwordSalt'])?.trim() ?? '';
+          if (hash.isEmpty || salt.isEmpty) {
+            throw ArgumentError(
+              'authImports for $id needs passwordHash and salt',
+            );
+          }
+          if (hash == 'server' || salt == 'server') {
+            throw ArgumentError(
+              'authImports cannot use server password placeholders',
+            );
+          }
+          passwordHash = hash;
+          passwordSalt = salt;
+        }
       }
 
       nextPeople.add({
@@ -172,6 +221,25 @@ class StateRepository {
       throw ArgumentError('At least one admin is required');
     }
 
+    final previousHadPassword = previousAuth.values.any((value) {
+      if (value is! Map) return false;
+      return _authEntryHasPassword(
+        value.map((k, v) => MapEntry(k.toString(), v)),
+      );
+    });
+    final nextHasPassword = nextAuth.values.any((value) {
+      if (value is! Map) return false;
+      return _authEntryHasPassword(
+        value.map((k, v) => MapEntry(k.toString(), v)),
+      );
+    });
+    if (previousHadPassword && !nextHasPassword) {
+      throw ArgumentError('Cannot remove the last remaining password');
+    }
+    if (requirePasswordLogin && !nextHasPassword) {
+      throw ArgumentError('Password login requires at least one password');
+    }
+
     _state.people = nextPeople;
     _state.peopleAuth = {
       'byPersonId': nextAuth,
@@ -179,6 +247,15 @@ class StateRepository {
     };
     _state.accountOwnerships = accountOwnerships;
     await save();
+  }
+
+  static bool _authEntryHasPassword(Map<String, dynamic> auth) {
+    final hash = auth['passwordHash'];
+    final salt = auth['passwordSalt'];
+    return hash is String &&
+        hash.isNotEmpty &&
+        salt is String &&
+        salt.isNotEmpty;
   }
 
   Future<({String token, Map<String, dynamic> person})> login({

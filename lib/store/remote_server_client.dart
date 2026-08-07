@@ -100,6 +100,15 @@ class RemoteServerClient {
     return _decode(response);
   }
 
+  /// Admin-only Firefly PAT + salted password hashes for settings backup.
+  Future<Map<String, dynamic>> fetchBackupSecrets() async {
+    final response = await _http.get(
+      _uri('/api/state/backup-secrets'),
+      headers: _headers(),
+    );
+    return _decode(response);
+  }
+
   Future<void> putUndo(Map<String, dynamic> undo) async {
     final response = await _http.put(
       _uri('/api/state/undo'),
@@ -131,6 +140,7 @@ class RemoteServerClient {
     required Object accountOwnerships,
     required bool requirePasswordLogin,
     Map<String, String> passwordUpdates = const {},
+    Map<String, Map<String, String>> authImports = const {},
   }) async {
     final response = await _http.put(
       _uri('/api/state/people'),
@@ -140,6 +150,7 @@ class RemoteServerClient {
         'accountOwnerships': accountOwnerships,
         'requirePasswordLogin': requirePasswordLogin,
         if (passwordUpdates.isNotEmpty) 'passwordUpdates': passwordUpdates,
+        if (authImports.isNotEmpty) 'authImports': authImports,
       }),
     );
     return _decode(response);

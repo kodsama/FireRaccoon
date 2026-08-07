@@ -95,6 +95,7 @@ class AppServer {
       ..post('/api/logout', _logout)
       ..get('/api/me', _me)
       ..get('/api/state', _state)
+      ..get('/api/state/backup-secrets', _backupSecrets)
       ..put('/api/state/device-prefs', _putDevicePrefs)
       ..put('/api/state/classifications', _putClassifications)
       ..put('/api/state/side-menu', _putSideMenu)
@@ -343,6 +344,17 @@ class AppServer {
     });
   }
 
+  /// Admin-only: Firefly PAT + salted password hashes for settings backup.
+  Future<Response> _backupSecrets(Request request) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    final session = _session(request);
+    if (!repository.isAdmin(session)) {
+      return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
+    }
+    return _json({'ok': true, ...repository.backupSecretsForAdmin()});
+  }
+
   Future<Response> _requireAdminPut(
     Request request,
     Future<void> Function(Map<String, dynamic> body) apply,
@@ -514,12 +526,30 @@ class AppServer {
       }
     }
 
+    final authImports = <String, Map<String, String>>{};
+    final rawAuthImports = body['authImports'];
+    if (rawAuthImports is Map) {
+      for (final entry in rawAuthImports.entries) {
+        final value = entry.value;
+        if (value is! Map) continue;
+        final map = value.map((k, v) => MapEntry(k.toString(), v.toString()));
+        final hash = map['passwordHash'] ?? '';
+        final salt = map['salt'] ?? map['passwordSalt'] ?? '';
+        if (hash.isEmpty || salt.isEmpty) continue;
+        authImports[entry.key.toString()] = {
+          'passwordHash': hash,
+          'salt': salt,
+        };
+      }
+    }
+
     try {
       await repository.replacePeopleConfig(
         people: people,
         accountOwnerships: ownerships,
         requirePasswordLogin: body['requirePasswordLogin'] as bool? ?? true,
         passwordUpdates: passwordUpdates,
+        authImports: authImports,
       );
     } on ArgumentError catch (error) {
       return _json({'ok': false, 'error': '${error.message}'}, status: 400);
