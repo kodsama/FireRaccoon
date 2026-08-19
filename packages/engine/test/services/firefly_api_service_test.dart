@@ -1424,10 +1424,12 @@ void main() {
         expect(request.method, 'POST');
         expect(request.url.path, '/api/v1/accounts');
         final body = jsonDecode(request.body) as Map<String, dynamic>;
+        // Firefly rejects an asset account without a role, so one is defaulted.
         expect(body, {
           'name': 'Savings',
           'type': 'asset',
           'currency_code': 'EUR',
+          'account_role': 'defaultAsset',
         });
         return jsonHttpResponse({
           'data': {
@@ -1455,6 +1457,71 @@ void main() {
       );
       expect(account.id, '11');
       expect(account.name, 'Savings');
+    });
+
+    test('createAccount sends no role for a non-asset type', () async {
+      Map<String, dynamic>? sent;
+      final client = MockClient((request) async {
+        sent = jsonDecode(request.body) as Map<String, dynamic>;
+        return jsonHttpResponse({
+          'data': {
+            'id': '12',
+            'attributes': {
+              'name': 'Rent',
+              'type': 'expense',
+              'current_balance': '0.00',
+              'currency_symbol': '\u20ac',
+              'currency_code': 'EUR',
+            },
+          },
+        });
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await service.createAccount(
+        name: 'Rent',
+        type: 'expense',
+        currencyCode: 'EUR',
+      );
+
+      expect(sent!.containsKey('account_role'), isFalse);
+    });
+
+    test('createAccount honours an explicit role', () async {
+      Map<String, dynamic>? sent;
+      final client = MockClient((request) async {
+        sent = jsonDecode(request.body) as Map<String, dynamic>;
+        return jsonHttpResponse({
+          'data': {
+            'id': '13',
+            'attributes': {
+              'name': 'Card',
+              'type': 'asset',
+              'current_balance': '0.00',
+              'currency_symbol': '\u20ac',
+              'currency_code': 'EUR',
+            },
+          },
+        });
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await service.createAccount(
+        name: 'Card',
+        type: 'asset',
+        currencyCode: 'EUR',
+        role: 'ccAsset',
+      );
+
+      expect(sent!['account_role'], 'ccAsset');
     });
 
     test('createAccount throws on failure status', () async {

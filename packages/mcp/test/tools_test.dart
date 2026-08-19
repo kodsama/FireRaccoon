@@ -7,67 +7,316 @@ import 'package:test/test.dart';
 
 import 'helpers/firefly_mock.dart';
 
-const _creds = {'firefly_url': fireflyBaseUrl, 'firefly_token': fireflyToken};
+const _target = FireflyTarget(baseUrl: fireflyBaseUrl, bearer: fireflyToken);
 
-List<McpTool> _tools({MockClient? client}) => buildTools(
-  defaultUrl: fireflyBaseUrl,
-  defaultToken: fireflyToken,
-  httpClient: client,
-);
+List<McpTool> _tools({MockClient? client}) =>
+    buildTools(target: _target, httpClient: client);
 
 McpTool _tool(String name, {MockClient? client}) =>
     _tools(client: client).firstWhere((tool) => tool.name == name);
 
 void main() {
-  group('credentials', () {
-    test('run_projection requires credentials when defaults missing', () async {
-      final tool = buildTools().firstWhere((t) => t.name == 'run_projection');
-      expect(() => tool.run({}), throwsA(isA<StateError>()));
-    });
+  group('connection target', () {
+    test(
+      'an unconfigured target fails the tool rather than guessing',
+      () async {
+        final tool = buildTools(
+          target: const FireflyTarget.unconfigured(),
+        ).firstWhere((t) => t.name == 'run_projection');
 
-    test('per-call credentials override defaults', () async {
-      final client = fireflyMockClient();
-      final tool = _tool('get_current_user', client: client);
+        expect(() => tool.run({}), throwsA(isA<StateError>()));
+      },
+    );
+
+    test('arguments cannot redirect a tool at another Firefly', () async {
+      final calls = <Uri>[];
+      final tool = _tool(
+        'get_current_user',
+        client: fireflyMockClient(record: calls),
+      );
+
+      // The old per-call credential keys are inert: the target fixed at server
+      // start is the only thing that decides where a call lands.
       final result = await tool.run({
-        'firefly_url': 'https://override.test',
-        'firefly_token': 'override-token',
+        'firefly_url': 'https://attacker.test',
+        'firefly_token': 'stolen-token',
       });
+
       expect(result['ok'], isTrue);
+      expect(calls, isNotEmpty);
+      for (final uri in calls) {
+        expect(uri.host, Uri.parse(fireflyBaseUrl).host);
+      }
     });
 
-    test('defaultUrl and defaultToken satisfy service()', () async {
-      final client = fireflyMockClient();
-      final tool = _tool('get_accounts', client: client);
+    test('no tool schema advertises a credential argument', () {
+      for (final tool in _tools()) {
+        final properties = (tool.inputSchema['properties'] as Map?) ?? const {};
+        expect(
+          properties.keys.map((key) => '$key'),
+          isNot(anyOf(contains('firefly_url'), contains('firefly_token'))),
+          reason: '${tool.name} must not take credentials',
+        );
+      }
+    });
+
+    test('the injected target serves reads', () async {
+      final tool = _tool('get_accounts', client: fireflyMockClient());
+
       final result = await tool.run({});
+
       expect(result['ok'], isTrue);
       expect(result['count'], 2);
     });
   });
 
-  group('get_capabilities', () {
-    test('does not need credentials', () async {
-      final tool = buildTools().firstWhere((t) => t.name == 'get_capabilities');
+  group('get_accounts types', () {
+    test('defaults to the accounts you own', () async {
+      final calls = <Uri>[];
+      final tool = _tool(
+        'get_accounts',
+        client: fireflyMockClient(record: calls),
+      );
+
       final result = await tool.run({});
+
+      expect(result['ok'], isTrue);
+      expect(result['types'], ['asset', 'liability']);
+      final requested = calls
+          .map((u) => u.queryParameters['type'])
+          .whereType<String>()
+          .toSet();
+      expect(requested, {'asset', 'liability'});
+    });
+
+    test(
+      'expense and revenue reach Firefly, so payees can be listed',
+      () async {
+        final calls = <Uri>[];
+        final tool = _tool(
+          'get_accounts',
+          client: fireflyMockClient(record: calls),
+        );
+
+        // A payee in Firefly is an expense or revenue account. Without this the
+        // import flow cannot check whether a payee already exists.
+        final result = await tool.run({
+          'types': ['expense', 'revenue'],
+        });
+
+        expect(result['ok'], isTrue);
+        expect(result['types'], ['expense', 'revenue']);
+        final requested = calls
+            .map((u) => u.queryParameters['type'])
+            .whereType<String>()
+            .toSet();
+        expect(requested, {'expense', 'revenue'});
+        expect(requested, isNot(contains('asset')));
+      },
+    );
+
+    test('an unknown type is refused before any request', () async {
+      final calls = <Uri>[];
+      final tool = _tool(
+        'get_accounts',
+        client: fireflyMockClient(record: calls),
+      );
+
+      final result = await tool.run({
+        'types': ['asset', 'chequing'],
+      });
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('chequing'));
+      expect(calls, isEmpty);
+    });
+  });
+
+  group('get_transactions date window', () {
+    test(
+      'an inclusive end_date reaches the engine as an exclusive end',
+      () async {
+        final calls = <Uri>[];
+        final tool = _tool(
+          'get_transactions',
+          client: fireflyMockClient(record: calls),
+        );
+
+        await tool.run({
+          'start_date': '2026-08-20',
+          'end_date': '2026-08-20',
+          'limit': 100,
+        });
+
+        // The engine subtracts a day from whatever end it is handed, so a
+        // single-day window has to arrive as the day after. Passing the caller's
+        // date through unchanged inverts the range and Firefly drops the filter.
+        final ranged = calls.where(
+          (u) => u.queryParameters.containsKey('start'),
+        );
+        expect(ranged, isNotEmpty, reason: 'no date range was sent at all');
+        expect(ranged.first.queryParameters['start'], '2026-08-20');
+        expect(ranged.first.queryParameters['end'], '2026-08-20');
+      },
+    );
+
+    test('a start_date alone still sends a range', () async {
+      final calls = <Uri>[];
+      final tool = _tool(
+        'get_transactions',
+        client: fireflyMockClient(record: calls),
+      );
+
+      await tool.run({'start_date': '2026-01-01'});
+
+      final ranged = calls.where((u) => u.queryParameters.containsKey('start'));
+      expect(ranged.first.queryParameters['start'], '2026-01-01');
+      expect(ranged.first.queryParameters.containsKey('end'), isFalse);
+    });
+
+    test('an unparseable date is refused before any request', () async {
+      final calls = <Uri>[];
+      final tool = _tool(
+        'get_transactions',
+        client: fireflyMockClient(record: calls),
+      );
+
+      final result = await tool.run({'start_date': 'last tuesday'});
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('start_date'));
+      expect(calls, isEmpty);
+    });
+
+    test('an end before the start is refused', () async {
+      final tool = _tool('get_transactions', client: fireflyMockClient());
+
+      final result = await tool.run({
+        'start_date': '2026-08-20',
+        'end_date': '2026-08-01',
+      });
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('precede'));
+    });
+  });
+
+  group('calendar dates in responses', () {
+    test('a date is reported as its calendar day, not its UTC day', () async {
+      final tool = _tool(
+        'get_account_balance_at_date',
+        client: fireflyMockClient(),
+      );
+
+      // Local midnight at a positive offset is the previous day in UTC. Echoing
+      // toIso8601String().substring(0, 10) reported 2026-07-31 for 1 August.
+      final result = await tool.run({'account_id': '5', 'date': '2026-08-01'});
+
+      expect(result['ok'], isTrue);
+      expect(result['date'], '2026-08-01');
+    });
+
+    test('a date across a year boundary keeps its calendar day', () async {
+      final tool = _tool(
+        'get_account_balance_at_date',
+        client: fireflyMockClient(),
+      );
+
+      final result = await tool.run({'account_id': '5', 'date': '2027-01-01'});
+
+      expect(result['date'], '2027-01-01');
+    });
+
+    test('a transaction date is a calendar day, not a timestamp', () async {
+      final tool = _tool('get_transaction', client: fireflyMockClient());
+
+      final result = await tool.run({'transaction_id': '1'});
+
+      // Reporting 2026-01-15T00:00:00.000 makes every caller parse a timestamp
+      // to get a day back, and it disagrees with the date every other tool
+      // reports and every write tool accepts.
+      expect((result['transaction'] as Map)['date'], '2026-01-15');
+    });
+  });
+
+  group('transaction bookkeeping fields', () {
+    test(
+      'a transaction carries the fields needed to match and copy it',
+      () async {
+        final tool = _tool('get_transaction', client: fireflyMockClient());
+
+        final transaction =
+            (await tool.run({'transaction_id': '1'}))['transaction']
+                as Map<String, Object?>;
+
+        // Reconciling a statement needs the payee account ids, because a payee in
+        // Firefly is an account and its own transaction list is the candidate
+        // history. Copying one needs to show what the copy inherits.
+        expect(transaction['source_id'], '5');
+        expect(transaction['destination_id'], '9');
+        expect(transaction['budget_name'], 'Housekeeping');
+        expect(transaction['bill_name'], 'Weekly shop');
+        expect(transaction['tags'], ['groceries', 'shared']);
+        expect(transaction['notes'], contains('ICA SUPERMARKET'));
+        expect(transaction['split_count'], 1);
+      },
+    );
+
+    test('the same fields appear in a transaction listing', () async {
+      final tool = _tool('get_transactions', client: fireflyMockClient());
+
+      final listed = (await tool.run({}))['transactions'] as List<Object?>;
+      final first = listed.cast<Map<String, Object?>>().firstWhere(
+        (t) => t['id'] == '1',
+      );
+
+      expect(first['destination_id'], '9');
+      expect(first['tags'], ['groceries', 'shared']);
+      expect(first['date'], '2026-01-15');
+    });
+  });
+
+  group('get_capabilities', () {
+    test('answers without a Firefly connection', () async {
+      final tool = buildTools(
+        target: const FireflyTarget.unconfigured(),
+      ).firstWhere((t) => t.name == 'get_capabilities');
+
+      final result = await tool.run({});
+
       expect(result['ok'], isTrue);
       expect(result['tools'], isA<List<Object?>>());
       expect(result['version'], '1.0.0');
-      expect(result['auth'], isA<Map<String, Object?>>());
+      expect(result['write_tools'], isA<List<Object?>>());
+    });
+
+    test('advertises agent keys as the credential', () async {
+      final tool = _tool('get_capabilities');
+
+      final auth = (await tool.run({}))['auth'] as Map<String, Object?>;
+
+      expect(auth['env'], ['FIRERACOON_URL', 'FIRERACOON_API_KEY']);
+      expect(auth['tcp_param'], 'initialize.params.apiKey');
+      expect(auth.containsKey('per_call'), isFalse);
     });
   });
 
   group('check_connection', () {
-    test('bad_input when credentials missing', () async {
+    test('bad_input when the server has no Firefly connection', () async {
       final tool = buildTools(
+        target: const FireflyTarget.unconfigured(),
         httpClient: fireflyMockClient(),
       ).firstWhere((t) => t.name == 'check_connection');
+
       final result = await tool.run({});
+
       expect(result['ok'], isFalse);
       expect(result['code'], 'bad_input');
     });
 
     test('connected on 200', () async {
       final tool = _tool('check_connection', client: fireflyMockClient());
-      final result = await tool.run(_creds);
+      final result = await tool.run({});
       expect(result['ok'], isTrue);
       expect(result['connected'], isTrue);
     });
@@ -77,16 +326,18 @@ void main() {
         'check_connection',
         client: fireflyMockClient(aboutOk: false),
       );
-      final result = await tool.run(_creds);
+      final result = await tool.run({});
       expect(result['ok'], isFalse);
       expect(result['connected'], isFalse);
       expect(result['error'], isNotNull);
     });
 
-    test('uses default credentials and strips trailing slash', () async {
+    test('strips a trailing slash from the target base URL', () async {
       final tools = buildTools(
-        defaultUrl: '$fireflyBaseUrl/',
-        defaultToken: fireflyToken,
+        target: const FireflyTarget(
+          baseUrl: '$fireflyBaseUrl/',
+          bearer: fireflyToken,
+        ),
         httpClient: fireflyMockClient(),
       );
       final tool = tools.firstWhere((t) => t.name == 'check_connection');
@@ -109,13 +360,15 @@ void main() {
           await request.response.close();
         });
 
-        final tool = buildTools().firstWhere(
-          (t) => t.name == 'check_connection',
-        );
-        final result = await tool.run({
-          'firefly_url': 'http://127.0.0.1:${server.port}/',
-          'firefly_token': 'token',
-        });
+        final tool = buildTools(
+          target: FireflyTarget(
+            baseUrl: 'http://127.0.0.1:${server.port}/',
+            bearer: 'token',
+          ),
+        ).firstWhere((t) => t.name == 'check_connection');
+
+        final result = await tool.run({});
+
         expect(result['ok'], isTrue);
       },
     );
@@ -126,7 +379,7 @@ void main() {
       final result = await _tool(
         'get_current_user',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['ok'], isTrue);
       final user = result['user'] as Map<String, Object?>;
       expect(user['email'], 'admin@local.test');
@@ -139,7 +392,7 @@ void main() {
       final result = await _tool(
         'get_primary_currency',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['ok'], isTrue);
       expect((result['currency'] as Map)['code'], 'EUR');
     });
@@ -150,7 +403,7 @@ void main() {
       final result = await _tool(
         'set_primary_currency',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['code'], 'bad_input');
     });
 
@@ -158,7 +411,7 @@ void main() {
       final result = await _tool(
         'set_primary_currency',
         client: fireflyMockClient(),
-      ).run({..._creds, 'code': 'EUR'});
+      ).run({'code': 'EUR'});
       expect(result['ok'], isTrue);
       expect((result['currency'] as Map)['symbol'], '€');
     });
@@ -169,7 +422,7 @@ void main() {
       final result = await _tool(
         'get_accounts',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['ok'], isTrue);
       expect(result['count'], 2);
       final accounts = result['accounts'] as List<Object?>;
@@ -182,7 +435,7 @@ void main() {
       final result = await _tool(
         'get_transactions',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['ok'], isTrue);
       expect(result['count'], greaterThan(0));
       expect(result['transactions'], isA<List<Object?>>());
@@ -192,7 +445,7 @@ void main() {
       final result = await _tool(
         'get_transactions',
         client: fireflyMockClient(),
-      ).run({..._creds, 'page': 2, 'limit': 10});
+      ).run({'page': 2, 'limit': 10});
       expect(result['ok'], isTrue);
       expect(result['pagination'], isA<Map<String, Object?>>());
     });
@@ -201,7 +454,7 @@ void main() {
       final result = await _tool(
         'get_transactions',
         client: fireflyMockClient(),
-      ).run({..._creds, 'account_id': '5', 'page': 1, 'limit': 25});
+      ).run({'account_id': '5', 'page': 1, 'limit': 25});
       expect(result['ok'], isTrue);
       expect(result['pagination'], isA<Map<String, Object?>>());
     });
@@ -210,7 +463,7 @@ void main() {
       final result = await _tool(
         'get_transactions',
         client: fireflyMockClient(),
-      ).run({..._creds, 'reconciled': true, 'page': 2, 'limit': 1});
+      ).run({'reconciled': true, 'page': 2, 'limit': 1});
       expect(result['ok'], isTrue);
       final pagination = result['pagination'] as Map<String, Object?>;
       expect(pagination['filtered_client_side'], isTrue);
@@ -220,7 +473,7 @@ void main() {
       final result = await _tool(
         'get_transactions',
         client: fireflyMockClient(),
-      ).run({..._creds, 'account_id': '5', 'reconciled': 'unreconciled'});
+      ).run({'account_id': '5', 'reconciled': 'unreconciled'});
       expect(result['ok'], isTrue);
       expect((result['pagination'] as Map)['filtered_client_side'], isTrue);
     });
@@ -230,7 +483,7 @@ void main() {
         final result = await _tool(
           'get_transactions',
           client: fireflyMockClient(),
-        ).run({..._creds, 'reconciled': filter});
+        ).run({'reconciled': filter});
         expect(result['ok'], isTrue, reason: filter);
       }
     });
@@ -239,7 +492,7 @@ void main() {
       final result = await _tool(
         'get_transactions',
         client: fireflyMockClient(),
-      ).run({..._creds, 'reconciled': false});
+      ).run({'reconciled': false});
       expect(result['ok'], isTrue);
     });
 
@@ -247,7 +500,7 @@ void main() {
       final result = await _tool(
         'get_transactions',
         client: fireflyMockClient(),
-      ).run({..._creds, 'reconciled': 'maybe'});
+      ).run({'reconciled': 'maybe'});
       expect(result['code'], 'bad_input');
     });
 
@@ -255,7 +508,7 @@ void main() {
       final result = await _tool(
         'get_transactions',
         client: fireflyMockClient(),
-      ).run({..._creds, 'reconciled': true, 'page': 99, 'limit': 1});
+      ).run({'reconciled': true, 'page': 99, 'limit': 1});
       expect(result['transactions'], isEmpty);
     });
   });
@@ -265,7 +518,7 @@ void main() {
       final result = await _tool(
         'get_transaction',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['code'], 'bad_input');
     });
 
@@ -273,7 +526,7 @@ void main() {
       final result = await _tool(
         'get_transaction',
         client: fireflyMockClient(),
-      ).run({..._creds, 'transaction_id': '1'});
+      ).run({'transaction_id': '1'});
       expect(result['ok'], isTrue);
       expect((result['transaction'] as Map)['id'], '1');
     });
@@ -285,18 +538,15 @@ void main() {
         'set_transaction_reconciled',
         client: fireflyMockClient(),
       );
-      expect((await tool.run(_creds))['code'], 'bad_input');
-      expect(
-        (await tool.run({..._creds, 'transaction_id': '1'}))['code'],
-        'bad_input',
-      );
+      expect((await tool.run({}))['code'], 'bad_input');
+      expect((await tool.run({'transaction_id': '1'}))['code'], 'bad_input');
     });
 
     test('updates reconciled flag', () async {
       final result = await _tool(
         'set_transaction_reconciled',
         client: fireflyMockClient(),
-      ).run({..._creds, 'transaction_id': '1', 'reconciled': true});
+      ).run({'transaction_id': '1', 'reconciled': true});
       expect(result['ok'], isTrue);
       expect((result['transaction'] as Map)['reconciled'], isTrue);
     });
@@ -304,7 +554,6 @@ void main() {
 
   group('store_reconciliation', () {
     Map<String, Object?> reconciliationArgs() => {
-      ..._creds,
       'account_id': '5',
       'start_date': '2026-01-01',
       'end_date': '2026-01-31',
@@ -315,14 +564,10 @@ void main() {
 
     test('validates required fields', () async {
       final tool = _tool('store_reconciliation', client: fireflyMockClient());
-      expect((await tool.run(_creds))['code'], 'bad_input');
-      expect(
-        (await tool.run({..._creds, 'account_id': '5'}))['code'],
-        'bad_input',
-      );
+      expect((await tool.run({}))['code'], 'bad_input');
+      expect((await tool.run({'account_id': '5'}))['code'], 'bad_input');
       expect(
         (await tool.run({
-          ..._creds,
           'account_id': '5',
           'start_date': 'bad',
           'end_date': '2026-01-31',
@@ -334,7 +579,6 @@ void main() {
       );
       expect(
         (await tool.run({
-          ..._creds,
           'account_id': '5',
           'start_date': '2026-01-01',
           'end_date': '2026-01-31',
@@ -344,7 +588,6 @@ void main() {
       );
       expect(
         (await tool.run({
-          ..._creds,
           'account_id': '5',
           'start_date': '2026-01-01',
           'end_date': '2026-01-31',
@@ -437,7 +680,7 @@ void main() {
       final result = await _tool(
         'get_budgets',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['ok'], isTrue);
       expect(result['count'], 1);
     });
@@ -448,7 +691,7 @@ void main() {
       final result = await _tool(
         'get_budget_transactions',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['code'], 'bad_input');
     });
 
@@ -456,7 +699,7 @@ void main() {
       final result = await _tool(
         'get_budget_transactions',
         client: fireflyMockClient(),
-      ).run({..._creds, 'budget_id': '3'});
+      ).run({'budget_id': '3'});
       expect(result['ok'], isTrue);
       expect(result['count'], greaterThan(0));
     });
@@ -465,18 +708,15 @@ void main() {
   group('update_account', () {
     test('validates inputs', () async {
       final tool = _tool('update_account', client: fireflyMockClient());
-      expect((await tool.run(_creds))['code'], 'bad_input');
-      expect(
-        (await tool.run({..._creds, 'account_id': '5'}))['code'],
-        'bad_input',
-      );
+      expect((await tool.run({}))['code'], 'bad_input');
+      expect((await tool.run({'account_id': '5'}))['code'], 'bad_input');
     });
 
     test('renames account', () async {
       final result = await _tool(
         'update_account',
         client: fireflyMockClient(),
-      ).run({..._creds, 'account_id': '5', 'name': 'Main'});
+      ).run({'account_id': '5', 'name': 'Main'});
       expect(result['ok'], isTrue);
       expect(result['name'], 'Main');
     });
@@ -485,17 +725,13 @@ void main() {
   group('update_budget', () {
     test('validates inputs', () async {
       final tool = _tool('update_budget', client: fireflyMockClient());
-      expect((await tool.run(_creds))['code'], 'bad_input');
-      expect(
-        (await tool.run({..._creds, 'budget_id': '3'}))['code'],
-        'bad_input',
-      );
+      expect((await tool.run({}))['code'], 'bad_input');
+      expect((await tool.run({'budget_id': '3'}))['code'], 'bad_input');
     });
 
     test('updates budget with auto amount', () async {
       final result = await _tool('update_budget', client: fireflyMockClient())
           .run({
-            ..._creds,
             'budget_id': '3',
             'name': 'Food',
             'amount': 500,
@@ -514,7 +750,7 @@ void main() {
       final result = await _tool(
         'delete_budget',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['code'], 'bad_input');
     });
 
@@ -522,7 +758,7 @@ void main() {
       final result = await _tool(
         'delete_budget',
         client: fireflyMockClient(),
-      ).run({..._creds, 'budget_id': '3'});
+      ).run({'budget_id': '3'});
       expect(result['ok'], isTrue);
       expect(result['deleted'], isTrue);
     });
@@ -533,7 +769,7 @@ void main() {
       final result = await _tool(
         'run_projection',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['ok'], isTrue);
       expect(result['end_expected'], isA<num>());
       expect(result['params'], isA<Map<String, Object?>>());
@@ -544,7 +780,7 @@ void main() {
         final result = await _tool(
           'run_projection',
           client: fireflyMockClient(),
-        ).run({..._creds, 'projection_type': type});
+        ).run({'projection_type': type});
         expect(result['ok'], isTrue);
         expect((result['params'] as Map)['type'], type);
       });
@@ -554,7 +790,7 @@ void main() {
       final result = await _tool(
         'run_projection',
         client: fireflyMockClient(),
-      ).run({..._creds, 'projection_type': 'invalid'});
+      ).run({'projection_type': 'invalid'});
       expect(result['code'], 'bad_input');
     });
 
@@ -562,7 +798,7 @@ void main() {
       final result = await _tool(
         'run_projection',
         client: fireflyMockClient(heavySpending: true),
-      ).run({..._creds, 'months': 12, 'projection_type': 'savings'});
+      ).run({'months': 12, 'projection_type': 'savings'});
       expect(result['ok'], isTrue);
       expect(result['alert'], isA<Map<String, Object?>>());
       expect((result['alert'] as Map)['kind'], isNotEmpty);
@@ -574,7 +810,7 @@ void main() {
       final result = await _tool(
         'get_dashboard_kpis',
         client: fireflyMockClient(),
-      ).run(_creds);
+      ).run({});
       expect(result['ok'], isTrue);
       final kpis = result['kpis'] as Map<String, Object?>;
       expect(kpis['total_balance'], isA<num>());
@@ -585,7 +821,7 @@ void main() {
       final result = await _tool(
         'get_dashboard_kpis',
         client: fireflyMockClient(),
-      ).run({..._creds, 'period_label': 'January'});
+      ).run({'period_label': 'January'});
       expect((result['kpis'] as Map)['period_label'], 'January');
     });
 
@@ -593,7 +829,7 @@ void main() {
       final result = await _tool(
         'get_dashboard_kpis',
         client: fireflyMockClient(),
-      ).run({..._creds, 'period': 'never'});
+      ).run({'period': 'never'});
       expect(result['code'], 'bad_input');
     });
   });

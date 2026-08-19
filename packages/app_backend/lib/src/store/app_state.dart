@@ -14,8 +14,10 @@ class AppState {
     Map<String, dynamic>? prognosis,
     Map<String, dynamic>? undo,
     Map<String, dynamic>? sessions,
+    List<Map<String, dynamic>>? agentKeys,
     Map<String, String>? avatars,
   }) : firefly = firefly ?? FireflyConnection.empty(),
+       agentKeys = agentKeys ?? <Map<String, dynamic>>[],
        people = people ?? <Map<String, dynamic>>[],
        peopleAuth =
            peopleAuth ?? <String, dynamic>{'byPersonId': <String, dynamic>{}},
@@ -44,6 +46,9 @@ class AppState {
   Map<String, dynamic> prognosis;
   Map<String, dynamic> undo;
   Map<String, dynamic> sessions;
+
+  /// MCP agent keys, digest-only. See `AgentKey` in fireracoon_engine.
+  List<Map<String, dynamic>> agentKeys;
 
   /// personId → base64 PNG
   Map<String, String> avatars;
@@ -85,6 +90,7 @@ class AppState {
     'prognosis': prognosis,
     'undo': undo,
     'sessions': sessions,
+    'agentKeys': agentKeys,
     'avatars': avatars,
   };
 
@@ -112,6 +118,7 @@ class AppState {
           (json['undo'] as Map?)?.cast<String, dynamic>() ??
           <String, dynamic>{'entries': <dynamic>[], 'index': 0},
       sessions: (json['sessions'] as Map?)?.cast<String, dynamic>() ?? {},
+      agentKeys: _listOfMaps(json['agentKeys']),
       avatars:
           (json['avatars'] as Map?)?.map(
             (k, v) => MapEntry(k.toString(), v.toString()),

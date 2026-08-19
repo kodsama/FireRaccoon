@@ -20,6 +20,7 @@ code comments, ADRs, and MCP descriptions.
 | **Prognosis** | Rich account forecast in the UI (`AccountPrognosisService`) |
 | **Write-ahead** | Materializing upcoming recurrence occurrences as future transactions |
 | **Reconciliation** | Marking journals reconciled and optionally posting a correction; for `ccAsset` accounts, also creating a multi-split payback transfer |
+| **Agent key** | Credential an MCP client presents (`frcn_…`); bound to a person, stored as a digest, revocable |
 
 ## Money objects
 
@@ -39,3 +40,8 @@ MCP tools are the supported agent API. They intentionally omit full CRUD for
 bills, recurrences, piggies, search, and prognosis. Expand `buildTools()` when
 a workflow needs them; keep OpenAPI `x-mcp.tools` and `docs/mcp-server.md` in
 sync.
+
+Agents authenticate with an agent key, never a Firefly PAT, and inherit their
+person's role: `viewer` keys are refused the write tools listed in
+`_writeToolNames`. Tools take no credential arguments, so where a call lands is
+decided when the server starts, not by the agent.

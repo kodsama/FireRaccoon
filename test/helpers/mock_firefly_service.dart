@@ -299,6 +299,7 @@ class FakeFireflyService implements FireflyService {
     required String name,
     required String type,
     required String currencyCode,
+    String? role,
   }) async {
     _maybeThrow();
     return Account(

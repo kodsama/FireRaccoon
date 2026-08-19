@@ -4048,6 +4048,198 @@ abstract class AppLocalizations {
   /// **'Starting…'**
   String get mcpStatusStarting;
 
+  /// No description provided for @mcpStatusNoKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'No agent keys yet, so the server is idle'**
+  String get mcpStatusNoKeys;
+
+  /// No description provided for @mcpAgentKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent keys'**
+  String get mcpAgentKeys;
+
+  /// No description provided for @mcpAgentKeysHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Agents authenticate with a FireRacoon key, not your Firefly III token. Each key acts as the person who created it.'**
+  String get mcpAgentKeysHint;
+
+  /// No description provided for @mcpNoAgentKeys.
+  ///
+  /// In en, this message translates to:
+  /// **'No agent keys yet'**
+  String get mcpNoAgentKeys;
+
+  /// No description provided for @mcpCreateKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Create key'**
+  String get mcpCreateKey;
+
+  /// No description provided for @mcpKeyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Label'**
+  String get mcpKeyLabel;
+
+  /// No description provided for @mcpKeyLabelHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Claude Desktop'**
+  String get mcpKeyLabelHint;
+
+  /// No description provided for @mcpKeyIssuedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy your agent key'**
+  String get mcpKeyIssuedTitle;
+
+  /// No description provided for @mcpForgetKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Forget this key'**
+  String get mcpForgetKey;
+
+  /// No description provided for @mcpPickKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Which key should it use?'**
+  String get mcpPickKeyTitle;
+
+  /// No description provided for @mcpWithoutKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Without a key'**
+  String get mcpWithoutKey;
+
+  /// No description provided for @mcpShowKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Show key'**
+  String get mcpShowKey;
+
+  /// No description provided for @mcpKeyNotRecoverable.
+  ///
+  /// In en, this message translates to:
+  /// **'This key was created before keys could be read back. Revoke it and create a new one.'**
+  String get mcpKeyNotRecoverable;
+
+  /// No description provided for @mcpKeyIssuedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste this into your MCP client as initialize.params.apiKey, or set FIRERACOON_API_KEY. You can reopen it later from this list.'**
+  String get mcpKeyIssuedBody;
+
+  /// No description provided for @mcpCopyKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get mcpCopyKey;
+
+  /// No description provided for @mcpKeyCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Agent key copied'**
+  String get mcpKeyCopied;
+
+  /// No description provided for @mcpRevokeKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke'**
+  String get mcpRevokeKey;
+
+  /// No description provided for @mcpRevokeKeyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke agent key?'**
+  String get mcpRevokeKeyTitle;
+
+  /// No description provided for @mcpRevokeKeyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{label} stops working immediately and its open connections drop.'**
+  String mcpRevokeKeyBody(String label);
+
+  /// No description provided for @mcpKeyCreatedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Created {date}'**
+  String mcpKeyCreatedAt(String date);
+
+  /// No description provided for @mcpKeyRevokedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Revoked {date}'**
+  String mcpKeyRevokedAt(String date);
+
+  /// No description provided for @mcpServerCredentials.
+  ///
+  /// In en, this message translates to:
+  /// **'MCP server credentials'**
+  String get mcpServerCredentials;
+
+  /// No description provided for @mcpAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Address'**
+  String get mcpAddress;
+
+  /// No description provided for @mcpNotRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Not running'**
+  String get mcpNotRunning;
+
+  /// No description provided for @mcpAuthParameter.
+  ///
+  /// In en, this message translates to:
+  /// **'Auth parameter'**
+  String get mcpAuthParameter;
+
+  /// No description provided for @mcpTransportLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport'**
+  String get mcpTransportLabel;
+
+  /// No description provided for @mcpTransportTcp.
+  ///
+  /// In en, this message translates to:
+  /// **'TCP (localhost only)'**
+  String get mcpTransportTcp;
+
+  /// No description provided for @mcpCopyConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy connection details'**
+  String get mcpCopyConnection;
+
+  /// No description provided for @mcpConnectionCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Connection details copied'**
+  String get mcpConnectionCopied;
+
+  /// No description provided for @mcpKeyLastUsedAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Last used {date}'**
+  String mcpKeyLastUsedAt(String date);
+
+  /// No description provided for @mcpKeyNeverUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Never used'**
+  String get mcpKeyNeverUsed;
+
+  /// No description provided for @mcpKeyOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Acts as {name} ({role})'**
+  String mcpKeyOwner(String name, String role);
+
   /// No description provided for @transactionDate.
   ///
   /// In en, this message translates to:
@@ -6088,6 +6280,24 @@ abstract class AppLocalizations {
   /// **'Backup & restore'**
   String get settingsBackup;
 
+  /// No description provided for @exportSettingsDisclosureTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What goes into the file?'**
+  String get exportSettingsDisclosureTitle;
+
+  /// No description provided for @exportSettingsDisclosure.
+  ///
+  /// In en, this message translates to:
+  /// **'INCLUDED:\n• People, their roles, and account assignments\n• Account classifications, layout, and preferences\n• Prognosis settings and the Firefly URL\n\nNOT INCLUDED:\n• MCP agent keys. They never leave this device, so an agent needs a key issued where it will run.\n• Your Firefly data itself: accounts, transactions, budgets. That stays in Firefly III.\n• Custom profile photos and biometric unlock\n• The Firefly API token and password hashes, unless you set a backup passphrase on the next screen, which seals them into the file'**
+  String get exportSettingsDisclosure;
+
+  /// No description provided for @exportSettingsContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get exportSettingsContinue;
+
   /// No description provided for @exportSettings.
   ///
   /// In en, this message translates to:
@@ -6097,7 +6307,7 @@ abstract class AppLocalizations {
   /// No description provided for @exportSettingsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Save people, preferences, layout, and the Firefly URL to a JSON file. The API token and salted password hashes are encrypted with a backup passphrase. Custom profile photos are not included.'**
+  /// **'Saves people and their roles, account assignments and classifications, layout, preferences, prognosis settings, and the Firefly URL to a JSON file.\n\nLeft out: MCP agent keys, which never leave this device; your Firefly data itself (accounts, transactions, budgets), which stays in Firefly III; custom profile photos; and biometric unlock. The Firefly API token and password hashes are only included if you set a backup passphrase, which encrypts them.'**
   String get exportSettingsDescription;
 
   /// No description provided for @importSettings.
@@ -6109,7 +6319,7 @@ abstract class AppLocalizations {
   /// No description provided for @importSettingsDescription.
   ///
   /// In en, this message translates to:
-  /// **'Replace settings on this device with a previously exported file.'**
+  /// **'Replaces what is on this device with a previously exported file: people and their roles, account assignments and classifications, layout, preferences, prognosis settings, and the Firefly connection if the file has one.\n\nDeletes MCP agent keys whose owner no longer exists afterwards. A key created before People were set up belongs to \"this device\", so importing people removes it and any agent using it stops working.\n\nDoes not restore custom profile photos or biometric unlock. Password login stays off unless the file carries portable password hashes and you enter its passphrase.'**
   String get importSettingsDescription;
 
   /// No description provided for @importSettingsConfirmTitle.
@@ -6121,7 +6331,7 @@ abstract class AppLocalizations {
   /// No description provided for @importSettingsConfirmMessage.
   ///
   /// In en, this message translates to:
-  /// **'This replaces people, preferences, ownership, layout, and the Firefly connection on this device. Enter the backup passphrase to restore encrypted credentials. Without secrets (or if passwords are missing), password login stays off. Custom profile photos are cleared.'**
+  /// **'REPLACED on this device:\n• People, their roles, and account assignments\n• Account classifications\n• Layout: side menu, columns, view mode, row density\n• Theme, language, dashboard period, page size, write-ahead days, undo limit\n• Prognosis settings\n• The Firefly connection, if the file carries one\n\nDELETED:\n• MCP agent keys whose owner no longer exists afterwards. A key created before People were set up belongs to \"this device\" and will be removed, so any agent using it stops working and needs a new key.\n\nNOT RESTORED:\n• Custom profile photos and biometric unlock\n• Password login, unless the file carries portable password hashes and you enter its passphrase'**
   String get importSettingsConfirmMessage;
 
   /// No description provided for @backupPassphraseExportTitle.
