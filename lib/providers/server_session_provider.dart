@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../store/secure_storage.dart';
+
 import '../deployment/deployment_providers.dart';
 import '../store/remote_server_client.dart';
 import 'auth_provider.dart';
@@ -33,7 +35,7 @@ class ServerSessionNotifier extends AsyncNotifier<ServerSession?> {
   ServerSessionNotifier({
     FlutterSecureStorage? storage,
     RemoteServerClientFactory? clientFactory,
-  }) : _storage = storage ?? const FlutterSecureStorage(),
+  }) : _storage = storage ?? appSecureStorage,
        _clientFactory =
            clientFactory ?? ((base) => RemoteServerClient(baseUrl: base));
 

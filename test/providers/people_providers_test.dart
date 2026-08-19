@@ -661,6 +661,242 @@ void main() {
     );
   });
 
+  group('PeopleNotifier importSettings', () {
+    test(
+      'applies people, ownerships and policy, and survives a reload',
+      () async {
+        final prefs = await freshPrefs();
+        final container = await buildContainer(prefs: prefs);
+        addTearDown(container.dispose);
+        await waitHydrated(container);
+
+        final ana = hashPassword('Import-Horse9!');
+        final bo = hashPassword('Second-Horse9!');
+        await container
+            .read(peopleProvider.notifier)
+            .importSettings(
+              people: [
+                Person(
+                  id: 'ana',
+                  name: 'Ana',
+                  colorValue: 0xFF3B82F6,
+                  role: PersonRole.admin,
+                  passwordHash: ana.hash,
+                  salt: ana.salt,
+                  createdAtIso: '2026-02-01T00:00:00.000Z',
+                ),
+                Person(
+                  id: 'bo',
+                  name: 'Bo',
+                  colorValue: 0xFF10B981,
+                  passwordHash: bo.hash,
+                  salt: bo.salt,
+                  createdAtIso: '2026-02-02T00:00:00.000Z',
+                ),
+              ],
+              accountOwnerships: const {
+                'acc-9': AccountOwnership(
+                  accountId: 'acc-9',
+                  personShares: {'ana': 0.6, 'bo': 0.4},
+                ),
+              },
+              requirePasswordLogin: true,
+            );
+
+        final state = container.read(peopleProvider);
+        expect(state.people.map((p) => p.id), ['ana', 'bo']);
+        expect(state.requirePasswordLogin, isTrue);
+        expect(state.config.getOwnershipRatio('acc-9', 'ana'), 0.6);
+
+        // An import that only lands in memory looks fine until the next launch,
+        // so reload from the same prefs and keychain.
+        final reloaded = await buildContainer(prefs: prefs);
+        addTearDown(reloaded.dispose);
+        await waitHydrated(reloaded);
+
+        final restored = reloaded.read(peopleProvider);
+        expect(restored.people.map((p) => p.id), ['ana', 'bo']);
+        expect(restored.requirePasswordLogin, isTrue);
+        expect(restored.config.getOwnershipRatio('acc-9', 'bo'), 0.4);
+        expect(
+          await reloaded
+              .read(peopleProvider.notifier)
+              .login('Ana', 'Import-Horse9!'),
+          isNotNull,
+          reason: 'imported password material must reach secure storage',
+        );
+      },
+    );
+
+    test(
+      'drops the session when the file omits the logged-in person',
+      () async {
+        final container = await buildContainer();
+        addTearDown(container.dispose);
+        await waitHydrated(container);
+
+        final notifier = container.read(peopleProvider.notifier);
+        final alex = await notifier.addPerson(
+          name: 'Alex',
+          colorValue: 0xFF3B82F6,
+        );
+        expect(container.read(peopleProvider).loggedInPersonId, alex.id);
+        expect(container.read(activePersonFilterProvider), alex.id);
+
+        await notifier.importSettings(
+          people: [
+            Person(
+              id: 'ana',
+              name: 'Ana',
+              colorValue: 0xFF10B981,
+              role: PersonRole.admin,
+              createdAtIso: '2026-02-01T00:00:00.000Z',
+            ),
+          ],
+          accountOwnerships: const {},
+          requirePasswordLogin: false,
+        );
+
+        expect(container.read(peopleProvider).loggedInPersonId, isNull);
+        expect(container.read(activePersonFilterProvider), isNull);
+        expect(
+          await const FlutterSecureStorage().read(key: kPeopleSessionKey),
+          isNull,
+          reason:
+              'a stale session id would log in a person who no longer exists',
+        );
+      },
+    );
+
+    test(
+      'leaves login-with-password off for a server placeholder hash',
+      () async {
+        final container = await buildContainer();
+        addTearDown(container.dispose);
+        await waitHydrated(container);
+
+        final ana = hashPassword('Import-Horse9!');
+        await container
+            .read(peopleProvider.notifier)
+            .importSettings(
+              people: [
+                Person(
+                  id: 'ana',
+                  name: 'Ana',
+                  colorValue: 0xFF3B82F6,
+                  role: PersonRole.admin,
+                  passwordHash: ana.hash,
+                  salt: ana.salt,
+                  createdAtIso: '2026-02-01T00:00:00.000Z',
+                ),
+                Person(
+                  id: 'bo',
+                  name: 'Bo',
+                  colorValue: 0xFF10B981,
+                  passwordHash: 'server',
+                  salt: 'server',
+                  createdAtIso: '2026-02-02T00:00:00.000Z',
+                ),
+              ],
+              accountOwnerships: const {},
+              requirePasswordLogin: true,
+            );
+
+        final state = container.read(peopleProvider);
+        expect(
+          state.requirePasswordLogin,
+          isFalse,
+          reason: 'Bo has no usable hash, so the gate would lock everyone out',
+        );
+        expect(
+          state.people.firstWhere((p) => p.id == 'ana').hasPassword,
+          isTrue,
+        );
+        expect(
+          state.people.firstWhere((p) => p.id == 'bo').hasPassword,
+          isFalse,
+        );
+      },
+    );
+  });
+
+  group('PeopleNotifier secure storage failures', () {
+    test(
+      'keeps hydrating and editing people when the keychain fails',
+      () async {
+        final encoded = AccountOwnershipConfig(
+          people: [
+            Person(
+              id: 'p1',
+              name: 'Alex',
+              colorValue: 0xFF3B82F6,
+              role: PersonRole.admin,
+              createdAtIso: '2026-01-01T00:00:00.000Z',
+            ),
+          ],
+        ).encode();
+        SharedPreferences.setMockInitialValues({
+          kPeopleConfigPreferenceKey: encoded,
+        });
+        final prefs = await SharedPreferences.getInstance();
+        FlutterSecureStoragePlatform.instance = _FailingSecureStoragePlatform(
+          {},
+        );
+
+        final container = await buildContainer(prefs: prefs);
+        addTearDown(container.dispose);
+        await waitHydrated(container);
+
+        expect(
+          container.read(peopleProvider).people.single.id,
+          'p1',
+          reason: 'prefs still hold the profiles when auth reads fail',
+        );
+
+        final notifier = container.read(peopleProvider.notifier);
+        await notifier.addPerson(name: 'Sam', colorValue: 0xFF10B981);
+        expect(container.read(peopleProvider).people, hasLength(2));
+        expect(prefs.getString(kPeopleConfigPreferenceKey), contains('Sam'));
+      },
+    );
+
+    test('switches session in memory when keychain writes fail', () async {
+      const person = Person(
+        id: 'p1',
+        name: 'Alex',
+        colorValue: 0xFF3B82F6,
+        role: PersonRole.admin,
+        createdAtIso: '2026-01-01T00:00:00.000Z',
+      );
+      SharedPreferences.setMockInitialValues({
+        kPeopleConfigPreferenceKey: const AccountOwnershipConfig(
+          people: [person],
+        ).encode(),
+      });
+      final prefs = await SharedPreferences.getInstance();
+      // Readable store, unwritable device: a passwordless setup, so selecting
+      // a person is meant to succeed even though the session cannot be saved.
+      FlutterSecureStoragePlatform.instance = _FailingSecureStoragePlatform({
+        kPeopleAuthStorageKey: PeopleAuthStorage(
+          byPersonId: {'p1': person.toAuthJson()},
+        ).encode(),
+      }, failReads: false);
+
+      final container = await buildContainer(prefs: prefs);
+      addTearDown(container.dispose);
+      await waitHydrated(container);
+
+      final notifier = container.read(peopleProvider.notifier);
+      await notifier.selectPerson('p1');
+      expect(container.read(peopleProvider).loggedInPersonId, 'p1');
+
+      await notifier.logout();
+      final state = container.read(peopleProvider);
+      expect(state.loggedInPersonId, isNull);
+      expect(state.lastSessionPersonId, 'p1');
+    });
+  });
+
   group('PeopleNotifier server mode', () {
     Map<String, dynamic> serverPeopleState() => {
       'storeLocked': false,
@@ -1196,7 +1432,184 @@ void main() {
       await container.read(peopleProvider.notifier).syncFromServerStore();
       expect(container.read(peopleProvider).isHydrated, isTrue);
     });
+
+    test('importSettings without a session keeps people locally', () async {
+      final prefs = await freshPrefs();
+      var putPeopleCalls = 0;
+      final container = await buildServerContainer(
+        prefs: prefs,
+        sessionToken: null,
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state/people')) {
+            putPeopleCalls++;
+            return http.Response(jsonEncode(serverPeopleState()), 200);
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+      await waitHydrated(container);
+
+      await container
+          .read(peopleProvider.notifier)
+          .importSettings(
+            people: [
+              Person(
+                id: 'imported_1',
+                name: 'Ana',
+                colorValue: 0xFF3B82F6,
+                role: PersonRole.admin,
+                createdAtIso: '2026-02-01T00:00:00.000Z',
+              ),
+            ],
+            accountOwnerships: const {
+              'acc-9': AccountOwnership(
+                accountId: 'acc-9',
+                personShares: {'imported_1': 1.0},
+              ),
+            },
+            requirePasswordLogin: false,
+          );
+
+      expect(
+        putPeopleCalls,
+        0,
+        reason: 'an unauthenticated client must not attempt a server write',
+      );
+      final state = container.read(peopleProvider);
+      expect(state.people.single.id, 'imported_1');
+      expect(state.config.getOwnershipRatio('acc-9', 'imported_1'), 1.0);
+      expect(
+        prefs.getString(kPeopleConfigPreferenceKey),
+        contains('imported_1'),
+      );
+    });
+
+    test(
+      'importSettings sends portable hashes as server auth imports',
+      () async {
+        Map<String, dynamic>? lastPutBody;
+        final container = await buildServerContainer(
+          httpClient: MockClient((request) async {
+            if (request.url.path.endsWith('/api/capabilities')) {
+              return http.Response(
+                jsonEncode({
+                  'storeLocked': false,
+                  'storeExists': true,
+                  'setupRequired': false,
+                }),
+                200,
+              );
+            }
+            if (request.url.path.endsWith('/api/state')) {
+              return http.Response(jsonEncode(serverPeopleState()), 200);
+            }
+            if (request.url.path.endsWith('/api/state/people')) {
+              lastPutBody = jsonDecode(request.body) as Map<String, dynamic>;
+              final people = (lastPutBody!['people'] as List)
+                  .cast<Map<String, dynamic>>();
+              return http.Response(
+                jsonEncode({
+                  ...serverPeopleState(),
+                  'people': people
+                      .map(
+                        (p) => {
+                          ...p,
+                          'createdAt':
+                              p['createdAt'] ?? '2026-08-01T00:00:00.000Z',
+                        },
+                      )
+                      .toList(),
+                }),
+                200,
+              );
+            }
+            return http.Response('{}', 200);
+          }),
+        );
+        await waitHydrated(container);
+        await container
+            .read(peopleProvider.notifier)
+            .syncFromServerStore(loggedInPersonId: 'admin_1');
+
+        final ana = hashPassword('Import-Horse9!');
+        await container
+            .read(peopleProvider.notifier)
+            .importSettings(
+              people: [
+                Person(
+                  id: 'import_1',
+                  name: 'Ana',
+                  colorValue: 0xFF3B82F6,
+                  role: PersonRole.admin,
+                  passwordHash: ana.hash,
+                  salt: ana.salt,
+                  createdAtIso: '2026-02-01T00:00:00.000Z',
+                ),
+                Person(
+                  id: 'import_2',
+                  name: 'Bo',
+                  colorValue: 0xFF10B981,
+                  passwordHash: 'server',
+                  salt: 'server',
+                  createdAtIso: '2026-02-02T00:00:00.000Z',
+                ),
+              ],
+              accountOwnerships: const {},
+              requirePasswordLogin: true,
+            );
+
+        final authImports =
+            lastPutBody?['authImports'] as Map<String, dynamic>?;
+        expect(authImports, isNotNull);
+        expect(
+          authImports!.keys.toList(),
+          ['import_1'],
+          reason: 'server placeholders must not be pushed back as real hashes',
+        );
+        expect((authImports['import_1'] as Map)['salt'], ana.salt);
+        expect((authImports['import_1'] as Map)['passwordHash'], ana.hash);
+      },
+    );
   });
+}
+
+/// Stands in for a device whose keychain refuses writes, and optionally reads.
+class _FailingSecureStoragePlatform extends TestFlutterSecureStoragePlatform {
+  _FailingSecureStoragePlatform(super.data, {this.failReads = true});
+
+  final bool failReads;
+
+  @override
+  Future<String?> read({
+    required String key,
+    required Map<String, String> options,
+  }) async {
+    if (failReads) throw Exception('keychain read denied');
+    return super.read(key: key, options: options);
+  }
+
+  @override
+  Future<void> write({
+    required String key,
+    required String value,
+    required Map<String, String> options,
+  }) async => throw Exception('keychain write denied');
+
+  @override
+  Future<void> delete({
+    required String key,
+    required Map<String, String> options,
+  }) async => throw Exception('keychain delete denied');
 }
 
 class _GatedPrefService extends FakeFireflyService {

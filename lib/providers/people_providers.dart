@@ -5,6 +5,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../store/secure_storage.dart';
 import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fireracoon_engine/fireracoon_engine.dart';
@@ -159,7 +161,7 @@ class PeopleState {
 
 class PeopleNotifier extends Notifier<PeopleState> {
   PeopleNotifier({FlutterSecureStorage? storage, BiometricAuth? biometricAuth})
-    : _storage = storage ?? const FlutterSecureStorage(),
+    : _storage = storage ?? appSecureStorage,
       _biometricAuth = biometricAuth ?? LocalBiometricAuth();
 
   final FlutterSecureStorage _storage;
@@ -459,13 +461,30 @@ class PeopleNotifier extends Notifier<PeopleState> {
           latest.toJson(),
         );
       }
-    } catch (_) {}
+    } on Object catch (error, stackTrace) {
+      // Local prefs already hold the config, so this only loses the Firefly
+      // mirror. Still worth a line: silence here made an import look inert.
+      _log.warning(
+        'Failed to mirror people config to Firefly preferences',
+        error,
+        stackTrace,
+      );
+    }
   }
 
   Future<void> _persistConfigToServer(AccountOwnershipConfig config) async {
     if (!ref.mounted) return;
     final client = ref.read(serverSessionProvider.notifier).client;
-    if (client == null || client.sessionToken == null) return;
+    if (client == null || client.sessionToken == null) {
+      // Silently dropping the write here is how an import can look like it
+      // worked and then lose everything on the next load.
+      _log.severe(
+        'Cannot persist people to server: '
+        '${client == null ? "no client" : "no session"}. '
+        '${config.people.length} person(s) stayed in memory only.',
+      );
+      return;
+    }
     final passwordUpdates = Map<String, String>.from(_pendingServerPasswords);
     final authImports = <String, Map<String, String>>{};
     for (final person in config.people) {
@@ -998,6 +1017,12 @@ class PeopleNotifier extends Notifier<PeopleState> {
       );
     }
 
+    _log.info(
+      'Importing ${sanitized.length} person(s) and '
+      '${accountOwnerships.length} account ownership(s); '
+      'serverMode=$_isServerMode',
+    );
+
     final currentId = state.loggedInPersonId;
     final stillExists =
         currentId != null && sanitized.any((p) => p.id == currentId);
@@ -1020,6 +1045,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
       final current = state.currentPerson;
       if (current != null) _applyPersonSession(current);
     }
+    _log.info('Import persisted; now holding ${state.people.length} person(s)');
   }
 
   Future<Uint8List?> resolveCustomAvatarBytes(Person person) async {
