@@ -160,10 +160,7 @@ class McpSettingsSection extends ConsumerWidget {
     required String secret,
   }) {
     final l10n = context.l10n;
-    final port = ref.read(mcpServiceProvider).port;
-    final snippet = port == null
-        ? null
-        : mcpConnectionSnippet(port: port, agentKey: secret);
+    final service = ref.read(mcpServiceProvider);
 
     return showDialog<void>(
       context: context,
@@ -177,15 +174,34 @@ class McpSettingsSection extends ConsumerWidget {
               Text(l10n.mcpKeyIssuedBody),
               const SizedBox(height: 16),
               _CodeBlock(text: secret),
-              if (snippet != null) ...[
-                const SizedBox(height: 20),
-                Text(
-                  l10n.mcpCopyConnection,
-                  style: Theme.of(ctx).textTheme.labelLarge,
-                ),
-                const SizedBox(height: 8),
-                _CodeBlock(text: snippet),
-              ],
+              // Issuing the very first key is what starts the server, so the
+              // port is still unbound while this dialog builds. Reading it once
+              // left the first key ever issued without a handshake to copy.
+              ListenableBuilder(
+                listenable: service,
+                builder: (ctx, _) {
+                  final port = service.port;
+                  if (port == null) return const SizedBox.shrink();
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 20),
+                      Text(
+                        l10n.mcpCopyConnection,
+                        style: Theme.of(ctx).textTheme.labelLarge,
+                      ),
+                      const SizedBox(height: 8),
+                      _CodeBlock(
+                        text: mcpConnectionSnippet(
+                          port: port,
+                          agentKey: secret,
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ],
           ),
         ),
@@ -199,16 +215,26 @@ class McpSettingsSection extends ConsumerWidget {
               showInfoToast(ctx, l10n.mcpKeyCopied);
             },
           ),
-          if (snippet != null)
-            TextButton.icon(
-              icon: const Icon(Icons.content_copy),
-              label: Text(l10n.mcpCopyConnection),
-              onPressed: () async {
-                await Clipboard.setData(ClipboardData(text: snippet));
-                if (!ctx.mounted) return;
-                showInfoToast(ctx, l10n.mcpConnectionCopied);
-              },
-            ),
+          ListenableBuilder(
+            listenable: service,
+            builder: (ctx, _) {
+              final port = service.port;
+              if (port == null) return const SizedBox.shrink();
+              return TextButton.icon(
+                icon: const Icon(Icons.content_copy),
+                label: Text(l10n.mcpCopyConnection),
+                onPressed: () async {
+                  await Clipboard.setData(
+                    ClipboardData(
+                      text: mcpConnectionSnippet(port: port, agentKey: secret),
+                    ),
+                  );
+                  if (!ctx.mounted) return;
+                  showInfoToast(ctx, l10n.mcpConnectionCopied);
+                },
+              );
+            },
+          ),
           FilledButton(
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(l10n.done),
