@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:fireracoon_mcp/fireracoon_mcp.dart';
 import 'package:http/testing.dart';
 import 'package:test/test.dart';
@@ -1211,6 +1212,283 @@ void main() {
       final rule =
           (result['recurrences'] as List).single as Map<String, Object?>;
       expect(rule['repeat_until'], '2027-09-01');
+    });
+  });
+
+  group('find_account', () {
+    test('an account number beats a name that also matches', () async {
+      // An identifier hit ends the search, so a fuzzy name tier can never be
+      // appended below one and read as an equally good answer.
+      final result = await _tool(
+        'find_account',
+        client: fireflyMockClient(),
+      ).run({'query': 'Checking'});
+
+      expect(result['ok'], isTrue);
+      expect(result['candidates'], isA<List<Object?>>());
+      expect(result['ambiguity_band'], isA<num>());
+      expect(result['searched_types'], [
+        'asset',
+        'liability',
+        'expense',
+        'revenue',
+      ]);
+    });
+
+    test('never returns the identifier it matched on', () async {
+      final result = await _tool(
+        'find_account',
+        client: fireflyMockClient(),
+      ).run({'query': 'Checking'});
+
+      // The matcher needs the IBAN and the account number; the transcript does
+      // not. A candidate carries a last-four hint and nothing more.
+      final encoded = jsonEncode(result);
+      expect(encoded, isNot(contains('"iban":')));
+      expect(encoded, isNot(contains('"account_number":')));
+      for (final candidate
+          in (result['candidates'] as List<Object?>)
+              .cast<Map<String, Object?>>()) {
+        expect(candidate.containsKey('has_iban'), isTrue);
+        expect(candidate.containsKey('identifier_hint'), isTrue);
+        expect(candidate['confidence'], isA<String>());
+      }
+    });
+
+    test('validates its own arguments before any request', () async {
+      final calls = <Uri>[];
+      final tool = _tool(
+        'find_account',
+        client: fireflyMockClient(record: calls),
+      );
+
+      expect((await tool.run({}))['code'], 'bad_input');
+      expect((await tool.run({'query': '  '}))['code'], 'bad_input');
+      expect(
+        (await tool.run({
+          'query': 'x',
+          'types': ['chequing'],
+        }))['error'],
+        contains('chequing'),
+      );
+      expect(
+        (await tool.run({'query': 'x', 'limit': 99}))['error'],
+        contains('limit'),
+      );
+      expect(calls, isEmpty);
+    });
+  });
+
+  group('match_statement', () {
+    Map<String, Object?> statementArgs() => {
+      'account_id': '5',
+      'start_date': '2026-01-01',
+      'end_date': '2026-01-31',
+      'rows': [
+        {'row_id': 'r1', 'date': '2026-01-15', 'amount': '-45,00'},
+      ],
+    };
+
+    test('matches a row against what is recorded', () async {
+      final result = await _tool(
+        'match_statement',
+        client: fireflyMockClient(),
+      ).run(statementArgs());
+
+      expect(result['ok'], isTrue);
+      // Tolerances are fixed rather than caller-settable, so they cannot drift
+      // between one conversation and the next, and are echoed to prove it.
+      final window = result['window'] as Map<String, Object?>;
+      expect(window['date_tolerance_days'], 3);
+      expect(window['near_date_tolerance_days'], 5);
+      expect(window['amount_equality_tolerance'], 0.005);
+      expect(result['arithmetic'], isA<Map<String, Object?>>());
+    });
+
+    test(
+      'a row whose amount cannot be read is returned, not guessed',
+      () async {
+        final result =
+            await _tool('match_statement', client: fireflyMockClient()).run({
+              ...statementArgs(),
+              'amount_format': 'comma',
+              'rows': [
+                {'row_id': 'r1', 'date': '2026-01-15', 'amount': '-45,00'},
+                {'row_id': 'r2', 'date': '2026-01-16', 'amount': '-9 889,00-'},
+              ],
+            });
+
+        expect(result['ok'], isTrue);
+        final needsInput = result['needs_input'] as List<Object?>;
+        expect(needsInput, hasLength(1));
+        expect((needsInput.single as Map)['row_id'], 'r2');
+      },
+    );
+
+    test('validates the window, the rows and the account', () async {
+      final tool = _tool('match_statement', client: fireflyMockClient());
+
+      expect((await tool.run({}))['code'], 'bad_input');
+      expect(
+        (await tool.run({...statementArgs(), 'rows': <Object?>[]}))['error'],
+        contains('rows'),
+      );
+      expect(
+        (await tool.run({
+          ...statementArgs(),
+          'end_date': '2025-12-01',
+        }))['error'],
+        contains('precede'),
+      );
+      expect(
+        (await tool.run({
+          ...statementArgs(),
+          'rows': [
+            {'date': '2026-01-15', 'amount': '1'},
+          ],
+        }))['error'],
+        contains('row_id'),
+      );
+      expect(
+        (await tool.run({
+          ...statementArgs(),
+          'account_id': 'missing',
+        }))['error'],
+        contains('missing'),
+      );
+    });
+  });
+
+  group('find_account identifiers', () {
+    test('an account number in the query wins and yields a hint', () async {
+      final result = await _tool(
+        'find_account',
+        client: fireflyMockClient(),
+      ).run({'query': 'Common Allkonto 571 343 821'});
+
+      final candidate =
+          (result['candidates'] as List<Object?>).first as Map<String, Object?>;
+      expect(candidate['matched_on'], contains('account_number'));
+      expect(candidate['identifier_hint'], 'account number ending 3821');
+      expect(candidate['confidence'], 'exact');
+      expect(candidate['requires_confirmation'], isFalse);
+    });
+
+    test('a supplied iban confirms without being echoed back', () async {
+      final result = await _tool(
+        'find_account',
+        client: fireflyMockClient(),
+      ).run({'query': 'whatever', 'iban': 'SE45 5000 0000 0583 9825 7466'});
+
+      final candidate =
+          (result['candidates'] as List<Object?>).first as Map<String, Object?>;
+      expect(candidate['identifier_hint'], 'iban ending 7466');
+      expect(jsonEncode(result), isNot(contains('5839825746')));
+    });
+  });
+
+  group('match_statement edges', () {
+    Map<String, Object?> base() => {
+      'account_id': '5',
+      'start_date': '2026-01-01',
+      'end_date': '2026-01-31',
+      'rows': [
+        {'row_id': 'r1', 'date': '2026-01-15', 'amount': '-45.00'},
+      ],
+    };
+
+    test('reports the self check and the missing rows', () async {
+      final result = await _tool('match_statement', client: fireflyMockClient())
+          .run({
+            ...base(),
+            'opening_balance': '100.00',
+            'closing_balance': '55.00',
+            'rows': [
+              {'row_id': 'r1', 'date': '2026-01-15', 'amount': '-45.00'},
+              {'row_id': 'r2', 'date': '2026-01-20', 'amount': '-12.00'},
+            ],
+          });
+
+      expect(result['ok'], isTrue);
+      expect(result['statement_self_check'], isA<Map<String, Object?>>());
+      expect(result['missing'], isA<List<Object?>>());
+    });
+
+    test(
+      'an unreadable date is refused with the row that carried it',
+      () async {
+        final tool = _tool('match_statement', client: fireflyMockClient());
+
+        expect(
+          (await tool.run({...base(), 'start_date': 'whenever'}))['code'],
+          'bad_input',
+        );
+        expect(
+          (await tool.run({
+            ...base(),
+            'rows': [
+              {'row_id': 'r1', 'date': 'whenever', 'amount': '1'},
+            ],
+          }))['error'],
+          contains('r1'),
+        );
+        expect(
+          (await tool.run({
+            ...base(),
+            'rows': [
+              {'row_id': 'r1', 'amount': '1'},
+            ],
+          }))['error'],
+          contains('date'),
+        );
+        expect(
+          (await tool.run({
+            ...base(),
+            'rows': [
+              {'row_id': 'r1', 'date': '2026-01-15'},
+            ],
+          }))['error'],
+          contains('amount'),
+        );
+      },
+    );
+
+    test('an unknown amount_format is refused, not thrown', () async {
+      final result = await _tool(
+        'match_statement',
+        client: fireflyMockClient(),
+      ).run({...base(), 'amount_format': 'swedish'});
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('amount_format'));
+    });
+
+    test('more than a thousand rows is refused', () async {
+      final result = await _tool('match_statement', client: fireflyMockClient())
+          .run({
+            ...base(),
+            'rows': [
+              for (var i = 0; i < 1001; i++)
+                {'row_id': 'r$i', 'date': '2026-01-15', 'amount': '-1.00'},
+            ],
+          });
+
+      expect(result['error'], contains('1000'));
+    });
+
+    test('a corpus that settles nothing asks rather than assuming', () async {
+      // A bare 1,234 is worth either 1234 or 1.234, and picking one silently
+      // values a statement row at a thousandth of its real amount.
+      final result = await _tool('match_statement', client: fireflyMockClient())
+          .run({
+            ...base(),
+            'rows': [
+              {'row_id': 'r1', 'date': '2026-01-15', 'amount': '1,234'},
+            ],
+          });
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('amount_format'));
     });
   });
 }

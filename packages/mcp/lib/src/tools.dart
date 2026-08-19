@@ -656,6 +656,65 @@ class FireflyTarget {
 /// Tools take no credentials. [target] is fixed when the server starts, from
 /// the agent key the process authenticated with or the desktop app's saved
 /// connection, so an agent can never widen its own reach through arguments.
+
+/// A resolver candidate, without the identifier it matched on.
+///
+/// The matcher needs the IBAN and the account number; the transcript does not.
+/// A last-four hint is enough for a person to confirm the right account without
+/// putting the identifier itself on the wire.
+Map<String, Object?> _accountCandidateJson(AccountCandidate candidate) {
+  final account = candidate.account;
+  final iban = account.iban?.trim() ?? '';
+  final number = account.accountNumber?.trim() ?? '';
+  final String? hint;
+  if (candidate.matchedOn.contains('account_number') && number.length >= 4) {
+    hint = 'account number ending ${number.substring(number.length - 4)}';
+  } else if (candidate.matchedOn.any((m) => m.startsWith('iban')) &&
+      iban.length >= 4) {
+    hint = 'iban ending ${iban.substring(iban.length - 4)}';
+  } else {
+    hint = null;
+  }
+  return {
+    'account_id': account.id,
+    'name': account.name,
+    'normalized_name': foldAccountName(account.name),
+    'type': account.type,
+    'role': account.role,
+    'currency_code': account.currencyCode,
+    'active': account.active,
+    'has_iban': iban.isNotEmpty,
+    'has_account_number': number.isNotEmpty,
+    'identifier_hint': hint,
+    'matched_on': candidate.matchedOn,
+    'confidence': candidate.confidence.name,
+    'requires_confirmation': candidate.confidence != MatchConfidence.exact,
+    'score': candidate.score,
+    'reasons': candidate.reasons,
+  };
+}
+
+Map<String, Object?> _legJson(LedgerLeg leg) => {
+  'transaction_id': leg.transactionId,
+  'journal_id': leg.journalId,
+  'split_index': leg.isSplitGroup ? leg.index : null,
+  'date': _dateOnly(leg.date),
+  'signed_amount': leg.signedAmount,
+  'description': leg.split.description,
+};
+
+Map<String, Object?> _statementMatchJson(StatementMatch match) => {
+  'row_id': match.row.rowId,
+  ..._legJson(match.leg),
+  'statement_amount': match.row.amount,
+  'amount_delta': match.row.amount - match.leg.signedAmount,
+  'amount_delta_pct': match.amountDeltaPct,
+  'date_delta_days': match.dateDeltaDays,
+  'date_field_used': match.dateFieldUsed,
+  'reasons': match.reasons,
+  'blocked_reason': match.blockedReason,
+};
+
 List<McpTool> buildTools({
   required FireflyTarget target,
   http.Client? httpClient,
@@ -690,7 +749,324 @@ List<McpTool> buildTools({
     }
   }
 
-  return [
+  // Filled once the list below is built, so get_capabilities reports the tools
+  // that actually exist rather than a second list someone has to remember.
+  final toolNames = <String>[];
+  final tools = <McpTool>[
+    McpTool(
+      name: 'find_account',
+      description:
+          'Resolve raw bank text to an account. Matches on account number and '
+          'IBAN first, then on the name, and returns ranked candidates with '
+          'the reason each matched rather than picking one. Identifiers are '
+          'never returned, only a last-four hint.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['query'],
+        'properties': {
+          'query': {
+            'type': 'string',
+            'description':
+                "Raw bank text, such as 'Common Allkonto 571 343 821'.",
+          },
+          'types': {
+            'type': 'array',
+            'items': {
+              'type': 'string',
+              'enum': ['asset', 'liability', 'expense', 'revenue'],
+            },
+            'description': 'Account types to search. Defaults to all four.',
+          },
+          'iban': {
+            'type': 'string',
+            'description': 'An IBAN you already hold, to confirm against.',
+          },
+          'account_number': {'type': 'string'},
+          'limit': {
+            'type': 'integer',
+            'minimum': 1,
+            'maximum': 25,
+            'default': 5,
+          },
+        },
+      },
+      run: (args) async {
+        final query = (args['query'] as String?)?.trim();
+        if (query == null || query.isEmpty) {
+          return _badInput('query is required');
+        }
+        final requested = _strList(args['types']);
+        const known = ['asset', 'liability', 'expense', 'revenue'];
+        for (final type in requested) {
+          if (!known.contains(type)) {
+            return _badInput('unknown account type: $type');
+          }
+        }
+        final types = requested.isEmpty ? known : requested;
+        final limit = (args['limit'] as num?)?.toInt() ?? 5;
+        if (limit < 1 || limit > 25) {
+          return _badInput('limit must be between 1 and 25');
+        }
+
+        final accounts = await service().getAccounts(types: types);
+        final resolution = resolveAccountCandidates(
+          accounts: accounts,
+          query: query,
+          iban: (args['iban'] as String?)?.trim(),
+          accountNumber: (args['account_number'] as String?)?.trim(),
+          limit: limit,
+        );
+        return {
+          'ok': true,
+          'query': query,
+          'normalized_query': foldAccountName(query),
+          'query_digits': digitsOnly(query),
+          'searched_types': types,
+          'candidate_count': resolution.candidates.length,
+          'ambiguous': resolution.ambiguous,
+          'ambiguity_band': kAmbiguityBand,
+          'skipped_blank_names': resolution.skippedBlankNames,
+          'collisions': [
+            for (final entry in resolution.collisions.entries)
+              {'key': entry.key, 'account_ids': entry.value},
+          ],
+          'warnings': resolution.warnings,
+          'candidates': [
+            for (final candidate in resolution.candidates)
+              _accountCandidateJson(candidate),
+          ],
+        };
+      },
+    ),
+    McpTool(
+      name: 'match_statement',
+      description:
+          'Match bank statement rows against what is recorded on an account. '
+          'Returns matched, near-matched and missing rows with the arithmetic '
+          'that proves the classification. Tolerances are fixed and echoed in '
+          'the response; a row whose amount cannot be read is returned for a '
+          'person to settle rather than guessed.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['account_id', 'start_date', 'end_date', 'rows'],
+        'properties': {
+          'account_id': {
+            'type': 'string',
+            'description': 'Account id, never a name. Use find_account first.',
+          },
+          'start_date': {'type': 'string', 'description': 'YYYY-MM-DD.'},
+          'end_date': {
+            'type': 'string',
+            'description': 'YYYY-MM-DD, inclusive.',
+          },
+          'opening_balance': {'type': 'string'},
+          'closing_balance': {'type': 'string'},
+          'amount_format': {
+            'type': 'string',
+            'enum': ['auto', 'dot', 'comma'],
+            'default': 'auto',
+          },
+          'rows': {
+            'type': 'array',
+            'minItems': 1,
+            'maxItems': 1000,
+            'items': {
+              'type': 'object',
+              'required': ['row_id', 'date', 'amount'],
+              'properties': {
+                'row_id': {'type': 'string'},
+                'date': {'type': 'string'},
+                'book_date': {'type': 'string'},
+                'amount': {
+                  'type': 'string',
+                  'description': 'Signed. Raw bank text is accepted.',
+                },
+                'text': {'type': 'string'},
+              },
+            },
+          },
+        },
+      },
+      run: (args) async {
+        final accountId = (args['account_id'] as String?)?.trim();
+        if (accountId == null || accountId.isEmpty) {
+          return _badInput('account_id is required');
+        }
+        final DateTime? start;
+        final DateTime? inclusiveEnd;
+        try {
+          start = _optionalDate(args['start_date'], 'start_date');
+          inclusiveEnd = _optionalDate(args['end_date'], 'end_date');
+        } on ArgumentError catch (e) {
+          return _badInput('${e.message}');
+        }
+        if (start == null) return _badInput('start_date is required');
+        if (inclusiveEnd == null) return _badInput('end_date is required');
+        if (inclusiveEnd.isBefore(start)) {
+          return _badInput('end_date must not precede start_date');
+        }
+
+        final rawRows = args['rows'];
+        if (rawRows is! List || rawRows.isEmpty) {
+          return _badInput('rows must list at least one statement row');
+        }
+        if (rawRows.length > 1000) {
+          return _badInput('rows must not exceed 1000 entries');
+        }
+        final parsedRows = <RawStatementRow>[];
+        for (final entry in rawRows) {
+          if (entry is! Map) return _badInput('each row must be an object');
+          final row = entry.cast<String, Object?>();
+          final rowId = (row['row_id'] as String?)?.trim();
+          if (rowId == null || rowId.isEmpty) {
+            return _badInput('every row needs a row_id');
+          }
+          final DateTime? date;
+          final DateTime? bookDate;
+          try {
+            date = _optionalDate(row['date'], 'date');
+            bookDate = _optionalDate(row['book_date'], 'book_date');
+          } on ArgumentError catch (e) {
+            return _badInput('row $rowId: ${e.message}');
+          }
+          if (date == null) return _badInput('row $rowId needs a date');
+          final amount = row['amount'];
+          if (amount == null) return _badInput('row $rowId needs an amount');
+          parsedRows.add(
+            RawStatementRow(
+              rowId: rowId,
+              date: date,
+              bookDate: bookDate,
+              rawAmount: '$amount',
+              text: row['text'] as String?,
+            ),
+          );
+        }
+
+        final format = (args['amount_format'] as String?) ?? 'auto';
+        if (!const ['auto', 'dot', 'comma'].contains(format)) {
+          return _badInput('amount_format must be auto, dot or comma');
+        }
+        final grammar = switch (format) {
+          'dot' => AmountGrammar.dotDecimal,
+          'comma' => AmountGrammar.commaDecimal,
+          _ => null,
+        };
+
+        final parsed = parseStatementRows(
+          rows: parsedRows,
+          openingBalance: args['opening_balance'] as String?,
+          closingBalance: args['closing_balance'] as String?,
+          amountFormat: grammar,
+        );
+        if (parsed is StatementParseFailure) {
+          return _badInput('${parsed.field}: ${parsed.message}');
+        }
+        final settled = parsed as StatementParsed;
+
+        final api = service();
+        final accounts = await api.getAccounts(
+          types: const ['asset', 'liability'],
+        );
+        final account = accounts.where((a) => a.id == accountId).firstOrNull;
+        if (account == null) {
+          return _badInput('no asset or liability account with id $accountId');
+        }
+
+        final recorded = await api.getAccountTransactions(
+          accountId,
+          start: start,
+          end: inclusiveEnd.add(const Duration(days: 1)),
+        );
+
+        final plan = matchStatementRows(
+          accountId: accountId,
+          rows: settled.rows,
+          recorded: recorded,
+          periodStart: start,
+          periodEnd: inclusiveEnd,
+          currencyCode: account.currencyCode,
+          openingBalance: settled.openingBalance,
+          closingBalance: settled.closingBalance,
+          needsInput: settled.needsInput,
+        );
+
+        final arithmetic = plan.arithmetic;
+        return {
+          'ok': true,
+          'account': {
+            'id': account.id,
+            'name': account.name,
+            'currency_code': account.currencyCode,
+          },
+          'window': {
+            'start': _dateOnly(start),
+            'end': _dateOnly(inclusiveEnd),
+            'date_tolerance_days': kStatementDateToleranceDays,
+            'near_date_tolerance_days': kStatementNearDateToleranceDays,
+            'near_amount_tolerance_pct': kStatementNearAmountTolerancePct,
+            'amount_equality_tolerance': kAmountEqualityTolerance,
+          },
+          'parse': {
+            'amount_format_used': settled.grammar.name,
+            'rows_read': settled.rows.length,
+            'rows_needing_input': settled.needsInput.length,
+          },
+          'matched': [
+            for (final match in plan.matched) _statementMatchJson(match),
+          ],
+          'near_matches': [
+            for (final match in plan.near) _statementMatchJson(match),
+          ],
+          'missing': [
+            for (final row in plan.missing)
+              {
+                'row_id': row.rowId,
+                'date': _dateOnly(row.date),
+                'amount': row.amount,
+                'text': row.text,
+              },
+          ],
+          'needs_input': [
+            for (final row in plan.needsInput)
+              {
+                'row_id': row.rowId,
+                'raw_amount': row.rawAmount,
+                'reason': row.reason,
+                'candidates': row.candidates,
+              },
+          ],
+          'unmatched_recorded': [
+            for (final leg in plan.unmatchedRecorded) _legJson(leg),
+          ],
+          'excluded': {
+            'foreign_currency_splits': plan.excludedForeignCurrencySplits,
+            'fetched_outside_period': plan.excludedOutsidePeriod,
+          },
+          'arithmetic': {
+            'statement_rows_sum': arithmetic.statementRowsSum,
+            'recorded_sum': arithmetic.recordedSum,
+            'rows_minus_recorded': arithmetic.rowsMinusRecorded,
+            'opening_balance': arithmetic.openingBalance,
+            'closing_balance': arithmetic.closingBalance,
+            'balance_gap': arithmetic.balanceGap,
+            'missing_rows_sum': arithmetic.missingRowsSum,
+            'gap_closed_by_plan': arithmetic.gapClosedByPlan,
+            'agrees': arithmetic.agrees,
+            'disagreement_reason': arithmetic.disagreementReason,
+          },
+          'statement_self_check': plan.selfCheck == null
+              ? null
+              : {
+                  'opening': plan.selfCheck!.opening,
+                  'rows_sum': plan.selfCheck!.rowsSum,
+                  'implied_closing': plan.selfCheck!.impliedClosing,
+                  'stated_closing': plan.selfCheck!.statedClosing,
+                  'agrees': plan.selfCheck!.agrees,
+                },
+        };
+      },
+    ),
     McpTool(
       name: 'get_capabilities',
       description:
@@ -699,63 +1075,7 @@ List<McpTool> buildTools({
       run: (_) async => {
         'ok': true,
         'version': _mcpVersion,
-        'tools': [
-          'check_connection',
-          'get_current_user',
-          'get_primary_currency',
-          'set_primary_currency',
-          'get_accounts',
-          'get_transactions',
-          'get_transaction',
-          'search_transactions',
-          'create_transaction',
-          'update_transaction',
-          'duplicate_transaction',
-          'delete_transaction',
-          'set_transaction_reconciled',
-          'store_reconciliation',
-          'get_budgets',
-          'get_budget_transactions',
-          'update_account',
-          'update_budget',
-          'delete_budget',
-          'get_account',
-          'get_account_balance_at_date',
-          'create_account',
-          'delete_account',
-          'create_budget',
-          'get_budget_limits',
-          'create_budget_limit',
-          'update_budget_limit',
-          'get_categories',
-          'create_category',
-          'update_category',
-          'delete_category',
-          'get_tags',
-          'create_tag',
-          'update_tag',
-          'delete_tag',
-          'get_currencies',
-          'get_bills',
-          'create_bill',
-          'update_bill',
-          'delete_bill',
-          'get_piggy_banks',
-          'create_piggy_bank',
-          'update_piggy_bank',
-          'delete_piggy_bank',
-          'get_recurrences',
-          'create_recurrence',
-          'update_recurrence',
-          'delete_recurrence',
-          'get_recurrence_transactions',
-          'get_bill_transactions',
-          'get_account_balance_history',
-          'create_liability',
-          'run_projection',
-          'get_dashboard_kpis',
-          'get_capabilities',
-        ],
+        'tools': [...toolNames]..sort(),
         // Sorted so this and the schema's list compare by membership, not by
         // the order two hand-maintained lists happen to be in.
         'write_tools': [..._writeToolNames]..sort(),
@@ -2772,4 +3092,6 @@ List<McpTool> buildTools({
       },
     ),
   ];
+  toolNames.addAll(tools.map((tool) => tool.name));
+  return tools;
 }

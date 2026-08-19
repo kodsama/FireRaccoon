@@ -43,6 +43,8 @@ Map<String, Object?> assetAccountsBody({String balance = '2500.00'}) => {
         'name': 'Checking',
         'type': 'asset',
         'account_role': 'defaultAsset',
+        'iban': 'SE4550000000058398257466',
+        'account_number': '571343821',
         'current_balance': balance,
         'currency_symbol': '€',
         'currency_code': 'EUR',
