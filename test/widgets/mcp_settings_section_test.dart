@@ -161,6 +161,7 @@ class _FixedMcpService extends McpService {
     required String fireflyToken,
     required List<AgentKey> agentKeys,
     required List<AgentKeyPerson> people,
+    String? agentKeysError,
     int basePort = 8787,
   }) async {}
 }

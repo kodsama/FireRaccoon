@@ -1,11 +1,28 @@
 import 'dart:convert';
 
 import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'secure_storage.dart';
 
 const String kAgentKeysStorageKey = 'agent_keys_v1';
+
+/// Describes a key-store failure with the platform's status code kept.
+///
+/// The code is the part that names the cause: `-34018` is a missing
+/// entitlement, `-25300` a missing item, `-25293` a refused authorisation.
+/// Without it the reader is left guessing at exactly the point they need to
+/// act, and the app logger records an error's type but never its text.
+String describeAgentKeyFailure(Object error) {
+  if (error is PlatformException) {
+    final detail = error.message ?? '';
+    return detail.isEmpty
+        ? 'Keychain error ${error.code}'
+        : 'Keychain error ${error.code}: $detail';
+  }
+  return '$error';
+}
 
 /// Persists MCP agent keys for local mode, in the platform keychain.
 ///

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'agent_keys_provider.dart';
 import 'auth_provider.dart';
 import '../services/mcp_service.dart';
+import '../store/agent_key_store.dart';
 
 final mcpServiceProvider = Provider<McpService>((ref) {
   final service = McpService();
@@ -24,11 +25,17 @@ final mcpServiceProvider = Provider<McpService>((ref) {
       service.stop();
       return;
     }
+    // localRecords is empty both when there are no keys and when the store
+    // could not be read, so the provider's own error is what tells them apart.
+    final keys = ref.read(agentKeysProvider);
     service.sync(
       fireflyUrl: auth.serverUrl,
       fireflyToken: auth.apiToken,
       agentKeys: ref.read(agentKeysProvider.notifier).localRecords,
       people: ref.read(agentKeyPeopleProvider),
+      agentKeysError: keys.hasError
+          ? describeAgentKeyFailure(keys.error!)
+          : null,
     );
   }
 

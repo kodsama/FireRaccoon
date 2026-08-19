@@ -9,6 +9,7 @@ import 'package:intl/intl.dart';
 import '../l10n/l10n_extensions.dart';
 import '../providers/agent_keys_provider.dart';
 import '../providers/mcp_provider.dart';
+import '../store/agent_key_store.dart';
 import '../services/mcp_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_feedback.dart';
@@ -55,11 +56,16 @@ class McpSettingsSection extends ConsumerWidget {
             child: SmallLoadingIndicator(),
           ),
           error: (error, stackTrace) {
-            _log.severe('Loading MCP agent keys failed', error, stackTrace);
+            final described = describeAgentKeyFailure(error);
+            _log.severe(
+              'Loading MCP agent keys failed: $described',
+              error,
+              stackTrace,
+            );
             return Padding(
               padding: const EdgeInsets.all(16),
               child: Text(
-                '$error',
+                described,
                 style: TextStyle(color: context.colors.danger),
               ),
             );

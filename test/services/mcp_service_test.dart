@@ -634,6 +634,26 @@ void main() {
     expect(service.needsAgentKey, isTrue);
   });
 
+  test('an unreadable key store is not reported as an empty one', () async {
+    final service = McpService();
+
+    // Both cases arrive here with no keys, and telling someone they have none
+    // when the keychain refused sends them off to reissue a key they still
+    // have.
+    await service.sync(
+      fireflyUrl: _url,
+      fireflyToken: _token,
+      agentKeys: const [],
+      people: _people,
+      agentKeysError: 'Keychain error -34018: entitlement missing',
+      basePort: 18881,
+    );
+
+    expect(service.running, isFalse);
+    expect(service.needsAgentKey, isFalse);
+    expect(service.error, contains('-34018'));
+  });
+
   test('dispose stops running server', () async {
     final service = McpService();
     await service.sync(

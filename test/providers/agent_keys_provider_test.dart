@@ -14,6 +14,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -121,6 +122,34 @@ void main() {
       // Clearing again on an already empty store must stay quiet.
       await store.clear();
       expect(await store.load(), isEmpty);
+    });
+  });
+
+  group('describeAgentKeyFailure', () {
+    test('keeps the platform status code, which names the cause', () {
+      // -34018 is a missing entitlement and -25300 a missing item; the app
+      // logger records an error's type but never its text, so without the code
+      // the reader is left guessing at the point they need to act.
+      expect(
+        describeAgentKeyFailure(
+          PlatformException(code: '-34018', message: 'A required entitlement'),
+        ),
+        'Keychain error -34018: A required entitlement',
+      );
+    });
+
+    test('a platform error with no message still reports its code', () {
+      expect(
+        describeAgentKeyFailure(PlatformException(code: '-25300')),
+        'Keychain error -25300',
+      );
+    });
+
+    test('anything else is reported as it prints', () {
+      expect(
+        describeAgentKeyFailure(StateError('no store')),
+        contains('no store'),
+      );
     });
   });
 
