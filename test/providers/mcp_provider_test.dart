@@ -28,6 +28,32 @@ void main() {
     debugDefaultTargetPlatformOverride = null;
   });
 
+  test('an unreadable key store reaches the service as an error', () async {
+    final container = ProviderContainer(
+      overrides: [
+        authProvider.overrideWith(
+          () => StaticAuthNotifier(
+            AuthSettings(serverUrl: 'http://localhost:8080', apiToken: 'token'),
+          ),
+        ),
+        peopleProvider.overrideWith(() => StaticPeopleNotifier(const [])),
+        agentKeysProvider.overrideWith(_FailingAgentKeys.new),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final service = container.read(mcpServiceProvider);
+    await container
+        .read(agentKeysProvider.future)
+        .catchError((Object _) => <AgentKeyView>[]);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    // Without this the status reads "no agent keys issued" for a keychain that
+    // refused, which sends someone off to reissue a key they still have.
+    expect(service.needsAgentKey, isFalse);
+    expect(service.error, contains('-34018'));
+  });
+
   test('mcpServiceProvider creates and disposes McpService', () {
     final container = ProviderContainer(
       overrides: [
@@ -115,4 +141,16 @@ void main() {
 
     expect(service.running, isFalse);
   });
+}
+
+/// A key store that will not open, standing in for a refused keychain.
+///
+/// Throws an Error rather than an exception because Riverpod retries a failed
+/// build with backoff unless the failure is an Error, and the retry window
+/// would leave the provider loading rather than failed.
+class _FailingAgentKeys extends AgentKeysNotifier {
+  @override
+  Future<List<AgentKeyView>> build() async {
+    throw StateError('Keychain error -34018: entitlement missing');
+  }
 }
