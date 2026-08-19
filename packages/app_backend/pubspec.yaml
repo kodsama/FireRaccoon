@@ -11,6 +11,8 @@ environment:
 dependencies:
   crypto: ^3.0.7
   cryptography: ^2.9.0
+  fireracoon_engine:
+    path: ../engine
   http: ^1.6.0
   path: ^1.9.1
   shelf: ^1.4.2
