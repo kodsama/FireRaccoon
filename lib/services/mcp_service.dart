@@ -68,6 +68,7 @@ class McpService extends ChangeNotifier {
     required String fireflyToken,
     required List<AgentKey> agentKeys,
     required List<AgentKeyPerson> people,
+    String? agentKeysError,
     int basePort = 8787,
   }) {
     final next = (_queue ?? Future<void>.value()).then(
@@ -76,6 +77,7 @@ class McpService extends ChangeNotifier {
         fireflyToken: fireflyToken,
         agentKeys: agentKeys,
         people: people,
+        agentKeysError: agentKeysError,
         basePort: basePort,
       ),
     );
@@ -89,6 +91,7 @@ class McpService extends ChangeNotifier {
     required String fireflyToken,
     required List<AgentKey> agentKeys,
     required List<AgentKeyPerson> people,
+    required String? agentKeysError,
     required int basePort,
   }) async {
     final active = [
@@ -114,6 +117,16 @@ class McpService extends ChangeNotifier {
       _error = 'Firefly credentials not configured';
       _needsAgentKey = false;
       _log.warning('MCP start aborted: Firefly credentials missing');
+      notifyListeners();
+      return;
+    }
+    if (agentKeysError != null) {
+      // A store that cannot be read is not a store with no keys in it. Saying
+      // "no keys issued" for a keychain that refused sends someone off to
+      // reissue a key they already have.
+      _error = agentKeysError;
+      _needsAgentKey = false;
+      _log.severe('MCP start aborted: agent keys unreadable: $agentKeysError');
       notifyListeners();
       return;
     }
