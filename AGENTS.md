@@ -4,8 +4,9 @@
 > For REST discovery, read `openapi.yaml` at the repo root.
 
 FireRacoon is a Flutter client for [Firefly III](https://www.firefly-iii.org/) with
-an on-device projection engine. Agents can query accounts, transactions, budgets,
-run projections, and compute dashboard KPIs without touching the GUI.
+an on-device projection engine. Agents read and write the whole bookkeeping
+surface, accounts through recurrences, and run projections and dashboard KPIs,
+without touching the GUI.
 
 ## Discovery flow
 
@@ -47,28 +48,71 @@ See `docs/adr/0002-local-vs-server-mode.md` and `docs/deployment.md`.
 
 ## Tools
 
-Intentional agent subset of `FireflyService` (not the full Firefly API). See
-`CONTEXT.md` and `docs/adr/0001-projection-vs-prognosis.md`.
+Accounts, transactions, budgets, budget limits, categories, tags, bills, piggy
+banks, recurrences, currencies, reconciliation, and the on-device projection:
+55 tools, 31 of them write-gated. The rich account prognosis behind the UI is
+the one engine capability with no tool
+(`docs/adr/0001-projection-vs-prognosis.md`). `get_capabilities` returns the
+live catalog and the write-gated names a `viewer` key is refused. Domain terms
+live in `CONTEXT.md`.
 
 | Tool | Purpose |
 |------|---------|
-| `get_capabilities` | Server version and tool catalog |
+| `get_capabilities` | Server version, tool catalog, and the write-gated list |
 | `check_connection` | Probe `/api/v1/about` |
 | `get_current_user` | Authenticated Firefly user |
-| `get_primary_currency` | Primary currency |
-| `set_primary_currency` | Set primary currency |
-| `get_accounts` | List accounts + balances |
-| `get_transactions` | Transactions (optional account, pagination, reconciled filter) |
-| `get_transaction` | Single transaction by journal ID |
-| `set_transaction_reconciled` | Mark transaction reconciled/unreconciled |
-| `store_reconciliation` | Mark reconciled; optional correction; for `ccAsset`, optional payback transfer |
-| `get_budgets` | List budgets |
-| `get_budget_transactions` | Budget-linked transactions |
-| `update_account` | Rename account |
-| `update_budget` | Update budget name/amount |
-| `delete_budget` | Delete budget |
-| `run_projection` | Savings/compound/portfolio/cashflow projection |
-| `get_dashboard_kpis` | Net worth, income, spending for a period |
+| `get_primary_currency` | Instance default currency |
+| `set_primary_currency` | Change the default currency |
+| `get_accounts` | List accounts with balances; pass types to reach payees |
+| `get_transactions` | Transactions, filterable by account, date window, and reconciled state |
+| `get_transaction` | One transaction by group ID; Firefly answers 401 for a journal ID |
+| `set_transaction_reconciled` | Mark reconciled or unreconciled |
+| `store_reconciliation` | Reconcile an account; optional correction, and a payback transfer for `ccAsset` |
+| `create_transaction` | Create a transaction |
+| `update_transaction` | Update a transaction; omitted fields keep their value |
+| `duplicate_transaction` | Copy a transaction, with optional overrides |
+| `delete_transaction` | Delete a transaction group and every split in it |
+| `search_transactions` | Full-text search, for matching statement lines |
+| `get_budgets` | List budgets with spent amounts |
+| `get_budget_transactions` | Transactions for a budget |
+| `update_account` | Rename an account |
+| `update_budget` | Update a budget name, active flag, notes, and auto-budget |
+| `delete_budget` | Delete a budget |
+| `get_account` | One account, optionally as it stood on a date |
+| `get_account_balance_at_date` | Balance on a date, for checking a statement close |
+| `get_account_balance_history` | Balance series across a window |
+| `create_account` | Create an asset, expense, revenue, or liability account |
+| `create_liability` | Create a loan, debt, or mortgage |
+| `delete_account` | Delete an account **and its transactions** |
+| `create_budget` | Create a budget, optionally with an auto-budget |
+| `get_budget_limits` | Per-period amounts on a budget |
+| `create_budget_limit` | Set a budget amount for one period |
+| `update_budget_limit` | Change a budget limit |
+| `get_categories` | List categories |
+| `create_category` | Create a category |
+| `update_category` | Rename a category, and optionally replace its notes |
+| `delete_category` | Delete a category |
+| `get_tags` | List tags |
+| `create_tag` | Create a tag |
+| `update_tag` | Rename a tag, and optionally replace its description |
+| `delete_tag` | Delete a tag |
+| `get_bills` | List bills with their amount ranges |
+| `create_bill` | Create a bill |
+| `update_bill` | Update a bill; omitted fields keep their value |
+| `delete_bill` | Delete a bill; linked transactions survive without the link |
+| `get_bill_transactions` | Transactions matched to a bill |
+| `get_piggy_banks` | List piggy banks and progress toward target |
+| `create_piggy_bank` | Create a piggy bank linked to asset accounts |
+| `update_piggy_bank` | Update a piggy bank; omitted fields keep their value |
+| `delete_piggy_bank` | Delete a piggy bank; linked accounts are untouched |
+| `get_recurrences` | List recurring transaction rules |
+| `get_recurrence_transactions` | Transactions a recurring rule has created |
+| `create_recurrence` | Create a recurring rule |
+| `update_recurrence` | Replace a recurring rule; every field to keep must be passed |
+| `delete_recurrence` | Delete a recurring rule; transactions it created are kept |
+| `get_currencies` | List currencies and which are enabled |
+| `run_projection` | Savings, compound, portfolio, or cashflow projection |
+| `get_dashboard_kpis` | Net worth, income, spending, and savings for a period |
 
 ## Result shape
 

@@ -96,6 +96,44 @@ void main() {
       expect(account.interestPeriod, 'monthly');
     });
 
+    test('parses virtual balance and interest', () {
+      // Both are written by updateAccount but were never read back, so a
+      // value set in the app reloaded as null and the edit dialog showed
+      // an empty field over a stored figure.
+      final account = Account.fromJson({
+        'id': '10',
+        'attributes': {
+          'name': 'Mortgage',
+          'type': 'liabilities',
+          'virtual_balance': '250.75',
+          'interest': '3.5',
+        },
+      });
+
+      expect(account.virtualBalance, 250.75);
+      expect(account.interest, 3.5);
+    });
+
+    test('leaves virtual balance and interest null when unreadable', () {
+      final missing = Account.fromJson({
+        'id': '11',
+        'attributes': {'name': 'Checking'},
+      });
+      final unreadable = Account.fromJson({
+        'id': '12',
+        'attributes': {
+          'name': 'Checking',
+          'virtual_balance': '',
+          'interest': 'n/a',
+        },
+      });
+
+      expect(missing.virtualBalance, isNull);
+      expect(missing.interest, isNull);
+      expect(unreadable.virtualBalance, isNull);
+      expect(unreadable.interest, isNull);
+    });
+
     test('copyWith replaces every field', () {
       final base = Account(
         id: '1',
@@ -444,6 +482,71 @@ void main() {
       expect(tx.isSplitGroup, isTrue);
       expect(tx.splits, hasLength(2));
       expect(tx.groupTitle, 'Grocery run');
+    });
+
+    test('parses a journal id per split of a group', () {
+      // Every leg used to expose only the group id, so nothing downstream
+      // could name one leg of a split.
+      final tx = Transaction.fromJson({
+        'id': '42',
+        'attributes': {
+          'group_title': 'Grocery run',
+          'transactions': [
+            {
+              'transaction_journal_id': 101,
+              'type': 'withdrawal',
+              'date': '2026-07-07',
+              'amount': '10',
+              'description': 'Grocery run',
+            },
+            {
+              'transaction_journal_id': '102',
+              'type': 'withdrawal',
+              'date': '2026-07-07',
+              'amount': '15',
+              'description': 'Grocery run',
+            },
+          ],
+        },
+      });
+
+      expect(tx.id, '42');
+      expect(tx.journalId, '101');
+      expect(tx.splits.map((split) => split.journalId), ['101', '102']);
+    });
+
+    test('leaves journalId null when the payload omits it', () {
+      final tx = Transaction.fromJson({
+        'id': '7',
+        'attributes': {
+          'transactions': [
+            {'type': 'withdrawal', 'date': '2026-07-07', 'amount': '10'},
+          ],
+        },
+      });
+
+      expect(tx.journalId, isNull);
+    });
+
+    test('copyWith replaces the journal id and keeps it otherwise', () {
+      // copyWith rebuilds every field explicitly, so a field it forgets is
+      // silently dropped: fromJson itself builds split groups through it.
+      final leg = Transaction.fromJson({
+        'id': '42',
+        'attributes': {
+          'transactions': [
+            {
+              'transaction_journal_id': '101',
+              'type': 'withdrawal',
+              'date': '2026-07-07',
+              'amount': '10',
+            },
+          ],
+        },
+      });
+
+      expect(leg.copyWith(journalId: '102').journalId, '102');
+      expect(leg.copyWith(amount: 12).journalId, '101');
     });
 
     test('parses reconciled flag from split payload', () {
