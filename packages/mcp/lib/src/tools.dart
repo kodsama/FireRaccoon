@@ -368,7 +368,12 @@ Future<BillInput> _billInput(
         (await api.getPrimaryCurrency()).code,
     date: date,
     repeatFrequency: args.containsKey('repeat_frequency')
-        ? BillRepeatFrequency.fromApi(args['repeat_frequency'] as String?)
+        ? _requireEnum(
+            BillRepeatFrequency.values,
+            args['repeat_frequency'] as String?,
+            (v) => v.apiValue,
+            'repeat_frequency',
+          )
         : (base?.repeatFrequency ?? BillRepeatFrequency.monthly),
     skip: (args['skip'] as num?)?.toInt() ?? base?.skip ?? 0,
     active: args['active'] as bool? ?? base?.active ?? true,
@@ -452,6 +457,23 @@ T? _enumByApiValue<T>(
     if (apiValue(value) == raw) return value;
   }
   return null;
+}
+
+/// Like [_enumByApiValue] but refuses an unknown value instead of returning
+/// null. The engine's own `fromApi` constructors fall back to a default, which
+/// is right when parsing whatever Firefly sends but wrong for agent input: it
+/// would turn `type: 'refund'` into a withdrawal and create it without comment.
+T _requireEnum<T>(
+  List<T> values,
+  String? raw,
+  String Function(T) apiValue,
+  String field,
+) {
+  final match = _enumByApiValue(values, raw, apiValue);
+  if (match != null) return match;
+  throw ArgumentError(
+    '$field must be one of ${values.map(apiValue).join(', ')}',
+  );
 }
 
 Map<String, Object?> _pageJson(TransactionPageResult result) => {
@@ -543,7 +565,12 @@ Future<RecurrenceInput> _recurrenceInput(
   final currency =
       args['currency_code'] as String? ?? (await api.getPrimaryCurrency()).code;
   return RecurrenceInput(
-    type: RecurrenceTransactionType.fromApi(args['type'] as String?),
+    type: _requireEnum(
+      RecurrenceTransactionType.values,
+      args['type'] as String?,
+      (v) => v.apiValue,
+      'type',
+    ),
     title: title,
     description: args['description'] as String?,
     firstDate: firstDate,
@@ -554,9 +581,14 @@ Future<RecurrenceInput> _recurrenceInput(
     notes: args['notes'] as String?,
     repetitions: [
       RecurrenceRepetitionInput(
-        type: RecurrenceRepetitionType.fromApi(
-          args['repetition_type'] as String?,
-        ),
+        type: args.containsKey('repetition_type')
+            ? _requireEnum(
+                RecurrenceRepetitionType.values,
+                args['repetition_type'] as String?,
+                (v) => v.apiValue,
+                'repetition_type',
+              )
+            : RecurrenceRepetitionType.monthly,
         moment: (args['moment'] as String?) ?? '',
         skip: (args['skip'] as num?)?.toInt() ?? 0,
       ),
@@ -1683,6 +1715,10 @@ List<McpTool> buildTools({
         if (type == null || type.isEmpty) return _badInput('type is required');
         if (currency == null || currency.isEmpty) {
           return _badInput('currency_code is required');
+        }
+        const accountTypes = ['asset', 'expense', 'revenue', 'liability'];
+        if (!accountTypes.contains(type)) {
+          return _badInput('type must be one of ${accountTypes.join(', ')}');
         }
         final created = await service().createAccount(
           name: name,
