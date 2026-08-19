@@ -2205,6 +2205,115 @@ class AppLocalizationsFr extends AppLocalizations {
   String get mcpStatusStarting => 'Démarrage…';
 
   @override
+  String get mcpStatusNoKeys => 'No agent keys yet, so the server is idle';
+
+  @override
+  String get mcpAgentKeys => 'Agent keys';
+
+  @override
+  String get mcpAgentKeysHint =>
+      'Agents authenticate with a FireRacoon key, not your Firefly III token. Each key acts as the person who created it.';
+
+  @override
+  String get mcpNoAgentKeys => 'No agent keys yet';
+
+  @override
+  String get mcpCreateKey => 'Create key';
+
+  @override
+  String get mcpKeyLabel => 'Label';
+
+  @override
+  String get mcpKeyLabelHint => 'Claude Desktop';
+
+  @override
+  String get mcpKeyIssuedTitle => 'Copy your agent key';
+
+  @override
+  String get mcpForgetKey => 'Forget this key';
+
+  @override
+  String get mcpPickKeyTitle => 'Which key should it use?';
+
+  @override
+  String get mcpWithoutKey => 'Without a key';
+
+  @override
+  String get mcpShowKey => 'Show key';
+
+  @override
+  String get mcpKeyNotRecoverable =>
+      'This key was created before keys could be read back. Revoke it and create a new one.';
+
+  @override
+  String get mcpKeyIssuedBody =>
+      'Paste this into your MCP client as initialize.params.apiKey, or set FIRERACOON_API_KEY. You can reopen it later from this list.';
+
+  @override
+  String get mcpCopyKey => 'Copy';
+
+  @override
+  String get mcpKeyCopied => 'Agent key copied';
+
+  @override
+  String get mcpRevokeKey => 'Revoke';
+
+  @override
+  String get mcpRevokeKeyTitle => 'Revoke agent key?';
+
+  @override
+  String mcpRevokeKeyBody(String label) {
+    return '$label stops working immediately and its open connections drop.';
+  }
+
+  @override
+  String mcpKeyCreatedAt(String date) {
+    return 'Created $date';
+  }
+
+  @override
+  String mcpKeyRevokedAt(String date) {
+    return 'Revoked $date';
+  }
+
+  @override
+  String get mcpServerCredentials => 'MCP server credentials';
+
+  @override
+  String get mcpAddress => 'Address';
+
+  @override
+  String get mcpNotRunning => 'Not running';
+
+  @override
+  String get mcpAuthParameter => 'Auth parameter';
+
+  @override
+  String get mcpTransportLabel => 'Transport';
+
+  @override
+  String get mcpTransportTcp => 'TCP (localhost only)';
+
+  @override
+  String get mcpCopyConnection => 'Copy connection details';
+
+  @override
+  String get mcpConnectionCopied => 'Connection details copied';
+
+  @override
+  String mcpKeyLastUsedAt(String date) {
+    return 'Last used $date';
+  }
+
+  @override
+  String get mcpKeyNeverUsed => 'Never used';
+
+  @override
+  String mcpKeyOwner(String name, String role) {
+    return 'Acts as $name ($role)';
+  }
+
+  @override
   String get transactionDate => 'Date';
 
   @override
@@ -3364,25 +3473,35 @@ class AppLocalizationsFr extends AppLocalizations {
   String get settingsBackup => 'Backup & restore';
 
   @override
+  String get exportSettingsDisclosureTitle => 'What goes into the file?';
+
+  @override
+  String get exportSettingsDisclosure =>
+      'INCLUDED:\n• People, their roles, and account assignments\n• Account classifications, layout, and preferences\n• Prognosis settings and the Firefly URL\n\nNOT INCLUDED:\n• MCP agent keys. They never leave this device, so an agent needs a key issued where it will run.\n• Your Firefly data itself: accounts, transactions, budgets. That stays in Firefly III.\n• Custom profile photos and biometric unlock\n• The Firefly API token and password hashes, unless you set a backup passphrase on the next screen, which seals them into the file';
+
+  @override
+  String get exportSettingsContinue => 'Export';
+
+  @override
   String get exportSettings => 'Export settings';
 
   @override
   String get exportSettingsDescription =>
-      'Save people, preferences, layout, and the Firefly URL to a JSON file. The API token and salted password hashes are encrypted with a backup passphrase. Custom profile photos are not included.';
+      'Saves people and their roles, account assignments and classifications, layout, preferences, prognosis settings, and the Firefly URL to a JSON file.\n\nLeft out: MCP agent keys, which never leave this device; your Firefly data itself (accounts, transactions, budgets), which stays in Firefly III; custom profile photos; and biometric unlock. The Firefly API token and password hashes are only included if you set a backup passphrase, which encrypts them.';
 
   @override
   String get importSettings => 'Import settings';
 
   @override
   String get importSettingsDescription =>
-      'Replace settings on this device with a previously exported file.';
+      'Replaces what is on this device with a previously exported file: people and their roles, account assignments and classifications, layout, preferences, prognosis settings, and the Firefly connection if the file has one.\n\nDeletes MCP agent keys whose owner no longer exists afterwards. A key created before People were set up belongs to \"this device\", so importing people removes it and any agent using it stops working.\n\nDoes not restore custom profile photos or biometric unlock. Password login stays off unless the file carries portable password hashes and you enter its passphrase.';
 
   @override
   String get importSettingsConfirmTitle => 'Overwrite settings?';
 
   @override
   String get importSettingsConfirmMessage =>
-      'This replaces people, preferences, ownership, layout, and the Firefly connection on this device. Enter the backup passphrase to restore encrypted credentials. Without secrets (or if passwords are missing), password login stays off. Custom profile photos are cleared.';
+      'REPLACED on this device:\n• People, their roles, and account assignments\n• Account classifications\n• Layout: side menu, columns, view mode, row density\n• Theme, language, dashboard period, page size, write-ahead days, undo limit\n• Prognosis settings\n• The Firefly connection, if the file carries one\n\nDELETED:\n• MCP agent keys whose owner no longer exists afterwards. A key created before People were set up belongs to \"this device\" and will be removed, so any agent using it stops working and needs a new key.\n\nNOT RESTORED:\n• Custom profile photos and biometric unlock\n• Password login, unless the file carries portable password hashes and you enter its passphrase';
 
   @override
   String get backupPassphraseExportTitle => 'Protect backup';
