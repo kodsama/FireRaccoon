@@ -578,6 +578,49 @@ void main() {
       expect((await ready.read(agentKeysProvider.future)), hasLength(1));
     });
 
+    test('a settled but empty people list does not destroy keys', () async {
+      final people = [_person('p1', 'Ada', PersonRole.admin)];
+      final first = containerFor(people);
+      await first.read(agentKeysProvider.future);
+      final secret = await first
+          .read(agentKeysProvider.notifier)
+          .issue('Claude');
+
+      // An app instance that has no data yet reports zero people as a settled
+      // state, indistinguishable from "everyone was deleted". Pruning there
+      // wiped every key, and pruning buys nothing anyway: resolveAgentKey
+      // already refuses a key whose person is gone, while deleting it is the
+      // only irreversible half of the pair.
+      final blank = containerFor(const []);
+      final views = await blank.read(agentKeysProvider.future);
+
+      expect(views, hasLength(1), reason: 'an empty list is not a deletion');
+      expect(
+        await blank
+            .read(agentKeysProvider.notifier)
+            .revealSecret(views.single.id),
+        secret,
+      );
+
+      // And the key still resolves once the real people list is back.
+      expect(
+        await containerFor(people).read(agentKeysProvider.future),
+        hasLength(1),
+      );
+    });
+
+    test('turning People on keeps a key issued before it', () async {
+      final local = containerFor(const []);
+      await local.read(agentKeysProvider.future);
+      await local.read(agentKeysProvider.notifier).issue('Claude');
+
+      // The key belongs to the device, not to anyone in the list, so adding the
+      // first person must not read it as orphaned.
+      final withPeople = containerFor([_person('p1', 'Ada', PersonRole.admin)]);
+
+      expect(await withPeople.read(agentKeysProvider.future), hasLength(1));
+    });
+
     test('keys of a deleted person are pruned on rebuild', () async {
       final first = containerFor([
         _person('p1', 'Ada', PersonRole.admin),
