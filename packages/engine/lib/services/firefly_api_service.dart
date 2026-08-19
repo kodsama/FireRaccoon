@@ -1357,7 +1357,13 @@ class FireflyApiService implements FireflyService {
   Future<void> setPreference(String name, dynamic data) async {
     return _runLogged('setPreference', () async {
       final body = jsonEncode({'name': name, 'data': data});
-      final response = await _send('POST', '/api/v1/preferences', body: body);
+      final jsonHeaders = {..._headers, 'Content-Type': 'application/json'};
+      final response = await _send(
+        'POST',
+        '/api/v1/preferences',
+        body: body,
+        headers: jsonHeaders,
+      );
       if (response.statusCode != 200 &&
           response.statusCode != 201 &&
           response.statusCode != 204) {
@@ -1366,6 +1372,7 @@ class FireflyApiService implements FireflyService {
           'PUT',
           '/api/v1/preferences/$name',
           body: body,
+          headers: jsonHeaders,
         );
         if (putResponse.statusCode != 200 &&
             putResponse.statusCode != 201 &&

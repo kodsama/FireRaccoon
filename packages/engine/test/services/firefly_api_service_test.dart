@@ -2477,6 +2477,29 @@ void main() {
       );
     });
 
+    test('setPreference sends JSON content type on POST and PUT', () async {
+      final contentTypes = <String, String?>{};
+      final client = MockClient((request) async {
+        contentTypes['${request.method} ${request.url.path}'] =
+            request.headers['Content-Type'];
+        if (request.method == 'POST') return http.Response('fail', 415);
+        return http.Response('', 200);
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await service.setPreference('fireracoon_people_config', {'a': 1});
+
+      expect(contentTypes['POST /api/v1/preferences'], 'application/json');
+      expect(
+        contentTypes['PUT /api/v1/preferences/fireracoon_people_config'],
+        'application/json',
+      );
+    });
+
     test('getTransactions includes type query when provided', () async {
       final client = MockClient((request) async {
         expect(request.url.path, '/api/v1/transactions');
