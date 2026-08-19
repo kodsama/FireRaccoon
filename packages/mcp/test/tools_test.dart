@@ -301,6 +301,71 @@ void main() {
     });
   });
 
+  group('get_capabilities identity', () {
+    const caller = AgentIdentity(
+      keyId: 'key-9',
+      personId: 'p1',
+      personName: 'Alexandre',
+      role: 'admin',
+    );
+
+    test('reports the person behind the presented key', () async {
+      final tool = buildTools(
+        target: _target,
+        httpClient: fireflyMockClient(),
+        identity: caller,
+      ).firstWhere((t) => t.name == 'get_capabilities');
+
+      final identity = (await tool.run({}))['identity'] as Map<String, Object?>;
+
+      expect(identity['person_name'], 'Alexandre');
+      expect(identity['key_id'], 'key-9');
+      expect(identity['role'], 'admin');
+      expect(identity['can_write'], isTrue);
+    });
+
+    test('a caller cannot present an identity through its arguments', () async {
+      final tool = buildTools(
+        target: _target,
+        httpClient: fireflyMockClient(),
+        identity: caller,
+      ).firstWhere((t) => t.name == 'get_capabilities');
+
+      // The identity comes from the authenticator, never from the wire. A tool
+      // that merged args would let any key claim to be anyone.
+      final identity =
+          (await tool.run({
+                'identity': {'person_name': 'Someone else', 'role': 'admin'},
+              }))['identity']
+              as Map<String, Object?>;
+
+      expect(identity['person_name'], 'Alexandre');
+      expect(identity['person_id'], 'p1');
+    });
+
+    test(
+      'a server with no identity reports none rather than guessing',
+      () async {
+        final tool = _tool('get_capabilities', client: fireflyMockClient());
+
+        expect((await tool.run({}))['identity'], isNull);
+      },
+    );
+
+    test('no tool takes a person as an argument', () {
+      // The only person id in the system arrives from the authenticator, so a
+      // person property on any schema would be a way to ask as someone else.
+      for (final tool in _tools()) {
+        final properties = (tool.inputSchema['properties'] as Map?) ?? const {};
+        expect(
+          properties.keys.map((k) => '$k'),
+          isNot(anyOf(contains('person_id'), contains('identity'))),
+          reason: '${tool.name} must not take a person',
+        );
+      }
+    });
+  });
+
   group('check_connection', () {
     test('bad_input when the server has no Firefly connection', () async {
       final tool = buildTools(

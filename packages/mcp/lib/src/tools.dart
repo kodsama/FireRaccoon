@@ -718,6 +718,7 @@ Map<String, Object?> _statementMatchJson(StatementMatch match) => {
 List<McpTool> buildTools({
   required FireflyTarget target,
   http.Client? httpClient,
+  AgentIdentity? identity,
 }) {
   FireflyService service() {
     if (!target.isConfigured) {
@@ -1079,6 +1080,18 @@ List<McpTool> buildTools({
         // Sorted so this and the schema's list compare by membership, not by
         // the order two hand-maintained lists happen to be in.
         'write_tools': [..._writeToolNames]..sort(),
+        // Who the presented key belongs to. The same block comes back from
+        // initialize, and repeating it here means an agent that has been
+        // running a while does not have to have kept that first response.
+        'identity': identity == null
+            ? null
+            : {
+                'key_id': identity.keyId,
+                'person_id': identity.personId,
+                'person_name': identity.personName,
+                'role': identity.role,
+                'can_write': identity.canWrite,
+              },
         'auth': {
           'credential': 'FireRacoon agent key',
           'env': ['FIRERACOON_URL', 'FIRERACOON_API_KEY'],
