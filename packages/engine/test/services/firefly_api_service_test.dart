@@ -2638,5 +2638,57 @@ void main() {
         interestPeriod: 'monthly',
       );
     });
+    test('a rejected write reports which field Firefly refused', () async {
+      final client = MockClient(
+        (request) async => jsonHttpResponse({
+          'message': 'The given data was invalid.',
+          'errors': {
+            'transactions.0.destination_id': [
+              'The destination account is not an expense account.',
+            ],
+          },
+        }, status: 422),
+      );
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      // A bare "422" leaves the caller guessing at exactly the moment they need
+      // to act, and an agent driving this API cannot correct itself from it.
+      await expectLater(
+        service.createRecurrence(
+          RecurrenceInput(
+            type: RecurrenceTransactionType.withdrawal,
+            title: 'Rent',
+            firstDate: DateTime(2026, 9),
+            repetitions: const [
+              RecurrenceRepetitionInput(
+                type: RecurrenceRepetitionType.monthly,
+                moment: '1',
+              ),
+            ],
+            transactions: const [
+              RecurrenceTransactionInput(
+                description: 'Rent',
+                amount: 1200,
+                currencyCode: 'EUR',
+                sourceId: '5',
+                destinationId: '9',
+              ),
+            ],
+          ),
+        ),
+        throwsA(
+          predicate(
+            (e) =>
+                e.toString().contains('422') &&
+                e.toString().contains('destination_id') &&
+                e.toString().contains('not an expense account'),
+          ),
+        ),
+      );
+    });
   });
 }
