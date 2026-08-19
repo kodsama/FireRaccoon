@@ -9,9 +9,9 @@ import 'people_providers.dart';
 import 'server_session_provider.dart';
 
 /// Owner recorded for keys issued before People exist, when the app grants
-/// everyone full access. Once People are set up this owner is gone, so those
-/// keys stop resolving and get pruned, the same rule the backend applies to a
-/// person who was deleted.
+/// everyone full access. Once People are set up this owner is no longer in the
+/// list, so the key stops resolving; the record is kept rather than deleted,
+/// because refusing it is enough and deleting it cannot be undone.
 const String kLocalAgentKeyOwnerId = 'local-device';
 
 const String _kLocalOwnerName = 'This device';
@@ -94,11 +94,14 @@ class AgentKeysNotifier extends AsyncNotifier<List<AgentKeyView>> {
     // Rebuild when a person is removed so their keys stop being offered.
     final peopleState = ref.watch(peopleProvider);
     _records = await _store.load();
-    // Never prune against a people list that has not loaded yet. People hydrate
-    // asynchronously, and this provider builds first: pruning in that window
-    // sees zero people, decides every key bound to a real person is orphaned,
-    // and deletes them all on startup.
-    if (peopleState.isHydrated) {
+    // Never prune against a people list that has not loaded yet, and never
+    // against an empty one. People hydrate asynchronously and this provider
+    // builds first, so pruning in that window deletes every key bound to a real
+    // person; and an app instance that simply has no data yet reports zero
+    // people as a settled state, which looks identical. Pruning buys nothing
+    // either way, since resolveAgentKey already refuses a key whose person is
+    // gone. Deleting the key is the only irreversible half of that pair.
+    if (peopleState.isHydrated && peopleState.people.isNotEmpty) {
       _records = await _pruneOrphans(_records, peopleState.people);
     }
     return _localViews();
@@ -261,7 +264,9 @@ class AgentKeysNotifier extends AsyncNotifier<List<AgentKeyView>> {
   ) async {
     final owners = {
       for (final person in people) person.id,
-      if (people.isEmpty) kLocalAgentKeyOwnerId,
+      // A key issued before People was turned on belongs to the device, not to
+      // anyone in the list. Adding the first person must not delete it.
+      kLocalAgentKeyOwnerId,
     };
     final kept = [
       for (final key in keys)
