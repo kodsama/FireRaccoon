@@ -14,23 +14,27 @@ run projections, and compute dashboard KPIs without touching the GUI.
    MCP tool, auth requirements, and transport options.
 2. **Read OpenAPI.** `openapi.yaml` documents the Firefly III REST subset and
    mirrors MCP tools under `x-mcp.tools`.
-3. **Configure credentials.** Set `FIREFLY_URL` and `FIREFLY_TOKEN`, or pass
-   `firefly_url` / `firefly_token` per tool call.
+3. **Get an agent key.** Issue one in Settings under MCP. It is shown once and
+   acts as the person who created it, so a viewer's key gets read-only tools.
+   Set `FIRERACOON_URL` and `FIRERACOON_API_KEY`. Firefly III credentials are
+   never accepted here, and tools take no credential arguments.
 4. **Connect via MCP.** Stdio for Cursor/CLI clients; TCP `127.0.0.1:8787+` when
-   the desktop app is running (embedded server in Settings). TCP requires
-   `MCP_TOKEN` — send it as `initialize.params.mcpToken`.
+   the desktop app is running (embedded server in Settings). Both require the
+   key; TCP takes it as `initialize.params.apiKey`.
 
 ## MCP session
 
 ```json
-{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","mcpToken":"<MCP_TOKEN for TCP>"}}
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","apiKey":"frcn_... (TCP)"}}
 {"jsonrpc":"2.0","method":"notifications/initialized"}
 {"jsonrpc":"2.0","id":2,"method":"tools/list"}
 {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_accounts","arguments":{}}}
 ```
 
-Protocol version: `2025-06-18`. TCP clients must include `mcpToken` on
-`initialize`; stdio does not require it.
+Protocol version: `2025-06-18`. TCP clients must include `apiKey` on
+`initialize`; stdio reads it from the environment instead. The `initialize`
+result carries a `fireracoon` block naming the account the key resolved to and
+whether it has write access.
 
 ## Deployment modes
 
@@ -80,7 +84,7 @@ Validation errors use `ok: false`, `code: bad_input`, `error: "..."`.
 
 ```bash
 # Stdio (MCP clients spawn this)
-FIREFLY_URL=http://localhost:8081 FIREFLY_TOKEN=... \
+FIRERACOON_URL=https://fireracoon.example FIRERACOON_API_KEY=frcn_... \
   dart run packages/mcp/bin/fireracoon_mcp.dart
 
 # TCP
@@ -94,7 +98,10 @@ Sample Cursor config: `docs/mcp-client-config.json`.
 
 ## Desktop embedding
 
-On macOS, Windows, and Linux the Flutter app starts MCP automatically when
-Firefly credentials are configured. Check **Settings → MCP server** for the bound port.
+On macOS, Windows, and Linux the Flutter app starts MCP once a Firefly
+connection and at least one agent key exist. Check **Settings → MCP server** for
+the bound port and to issue or revoke keys. Revoking restarts the server, so the
+connections that key had open drop with it.
 
-Mobile and web do not embed MCP.
+Mobile and web do not embed MCP. Server-mode deployments manage keys through the
+same Settings section and run `fireracoon_mcp` separately.

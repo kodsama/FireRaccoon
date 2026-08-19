@@ -12,11 +12,17 @@ info:
     2. **MCP tools** exposed by the built-in `fireracoon_mcp` server (JSON-RPC 2.0
        over stdio or TCP `127.0.0.1:8787+`).
 
-    The desktop app starts an embedded MCP server automatically when Firefly
-    credentials are configured. Standalone usage:
+    Agents authenticate with a FireRacoon agent key, never a Firefly III
+    token. A key is issued per agent in Settings under MCP and inherits its
+    person's role, so a viewer's key gets read-only tools. In server mode the
+    backend holds the Firefly PAT and proxies calls through `/api/firefly`.
+
+    The desktop app starts an embedded MCP server once a Firefly connection and
+    at least one agent key exist. Standalone usage:
 
     ```bash
-    FIREFLY_URL=http://localhost:8081 FIREFLY_TOKEN=... dart run packages/mcp/bin/fireracoon_mcp.dart
+    FIRERACOON_URL=https://fireracoon.example FIRERACOON_API_KEY=frcn_... \
+      dart run packages/mcp/bin/fireracoon_mcp.dart
     ```
 
 servers:
@@ -315,23 +321,72 @@ x-mcp:
       port: 8787
       note: Desktop app binds 8787–8796 when running
   auth:
+    credential: FireRacoon agent key
     env:
-      - FIREFLY_URL
-      - FIREFLY_TOKEN
-    perToolArguments:
-      - firefly_url
-      - firefly_token
+      - FIRERACOON_URL
+      - FIRERACOON_API_KEY
+    tcpParam: initialize.params.apiKey
+    note: >
+      Tools accept no credentials. Firefly III access is fixed when the server
+      starts, so an agent cannot redirect a call through arguments.
+  keyManagement:
+    list: GET /api/agent-keys
+    issue: POST /api/agent-keys
+    reveal: GET /api/agent-keys/{keyId}/secret
+    revoke: DELETE /api/agent-keys/{keyId}
+    forget: DELETE /api/agent-keys/{keyId}/record
+    notes: >
+      Reveal is owner-only and narrower than list; an agent key can neither mint
+      keys nor read secrets. Forget requires the key to be revoked first, so
+      clearing a record can never be what removes access.
+  usage:
+    lastUsedAt: >
+      Recorded per key on every message from an authenticated agent, throttled
+      to one write per minute. Visible in Settings and via GET /api/agent-keys.
+  permissions:
+    roles:
+      admin: all tools
+      user: all tools
+      viewer: read-only tools
+    writeTools:
+      - set_primary_currency
+      - set_transaction_reconciled
+      - store_reconciliation
+      - create_transaction
+      - update_transaction
+      - duplicate_transaction
+      - delete_transaction
+      - update_account
+      - update_budget
+      - delete_budget
+      - create_category
+      - update_category
+      - delete_category
+      - create_tag
+      - update_tag
+      - delete_tag
+      - create_account
+      - delete_account
+      - create_budget
+      - create_budget_limit
+      - update_budget_limit
+      - create_bill
+      - update_bill
+      - delete_bill
+      - create_piggy_bank
+      - update_piggy_bank
+      - delete_piggy_bank
+      - create_recurrence
+      - update_recurrence
+      - delete_recurrence
+      - create_liability
   tools:
     get_capabilities:
       description: Server capabilities and tool catalog
       inputSchema: { type: object, properties: {} }
     check_connection:
-      description: Verify /api/v1/about with credentials
-      inputSchema:
-        type: object
-        properties:
-          firefly_url: { type: string }
-          firefly_token: { type: string }
+      description: Verify /api/v1/about on the configured connection
+      inputSchema: { type: object, properties: {} }
     get_current_user:
       description: Fetch authenticated user
       mapsTo: GET /api/v1/about/user
@@ -343,7 +398,9 @@ x-mcp:
       mapsTo: POST /api/v1/currencies/{code}/primary
       required: [code]
     get_accounts:
-      description: List accounts with balances
+      description: >
+        List accounts with balances. Defaults to asset and liability; pass types
+        with expense or revenue to list payees.
       mapsTo: GET /api/v1/accounts
     get_transactions:
       description: Fetch transactions with optional account filter and pagination
@@ -352,6 +409,8 @@ x-mcp:
         type: object
         properties:
           account_id: { type: string }
+          start_date: { type: string, description: 'YYYY-MM-DD, inclusive' }
+          end_date: { type: string, description: 'YYYY-MM-DD, inclusive' }
           page: { type: integer, default: 1 }
           limit: { type: integer, default: 50 }
           reconciled:
@@ -361,7 +420,9 @@ x-mcp:
               - type: string
                 enum: [all, true, false, reconciled, unreconciled]
     get_transaction:
-      description: Fetch a single transaction by journal ID
+      description: >
+        Fetch a single transaction by its group id. Not the journal id: Firefly
+        answers 401 for a journal id passed here.
       mapsTo: GET /api/v1/transactions/{transactionId}
       required: [transaction_id]
     set_transaction_reconciled:
@@ -387,6 +448,28 @@ x-mcp:
           payback_date:
             type: string
             description: Payback transfer date (YYYY-MM-DD)
+    search_transactions:
+      description: Full-text transaction search, for matching bank statement lines
+      mapsTo: GET /api/v1/search/transactions
+      required: [query]
+    create_transaction:
+      description: Create a transaction
+      mapsTo: POST /api/v1/transactions
+      required: [type, date, amount, description]
+    update_transaction:
+      description: Update a transaction; omitted fields keep their current value
+      mapsTo: PUT /api/v1/transactions/{transactionId}
+      required: [transaction_id]
+    duplicate_transaction:
+      description: >
+        Copy a transaction into a new one, applying any passed field as an
+        override. The original is untouched.
+      mapsTo: POST /api/v1/transactions
+      required: [transaction_id]
+    delete_transaction:
+      description: Delete a transaction group and all of its splits
+      mapsTo: DELETE /api/v1/transactions/{transactionId}
+      required: [transaction_id]
     get_budgets:
       description: List budgets
       mapsTo: GET /api/v1/budgets
@@ -406,6 +489,137 @@ x-mcp:
       description: Delete budget
       mapsTo: DELETE /api/v1/budgets/{budgetId}
       required: [budget_id]
+    get_account:
+      description: Fetch one account, optionally as of a date
+      mapsTo: GET /api/v1/accounts/{accountId}
+      required: [account_id]
+    get_account_balance_at_date:
+      description: Account balance on a date, for checking a statement closing balance
+      mapsTo: GET /api/v1/accounts/{accountId}
+      required: [account_id, date]
+    create_account:
+      description: Create an asset, expense, revenue, or liability account
+      mapsTo: POST /api/v1/accounts
+      required: [name, type, currency_code]
+    delete_account:
+      description: >
+        Delete an account. Firefly removes its transactions too, so this is not
+        recoverable.
+      mapsTo: DELETE /api/v1/accounts/{accountId}
+      required: [account_id]
+    create_budget:
+      description: Create a budget, optionally with an auto-budget
+      mapsTo: POST /api/v1/budgets
+      required: [name]
+    get_budget_limits:
+      description: Per-period amounts set on a budget, separate from an auto-budget rule
+      mapsTo: GET /api/v1/budgets/{budgetId}/limits
+      required: [budget_id]
+    create_budget_limit:
+      description: Set a budget amount for one period
+      mapsTo: POST /api/v1/budgets/{budgetId}/limits
+      required: [budget_id, start_date, end_date, amount]
+    update_budget_limit:
+      description: Change an existing budget limit
+      mapsTo: PUT /api/v1/budgets/{budgetId}/limits/{limitId}
+      required: [budget_id, limit_id, amount]
+    get_categories:
+      description: List categories
+      mapsTo: GET /api/v1/categories
+    create_category:
+      description: Create a category
+      mapsTo: POST /api/v1/categories
+      required: [name]
+    update_category:
+      description: Rename a category
+      mapsTo: PUT /api/v1/categories/{categoryId}
+      required: [category_id, name]
+    delete_category:
+      description: Delete a category
+      mapsTo: DELETE /api/v1/categories/{categoryId}
+      required: [category_id]
+    get_tags:
+      description: List tags
+      mapsTo: GET /api/v1/tags
+    create_tag:
+      description: Create a tag
+      mapsTo: POST /api/v1/tags
+      required: [tag]
+    update_tag:
+      description: Rename a tag
+      mapsTo: PUT /api/v1/tags/{tagId}
+      required: [tag_id, tag]
+    delete_tag:
+      description: Delete a tag
+      mapsTo: DELETE /api/v1/tags/{tagId}
+      required: [tag_id]
+    get_currencies:
+      description: List currencies and which are enabled
+      mapsTo: GET /api/v1/currencies
+    get_bills:
+      description: List bills with their amount ranges
+      mapsTo: GET /api/v1/bills
+    create_bill:
+      description: Create a bill
+      mapsTo: POST /api/v1/bills
+      required: [name, amount_min, amount_max, date]
+    update_bill:
+      description: Update a bill; omitted fields keep their current value
+      mapsTo: PUT /api/v1/bills/{billId}
+      required: [bill_id]
+    delete_bill:
+      description: Delete a bill; linked transactions survive without the link
+      mapsTo: DELETE /api/v1/bills/{billId}
+      required: [bill_id]
+    get_piggy_banks:
+      description: List piggy banks and their progress
+      mapsTo: GET /api/v1/piggy-banks
+    create_piggy_bank:
+      description: Create a piggy bank against one or more asset accounts
+      mapsTo: POST /api/v1/piggy-banks
+      required: [name, target_amount, account_ids, start_date]
+    update_piggy_bank:
+      description: Update a piggy bank; omitted fields keep their value
+      mapsTo: PUT /api/v1/piggy-banks/{piggyBankId}
+      required: [piggy_bank_id]
+    delete_piggy_bank:
+      description: Delete a piggy bank; linked accounts are untouched
+      mapsTo: DELETE /api/v1/piggy-banks/{piggyBankId}
+      required: [piggy_bank_id]
+    get_recurrences:
+      description: List recurring transaction rules
+      mapsTo: GET /api/v1/recurrences
+    delete_recurrence:
+      description: >
+        Delete a recurring rule. Transactions it already created are kept.
+      mapsTo: DELETE /api/v1/recurrences/{recurrenceId}
+      required: [recurrence_id]
+    create_recurrence:
+      description: Create a recurring transaction rule
+      mapsTo: POST /api/v1/recurrences
+      required: [title, first_date, type, amount, description, source_id, destination_id]
+    update_recurrence:
+      description: >
+        Replace a recurring rule. Firefly takes the whole rule, so every field to
+        keep must be passed.
+      mapsTo: PUT /api/v1/recurrences/{recurrenceId}
+      required: [recurrence_id, title, first_date, type, amount, description, source_id, destination_id]
+    get_recurrence_transactions:
+      description: Transactions a recurring rule has created
+      mapsTo: GET /api/v1/recurrences/{recurrenceId}/transactions
+      required: [recurrence_id]
+    get_bill_transactions:
+      description: Transactions matched to a bill
+      mapsTo: GET /api/v1/bills/{billId}/transactions
+      required: [bill_id]
+    get_account_balance_history:
+      description: Balance series across a window, for charting or month-end comparison
+      mapsTo: GET /api/v1/chart/account/overview
+      required: [account_ids, start_date, end_date]
+    create_liability:
+      description: Create a liability account (loan, debt, or mortgage)
+      mapsTo: POST /api/v1/accounts
+      required: [name, liability_type, liability_direction]
     run_projection:
       description: On-device financial projection (savings, compound, portfolio, cashflow)
       inputSchema:
