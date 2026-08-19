@@ -9,129 +9,145 @@ Future<String?> showBackupPassphraseDialog({
   required BuildContext context,
   required bool confirm,
 }) {
-  final l10n = context.l10n;
-  final passphraseController = TextEditingController();
-  final confirmController = TextEditingController();
-  var obscure = true;
-  String? error;
-
   return showDialog<String>(
     context: context,
     barrierDismissible: false,
-    builder: (ctx) {
-      return StatefulBuilder(
-        builder: (context, setState) {
-          return AlertDialog(
-            title: Text(
-              confirm
-                  ? l10n.backupPassphraseExportTitle
-                  : l10n.backupPassphraseImportTitle,
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  confirm
-                      ? l10n.backupPassphraseExportMessage
-                      : l10n.backupPassphraseImportMessage,
-                ),
-                const SizedBox(height: 16),
-                TextField(
-                  controller: passphraseController,
-                  obscureText: obscure,
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    labelText: l10n.backupPassphrase,
-                    helperText: confirm ? l10n.passwordRequirements : null,
-                    helperMaxLines: 3,
-                    suffixIcon: IconButton(
-                      tooltip: obscure
-                          ? l10n.backupPassphraseShow
-                          : l10n.backupPassphraseHide,
-                      onPressed: () => setState(() => obscure = !obscure),
-                      icon: Icon(
-                        obscure ? Icons.visibility : Icons.visibility_off,
-                      ),
-                    ),
-                  ),
-                  onChanged: (_) {
-                    if (error != null) setState(() => error = null);
-                  },
-                ),
-                if (confirm) ...[
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: confirmController,
-                    obscureText: obscure,
-                    decoration: InputDecoration(
-                      labelText: l10n.confirmNewPassword,
-                    ),
-                    onChanged: (_) {
-                      if (error != null) setState(() => error = null);
-                    },
-                  ),
-                ],
-                if (error != null) ...[
-                  const SizedBox(height: 12),
-                  Text(error!, style: TextStyle(color: context.colors.danger)),
-                ],
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                child: Text(l10n.cancel),
+    builder: (ctx) => _PassphrasePrompt(confirm: confirm),
+  );
+}
+
+/// Owns its controllers so they outlive the dialog's dismissal.
+///
+/// Disposing them when `showDialog`'s future completes is too early: the future
+/// completes at pop time while the route is still animating out and the fields
+/// still rebuild as focus leaves them, which reads a disposed controller.
+class _PassphrasePrompt extends StatefulWidget {
+  const _PassphrasePrompt({required this.confirm});
+
+  final bool confirm;
+
+  @override
+  State<_PassphrasePrompt> createState() => _PassphrasePromptState();
+}
+
+class _PassphrasePromptState extends State<_PassphrasePrompt> {
+  final _passphrase = TextEditingController();
+  final _confirmation = TextEditingController();
+  bool _obscure = true;
+  String? _error;
+
+  @override
+  void dispose() {
+    _passphrase.dispose();
+    _confirmation.dispose();
+    super.dispose();
+  }
+
+  void _clearError() {
+    if (_error != null) setState(() => _error = null);
+  }
+
+  String _missingRequirements(PasswordPolicyResult policy) {
+    final l10n = context.l10n;
+    return l10n.passwordMissingRequirements(
+      policy.missingRequirements
+          .map(
+            (r) => switch (r) {
+              PasswordRequirement.minLength => l10n.passwordReqMinLength,
+              PasswordRequirement.upper => l10n.passwordReqUpper,
+              PasswordRequirement.lower => l10n.passwordReqLower,
+              PasswordRequirement.digit => l10n.passwordReqDigit,
+              PasswordRequirement.special => l10n.passwordReqSpecial,
+            },
+          )
+          .join(', '),
+    );
+  }
+
+  void _submit() {
+    final l10n = context.l10n;
+    final passphrase = _passphrase.text;
+    if (widget.confirm) {
+      final policy = validatePasswordPolicy(passphrase);
+      if (!policy.isValid) {
+        setState(() => _error = _missingRequirements(policy));
+        return;
+      }
+      if (passphrase != _confirmation.text) {
+        setState(() => _error = l10n.passwordsDoNotMatch);
+        return;
+      }
+    } else if (passphrase.isEmpty) {
+      setState(() => _error = l10n.backupPassphraseRequired);
+      return;
+    }
+    Navigator.of(context).pop(passphrase);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final confirm = widget.confirm;
+
+    return AlertDialog(
+      title: Text(
+        confirm
+            ? l10n.backupPassphraseExportTitle
+            : l10n.backupPassphraseImportTitle,
+      ),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            confirm
+                ? l10n.backupPassphraseExportMessage
+                : l10n.backupPassphraseImportMessage,
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _passphrase,
+            obscureText: _obscure,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: l10n.backupPassphrase,
+              helperText: confirm ? l10n.passwordRequirements : null,
+              helperMaxLines: 3,
+              suffixIcon: IconButton(
+                tooltip: _obscure
+                    ? l10n.backupPassphraseShow
+                    : l10n.backupPassphraseHide,
+                onPressed: () => setState(() => _obscure = !_obscure),
+                icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
               ),
-              FilledButton(
-                onPressed: () {
-                  final passphrase = passphraseController.text;
-                  if (confirm) {
-                    final policy = validatePasswordPolicy(passphrase);
-                    if (!policy.isValid) {
-                      setState(() {
-                        error = l10n.passwordMissingRequirements(
-                          policy.missingRequirements
-                              .map(
-                                (r) => switch (r) {
-                                  PasswordRequirement.minLength =>
-                                    l10n.passwordReqMinLength,
-                                  PasswordRequirement.upper =>
-                                    l10n.passwordReqUpper,
-                                  PasswordRequirement.lower =>
-                                    l10n.passwordReqLower,
-                                  PasswordRequirement.digit =>
-                                    l10n.passwordReqDigit,
-                                  PasswordRequirement.special =>
-                                    l10n.passwordReqSpecial,
-                                },
-                              )
-                              .join(', '),
-                        );
-                      });
-                      return;
-                    }
-                    if (passphrase != confirmController.text) {
-                      setState(() => error = l10n.passwordsDoNotMatch);
-                      return;
-                    }
-                  } else if (passphrase.isEmpty) {
-                    setState(() => error = l10n.backupPassphraseRequired);
-                    return;
-                  }
-                  Navigator.of(ctx).pop(passphrase);
-                },
-                child: Text(
-                  confirm ? l10n.exportSettings : l10n.importSettings,
-                ),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  ).whenComplete(() {
-    passphraseController.dispose();
-    confirmController.dispose();
-  });
+            ),
+            onChanged: (_) => _clearError(),
+          ),
+          if (confirm) ...[
+            const SizedBox(height: 12),
+            TextField(
+              controller: _confirmation,
+              obscureText: _obscure,
+              decoration: InputDecoration(labelText: l10n.confirmNewPassword),
+              onChanged: (_) => _clearError(),
+            ),
+          ],
+          if (_error != null) ...[
+            const SizedBox(height: 12),
+            Text(_error!, style: TextStyle(color: context.colors.danger)),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: _submit,
+          child: Text(confirm ? l10n.exportSettings : l10n.importSettings),
+        ),
+      ],
+    );
+  }
 }
