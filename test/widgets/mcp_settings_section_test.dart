@@ -230,6 +230,42 @@ class _ScriptedAgentKeys extends AgentKeysNotifier {
   }
 }
 
+/// Unbound until [bind] is called, standing in for the first key ever issued.
+///
+/// On a fresh install nothing has started the server yet, so issuing a key is
+/// what binds the port, and it binds after the dialog showing that key is
+/// already on screen.
+class _LateBindingMcpService extends McpService {
+  int? _port;
+
+  @override
+  int? get port => _port;
+
+  @override
+  bool get running => _port != null;
+
+  @override
+  bool get needsAgentKey => _port == null;
+
+  @override
+  String? get error => null;
+
+  void bind(int port) {
+    _port = port;
+    notifyListeners();
+  }
+
+  @override
+  Future<void> sync({
+    required String fireflyUrl,
+    required String fireflyToken,
+    required List<AgentKey> agentKeys,
+    required List<AgentKeyPerson> people,
+    String? agentKeysError,
+    int basePort = 8787,
+  }) async {}
+}
+
 /// Fails to load at all, standing in for a keychain that will not open.
 ///
 /// An [Error] rather than an exception on purpose: Riverpod retries a failed
@@ -305,6 +341,63 @@ void main() {
       // The prefix identifies the row, and it has not been used yet.
       expect(find.textContaining('Never used'), findsOneWidget);
       expect(find.textContaining(secret.substring(5, 11)), findsOneWidget);
+    });
+  });
+
+  testWidgets('the first key gets its handshake once the port binds', (
+    tester,
+  ) async {
+    await onDesktop(() async {
+      final service = _LateBindingMcpService();
+      await _pumpSection(tester, service: service);
+
+      await tester.tap(find.text('Create key'));
+      await settleIgnoringOverflow(tester);
+      await tester.enterText(find.byType(TextField), 'Claude Desktop');
+      await tester.tap(find.widgetWithText(FilledButton, 'Create'));
+      await settleIgnoringOverflow(tester);
+
+      // Nothing to connect to yet: issuing this key is what starts the server.
+      // Scoped to the dialog, since the section behind it carries the same
+      // label on a button that is disabled while the port is unbound.
+      expect(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.text('Copy connection details'),
+        ),
+        findsNothing,
+      );
+
+      service.bind(8787);
+      await settleIgnoringOverflow(tester);
+
+      // Reading the port once left the first key ever issued with only a bare
+      // secret, which is the config nobody finishes assembling by hand.
+      final snippet = tester
+          .widgetList<SelectableText>(
+            find.descendant(
+              of: find.byType(AlertDialog),
+              matching: find.byType(SelectableText),
+            ),
+          )
+          .map((w) => w.data ?? '')
+          .firstWhere((text) => text.contains('127.0.0.1'));
+      expect(snippet, contains('8787'));
+      expect(snippet, contains('frcn_'));
+      expect(snippet, isNot(contains('PASTE_YOUR_AGENT_KEY')));
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.widgetWithText(TextButton, 'Copy connection details'),
+        ),
+      );
+      await settleIgnoringOverflow(tester);
+      expect(_clipboard.last, contains('8787'));
+
+      // The copy toast dismisses itself; leave it pending and the binding
+      // fails the test on a live timer.
+      await tester.pump(const Duration(seconds: 4));
     });
   });
 
