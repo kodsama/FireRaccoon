@@ -7,6 +7,7 @@ import 'package:fireracoon/models/account_prognosis.dart';
 import 'package:fireracoon/models/people_models.dart';
 import 'package:fireracoon/models/settings_bundle.dart';
 import 'package:fireracoon/providers/account_classification_provider.dart';
+import 'package:fireracoon/providers/agent_keys_provider.dart';
 import 'package:fireracoon/providers/auth_provider.dart';
 import 'package:fireracoon/providers/default_period_provider.dart';
 import 'package:fireracoon/providers/locale_provider.dart';
@@ -161,6 +162,39 @@ void main() {
     expect(bundle.sideMenu, isNotNull);
     expect(bundle.accountColumns, isNotNull);
     expect(bundle.transactionColumns, isNotNull);
+  });
+
+  test('an exported bundle carries no agent key material', () async {
+    final container = await buildContainer();
+    addTearDown(container.dispose);
+    await waitHydrated(container);
+    await container
+        .read(peopleProvider.notifier)
+        .addPerson(name: 'Alex', colorValue: 0xFF3B82F6);
+    await container.read(agentKeysProvider.future);
+    final secret = await container
+        .read(agentKeysProvider.notifier)
+        .issue('Claude Desktop');
+    final record = container
+        .read(agentKeysProvider.notifier)
+        .localRecords
+        .single;
+
+    final bundle = await container
+        .read(settingsExportImportProvider)
+        .buildBundle();
+    final encoded = await bundle.encodeSealed(passphrase);
+
+    // Keys live in the keychain or the sealed store and go nowhere else: a
+    // backup file is a copy someone can carry off the machine.
+    for (final material in [secret, record.hash, record.id]) {
+      expect(
+        encoded,
+        isNot(contains(material)),
+        reason: 'agent key material must not reach a settings backup',
+      );
+      expect(bundle.toString(), isNot(contains(material)));
+    }
   });
 
   test('applyBundle overwrites people and device settings', () async {

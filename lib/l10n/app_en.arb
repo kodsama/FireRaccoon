@@ -1272,6 +1272,76 @@
     }
   },
   "mcpStatusStarting": "Starting…",
+  "mcpStatusNoKeys": "No agent keys yet, so the server is idle",
+  "mcpAgentKeys": "Agent keys",
+  "mcpAgentKeysHint": "Agents authenticate with a FireRacoon key, not your Firefly III token. Each key acts as the person who created it.",
+  "mcpNoAgentKeys": "No agent keys yet",
+  "mcpCreateKey": "Create key",
+  "mcpKeyLabel": "Label",
+  "mcpKeyLabelHint": "Claude Desktop",
+  "mcpKeyIssuedTitle": "Copy your agent key",
+  "mcpForgetKey": "Forget this key",
+  "mcpPickKeyTitle": "Which key should it use?",
+  "mcpWithoutKey": "Without a key",
+  "mcpShowKey": "Show key",
+  "mcpKeyNotRecoverable": "This key was created before keys could be read back. Revoke it and create a new one.",
+  "mcpKeyIssuedBody": "Paste this into your MCP client as initialize.params.apiKey, or set FIRERACOON_API_KEY. You can reopen it later from this list.",
+  "mcpCopyKey": "Copy",
+  "mcpKeyCopied": "Agent key copied",
+  "mcpRevokeKey": "Revoke",
+  "mcpRevokeKeyTitle": "Revoke agent key?",
+  "mcpRevokeKeyBody": "{label} stops working immediately and its open connections drop.",
+  "@mcpRevokeKeyBody": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpKeyCreatedAt": "Created {date}",
+  "@mcpKeyCreatedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpKeyRevokedAt": "Revoked {date}",
+  "@mcpKeyRevokedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpServerCredentials": "MCP server credentials",
+  "mcpAddress": "Address",
+  "mcpNotRunning": "Not running",
+  "mcpAuthParameter": "Auth parameter",
+  "mcpTransportLabel": "Transport",
+  "mcpTransportTcp": "TCP (localhost only)",
+  "mcpCopyConnection": "Copy connection details",
+  "mcpConnectionCopied": "Connection details copied",
+  "mcpKeyLastUsedAt": "Last used {date}",
+  "@mcpKeyLastUsedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "mcpKeyNeverUsed": "Never used",
+  "mcpKeyOwner": "Acts as {name} ({role})",
+  "@mcpKeyOwner": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "role": {
+        "type": "String"
+      }
+    }
+  },
   "transactionDate": "Date",
   "moreOptions": "More",
   "foreignAmountLabel": "Foreign amount",
@@ -1834,12 +1904,15 @@
   "accountAssignments": "Account Assignments & Split Ratios",
   "colorBadge": "Color Badge",
   "settingsBackup": "Backup & restore",
+  "exportSettingsDisclosureTitle": "What goes into the file?",
+  "exportSettingsDisclosure": "INCLUDED:\n• People, their roles, and account assignments\n• Account classifications, layout, and preferences\n• Prognosis settings and the Firefly URL\n\nNOT INCLUDED:\n• MCP agent keys. They never leave this device, so an agent needs a key issued where it will run.\n• Your Firefly data itself: accounts, transactions, budgets. That stays in Firefly III.\n• Custom profile photos and biometric unlock\n• The Firefly API token and password hashes, unless you set a backup passphrase on the next screen, which seals them into the file",
+  "exportSettingsContinue": "Export",
   "exportSettings": "Export settings",
-  "exportSettingsDescription": "Save people, preferences, layout, and the Firefly URL to a JSON file. The API token and salted password hashes are encrypted with a backup passphrase. Custom profile photos are not included.",
+  "exportSettingsDescription": "Saves people and their roles, account assignments and classifications, layout, preferences, prognosis settings, and the Firefly URL to a JSON file.\n\nLeft out: MCP agent keys, which never leave this device; your Firefly data itself (accounts, transactions, budgets), which stays in Firefly III; custom profile photos; and biometric unlock. The Firefly API token and password hashes are only included if you set a backup passphrase, which encrypts them.",
   "importSettings": "Import settings",
-  "importSettingsDescription": "Replace settings on this device with a previously exported file.",
+  "importSettingsDescription": "Replaces what is on this device with a previously exported file: people and their roles, account assignments and classifications, layout, preferences, prognosis settings, and the Firefly connection if the file has one.\n\nDeletes MCP agent keys whose owner no longer exists afterwards. A key created before People were set up belongs to \"this device\", so importing people removes it and any agent using it stops working.\n\nDoes not restore custom profile photos or biometric unlock. Password login stays off unless the file carries portable password hashes and you enter its passphrase.",
   "importSettingsConfirmTitle": "Overwrite settings?",
-  "importSettingsConfirmMessage": "This replaces people, preferences, ownership, layout, and the Firefly connection on this device. Enter the backup passphrase to restore encrypted credentials. Without secrets (or if passwords are missing), password login stays off. Custom profile photos are cleared.",
+  "importSettingsConfirmMessage": "REPLACED on this device:\n• People, their roles, and account assignments\n• Account classifications\n• Layout: side menu, columns, view mode, row density\n• Theme, language, dashboard period, page size, write-ahead days, undo limit\n• Prognosis settings\n• The Firefly connection, if the file carries one\n\nDELETED:\n• MCP agent keys whose owner no longer exists afterwards. A key created before People were set up belongs to \"this device\" and will be removed, so any agent using it stops working and needs a new key.\n\nNOT RESTORED:\n• Custom profile photos and biometric unlock\n• Password login, unless the file carries portable password hashes and you enter its passphrase",
   "backupPassphraseExportTitle": "Protect backup",
   "backupPassphraseExportMessage": "Choose a passphrase to encrypt the Firefly API token and password hashes in this file. You will need the same passphrase to import.",
   "backupPassphraseImportTitle": "Unlock backup",
