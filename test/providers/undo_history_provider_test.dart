@@ -993,6 +993,7 @@ class _RecordingFireflyService extends FakeFireflyService {
     required String name,
     required String type,
     required String currencyCode,
+    String? role,
   }) async {
     createAccountCalls++;
     return super.createAccount(

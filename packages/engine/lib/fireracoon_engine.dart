@@ -29,6 +29,7 @@ export 'utils/dashboard_stats.dart';
 export 'utils/date_range.dart';
 export 'utils/fiat_currency.dart';
 export 'utils/transaction_filters.dart';
+export 'utils/agent_key.dart';
 export 'utils/account_balance.dart';
 export 'utils/balance_check.dart';
 export 'utils/chart_balance_parser.dart';

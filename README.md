@@ -118,10 +118,12 @@ Replace `CHANGE_ME_*` secrets on full stacks. Guide:
 
 Agents should use the MCP server rather than scraping the UI. Stdio for
 Cursor/CLI; TCP when the desktop app is running (see Settings for the bound
-port and token).
+port). Agents authenticate with a FireRacoon agent key issued in Settings under
+MCP, never with your Firefly III token. A key acts as the person who created it,
+so a viewer's key gets read-only tools.
 
 ```bash
-FIREFLY_URL=http://localhost:8082/firefly-local FIREFLY_TOKEN=... \
+FIRERACOON_URL=https://fireracoon.example FIRERACOON_API_KEY=frcn_... \
   dart run packages/mcp/bin/fireracoon_mcp.dart
 ```
 
