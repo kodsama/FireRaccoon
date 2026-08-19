@@ -614,7 +614,7 @@ x-mcp:
       required: [bill_id]
     get_account_balance_history:
       description: Balance series across a window, for charting or month-end comparison
-      mapsTo: GET /api/v1/chart/account/overview
+      mapsTo: GET /api/v1/chart/balance/balance
       required: [account_ids, start_date, end_date]
     create_liability:
       description: Create a liability account (loan, debt, or mortgage)
@@ -652,6 +652,72 @@ x-mcp:
               - last5Years
               - last10Years
               - all
+    find_account:
+      description: >-
+        Resolve raw bank text to an account. Matches on account number and IBAN
+        before the name, and returns ranked candidates with the reason each
+        matched rather than picking one. Identifiers are never returned, only a
+        last-four hint.
+      inputSchema:
+        type: object
+        required:
+          - query
+        properties:
+          query: { type: string }
+          types:
+            type: array
+            items:
+              type: string
+              enum:
+                - asset
+                - liability
+                - expense
+                - revenue
+          iban: { type: string }
+          account_number: { type: string }
+          limit: { type: integer, minimum: 1, maximum: 25, default: 5 }
+    match_statement:
+      description: >-
+        Match bank statement rows against what is recorded on an account.
+        Returns matched, near-matched and missing rows with the arithmetic that
+        proves the classification. Tolerances are fixed and echoed in the
+        response.
+      inputSchema:
+        type: object
+        required:
+          - account_id
+          - start_date
+          - end_date
+          - rows
+        properties:
+          account_id: { type: string }
+          start_date: { type: string }
+          end_date: { type: string }
+          opening_balance: { type: string }
+          closing_balance: { type: string }
+          amount_format:
+            type: string
+            enum:
+              - auto
+              - dot
+              - comma
+            default: auto
+          rows:
+            type: array
+            minItems: 1
+            maxItems: 1000
+            items:
+              type: object
+              required:
+                - row_id
+                - date
+                - amount
+              properties:
+                row_id: { type: string }
+                date: { type: string }
+                book_date: { type: string }
+                amount: { type: string }
+                text: { type: string }
 
 tags:
   - name: Firefly
