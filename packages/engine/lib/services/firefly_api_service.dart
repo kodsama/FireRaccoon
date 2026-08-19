@@ -143,6 +143,42 @@ class FireflyApiService implements FireflyService {
     }
   }
 
+  /// Status code plus whatever Firefly said about it.
+  ///
+  /// A bare `422` tells the caller a write was refused but not which field, so
+  /// nobody driving this API can correct themselves without guessing. The body
+  /// carries the message and the per-field errors, redacted and truncated like
+  /// any other preview.
+  String _status(http.Response response) {
+    final detail = _validationDetail(response.body);
+    return detail == null
+        ? '${response.statusCode}'
+        : '${response.statusCode} ${_preview(detail)}';
+  }
+
+  String? _validationDetail(String body) {
+    if (body.isEmpty) return null;
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(body);
+    } on FormatException {
+      return null;
+    }
+    if (decoded is! Map) return null;
+    final message = decoded['message'] as String?;
+    final errors = decoded['errors'];
+    final fields = <String>[
+      if (errors is Map)
+        for (final entry in errors.entries)
+          '${entry.key}: '
+              '${entry.value is List && (entry.value as List).isNotEmpty ? (entry.value as List).first : entry.value}',
+    ];
+    if (fields.isEmpty) return message;
+    return message == null
+        ? fields.join('; ')
+        : '$message (${fields.join('; ')})';
+  }
+
   String _preview(Object? value) {
     if (value == null) return 'null';
     final text = value is String ? value : AppLogger.compactJson(value);
@@ -258,7 +294,7 @@ class FireflyApiService implements FireflyService {
       maxAttempts: _readMaxAttempts,
     );
     if (response.statusCode != 200) {
-      throw Exception('Failed to load transactions: ${response.statusCode}');
+      throw Exception('Failed to load transactions: ${_status(response)}');
     }
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     final list = data['data'] as List<dynamic>;
@@ -371,7 +407,7 @@ class FireflyApiService implements FireflyService {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
         return FireflyUser.fromJson(data['data'] as Map<String, dynamic>);
       }
-      throw Exception('Failed to load user: ${response.statusCode}');
+      throw Exception('Failed to load user: ${_status(response)}');
     });
   }
 
@@ -447,7 +483,7 @@ class FireflyApiService implements FireflyService {
         maxAttempts: _readMaxAttempts,
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to fetch account: ${response.statusCode}');
+        throw Exception('Failed to fetch account: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Account.fromJson(data['data'] as Map<String, dynamic>);
@@ -626,7 +662,7 @@ class FireflyApiService implements FireflyService {
             .map((e) => Budget.fromJson(e as Map<String, dynamic>))
             .toList();
       } else {
-        throw Exception('Failed to load budgets: ${response.statusCode}');
+        throw Exception('Failed to load budgets: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
@@ -642,7 +678,7 @@ class FireflyApiService implements FireflyService {
         maxAttempts: _readMaxAttempts,
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to fetch transaction: ${response.statusCode}');
+        throw Exception('Failed to fetch transaction: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Transaction.fromJson(data['data'] as Map<String, dynamic>);
@@ -671,7 +707,7 @@ class FireflyApiService implements FireflyService {
     try {
       final response = await _send('DELETE', '/api/v1/budgets/$budgetId');
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to delete budget: ${response.statusCode}');
+        throw Exception('Failed to delete budget: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
@@ -737,7 +773,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(body),
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to update account: ${response.statusCode}');
+        throw Exception('Failed to update account: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
@@ -749,7 +785,7 @@ class FireflyApiService implements FireflyService {
     try {
       final response = await _send('DELETE', '/api/v1/accounts/$accountId');
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to delete account: ${response.statusCode}');
+        throw Exception('Failed to delete account: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
@@ -780,7 +816,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(body),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Failed to create account: ${response.statusCode}');
+        throw Exception('Failed to create account: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Account.fromJson(data['data'] as Map<String, dynamic>);
@@ -799,7 +835,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(input.toCreateJson()),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Failed to create liability: ${response.statusCode}');
+        throw Exception('Failed to create liability: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Account.fromJson(data['data'] as Map<String, dynamic>);
@@ -818,7 +854,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(input.toJson()),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Failed to create budget: ${response.statusCode}');
+        throw Exception('Failed to create budget: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Budget.fromJson(data['data'] as Map<String, dynamic>);
@@ -837,7 +873,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(input.toJson()),
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to update budget: ${response.statusCode}');
+        throw Exception('Failed to update budget: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
@@ -933,7 +969,7 @@ class FireflyApiService implements FireflyService {
         maxAttempts: _readMaxAttempts,
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to load $path: ${response.statusCode}');
+        throw Exception('Failed to load $path: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       final list = data['data'] as List<dynamic>? ?? [];
@@ -960,7 +996,7 @@ class FireflyApiService implements FireflyService {
       body: body,
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to $method transaction: ${response.statusCode}');
+      throw Exception('Failed to $method transaction: ${_status(response)}');
     }
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     return Transaction.fromJson(data['data'] as Map<String, dynamic>);
@@ -987,7 +1023,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(body),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Failed to create category: ${response.statusCode}');
+        throw Exception('Failed to create category: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Category.fromJson(data['data'] as Map<String, dynamic>);
@@ -1012,7 +1048,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(body),
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to update category: ${response.statusCode}');
+        throw Exception('Failed to update category: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Category.fromJson(data['data'] as Map<String, dynamic>);
@@ -1026,7 +1062,7 @@ class FireflyApiService implements FireflyService {
     try {
       final response = await _send('DELETE', '/api/v1/categories/$categoryId');
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to delete category: ${response.statusCode}');
+        throw Exception('Failed to delete category: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
@@ -1056,7 +1092,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(body),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Failed to create tag: ${response.statusCode}');
+        throw Exception('Failed to create tag: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Tag.fromJson(data['data'] as Map<String, dynamic>);
@@ -1077,7 +1113,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(body),
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to update tag: ${response.statusCode}');
+        throw Exception('Failed to update tag: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Tag.fromJson(data['data'] as Map<String, dynamic>);
@@ -1091,7 +1127,7 @@ class FireflyApiService implements FireflyService {
     try {
       final response = await _send('DELETE', '/api/v1/tags/$tagId');
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to delete tag: ${response.statusCode}');
+        throw Exception('Failed to delete tag: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
@@ -1126,7 +1162,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(input.toJson()),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Failed to create bill: ${response.statusCode}');
+        throw Exception('Failed to create bill: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Bill.fromJson(data['data'] as Map<String, dynamic>);
@@ -1145,7 +1181,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(input.toJson()),
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to update bill: ${response.statusCode}');
+        throw Exception('Failed to update bill: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Bill.fromJson(data['data'] as Map<String, dynamic>);
@@ -1159,7 +1195,7 @@ class FireflyApiService implements FireflyService {
     try {
       final response = await _send('DELETE', '/api/v1/bills/$billId');
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to delete bill: ${response.statusCode}');
+        throw Exception('Failed to delete bill: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
@@ -1185,7 +1221,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(input.toJson(isUpdate: false)),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Failed to create recurrence: ${response.statusCode}');
+        throw Exception('Failed to create recurrence: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Recurrence.fromJson(data['data'] as Map<String, dynamic>);
@@ -1207,7 +1243,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(input.toJson(isUpdate: true)),
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to update recurrence: ${response.statusCode}');
+        throw Exception('Failed to update recurrence: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Recurrence.fromJson(data['data'] as Map<String, dynamic>);
@@ -1224,7 +1260,7 @@ class FireflyApiService implements FireflyService {
         '/api/v1/recurrences/$recurrenceId',
       );
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to delete recurrence: ${response.statusCode}');
+        throw Exception('Failed to delete recurrence: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
@@ -1250,7 +1286,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(input.toCreateJson()),
       );
       if (response.statusCode != 200 && response.statusCode != 201) {
-        throw Exception('Failed to create piggy bank: ${response.statusCode}');
+        throw Exception('Failed to create piggy bank: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return PiggyBank.fromJson(data['data'] as Map<String, dynamic>);
@@ -1272,7 +1308,7 @@ class FireflyApiService implements FireflyService {
         body: jsonEncode(input.toUpdateJson()),
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to update piggy bank: ${response.statusCode}');
+        throw Exception('Failed to update piggy bank: ${_status(response)}');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return PiggyBank.fromJson(data['data'] as Map<String, dynamic>);
@@ -1289,7 +1325,7 @@ class FireflyApiService implements FireflyService {
         '/api/v1/piggy-banks/$piggyBankId',
       );
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to delete piggy bank: ${response.statusCode}');
+        throw Exception('Failed to delete piggy bank: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
@@ -1335,7 +1371,7 @@ class FireflyApiService implements FireflyService {
         '/api/v1/transactions/$transactionId',
       );
       if (response.statusCode != 204 && response.statusCode != 200) {
-        throw Exception('Failed to delete transaction: ${response.statusCode}');
+        throw Exception('Failed to delete transaction: ${_status(response)}');
       }
     }, context: {'transactionId': transactionId});
   }
