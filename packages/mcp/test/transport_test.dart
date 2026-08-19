@@ -2,10 +2,35 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fireracoon_engine/fireracoon_engine.dart';
 import 'package:fireracoon_mcp/fireracoon_mcp.dart';
 import 'package:test/test.dart';
 
-McpServer _server() => McpServer(tools: buildTools());
+McpServer _server() =>
+    McpServer(tools: buildTools(target: const FireflyTarget.unconfigured()));
+
+const _adminIdentity = AgentIdentity(
+  keyId: 'k1',
+  personId: 'p1',
+  personName: 'Ada',
+  role: 'admin',
+);
+
+/// Admits exactly one secret, so tests can assert on both outcomes without
+/// standing up a key store.
+class _StubAuthenticator implements McpAuthenticator {
+  _StubAuthenticator(this.accepted, {this.identity = _adminIdentity});
+
+  final String accepted;
+  final AgentIdentity identity;
+  final keysSeen = <String>[];
+
+  @override
+  Future<AgentIdentity?> authenticate(String key) async {
+    keysSeen.add(key);
+    return key == accepted ? identity : null;
+  }
+}
 
 class _ByteCollector implements StreamConsumer<List<int>> {
   _ByteCollector(this.sink);
@@ -22,6 +47,52 @@ class _ByteCollector implements StreamConsumer<List<int>> {
   @override
   Future<void> close() async {}
 }
+
+/// Opens a socket, collects [expected] response frames, and returns them.
+Future<List<Map<String, Object?>>> _exchange(
+  ServerSocket socket,
+  List<Map<String, Object?>> requests, {
+  required int expected,
+}) async {
+  final client = await Socket.connect('127.0.0.1', socket.port);
+  addTearDown(() => client.destroy());
+
+  final responses = <Map<String, Object?>>[];
+  final done = Completer<void>();
+  utf8.decoder.bind(client).transform(const LineSplitter()).listen((line) {
+    if (line.trim().isEmpty) return;
+    responses.add(jsonDecode(line) as Map<String, Object?>);
+    if (responses.length == expected && !done.isCompleted) done.complete();
+  });
+
+  for (final request in requests) {
+    client.writeln(jsonEncode(request));
+  }
+  await client.flush();
+  await done.future.timeout(const Duration(seconds: 5));
+  return responses;
+}
+
+Map<String, Object?> _initialize(String? key) => {
+  'jsonrpc': '2.0',
+  'id': 1,
+  'method': 'initialize',
+  'params': {'protocolVersion': '2025-06-18', 'apiKey': ?key},
+};
+
+Map<String, Object?> _call(int id, String tool) => {
+  'jsonrpc': '2.0',
+  'id': id,
+  'method': 'tools/call',
+  'params': {'name': tool, 'arguments': <String, Object?>{}},
+};
+
+Map<String, Object?> _errorOf(Map<String, Object?> response) =>
+    response['error'] as Map<String, Object?>;
+
+Map<String, Object?> _structuredOf(Map<String, Object?> response) =>
+    (response['result'] as Map<String, Object?>)['structuredContent']
+        as Map<String, Object?>;
 
 void main() {
   group('processLine', () {
@@ -45,12 +116,12 @@ void main() {
 
     test('malformed JSON is parse error', () async {
       final response = await processLine(_server(), '{bad');
-      expect((response!['error'] as Map<String, Object?>)['code'], -32700);
+      expect(_errorOf(response!)['code'], -32700);
     });
 
     test('non-object JSON is invalid request', () async {
       final response = await processLine(_server(), '123');
-      expect((response!['error'] as Map<String, Object?>)['code'], -32600);
+      expect(_errorOf(response!)['code'], -32600);
     });
   });
 
@@ -61,14 +132,7 @@ void main() {
           '${jsonEncode({'jsonrpc': '2.0', 'id': 1, 'method': 'ping'})}\n',
         ),
         utf8.encode('\n'),
-        utf8.encode(
-          '${jsonEncode({
-            'jsonrpc': '2.0',
-            'id': 2,
-            'method': 'tools/call',
-            'params': {'name': 'get_capabilities', 'arguments': <String, Object?>{}},
-          })}\n',
-        ),
+        utf8.encode('${jsonEncode(_call(2, 'get_capabilities'))}\n'),
       ]);
 
       final captured = <int>[];
@@ -88,53 +152,94 @@ void main() {
         frames.firstWhere((frame) => frame['id'] == 1)['result'],
         isNotNull,
       );
-      final caps = frames.firstWhere((frame) => frame['id'] == 2);
-      final structured =
-          ((caps['result'] as Map<String, Object?>)['structuredContent'])
+      expect(
+        _structuredOf(frames.firstWhere((frame) => frame['id'] == 2))['ok'],
+        isTrue,
+      );
+    });
+
+    test('passes its startup identity to write tools', () async {
+      final input = Stream<List<int>>.fromIterable([
+        utf8.encode('${jsonEncode(_initialize(null))}\n'),
+      ]);
+      final captured = <int>[];
+      final output = IOSink(_ByteCollector(captured));
+
+      await serveStdio(
+        _server(),
+        identity: _adminIdentity,
+        input: input,
+        output: output,
+      );
+      await output.close();
+
+      final frame =
+          jsonDecode(utf8.decode(captured).trim()) as Map<String, Object?>;
+      final fireracoon =
+          (frame['result'] as Map<String, Object?>)['fireracoon']
               as Map<String, Object?>;
-      expect(structured['ok'], isTrue);
+      expect(fireracoon['write_access'], isTrue);
+      expect(
+        (fireracoon['account'] as Map<String, Object?>)['person_name'],
+        'Ada',
+      );
     });
   });
 
-  group('extractMcpToken', () {
-    test('reads mcpToken and mcp_token', () {
-      expect(extractMcpToken({'mcpToken': 'a'}), 'a');
-      expect(extractMcpToken({'mcp_token': 'b'}), 'b');
+  group('extractAgentKey', () {
+    test('reads apiKey and api_key', () {
+      expect(extractAgentKey({'apiKey': 'a'}), 'a');
+      expect(extractAgentKey({'api_key': 'b'}), 'b');
     });
 
     test('reads nested authentication token', () {
       expect(
-        extractMcpToken({
+        extractAgentKey({
           'authentication': {'token': 'nested'},
         }),
         'nested',
       );
       expect(
-        extractMcpToken({
-          'authentication': {'mcpToken': 'nested-mcp'},
+        extractAgentKey({
+          'authentication': {'api_key': 'nested-key'},
         }),
-        'nested-mcp',
+        'nested-key',
       );
+    });
+
+    test('returns null when no key is present', () {
+      expect(extractAgentKey(const {}), isNull);
+      expect(extractAgentKey({'apiKey': ''}), isNull);
+      expect(extractAgentKey({'mcpToken': 'legacy'}), isNull);
     });
   });
 
   group('serveTcp', () {
-    test('logs auth requirement when token configured', () async {
-      final logs = <String>[];
+    Future<ServerSocket> start(
+      McpAuthenticator authenticator, {
+      List<String>? logs,
+      McpServer Function()? server,
+    }) async {
       final socket = await serveTcp(
-        _server(),
+        server: (_, _) => (server ?? _server)(),
+        authenticator: authenticator,
         port: 0,
-        authToken: 'secret-token',
-        onLog: logs.add,
+        onLog: logs?.add,
       );
       addTearDown(() => socket.close());
+      return socket;
+    }
+
+    test('announces that a key is required', () async {
+      final logs = <String>[];
+      await start(_StubAuthenticator('good'), logs: logs);
+
       expect(logs.any((line) => line.contains('TCP auth required')), isTrue);
     });
 
     test('invokes onLog when clients connect', () async {
       final logs = <String>[];
-      final socket = await serveTcp(_server(), port: 0, onLog: logs.add);
-      addTearDown(() => socket.close());
+      final socket = await start(_StubAuthenticator('good'), logs: logs);
 
       final client = await Socket.connect('127.0.0.1', socket.port);
       addTearDown(() => client.destroy());
@@ -146,179 +251,203 @@ void main() {
       expect(logs.any((line) => line.contains('connected')), isTrue);
     });
 
-    test('serves JSON-RPC over a real socket', () async {
-      final socket = await serveTcp(_server(), port: 0);
-      addTearDown(() => socket.close());
+    test('serves JSON-RPC once a valid key authenticates', () async {
+      final logs = <String>[];
+      final socket = await start(_StubAuthenticator('good'), logs: logs);
 
-      final client = await Socket.connect('127.0.0.1', socket.port);
-      addTearDown(() => client.destroy());
+      final responses = await _exchange(socket, [
+        _initialize('good'),
+        _call(2, 'get_capabilities'),
+      ], expected: 2);
 
-      final responses = <Map<String, Object?>>[];
-      final done = Completer<void>();
-      utf8.decoder.bind(client).transform(const LineSplitter()).listen((line) {
-        if (line.trim().isEmpty) return;
-        responses.add(jsonDecode(line) as Map<String, Object?>);
-        if (responses.length == 2 && !done.isCompleted) done.complete();
-      });
-
-      client.writeln(
-        jsonEncode({
-          'jsonrpc': '2.0',
-          'id': 1,
-          'method': 'initialize',
-          'params': {'protocolVersion': '2025-06-18'},
-        }),
-      );
-      client.writeln(
-        jsonEncode({
-          'jsonrpc': '2.0',
-          'id': 2,
-          'method': 'tools/call',
-          'params': {
-            'name': 'get_capabilities',
-            'arguments': <String, Object?>{},
-          },
-        }),
-      );
-      await client.flush();
-      await done.future.timeout(const Duration(seconds: 5));
-
+      final init = responses.firstWhere((r) => r['id'] == 1);
       expect(
-        ((responses.firstWhere((r) => r['id'] == 1)['result'])
-            as Map<String, Object?>)['protocolVersion'],
+        (init['result'] as Map<String, Object?>)['protocolVersion'],
         '2025-06-18',
       );
-      final structured =
-          (((responses.firstWhere((r) => r['id'] == 2)['result'])
-                  as Map<String, Object?>)['structuredContent'])
-              as Map<String, Object?>;
-      expect(structured['ok'], isTrue);
+      expect(
+        _structuredOf(responses.firstWhere((r) => r['id'] == 2))['ok'],
+        isTrue,
+      );
+      expect(logs.any((line) => line.contains('authenticated as Ada')), isTrue);
+    });
+
+    test(
+      'rejects every method until initialize supplies a valid key',
+      () async {
+        final socket = await start(_StubAuthenticator('good'));
+
+        final responses = await _exchange(socket, [
+          {
+            'jsonrpc': '2.0',
+            'id': 1,
+            'method': 'tools/list',
+            'params': <String, Object?>{},
+          },
+          {
+            'jsonrpc': '2.0',
+            'id': 2,
+            'method': 'initialize',
+            'params': {'protocolVersion': '2025-06-18', 'apiKey': 'wrong'},
+          },
+          {
+            'jsonrpc': '2.0',
+            'id': 3,
+            'method': 'initialize',
+            'params': {'protocolVersion': '2025-06-18', 'apiKey': 'good'},
+          },
+        ], expected: 3);
+
+        expect(
+          _errorOf(responses.firstWhere((r) => r['id'] == 1))['code'],
+          -32000,
+        );
+        expect(
+          _errorOf(responses.firstWhere((r) => r['id'] == 2))['code'],
+          -32000,
+        );
+        expect(
+          responses.firstWhere((r) => r['id'] == 3)['result'],
+          isA<Map<String, Object?>>(),
+        );
+      },
+    );
+
+    test('an initialize with no key at all is rejected', () async {
+      final socket = await start(_StubAuthenticator('good'));
+
+      final responses = await _exchange(socket, [
+        _initialize(null),
+      ], expected: 1);
+
+      expect(_errorOf(responses.single)['code'], -32000);
+      expect(_errorOf(responses.single)['message'], contains('agent key'));
+    });
+
+    test('hands the connection its own key to the server factory', () async {
+      final seen = <String>[];
+      final socket = await serveTcp(
+        server: (_, agentKey) {
+          seen.add(agentKey);
+          return _server();
+        },
+        authenticator: _StubAuthenticator('good'),
+        port: 0,
+      );
+      addTearDown(() => socket.close());
+
+      await _exchange(socket, [_initialize('good')], expected: 1);
+
+      expect(seen, ['good']);
     });
 
     test('pipelined requests respond in arrival order', () async {
-      final slowDone = Completer<void>();
-      final server = McpServer(
-        tools: [
-          McpTool(
-            name: 'slow',
-            description: 'delay',
-            inputSchema: const {'type': 'object', 'properties': {}},
-            run: (_) async {
-              await Future<void>.delayed(const Duration(milliseconds: 100));
-              slowDone.complete();
-              return {'ok': true, 'tool': 'slow'};
-            },
-          ),
-          McpTool(
-            name: 'fast',
-            description: 'instant',
-            inputSchema: const {'type': 'object', 'properties': {}},
-            run: (_) async => {'ok': true, 'tool': 'fast'},
-          ),
-        ],
+      final socket = await start(
+        _StubAuthenticator('good'),
+        server: () => McpServer(
+          tools: [
+            McpTool(
+              name: 'slow',
+              description: 'delay',
+              inputSchema: const {'type': 'object', 'properties': {}},
+              run: (_) async {
+                await Future<void>.delayed(const Duration(milliseconds: 100));
+                return {'ok': true, 'tool': 'slow'};
+              },
+            ),
+            McpTool(
+              name: 'fast',
+              description: 'instant',
+              inputSchema: const {'type': 'object', 'properties': {}},
+              run: (_) async => {'ok': true, 'tool': 'fast'},
+            ),
+          ],
+        ),
       );
 
-      final socket = await serveTcp(server, port: 0);
-      addTearDown(() => socket.close());
+      final responses = await _exchange(socket, [
+        _initialize('good'),
+        _call(2, 'slow'),
+        _call(3, 'fast'),
+      ], expected: 3);
 
-      final client = await Socket.connect('127.0.0.1', socket.port);
-      addTearDown(() => client.destroy());
-
-      final responses = <Map<String, Object?>>[];
-      final done = Completer<void>();
-      utf8.decoder.bind(client).transform(const LineSplitter()).listen((line) {
-        if (line.trim().isEmpty) return;
-        responses.add(jsonDecode(line) as Map<String, Object?>);
-        if (responses.length == 2 && !done.isCompleted) done.complete();
-      });
-
-      client.writeln(
-        jsonEncode({
-          'jsonrpc': '2.0',
-          'id': 1,
-          'method': 'tools/call',
-          'params': {'name': 'slow', 'arguments': <String, Object?>{}},
-        }),
-      );
-      await client.flush();
-      await Future<void>.delayed(const Duration(milliseconds: 10));
-      client.writeln(
-        jsonEncode({
-          'jsonrpc': '2.0',
-          'id': 2,
-          'method': 'tools/call',
-          'params': {'name': 'fast', 'arguments': <String, Object?>{}},
-        }),
-      );
-      await client.flush();
-      await done.future.timeout(const Duration(seconds: 5));
-
-      expect(responses.map((response) => response['id']).toList(), [1, 2]);
+      expect(responses.map((response) => response['id']).toList(), [1, 2, 3]);
     });
 
-    test('rejects tools/call until initialize supplies mcpToken', () async {
-      final socket = await serveTcp(
-        _server(),
-        port: 0,
-        authToken: 'secret-token',
-      );
-      addTearDown(() => socket.close());
+    test(
+      'a client that hangs up mid-exchange does not kill the server',
+      () async {
+        final socket = await start(_StubAuthenticator('good'));
 
-      final client = await Socket.connect('127.0.0.1', socket.port);
-      addTearDown(() => client.destroy());
+        // Fire requests and reset the connection without reading any reply, so
+        // the server's next write lands on a dead peer.
+        for (var attempt = 0; attempt < 3; attempt++) {
+          final rude = await Socket.connect('127.0.0.1', socket.port);
+          rude.writeln(jsonEncode(_initialize('good')));
+          rude.writeln(jsonEncode(_call(2, 'get_capabilities')));
+          await rude.flush();
+          rude.destroy();
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 100));
 
-      final responses = <Map<String, Object?>>[];
-      final done = Completer<void>();
-      utf8.decoder.bind(client).transform(const LineSplitter()).listen((line) {
-        if (line.trim().isEmpty) return;
-        responses.add(jsonDecode(line) as Map<String, Object?>);
-        if (responses.length == 3 && !done.isCompleted) done.complete();
-      });
+        // The listener must still be serving a well-behaved client.
+        final responses = await _exchange(socket, [
+          _initialize('good'),
+          _call(2, 'get_capabilities'),
+        ], expected: 2);
 
-      client.writeln(
-        jsonEncode({
-          'jsonrpc': '2.0',
-          'id': 1,
-          'method': 'tools/list',
-          'params': <String, Object?>{},
-        }),
-      );
-      client.writeln(
-        jsonEncode({
-          'jsonrpc': '2.0',
-          'id': 2,
-          'method': 'initialize',
-          'params': {'protocolVersion': '2025-06-18', 'mcpToken': 'wrong'},
-        }),
-      );
-      client.writeln(
-        jsonEncode({
-          'jsonrpc': '2.0',
-          'id': 3,
-          'method': 'initialize',
-          'params': {
-            'protocolVersion': '2025-06-18',
-            'mcpToken': 'secret-token',
-          },
-        }),
-      );
-      await client.flush();
-      await done.future.timeout(const Duration(seconds: 5));
+        expect(
+          _structuredOf(responses.firstWhere((r) => r['id'] == 2))['ok'],
+          isTrue,
+        );
+      },
+    );
 
+    test('a half-written frame from a dropped client is survivable', () async {
+      final logs = <String>[];
+      final socket = await start(_StubAuthenticator('good'), logs: logs);
+
+      final rude = await Socket.connect('127.0.0.1', socket.port);
+      rude.write('{"jsonrpc":"2.0","id":1,"method":"initi');
+      await rude.flush();
+      rude.destroy();
+      await Future<void>.delayed(const Duration(milliseconds: 100));
+
+      final responses = await _exchange(socket, [
+        _initialize('good'),
+      ], expected: 1);
+
+      expect(responses.single['result'], isNotNull);
+    });
+
+    test('a viewer key is admitted but refused write tools', () async {
+      final socket = await start(
+        _StubAuthenticator(
+          'good',
+          identity: const AgentIdentity(
+            keyId: 'k2',
+            personId: 'p2',
+            personName: 'Grace',
+            role: 'viewer',
+          ),
+        ),
+      );
+
+      final responses = await _exchange(socket, [
+        _initialize('good'),
+        _call(2, 'delete_budget'),
+      ], expected: 2);
+
+      final init = responses.firstWhere((r) => r['id'] == 1);
       expect(
-        (responses.firstWhere((r) => r['id'] == 1)['error']
-            as Map<String, Object?>)['code'],
-        -32000,
+        ((init['result'] as Map<String, Object?>)['fireracoon']
+            as Map<String, Object?>)['write_access'],
+        isFalse,
       );
-      expect(
-        (responses.firstWhere((r) => r['id'] == 2)['error']
-            as Map<String, Object?>)['code'],
-        -32000,
-      );
-      expect(
-        responses.firstWhere((r) => r['id'] == 3)['result'],
-        isA<Map<String, Object?>>(),
-      );
+      final refusal = _structuredOf(responses.firstWhere((r) => r['id'] == 2));
+      expect(refusal['ok'], isFalse);
+      expect(refusal['code'], 'forbidden');
+      expect(refusal['error'], contains('Grace'));
     });
   });
 }

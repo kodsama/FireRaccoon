@@ -344,7 +344,13 @@ class FireflyApiService implements FireflyService {
   @override
   Future<void> setPrimaryCurrency(String code) async {
     return _runLogged('setPrimaryCurrency', () async {
-      final response = await _send('POST', '/api/v1/currencies/$code/primary');
+      // Firefly answers 415 without a content type, even though this POST
+      // carries no body.
+      final response = await _send(
+        'POST',
+        '/api/v1/currencies/$code/primary',
+        headers: {..._headers, 'Content-Type': 'application/json'},
+      );
       if (response.statusCode != 204 && response.statusCode != 200) {
         throw Exception(
           'Failed to set primary currency: ${response.statusCode}',
@@ -755,6 +761,7 @@ class FireflyApiService implements FireflyService {
     required String name,
     required String type,
     required String currencyCode,
+    String? role,
   }) async {
     try {
       final body = <String, dynamic>{
@@ -762,6 +769,10 @@ class FireflyApiService implements FireflyService {
         'type': type,
         'currency_code': currencyCode,
       };
+      // Firefly refuses an asset account without a role: "The account role
+      // field is required when type is asset." Default it rather than fail.
+      final resolvedRole = role ?? (type == 'asset' ? 'defaultAsset' : null);
+      if (resolvedRole != null) body['account_role'] = resolvedRole;
       final response = await _send(
         'POST',
         '/api/v1/accounts',
