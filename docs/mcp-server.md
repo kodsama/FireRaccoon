@@ -110,7 +110,7 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 
 | Tool | Description | Writes |
 |------|-------------|--------|
-| `get_capabilities` | Server version, tool catalog, and the write-gated list |  |
+| `get_capabilities` | Server version, tool catalog, the write-gated list, and the person behind the presented key |  |
 | `check_connection` | Ping Firefly III (`/api/v1/about`) |  |
 | `get_current_user` | Authenticated Firefly user profile |  |
 | `get_primary_currency` | Instance default currency |  |
@@ -166,7 +166,11 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 | `run_projection` | On-device balance forecast |  |
 | `get_dashboard_kpis` | Income, spending, and savings KPIs for a period |  |
 
-Call `get_capabilities` after connecting to discover the live tool list and schema versions.
+Call `get_capabilities` after connecting to discover the live tool list and
+schema versions. Its `identity` block names the person the presented key belongs
+to, so an agent that has been running a while does not have to have kept the
+`initialize` response. It is null when the server was started without a key,
+which is only the case for an unauthenticated stdio run.
 
 ## Managing keys
 
