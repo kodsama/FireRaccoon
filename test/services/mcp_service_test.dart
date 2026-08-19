@@ -1,6 +1,7 @@
 @Timeout(Duration(seconds: 30))
 library;
 
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
@@ -147,12 +148,90 @@ Future<Map<String, Object?>> _initialize(int port, String? apiKey) async {
   }
 }
 
+/// Initializes, then calls one tool on the same connection.
+Future<Map<String, Object?>> _callTool(
+  int port,
+  String apiKey,
+  String tool,
+) async {
+  final socket = await Socket.connect(
+    InternetAddress.loopbackIPv4,
+    port,
+  ).timeout(const Duration(seconds: 5));
+  try {
+    final lines = utf8.decoder
+        .bind(socket)
+        .transform(const LineSplitter())
+        .where((line) => line.trim().isNotEmpty);
+    final responses = <String>[];
+    final done = Completer<void>();
+    final subscription = lines.listen((line) {
+      responses.add(line);
+      if (responses.length == 2 && !done.isCompleted) done.complete();
+    });
+    socket.writeln(
+      jsonEncode({
+        'jsonrpc': '2.0',
+        'id': 1,
+        'method': 'initialize',
+        'params': {'protocolVersion': '2025-06-18', 'apiKey': apiKey},
+      }),
+    );
+    socket.writeln(
+      jsonEncode({
+        'jsonrpc': '2.0',
+        'id': 2,
+        'method': 'tools/call',
+        'params': {'name': tool, 'arguments': <String, Object?>{}},
+      }),
+    );
+    await socket.flush();
+    await done.future.timeout(const Duration(seconds: 5));
+    await subscription.cancel();
+    return jsonDecode(responses[1]) as Map<String, Object?>;
+  } finally {
+    socket.destroy();
+  }
+}
+
 Map<String, Object?> _fireracoonBlock(Map<String, Object?> response) {
   return (response['result'] as Map<String, Object?>)['fireracoon']
       as Map<String, Object?>;
 }
 
 void main() {
+  test('get_capabilities names the person whose key connected', () async {
+    final service = McpService();
+    addTearDown(service.stop);
+    final issued = _issue(personId: 'p2', id: 'k7');
+
+    await service.sync(
+      fireflyUrl: _url,
+      fireflyToken: _token,
+      agentKeys: [issued.record],
+      people: _people,
+      basePort: 18890,
+    );
+    await _waitUntil(() => service.running || service.error != null);
+    expect(service.error, isNull, reason: service.error);
+
+    final response = await _callTool(
+      service.port!,
+      issued.secret,
+      'get_capabilities',
+    );
+
+    // The isolate used to serve every connection from one server built with no
+    // identity, so every caller came back anonymous however it had signed in.
+    final result = response['result'] as Map<String, Object?>;
+    final content =
+        (result['structuredContent'] as Map<String, Object?>)['identity']
+            as Map<String, Object?>;
+    expect(content['person_name'], 'Grace');
+    expect(content['role'], 'viewer');
+    expect(content['can_write'], isFalse);
+  });
+
   test('sync binds localhost port then stop tears down', () async {
     final service = McpService();
     addTearDown(service.stop);

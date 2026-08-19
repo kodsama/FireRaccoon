@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:fireracoon_engine/fireracoon_engine.dart';
 import 'package:fireracoon_mcp/fireracoon_mcp.dart';
 
 const _usage = '''
@@ -57,13 +58,14 @@ Future<void> main(List<String> args) async {
     'write access: ${identity.canWrite}',
   );
 
-  McpServer serverFor(String bearer) {
+  McpServer serverFor(String bearer, AgentIdentity caller) {
     return McpServer(
       tools: buildTools(
         target: FireflyTarget(
           baseUrl: authenticator.fireflyProxyBase,
           bearer: bearer,
         ),
+        identity: caller,
       ),
     );
   }
@@ -73,7 +75,7 @@ Future<void> main(List<String> args) async {
     await serveTcp(
       // Each connection's own key becomes its Firefly bearer, so the backend
       // stays the authority on what that key may do.
-      server: (_, agentKey) => serverFor(agentKey),
+      server: (caller, agentKey) => serverFor(agentKey, caller),
       authenticator: authenticator,
       port: port,
       onLog: stderr.writeln,
@@ -81,7 +83,7 @@ Future<void> main(List<String> args) async {
     stderr.writeln('fireracoon MCP server ready (tcp). Ctrl-C to stop.');
     await Completer<void>().future;
   } else {
-    await serveStdio(serverFor(key), identity: identity);
+    await serveStdio(serverFor(key, identity), identity: identity);
   }
 }
 

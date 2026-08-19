@@ -346,10 +346,13 @@ Future<void> _serverEntry(McpIsolateConfig cfg) async {
   }
 
   // Every agent shares the app's single Firefly connection; the key only
-  // decides which tools that agent may call.
-  final server = McpServer(
+  // decides which tools that agent may call, and which person get_capabilities
+  // reports it as. One server per connection is what carries that identity;
+  // sharing one across all of them left every caller anonymous.
+  McpServer serverFor(AgentIdentity identity) => McpServer(
     tools: buildTools(
       target: FireflyTarget(baseUrl: cfg.fireflyUrl, bearer: cfg.fireflyToken),
+      identity: identity,
     ),
     onActivity: reportUse,
   );
@@ -363,7 +366,7 @@ Future<void> _serverEntry(McpIsolateConfig cfg) async {
     try {
       log.fine('Trying to bind MCP TCP server on port $port');
       socket = await serveTcp(
-        server: (_, _) => server,
+        server: (identity, _) => serverFor(identity),
         authenticator: authenticator,
         port: port,
       );
