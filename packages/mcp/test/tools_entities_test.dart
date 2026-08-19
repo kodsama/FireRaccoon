@@ -89,6 +89,17 @@ void main() {
       expect(bodies.single, contains('defaultAsset'));
     });
 
+    test('create_account refuses an unknown type before requesting', () async {
+      final calls = <Uri>[];
+      final result = await _tool(
+        'create_account',
+        client: fireflyMockClient(record: calls),
+      ).run({'name': 'X', 'type': 'chequing', 'currency_code': 'EUR'});
+
+      expect(result['code'], 'bad_input');
+      expect(calls, isEmpty);
+    });
+
     test('create_liability sends its type and direction', () async {
       final bodies = <String>[];
       final result =
@@ -451,6 +462,27 @@ void main() {
       expect((result['bill'] as Map)['name'], 'Rent');
     });
 
+    test('create_bill refuses an unknown frequency', () async {
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'create_bill',
+            client: fireflyMockClient(recordBodies: bodies),
+          ).run({
+            'name': 'Rent',
+            'amount_min': 1,
+            'amount_max': 2,
+            'date': '2026-03-01',
+            'repeat_frequency': 'fortnightly',
+          });
+
+      // Firefly's own parser would quietly read an unknown frequency as
+      // monthly, so the bill has to be refused before anything is written.
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('repeat_frequency'));
+      expect(bodies, isEmpty);
+    });
+
     test('update_bill keeps omitted fields', () async {
       final result = await _tool(
         'update_bill',
@@ -581,6 +613,17 @@ void main() {
 
       expect(result['ok'], isTrue);
       expect((result['recurrence'] as Map)['id'], '12');
+    });
+
+    test('create_recurrence refuses an unknown repetition type', () async {
+      final calls = <Uri>[];
+      final result = await _tool(
+        'create_recurrence',
+        client: fireflyMockClient(record: calls),
+      ).run({...recurrenceArgs(), 'repetition_type': 'fortnightly'});
+
+      expect(result['code'], 'bad_input');
+      expect(calls, isEmpty);
     });
 
     test('update_recurrence replaces the rule', () async {
