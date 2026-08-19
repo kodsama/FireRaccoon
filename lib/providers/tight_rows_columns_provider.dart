@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../store/secure_storage.dart';
 import '../l10n/app_localizations.dart';
 
 enum TightRowColumn {
@@ -43,7 +43,7 @@ extension TightRowColumnL10n on TightRowColumn {
 }
 
 class TightRowsColumnsNotifier extends Notifier<Set<TightRowColumn>> {
-  static const _storage = FlutterSecureStorage();
+  static const _storage = appSecureStorage;
   static const _storageKey = 'tightRowsColumns';
 
   static const Set<TightRowColumn> defaultColumns = {
