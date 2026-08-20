@@ -54,7 +54,8 @@ Map<String, Object?> buildMcpSchema({FireflyTarget? target}) {
       'note':
           'Accounts, transactions, budgets and their limits, categories, tags, '
           'bills, piggy banks, recurrences, currencies, search, reconciliation, '
-          'and the on-device projection all have tools. The rich account '
+          'account resolution, statement matching, and the on-device projection '
+          'all have tools. The rich account '
           'prognosis behind the UI is the one engine capability with none. '
           'Read the tools list below rather than assuming a gap.',
     },

@@ -70,6 +70,28 @@ Map<String, Object?> _badInput(String message) => {
   'error': message,
 };
 
+/// Fields `update_account` forwards, in the order it reports them back. Named
+/// once so the at-least-one guard and the `updated_fields` report cannot drift.
+const List<String> _accountUpdateFields = [
+  'name',
+  'type',
+  'iban',
+  'bic',
+  'account_number',
+  'notes',
+  'active',
+  'account_role',
+  'currency_code',
+  'liability_type',
+  'liability_direction',
+  'include_net_worth',
+  'opening_balance',
+  'opening_balance_date',
+  'virtual_balance',
+  'interest',
+  'interest_period',
+];
+
 Map<String, Object?> _accountJson(Account account) => {
   'id': account.id,
   'name': account.name,
@@ -83,10 +105,15 @@ Map<String, Object?> _accountJson(Account account) => {
 
 Map<String, Object?> _transactionJson(Transaction transaction) => {
   'id': transaction.id,
+  // One leg of a split is only addressable by its journal id; the group id
+  // reaches the whole group. match_statement reports a leg, so a caller acting
+  // on its output needs the id that identifies one.
+  'journal_id': transaction.journalId,
   'type': transaction.type,
   'date': _dateOnly(transaction.date),
   'amount': transaction.totalAmount,
   'description': transaction.description,
+  'group_title': transaction.groupTitle,
   'source_id': transaction.sourceId,
   'source_name': transaction.sourceName,
   'destination_id': transaction.destinationId,
@@ -98,6 +125,11 @@ Map<String, Object?> _transactionJson(Transaction transaction) => {
   'bill_id': transaction.billId,
   'bill_name': transaction.billName,
   'tags': transaction.tags,
+  // Deliberately carried, unlike on an account. A transaction note is what
+  // records where a row came from, such as the raw bank text an import kept so
+  // the origin stays traceable, and an agent reading transactions needs it.
+  // Account notes are unbounded free text on an entity that appears in every
+  // payee row, which is why _accountJson does not carry them.
   'notes': transaction.notes,
   'currency_symbol': transaction.currencySymbol,
   'currency_code': transaction.currencyCode,
@@ -763,12 +795,22 @@ List<McpTool> buildTools({
           'never returned, only a last-four hint.',
       inputSchema: {
         'type': 'object',
-        'required': ['query'],
         'properties': {
           'query': {
             'type': 'string',
             'description':
-                "Raw bank text, such as 'Common Allkonto 571 343 821'.",
+                "Raw bank text, such as 'Joint Current 12 345 678'. Give this "
+                'or queries, not both.',
+          },
+          'queries': {
+            'type': 'array',
+            'items': {'type': 'string'},
+            'maxItems': 200,
+            'description':
+                'Several texts resolved against one read of the chart of '
+                'accounts. A ledger with a couple of thousand payees takes '
+                'seconds to read, so resolving a statement a row at a time '
+                'pays that cost once per row.',
           },
           'types': {
             'type': 'array',
@@ -792,9 +834,20 @@ List<McpTool> buildTools({
         },
       },
       run: (args) async {
-        final query = (args['query'] as String?)?.trim();
-        if (query == null || query.isEmpty) {
-          return _badInput('query is required');
+        final single = (args['query'] as String?)?.trim();
+        final batch = [
+          for (final raw in _strList(args['queries']))
+            if (raw.trim().isNotEmpty) raw.trim(),
+        ];
+        if (single != null && single.isNotEmpty && batch.isNotEmpty) {
+          return _badInput('give query or queries, not both');
+        }
+        final queries = batch.isNotEmpty
+            ? batch
+            : (single == null || single.isEmpty ? const <String>[] : [single]);
+        if (queries.isEmpty) return _badInput('query or queries is required');
+        if (queries.length > 200) {
+          return _badInput('queries must not exceed 200 entries');
         }
         final requested = _strList(args['types']);
         const known = ['asset', 'liability', 'expense', 'revenue'];
@@ -809,33 +862,50 @@ List<McpTool> buildTools({
           return _badInput('limit must be between 1 and 25');
         }
 
+        // Read once, however many texts are being resolved.
         final accounts = await service().getAccounts(types: types);
-        final resolution = resolveAccountCandidates(
-          accounts: accounts,
-          query: query,
-          iban: (args['iban'] as String?)?.trim(),
-          accountNumber: (args['account_number'] as String?)?.trim(),
-          limit: limit,
-        );
-        return {
+        final iban = (args['iban'] as String?)?.trim();
+        final accountNumber = (args['account_number'] as String?)?.trim();
+
+        Map<String, Object?> resolve(String text) {
+          final resolution = resolveAccountCandidates(
+            accounts: accounts,
+            query: text,
+            iban: iban,
+            accountNumber: accountNumber,
+            limit: limit,
+          );
+          return {
+            'query': text,
+            'normalized_query': foldAccountName(text),
+            'query_digits': digitsOnly(text),
+            'candidate_count': resolution.candidates.length,
+            'ambiguous': resolution.ambiguous,
+            'skipped_blank_names': resolution.skippedBlankNames,
+            'collisions': [
+              for (final entry in resolution.collisions.entries)
+                {'key': entry.key, 'account_ids': entry.value},
+            ],
+            'warnings': resolution.warnings,
+            'candidates': [
+              for (final candidate in resolution.candidates)
+                _accountCandidateJson(candidate),
+            ],
+          };
+        }
+
+        final header = {
           'ok': true,
-          'query': query,
-          'normalized_query': foldAccountName(query),
-          'query_digits': digitsOnly(query),
           'searched_types': types,
-          'candidate_count': resolution.candidates.length,
-          'ambiguous': resolution.ambiguous,
+          'accounts_read': accounts.length,
           'ambiguity_band': kAmbiguityBand,
-          'skipped_blank_names': resolution.skippedBlankNames,
-          'collisions': [
-            for (final entry in resolution.collisions.entries)
-              {'key': entry.key, 'account_ids': entry.value},
-          ],
-          'warnings': resolution.warnings,
-          'candidates': [
-            for (final candidate in resolution.candidates)
-              _accountCandidateJson(candidate),
-          ],
+        };
+        // A single query keeps its flat shape so an existing caller is
+        // unaffected; a batch reports one entry per text.
+        if (batch.isEmpty) return {...header, ...resolve(queries.single)};
+        return {
+          ...header,
+          'results': [for (final text in queries) resolve(text)],
         };
       },
     ),
@@ -1823,25 +1893,167 @@ List<McpTool> buildTools({
     McpTool(
       name: 'update_account',
       writes: true,
-      description: 'Rename a Firefly III account.',
+      description:
+          'Update an account: name, type, identifiers, notes, role, currency, '
+          'liability terms, or balances. Anything omitted keeps its current '
+          'value. Setting account_number or iban on a payee is what lets '
+          'find_account resolve a statement line to it next time instead of '
+          'guessing from the name.',
       inputSchema: {
         'type': 'object',
-        'required': ['account_id', 'name'],
+        'required': ['account_id'],
         'properties': {
           'account_id': {'type': 'string'},
           'name': {'type': 'string'},
+          'type': {
+            'type': 'string',
+            'enum': ['asset', 'expense', 'revenue', 'liability'],
+          },
+          'iban': {'type': 'string'},
+          'bic': {'type': 'string'},
+          'account_number': {'type': 'string'},
+          'notes': {'type': 'string'},
+          'active': {'type': 'boolean'},
+          'account_role': {
+            'type': 'string',
+            'enum': [
+              'defaultAsset',
+              'sharedAsset',
+              'savingAsset',
+              'ccAsset',
+              'cashWalletAsset',
+            ],
+          },
+          'currency_code': {'type': 'string'},
+          'liability_type': {
+            'type': 'string',
+            'enum': ['debt', 'loan', 'mortgage'],
+          },
+          'liability_direction': {
+            'type': 'string',
+            'enum': ['credit', 'debit'],
+          },
+          'include_net_worth': {'type': 'boolean'},
+          'opening_balance': {'type': 'number'},
+          'opening_balance_date': {
+            'type': 'string',
+            'description': 'YYYY-MM-DD.',
+          },
+          'virtual_balance': {'type': 'number'},
+          'interest': {'type': 'number'},
+          'interest_period': {
+            'type': 'string',
+            'enum': [
+              'daily',
+              'weekly',
+              'monthly',
+              'quarterly',
+              'half-year',
+              'yearly',
+            ],
+          },
         },
       },
       run: (args) async {
-        final accountId = args['account_id'] as String?;
-        final name = args['name'] as String?;
+        final accountId = (args['account_id'] as String?)?.trim();
         if (accountId == null || accountId.isEmpty) {
           return _badInput('account_id is required');
         }
-        if (name == null || name.isEmpty) return _badInput('name is required');
-        final api = service();
-        await api.updateAccount(accountId, name: name);
-        return {'ok': true, 'account_id': accountId, 'name': name};
+        // Firefly answers 200 to a PUT that changes nothing, so without this a
+        // caller who misspelled a field name would be told the edit landed.
+        final updated = _accountUpdateFields
+            .where((field) => args[field] != null)
+            .toList();
+        if (updated.isEmpty) {
+          return _badInput(
+            'pass at least one field to change: '
+            '${_accountUpdateFields.join(', ')}',
+          );
+        }
+        final name = (args['name'] as String?)?.trim();
+        if (name != null && name.isEmpty) {
+          return _badInput('name must not be empty');
+        }
+        const accountTypes = ['asset', 'expense', 'revenue', 'liability'];
+        final type = args['type'] as String?;
+        if (type != null && !accountTypes.contains(type)) {
+          return _badInput('type must be one of ${accountTypes.join(', ')}');
+        }
+        const accountRoles = [
+          'defaultAsset',
+          'sharedAsset',
+          'savingAsset',
+          'ccAsset',
+          'cashWalletAsset',
+        ];
+        final role = args['account_role'] as String?;
+        if (role != null && !accountRoles.contains(role)) {
+          return _badInput(
+            'account_role must be one of ${accountRoles.join(', ')}',
+          );
+        }
+        final liabilityType = _enumByApiValue(
+          LiabilityType.values,
+          args['liability_type'] as String?,
+          (v) => v.apiValue,
+        );
+        if (args['liability_type'] != null && liabilityType == null) {
+          return _badInput('liability_type must be debt, loan, or mortgage');
+        }
+        final liabilityDirection = _enumByApiValue(
+          LiabilityDirection.values,
+          args['liability_direction'] as String?,
+          (v) => v.apiValue,
+        );
+        if (args['liability_direction'] != null && liabilityDirection == null) {
+          return _badInput('liability_direction must be credit or debit');
+        }
+        final interestPeriod = _enumByApiValue(
+          InterestPeriod.values,
+          args['interest_period'] as String?,
+          (v) => v.apiValue,
+        );
+        if (args['interest_period'] != null && interestPeriod == null) {
+          return _badInput(
+            'interest_period must be one of '
+            '${InterestPeriod.values.map((v) => v.apiValue).join(', ')}',
+          );
+        }
+        final DateTime? openingBalanceDate;
+        try {
+          openingBalanceDate = _optionalDate(
+            args['opening_balance_date'],
+            'opening_balance_date',
+          );
+        } on ArgumentError catch (e) {
+          return _badInput('${e.message}');
+        }
+        await service().updateAccount(
+          accountId,
+          name: name,
+          type: type,
+          iban: args['iban'] as String?,
+          bic: args['bic'] as String?,
+          accountNumber: args['account_number'] as String?,
+          notes: args['notes'] as String?,
+          active: args['active'] as bool?,
+          role: role,
+          currencyCode: args['currency_code'] as String?,
+          liabilityType: liabilityType?.apiValue,
+          liabilityDirection: liabilityDirection?.apiValue,
+          includeNetWorth: args['include_net_worth'] as bool?,
+          openingBalance: (args['opening_balance'] as num?)?.toDouble(),
+          openingBalanceDate: openingBalanceDate,
+          virtualBalance: (args['virtual_balance'] as num?)?.toDouble(),
+          interest: (args['interest'] as num?)?.toDouble(),
+          interestPeriod: interestPeriod?.apiValue,
+        );
+        return {
+          'ok': true,
+          'account_id': accountId,
+          'name': ?name,
+          'updated_fields': updated,
+        };
       },
     ),
     McpTool(

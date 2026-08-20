@@ -41,11 +41,11 @@ void main() {
     });
 
     test('strips a leading company form', () {
-      // Regression: only the last token checked, leaving absvenskaspel to be
+      // Regression: only the last token checked, leaving abnordisklotto to be
       // compared against a statement line that prints the form on one side
       // only.
-      expect(foldAccountName('AB Svenska Spel'), 'svenskaspel');
-      expect(foldAccountName('AB Svenska Spel AB'), 'svenskaspel');
+      expect(foldAccountName('AB Nordisk Lotto'), 'nordisklotto');
+      expect(foldAccountName('AB Nordisk Lotto AB'), 'nordisklotto');
     });
 
     test(
@@ -87,33 +87,33 @@ void main() {
 
   group('prefixMatches', () {
     test('accepts a truncated bank name against the full name', () {
-      expect(prefixMatches('svenskas', 'svenskaspel'), isTrue);
+      expect(prefixMatches('nordiskl', 'nordisklotto'), isTrue);
     });
 
     test('rejects a shared run that is not a prefix of the shorter string', () {
       // Regression: longest common prefix implemented instead of bidirectional
       // startsWith, which merges a lottery company with a bank.
-      expect(prefixMatches('svenskas', 'svenskahandelsbanken'), isFalse);
+      expect(prefixMatches('nordiskl', 'nordiskbank'), isFalse);
     });
 
     test('rejects a prefix shorter than the minimum', () {
       // Pins kNameMatchMinPrefix at 4 through behaviour: two folded characters
       // in common is half the payees in a ledger.
-      expect(prefixMatches('va', 'vasyd'), isFalse);
-      expect(prefixMatches('vas', 'vasyd'), isFalse);
-      expect(prefixMatches('vasy', 'vasyd'), isTrue);
+      expect(prefixMatches('va', 'vattn'), isFalse);
+      expect(prefixMatches('vat', 'vattn'), isFalse);
+      expect(prefixMatches('vatt', 'vattn'), isTrue);
     });
 
     test('rejects an empty side', () {
       // Regression: a blank folded name being a prefix of everything.
-      expect(prefixMatches('', 'vasyd'), isFalse);
-      expect(prefixMatches('vasyd', ''), isFalse);
+      expect(prefixMatches('', 'vattn'), isFalse);
+      expect(prefixMatches('vattn', ''), isFalse);
     });
   });
 
   group('digitsOnly and normalizeIdentifier', () {
     test('keeps the digits a bank prints with spaces', () {
-      expect(digitsOnly('Common Allkonto 571 343 821'), '571343821');
+      expect(digitsOnly('Joint Current 123 456 789'), '123456789');
       expect(digitsOnly('no digits'), '');
     });
 
@@ -131,7 +131,7 @@ void main() {
 
     test('recognises the ISO 13616 shape', () {
       expect(isIbanShaped(swedish), isTrue);
-      expect(isIbanShaped('6000 571343821'), isFalse);
+      expect(isIbanShaped('6000 123456789'), isFalse);
     });
 
     test('validates mod-97 across countries', () {
@@ -147,7 +147,7 @@ void main() {
     test(
       'reports a clearing number as failing the shape, not the checksum',
       () {
-        // Regression: mod-97 run on a Handelsbanken clearing number that was
+        // Regression: mod-97 run on a bank clearing number that was
         // never claimed to be an IBAN, which reads as a corrupt IBAN.
         expect(isIbanShaped('6000'), isFalse);
         expect(ibanChecksumValid('6000'), isFalse);
@@ -157,12 +157,12 @@ void main() {
     test('strips country, check digits and the domestic zero padding', () {
       // Regression: the zero-padded Swedish BBAN never equalling the digits a
       // statement prints for the same account.
-      expect(ibanBban('SE87 0000 0000 0005 7134 3821'), '571343821');
+      expect(ibanBban('SE87 0000 0000 0001 2345 6789'), '123456789');
       expect(ibanBban(swedish), '50000000058398257466');
     });
 
     test('has no BBAN for a non-IBAN or an all-zero body', () {
-      expect(ibanBban('571343821'), isNull);
+      expect(ibanBban('123456789'), isNull);
       expect(ibanBban('SE000000'), isNull);
     });
   });

@@ -6,6 +6,8 @@ import 'package:fireracoon_engine/utils/agent_key.dart' as keys;
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
+import 'helpers/test_store.dart';
+
 const _password = 'correct-horse-battery';
 
 Map<String, dynamic> _person(String id, String name, {String role = 'user'}) =>
@@ -31,7 +33,7 @@ void main() {
   });
 
   Future<StateRepository> repository() async {
-    final sealed = await SealedStore.open(
+    final sealed = await openTestStore(
       dataDirPath: tmp.path,
       password: _password,
     );
@@ -308,7 +310,7 @@ void main() {
       );
 
       final reopened = StateRepository(
-        await SealedStore.open(dataDirPath: tmp.path, password: _password),
+        await openTestStore(dataDirPath: tmp.path, password: _password),
       );
       await reopened.load();
 
@@ -324,7 +326,7 @@ void main() {
       );
 
       final reopened = StateRepository(
-        await SealedStore.open(dataDirPath: tmp.path, password: _password),
+        await openTestStore(dataDirPath: tmp.path, password: _password),
       );
       await reopened.load();
 
@@ -507,7 +509,7 @@ void main() {
       await repo.touchAgentKey(issued.secret, now: at);
 
       final reopened = StateRepository(
-        await SealedStore.open(dataDirPath: tmp.path, password: _password),
+        await openTestStore(dataDirPath: tmp.path, password: _password),
       );
       await reopened.load();
 

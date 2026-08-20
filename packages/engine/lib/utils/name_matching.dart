@@ -87,7 +87,7 @@ String foldLatin(String raw) {
 /// The legal-suffix token goes while the token boundaries are still there, so
 /// `Danfoss A/S` loses `a/s` instead of collapsing to `danfossas` and matching
 /// every `as` payee. Both ends are checked, because a Nordic company form is
-/// written on either side: `AB Svenska Spel` folds to `svenskaspel`. A name
+/// written on either side: `AB Lotteri Bolaget` folds to `lotteribolaget`. A name
 /// that is only a suffix, or that would drop below three characters without
 /// it, keeps it: `Kebab` folds to `kebab`, not to the empty string that
 /// prefix-matches the whole ledger.
@@ -169,8 +169,8 @@ String? ibanBban(String raw) {
 /// [kNameMatchMinPrefix] characters.
 ///
 /// Bidirectional startsWith, not longest common prefix: the bank's truncated
-/// `AB SVENSKA S` folds to a prefix of `svenskaspel`, while the seven
-/// characters it shares with `svenskahandelsbanken` buy it nothing, so a
+/// `AB LOTTERI B` folds to a prefix of `lotteribolaget`, while the seven
+/// characters it shares with `nordiskbank` buy it nothing, so a
 /// lottery company is not paid to a bank.
 bool prefixMatches(String a, String b) =>
     a.isNotEmpty &&
