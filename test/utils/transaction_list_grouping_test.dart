@@ -217,7 +217,10 @@ void main() {
         );
 
         expect(result.filteredTransactions, hasLength(3));
-        expect(result.futureTransactions.map((t) => t.id), ['f3', 'f2', 'f1']);
+        // Newest first, the direction the dated groups below already use.
+        // Regression: the future block sorted the other way, so the list
+        // reversed itself where that block began.
+        expect(result.futureTransactions.map((t) => t.id), ['f1', 'f2', 'f3']);
         expect(result.groups, isEmpty);
       },
     );
