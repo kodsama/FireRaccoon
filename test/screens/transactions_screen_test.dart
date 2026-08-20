@@ -603,6 +603,60 @@ void main() {
     },
   );
 
+  testWidgets('TransactionsScreen reads the balance at a chosen date', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final fake = FakeFireflyService(
+      accounts: sampleAccounts,
+      accountTransactionPages: {
+        '1': {
+          1: TransactionPageResult(
+            transactions: sampleTransactions,
+            currentPage: 1,
+            totalPages: 1,
+            total: sampleTransactions.length,
+          ),
+        },
+      },
+      balancesByDate: const {
+        '1': {'*': 4321.0},
+      },
+    );
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const TransactionsScreen(),
+        initialLocation: '/transactions?account=Checking',
+        fireflyService: fake,
+        viewMode: ViewMode.compact,
+      ),
+    );
+    await pumpScreen(tester);
+
+    // Today, straight from the account.
+    expect(find.textContaining('\u20ac2,500.00'), findsWidgets);
+
+    await tester.tap(find.text('Balance:'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DatePickerDialog), findsOneWidget);
+
+    // The picker opens on today, so confirming it asks the ledger for a date
+    // rather than reading the account's own balance.
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('\u20ac4,321.00'), findsWidgets);
+
+    // Clearing it goes back to today, straight from the account.
+    await tester.tap(find.byTooltip('today'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('\u20ac2,500.00'), findsWidgets);
+  });
+
   testWidgets(
     'TransactionsScreen shows Refresh instead of view mode switcher',
     (tester) async {

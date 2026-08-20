@@ -52,10 +52,33 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
   String? _paybackPaymentAccountId;
   DateTime _paybackDate = DateTime.now();
   bool _reconcileRouteApplied = false;
+
+  /// Day the balance chip is reading, or null for today.
+  DateTime? _balanceAsOfDate;
   _CachedTransactionListGroups? _cachedGroups;
   List<Transaction>? _cachedMergeLocal;
   List<Transaction>? _cachedMergeSearch;
   List<Transaction>? _cachedMerged;
+
+  /// Asks which day the balance chip should read.
+  ///
+  /// The range reaches a decade either way: the ledger holds scheduled payments
+  /// well past today, and answering "what will I have when the loan is paid" is
+  /// the point of allowing a future date at all.
+  Future<void> _pickBalanceDate(BuildContext context) async {
+    final now = DateTime.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _balanceAsOfDate ?? DateTime(now.year, now.month, now.day),
+      firstDate: DateTime(now.year - 10),
+      lastDate: DateTime(now.year + 10, 12, 31),
+      helpText: context.l10n.balance,
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _balanceAsOfDate = DateTime(picked.year, picked.month, picked.day);
+    });
+  }
 
   /// Combines the locally paginated window with server search results,
   /// memoized by input identity so downstream group caching stays effective.
@@ -895,37 +918,16 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                       ),
                       child: Text(l10n.clearFilters),
                     ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: colors.surface,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: colors.border),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          l10n.balance,
-                          style: TextStyle(color: colors.text3, fontSize: 13),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          balance != null
-                              ? format.formatMoney(balance, currencySymbol)
-                              : l10n.notAvailable,
-                          style: TextStyle(
-                            fontFamily: 'Roboto Slab',
-                            fontWeight: FontWeight.w700,
-                            color: balance != null && balance < 0
-                                ? colors.danger
-                                : colors.text,
-                          ),
-                        ),
-                      ],
-                    ),
+                  _AccountBalanceChip(
+                    accountId: filteredAccount?.id,
+                    todayBalance: balance,
+                    currencySymbol: currencySymbol,
+                    format: format,
+                    asOf: _balanceAsOfDate,
+                    onPickDate: filteredAccount == null
+                        ? null
+                        : () => _pickBalanceDate(context),
+                    onClearDate: () => setState(() => _balanceAsOfDate = null),
                   ),
                   if (filterAccount != null && balance != null) ...[
                     AccountBalanceCheckToggle(
@@ -1805,6 +1807,129 @@ class _ActiveFilterBubble extends StatelessWidget {
               child: Icon(LucideIcons.x, size: 14, color: colors.accent.acc),
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The balance chip in the header, which reads today by default and any other
+/// day on request.
+///
+/// A day other than today is asked of the ledger rather than derived here:
+/// Firefly counts everything dated up to it, future-dated rows included, so a
+/// date ahead of today gives the balance already expected rather than a
+/// forecast of it.
+class _AccountBalanceChip extends ConsumerWidget {
+  const _AccountBalanceChip({
+    required this.accountId,
+    required this.todayBalance,
+    required this.currencySymbol,
+    required this.format,
+    required this.asOf,
+    required this.onPickDate,
+    required this.onClearDate,
+  });
+
+  final String? accountId;
+  final double? todayBalance;
+  final String? currencySymbol;
+  final LocaleFormatting format;
+  final DateTime? asOf;
+  final VoidCallback? onPickDate;
+  final VoidCallback onClearDate;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final l10n = context.l10n;
+    final symbol = currencySymbol ?? '';
+
+    final dated = asOf == null || accountId == null
+        ? null
+        : ref.watch(
+            accountBalanceAtDateProvider(
+              AccountBalanceDateKey(accountId: accountId!, date: asOf!),
+            ),
+          );
+
+    final String amountLabel;
+    double? shownBalance;
+    if (dated == null) {
+      shownBalance = todayBalance;
+      amountLabel = todayBalance != null
+          ? format.formatMoney(todayBalance!, symbol)
+          : l10n.notAvailable;
+    } else {
+      shownBalance = dated.hasValue ? dated.value : null;
+      amountLabel = switch (dated) {
+        AsyncData(:final value) => format.formatMoney(value, symbol),
+        AsyncError() => l10n.notAvailable,
+        _ => '…',
+      };
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: onPickDate,
+            child: Row(
+              children: [
+                Text(
+                  l10n.balance,
+                  style: TextStyle(color: colors.text3, fontSize: 13),
+                ),
+                if (asOf != null) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    format.formatMediumDate(asOf!),
+                    style: TextStyle(color: colors.accent.acc, fontSize: 13),
+                  ),
+                ],
+                const SizedBox(width: 8),
+                Text(
+                  amountLabel,
+                  style: TextStyle(
+                    fontFamily: 'Roboto Slab',
+                    fontWeight: FontWeight.w700,
+                    color: shownBalance != null && shownBalance < 0
+                        ? colors.danger
+                        : colors.text,
+                  ),
+                ),
+                if (onPickDate != null && asOf == null) ...[
+                  const SizedBox(width: 6),
+                  Icon(LucideIcons.calendar, size: 14, color: colors.text3),
+                ],
+              ],
+            ),
+          ),
+          if (asOf != null) ...[
+            const SizedBox(width: 6),
+            Tooltip(
+              message: l10n.today,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: onClearDate,
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Icon(
+                    LucideIcons.x,
+                    size: 14,
+                    color: colors.accent.acc,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

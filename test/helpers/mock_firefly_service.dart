@@ -16,6 +16,7 @@ class FakeFireflyService implements FireflyService {
     this.transactionPages = const {},
     this.accountTransactionPages = const {},
     this.budgetTransactions = const {},
+    this.balancesByDate = const {},
   }) : _primaryCurrency =
            primaryCurrency ??
            const FireflyCurrency(
@@ -37,6 +38,11 @@ class FakeFireflyService implements FireflyService {
   final Map<int, TransactionPageResult> transactionPages;
   final Map<String, Map<int, TransactionPageResult>> accountTransactionPages;
   final Map<String, List<Transaction>> budgetTransactions;
+
+  /// Balance per account per `yyyy-MM-dd`, for the dated reads. Firefly
+  /// answers those from the ledger, so a fake that ignored the date could
+  /// not tell a chosen day from today.
+  final Map<String, Map<String, double>> balancesByDate;
 
   Exception? throwOn;
   Exception? createTransactionError;
@@ -97,6 +103,18 @@ class FakeFireflyService implements FireflyService {
     String accountId,
     DateTime date,
   ) async {
+    final key =
+        '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+    final forAccount = balancesByDate[accountId];
+    // '*' answers for any date, for tests whose chosen day is today and so
+    // cannot be written as a literal.
+    final dated = forAccount?[key] ?? forAccount?['*'];
+    if (dated != null) {
+      await _maybeDelay();
+      return dated;
+    }
     return (await getAccount(accountId, date: date)).currentBalance;
   }
 
