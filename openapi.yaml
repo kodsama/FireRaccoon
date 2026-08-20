@@ -8,9 +8,17 @@ info:
     FireRacoon is a Flutter client for [Firefly III](https://www.firefly-iii.org/).
     This document describes:
 
-    1. **Firefly III REST endpoints** consumed by the app and MCP tools.
-    2. **MCP tools** exposed by the built-in `fireracoon_mcp` server (JSON-RPC 2.0
+    1. **FireRacoon backend routes** served in server mode by
+       `packages/app_backend`: session login, the shared state document, agent
+       key management, avatars, and the Firefly proxy.
+    2. **Firefly III REST endpoints** consumed by the app and MCP tools.
+    3. **MCP tools** exposed by the built-in `fireracoon_mcp` server (JSON-RPC 2.0
        over stdio or TCP `127.0.0.1:8787+`).
+
+    Backend routes answer `503` with `code: store_locked` while the encrypted
+    store is locked, apart from the three that report that state or clear it:
+    `/api/capabilities`, `/config.json` and `/api/store/unlock`. Failures use
+    `ok: false` with an `error` string; the status carries the meaning.
 
     Agents authenticate with a FireRacoon agent key, never a Firefly III
     token. A key is issued per agent in Settings under MCP and inherits its
@@ -26,11 +34,18 @@ info:
     ```
 
 servers:
-  - url: '{fireflyUrl}'
+  - &fireflyServer
+    url: '{fireflyUrl}'
     description: Firefly III instance
     variables:
       fireflyUrl:
         default: http://localhost:8081
+  - &backendServer
+    url: '{fireracoonUrl}'
+    description: FireRacoon backend in server mode, a different origin from Firefly
+    variables:
+      fireracoonUrl:
+        default: http://localhost:8080
 
 security:
   - bearerAuth: []
@@ -41,6 +56,36 @@ components:
       type: http
       scheme: bearer
       description: Firefly III personal access token or OAuth2 bearer token
+
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: fireracoon_session
+      description: Session token, set by POST /api/login and POST /api/setup
+
+    sessionHeader:
+      type: apiKey
+      in: header
+      name: x-fireracoon-session
+      description: >
+        The same session token, for clients that cannot carry cookies. Checked
+        before the Authorization header and the cookie.
+
+    sessionBearer:
+      type: http
+      scheme: bearer
+      description: The same session token as an Authorization bearer
+
+    agentKeyBearer:
+      type: http
+      scheme: bearer
+      description: >
+        A FireRacoon agent key (`frcn_...`). The backend resolves it to the
+        person it was issued to, so it reaches every route that person's role
+        allows, except the two that refuse it on purpose: POST /api/agent-keys
+        and GET /api/agent-keys/{keyId}/secret. A key also works in the session
+        cookie or the x-fireracoon-session header, which no single OpenAPI
+        scheme can express.
 
   schemas:
     JsonApiResource:
@@ -99,6 +144,54 @@ components:
         code: { type: string }
         error: { type: string }
 
+    StoreStatus:
+      type: object
+      description: Store state, repeated on every response that can be read while locked
+      properties:
+        storeLocked: { type: boolean }
+        storeExists: { type: boolean }
+        setupRequired: { type: boolean, description: True whenever no person or no Firefly connection exists }
+
+    BackendError:
+      type: object
+      properties:
+        ok: { type: boolean, const: false }
+        error: { type: string }
+        code: { type: string, description: 'Only store_locked sets one' }
+
+    Person:
+      type: object
+      description: >
+        Public person shape. Password hash and salt are never in it; hasPassword
+        reports whether one is set.
+      properties:
+        id: { type: string }
+        name: { type: string }
+        role: { type: string, enum: [admin, user, viewer] }
+        colorValue: { type: integer }
+        avatarKind: { type: string, enum: [none, preset, custom] }
+        avatarValue: { type: string, description: 'Preset id or stored file name, absent for avatarKind none' }
+        createdAt: { type: string, format: date-time }
+        preferences: { type: object, additionalProperties: true }
+        hasPassword: { type: boolean }
+        biometricsEnabled: { type: boolean }
+
+    AgentKey:
+      type: object
+      description: >
+        Public agent key record. The hash and the secret are withheld; reading a
+        secret is the separate owner-only step at
+        GET /api/agent-keys/{keyId}/secret.
+      properties:
+        id: { type: string }
+        personId: { type: string }
+        label: { type: string }
+        displayPrefix: { type: string, description: 'Leading characters of the secret, enough to tell keys apart' }
+        createdAt: { type: string, format: date-time }
+        lastUsedAt: { type: [string, 'null'], format: date-time }
+        revokedAt: { type: [string, 'null'], format: date-time }
+        active: { type: boolean }
+
 paths:
   /api/v1/about:
     get:
@@ -154,7 +247,7 @@ paths:
   /api/v1/accounts/{accountId}:
     put:
       operationId: updateAccount
-      summary: Rename an account
+      summary: Update an account
       tags: [Firefly]
       parameters:
         - name: accountId
@@ -167,9 +260,27 @@ paths:
           application/json:
             schema:
               type: object
-              required: [name]
+              description: >
+                Only the fields present are sent, and Firefly keeps the rest.
+                The amounts go over the wire as strings.
               properties:
                 name: { type: string }
+                type: { type: string, enum: [asset, expense, revenue, liability] }
+                iban: { type: string }
+                bic: { type: string }
+                account_number: { type: string }
+                notes: { type: string }
+                active: { type: boolean }
+                account_role: { type: string }
+                currency_code: { type: string }
+                liability_type: { type: string, enum: [debt, loan, mortgage] }
+                liability_direction: { type: string, enum: [credit, debit] }
+                include_net_worth: { type: boolean }
+                opening_balance: { type: string }
+                opening_balance_date: { type: string, format: date }
+                virtual_balance: { type: string }
+                interest: { type: string }
+                interest_period: { type: string }
       responses:
         '200':
           description: Updated account
@@ -310,6 +421,716 @@ paths:
       responses:
         '200':
           description: Transaction collection
+
+  /api/capabilities:
+    get:
+      operationId: getBackendCapabilities
+      summary: Deployment mode and encrypted store status
+      tags: [Backend]
+      servers: [*backendServer]
+      security: []
+      responses:
+        '200':
+          description: >
+            deployment and mode, both 'server', plus storeLocked, storeExists
+            and setupRequired. Answered while the store is locked, which is how
+            a client learns it has to unlock before anything else works.
+
+  /config.json:
+    get:
+      operationId: getWebConfig
+      summary: Bootstrap config for the web build
+      tags: [Backend]
+      servers: [*backendServer]
+      security: []
+      responses:
+        '200':
+          description: >
+            FIRERACOON_MODE and mode, both 'server', plus the same store status
+            as /api/capabilities. The web build reads it before deciding whether
+            it is talking to a backend or running locally.
+
+  /api/store/unlock:
+    post:
+      operationId: unlockStore
+      summary: Unlock the encrypted store, or create it on an empty DATA_DIR
+      tags: [Backend]
+      servers: [*backendServer]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string, minLength: 10 }
+                confirmPassword:
+                  type: string
+                  description: >
+                    Required, and must match, only when DATA_DIR holds no store
+                    yet and this call creates one.
+      responses:
+        '200':
+          description: >
+            ok with the store status. alreadyUnlocked is true when the store was
+            already open, including when DATA_PASSWORD opened it at boot.
+        '400':
+          description: Password under 10 characters, or confirmation missing or mismatched
+        '401':
+          description: Wrong password for an existing store
+
+  /api/setup:
+    post:
+      operationId: completeSetup
+      summary: Create the first admin and store the Firefly connection
+      tags: [Backend]
+      servers: [*backendServer]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [adminName, adminPassword, fireflyUrl, fireflyToken]
+              properties:
+                adminName: { type: string }
+                adminPassword: { type: string, minLength: 10 }
+                fireflyUrl: { type: string }
+                fireflyToken:
+                  type: string
+                  description: >
+                    Firefly III personal access token. The backend keeps it from
+                    here on and clients reach Firefly through /api/firefly.
+                allowInsecure: { type: boolean, default: false }
+      responses:
+        '200':
+          description: >
+            ok, the new admin as a Person, and sessionToken. Sets the
+            fireracoon_session cookie, so setup leaves the caller logged in.
+        '400':
+          description: Blank name, password under 10 characters, or missing Firefly url or token
+        '409':
+          description: A person already exists, so setup has already run
+        '503':
+          description: Encrypted store is locked
+
+  /api/login:
+    post:
+      operationId: login
+      summary: Exchange a name and password for a session
+      tags: [Backend]
+      servers: [*backendServer]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, password]
+              properties:
+                name: { type: string, description: 'Person name, matched case-insensitively' }
+                password: { type: string }
+      responses:
+        '200':
+          description: >
+            ok, the Person, and sessionToken. Also sets the fireracoon_session
+            cookie.
+        '401':
+          description: Invalid credentials, whether the name is unknown or the password is wrong
+        '503':
+          description: Encrypted store is locked
+
+  /api/logout:
+    post:
+      operationId: logout
+      summary: Drop the session server-side and clear the cookie
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, {}]
+      responses:
+        '200':
+          description: >
+            ok, with the cookie expired. Succeeds with no credential at all, and
+            with an agent key, which has no session to drop.
+        '503':
+          description: Encrypted store is locked
+
+  /api/me:
+    get:
+      operationId: getMe
+      summary: Person and role behind the presented credential
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      responses:
+        '200':
+          description: >
+            ok and the Person, plus agentKeyId when the credential was an agent
+            key. MCP clients call this first to learn which account and role
+            their key grants.
+        '401':
+          description: No credential, or one that resolves to no person
+        '503':
+          description: Encrypted store is locked
+
+  /api/state:
+    get:
+      operationId: getState
+      summary: Whole client state document
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }, {}]
+      responses:
+        '200':
+          description: >
+            ok plus setupRequired, firefly as url, allowInsecure and configured
+            but never the token, people as Person entries, accountOwnerships,
+            requirePasswordLogin, the devicePrefs, classifications, sideMenu,
+            accountColumns, transactionColumns, viewMode, prognosis and undo
+            blobs, me, and avatars as the person ids that have one. Readable
+            without a credential only while setupRequired is true, so a
+            first-run client can render the setup screen.
+        '401':
+          description: Setup is done and no credential resolves to a person
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/backup-secrets:
+    get:
+      operationId: getBackupSecrets
+      summary: Firefly token and password hashes for a settings backup
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      responses:
+        '200':
+          description: >
+            ok, firefly as url, token and allowInsecure, requirePasswordLogin,
+            and peopleAuth mapping each person id to passwordHash and salt. Kept
+            out of /api/state on purpose: it exists so an export can seal the
+            same secrets blob local mode writes.
+        '403':
+          description: Not an admin, which is also the answer with no credential
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/device-prefs:
+    put:
+      operationId: putDevicePrefs
+      summary: Replace the device preferences blob
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: >
+                Stored verbatim as devicePrefs. The backend never reads the
+                keys, so the shape is whatever the writing client uses.
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: Body was not a JSON object
+        '401':
+          description: No credential resolves to a person
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/classifications:
+    put:
+      operationId: putClassifications
+      summary: Replace the classifications blob
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Stored verbatim as classifications, keys unread by the backend
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: Body was not a JSON object
+        '403':
+          description: Not an admin. This blob is shared, so only an admin may replace it
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/side-menu:
+    put:
+      operationId: putSideMenu
+      summary: Replace the side menu blob
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Stored verbatim as sideMenu, keys unread by the backend
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: Body was not a JSON object
+        '401':
+          description: No credential resolves to a person
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/account-columns:
+    put:
+      operationId: putAccountColumns
+      summary: Replace the account column blob
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Stored verbatim as accountColumns, keys unread by the backend
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: Body was not a JSON object
+        '401':
+          description: No credential resolves to a person
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/transaction-columns:
+    put:
+      operationId: putTransactionColumns
+      summary: Replace the transaction column blob
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Stored verbatim as transactionColumns, keys unread by the backend
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: Body was not a JSON object
+        '401':
+          description: No credential resolves to a person
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/view-mode:
+    put:
+      operationId: putViewMode
+      summary: Replace the view mode blob
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Stored verbatim as viewMode, keys unread by the backend
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: Body was not a JSON object
+        '401':
+          description: No credential resolves to a person
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/prognosis:
+    put:
+      operationId: putPrognosis
+      summary: Replace the prognosis settings blob
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Stored verbatim as prognosis, keys unread by the backend
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: Body was not a JSON object
+        '401':
+          description: No credential resolves to a person
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/undo:
+    put:
+      operationId: putUndo
+      summary: Replace the undo stack
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: >
+                Stored verbatim as undo. A fresh store starts with entries as an
+                empty list and index 0; the backend reads neither.
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: Body was not a JSON object
+        '403':
+          description: >
+            Role cannot write, which is also the answer with no credential: this
+            route has no separate 401.
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/firefly:
+    put:
+      operationId: putFireflyConnection
+      summary: Point the backend at a Firefly instance
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url: { type: string, description: 'Replaced on every call, and cleared when omitted' }
+                token:
+                  type: string
+                  description: >
+                    Kept as it is when omitted or empty, so a client that never
+                    reads the token can still save the rest of the connection.
+                allowInsecure: { type: boolean, default: false }
+      responses:
+        '200':
+          description: ok
+        '400':
+          description: Body was not a JSON object
+        '403':
+          description: Not an admin, which is also the answer with no credential
+        '503':
+          description: Encrypted store is locked
+
+  /api/state/people:
+    put:
+      operationId: putPeople
+      summary: Replace people, ownerships and login policy
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [people]
+              properties:
+                people:
+                  type: array
+                  minItems: 1
+                  description: >
+                    Replaces the roster wholesale, so every person to keep must
+                    be present and at least one must be an admin. Each entry
+                    needs id and name; colorValue, avatarKind, avatarValue,
+                    role, createdAt, preferences and biometricsEnabled are
+                    optional. preferences and biometricsEnabled fall back to the stored
+                    values; colorValue, avatarKind, role and createdAt fall back to fixed
+                    defaults, so omitting one resets it rather than preserving it.
+                  items: { type: object, additionalProperties: true }
+                accountOwnerships:
+                  description: >
+                    Accepts a list of accountId and personShares objects, or the
+                    older map keyed by account id, which is folded into the same
+                    list.
+                  oneOf:
+                    - type: array
+                      items: { type: object, additionalProperties: true }
+                    - type: object
+                      additionalProperties: true
+                requirePasswordLogin: { type: boolean, default: true }
+                passwordUpdates:
+                  type: object
+                  description: >
+                    Person id to new plaintext password, 10 characters minimum.
+                    Anyone left out keeps their stored hash.
+                  additionalProperties: { type: string }
+                authImports:
+                  type: object
+                  description: >
+                    Person id to a passwordHash and salt pair, for importing
+                    settings from local mode or another server. Ignored for a
+                    person also named in passwordUpdates.
+                  additionalProperties:
+                    type: object
+                    required: [passwordHash, salt]
+                    properties:
+                      passwordHash: { type: string }
+                      salt: { type: string }
+                      passwordSalt: { type: string, description: Accepted in place of salt }
+      responses:
+        '200':
+          description: >
+            ok plus the same document as GET /api/state. Agent keys of people
+            who no longer exist are dropped in the same call.
+        '400':
+          description: >
+            Empty people list, a person without id or name, no admin left, a
+            password under 10 characters, an authImports entry missing its passwordHash or
+            salt, or a change that would leave no password behind while password
+            login is required.
+        '403':
+          description: Not an admin, which is also the answer with no credential
+        '503':
+          description: Encrypted store is locked
+
+  /api/agent-keys:
+    get:
+      operationId: listAgentKeys
+      summary: Agent keys visible to the caller
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      responses:
+        '200':
+          description: >
+            ok and keys, each an AgentKey. An admin sees every key, anyone else
+            only their own. lastUsedAt is stamped by any request an agent key
+            carries, throttled to one write a minute.
+        '401':
+          description: No credential resolves to a person
+        '503':
+          description: Encrypted store is locked
+    post:
+      operationId: issueAgentKey
+      summary: Mint an agent key for the caller
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [label]
+              properties:
+                label: { type: string, description: Shown in Settings to tell keys apart }
+      responses:
+        '201':
+          description: >
+            ok, key as an AgentKey, and secret. The secret is readable again
+            afterwards only by its owner through
+            GET /api/agent-keys/{keyId}/secret.
+        '400':
+          description: Blank label
+        '401':
+          description: No credential resolves to a person
+        '403':
+          description: >
+            The credential was an agent key. A key cannot mint keys, so one
+            leaked secret cannot outlive its revocation.
+        '503':
+          description: Encrypted store is locked
+
+  /api/agent-keys/{keyId}/secret:
+    get:
+      operationId: revealAgentKeySecret
+      summary: Read back the secret of your own key
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }]
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: ok and secret
+        '401':
+          description: No credential resolves to a person
+        '404':
+          description: >
+            One answer for every case that is not a hit: someone else's key, no
+            such key, a key issued before secrets were retained, and a request
+            carrying an agent key rather than a session. None of them confirm
+            another person's key exists.
+        '503':
+          description: Encrypted store is locked
+
+  /api/agent-keys/{keyId}/record:
+    delete:
+      operationId: forgetAgentKey
+      summary: Delete a revoked key's record
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: ok and the remaining keys as AgentKey entries
+        '401':
+          description: No credential resolves to a person
+        '404':
+          description: >
+            No such key, not yours and you are not an admin, or the key is still
+            live. Revoking first is required, so forgetting a record can never
+            be what removes access.
+        '503':
+          description: Encrypted store is locked
+
+  /api/agent-keys/{keyId}:
+    delete:
+      operationId: revokeAgentKey
+      summary: Revoke an agent key
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      parameters:
+        - name: keyId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: >
+            ok and the keys as AgentKey entries. Repeating the call on an
+            already revoked key answers the same way.
+        '401':
+          description: No credential resolves to a person
+        '404':
+          description: No such key, or it is not yours and you are not an admin
+        '503':
+          description: Encrypted store is locked
+
+  /api/avatars/{personId}:
+    get:
+      operationId: getAvatar
+      summary: Fetch a person's avatar
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }, {}]
+      parameters:
+        - name: personId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: ok, personId, and pngBase64
+        '401':
+          description: No credential resolves to a person, unless setupRequired is still true
+        '404':
+          description: No avatar stored for this person. Plain text, not the JSON error shape
+        '503':
+          description: Encrypted store is locked
+    put:
+      operationId: putAvatar
+      summary: Set or clear a person's avatar
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      parameters:
+        - name: personId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pngBase64:
+                  type: string
+                  description: >
+                    Base64 PNG. Empty or omitted deletes the stored avatar, so
+                    clearing one needs no separate route.
+      responses:
+        '200':
+          description: ok
+        '403':
+          description: >
+            Not an admin and not this person, which is also the answer with no
+            credential: this route has no separate 401.
+        '503':
+          description: Encrypted store is locked
+
+  /api/firefly/{path}:
+    description: >
+      Transparent proxy to the configured Firefly instance, and how a
+      server-mode client reaches the Firefly paths above without ever holding
+      the token. Every method the router accepts is forwarded with the stored
+      PAT attached, query string included, and the upstream status, body and
+      headers come back unchanged. Documented without operations because the
+      handler is registered for all methods at once and no single OpenAPI
+      operation can say that. A session or agent key is required; anything other
+      than GET, HEAD or OPTIONS also needs a role that can write; 503 covers
+      both a locked store and an unconfigured Firefly connection.
+    servers: [*backendServer]
+    parameters:
+      - name: path
+        in: path
+        required: true
+        description: >
+          Whole Firefly path after the prefix, slashes and all, which OpenAPI
+          cannot express as one parameter.
+        schema: { type: string }
+
+  /api/firefly:
+    description: >
+      Same proxy with no path, so the Firefly base url itself can be reached.
+    servers: [*backendServer]
 
 x-mcp:
   protocolVersion: '2025-06-18'
@@ -478,9 +1299,49 @@ x-mcp:
       mapsTo: GET /api/v1/budgets/{budgetId}/transactions
       required: [budget_id]
     update_account:
-      description: Rename account
+      description: >
+        Update an account. Pass account_id plus at least one field; anything
+        omitted keeps its current value. Setting account_number or iban on a
+        payee is what lets find_account resolve a statement line to it next
+        time instead of guessing from the name.
       mapsTo: PUT /api/v1/accounts/{accountId}
-      required: [account_id, name]
+      required: [account_id]
+      inputSchema:
+        type: object
+        properties:
+          account_id: { type: string }
+          name: { type: string }
+          type:
+            type: string
+            enum: [asset, expense, revenue, liability]
+          iban: { type: string }
+          bic: { type: string }
+          account_number: { type: string }
+          notes: { type: string }
+          active: { type: boolean }
+          account_role:
+            type: string
+            enum:
+              - defaultAsset
+              - sharedAsset
+              - savingAsset
+              - ccAsset
+              - cashWalletAsset
+          currency_code: { type: string }
+          liability_type:
+            type: string
+            enum: [debt, loan, mortgage]
+          liability_direction:
+            type: string
+            enum: [credit, debit]
+          include_net_worth: { type: boolean }
+          opening_balance: { type: number }
+          opening_balance_date: { type: string, description: 'YYYY-MM-DD' }
+          virtual_balance: { type: number }
+          interest: { type: number }
+          interest_period:
+            type: string
+            enum: [daily, weekly, monthly, quarterly, half-year, yearly]
     update_budget:
       description: Update budget
       mapsTo: PUT /api/v1/budgets/{budgetId}
@@ -660,10 +1521,15 @@ x-mcp:
         last-four hint.
       inputSchema:
         type: object
-        required:
-          - query
         properties:
           query: { type: string }
+          queries:
+            type: array
+            items: { type: string }
+            maxItems: 200
+            description: >-
+              Several texts resolved against one read of the chart of accounts.
+              Give this or query, not both.
           types:
             type: array
             items:
@@ -722,3 +1588,5 @@ x-mcp:
 tags:
   - name: Firefly
     description: Firefly III REST API subset used by FireRacoon
+  - name: Backend
+    description: FireRacoon server-mode API, served by packages/app_backend

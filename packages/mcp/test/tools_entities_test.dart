@@ -13,6 +13,40 @@ List<McpTool> _tools({MockClient? client}) =>
 McpTool _tool(String name, {MockClient? client}) =>
     _tools(client: client).firstWhere((tool) => tool.name == name);
 
+/// A two-leg group, which the shared mock has no example of: it carries a
+/// journal id per leg and a title on the group.
+Map<String, Object?> _splitGroupItem() => {
+  'id': '77',
+  'type': 'transactions',
+  'attributes': {
+    'group_title': 'Rent and fees',
+    'transactions': [
+      {
+        'transaction_journal_id': '811',
+        'type': 'withdrawal',
+        'date': '2026-02-01',
+        'amount': '1200.00',
+        'description': 'Rent',
+        'source_name': 'Checking',
+        'destination_name': 'Landlord',
+        'currency_code': 'EUR',
+        'currency_symbol': '€',
+      },
+      {
+        'transaction_journal_id': '812',
+        'type': 'withdrawal',
+        'date': '2026-02-01',
+        'amount': '25.00',
+        'description': 'Service fee',
+        'source_name': 'Checking',
+        'destination_name': 'Landlord',
+        'currency_code': 'EUR',
+        'currency_symbol': '€',
+      },
+    ],
+  },
+};
+
 /// Every required field of every tool, so the validation sweep below stays in
 /// step with the schemas rather than drifting from a hand-written list.
 Iterable<(String, List<String>)> _toolsWithRequiredFields() sync* {
@@ -201,6 +235,148 @@ void main() {
     });
   });
 
+  group('update_account', () {
+    test('an update naming no field is refused, not sent as a no-op', () async {
+      final calls = <Uri>[];
+      final result = await _tool(
+        'update_account',
+        client: fireflyMockClient(record: calls),
+      ).run({'account_id': '5'});
+
+      expect(result['code'], 'bad_input');
+      // The refusal has to name the fields, or a caller who misspelled one has
+      // nothing to correct against.
+      expect(result['error'], contains('account_number'));
+      expect(result['error'], contains('liability_direction'));
+      expect(calls, isEmpty);
+    });
+
+    test('an empty name is refused rather than sent', () async {
+      final calls = <Uri>[];
+      final result = await _tool(
+        'update_account',
+        client: fireflyMockClient(record: calls),
+      ).run({'account_id': '5', 'name': '  '});
+
+      expect(result['code'], 'bad_input');
+      expect(calls, isEmpty);
+    });
+
+    test('an unknown enum value is refused before requesting', () async {
+      // Coercing any of these would rewrite the account as something the
+      // caller never asked for: a liability silently turned into an asset.
+      const cases = {
+        'type': 'chequing',
+        'account_role': 'mainAsset',
+        'liability_type': 'overdraft',
+        'liability_direction': 'sideways',
+        'interest_period': 'fortnightly',
+      };
+      for (final entry in cases.entries) {
+        final calls = <Uri>[];
+        final result = await _tool(
+          'update_account',
+          client: fireflyMockClient(record: calls),
+        ).run({'account_id': '5', entry.key: entry.value});
+
+        expect(
+          result['code'],
+          'bad_input',
+          reason: '${entry.key} accepted ${entry.value}',
+        );
+        expect(result['error'], contains(entry.key));
+        expect(calls, isEmpty, reason: '${entry.key} reached Firefly');
+      }
+    });
+
+    test('an unreadable opening_balance_date is refused', () async {
+      final calls = <Uri>[];
+      final result = await _tool(
+        'update_account',
+        client: fireflyMockClient(record: calls),
+      ).run({'account_id': '5', 'opening_balance_date': 'whenever'});
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('opening_balance_date'));
+      expect(calls, isEmpty);
+    });
+
+    test('sets the account number that find_account matches on', () async {
+      // Without this the next import is back to guessing a payee by name.
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'update_account',
+            client: fireflyMockClient(recordBodies: bodies),
+          ).run({
+            'account_id': '20',
+            'account_number': '123456789',
+            'iban': 'SE41 0000 0000 0012 3456 7890',
+            'bic': 'NORDSESS',
+            'notes': 'Statement text: BOLANEBANKEN',
+            'active': true,
+            'currency_code': 'SEK',
+          });
+
+      expect(result['ok'], isTrue);
+      expect(bodies.single, contains('"account_number":"123456789"'));
+      expect(bodies.single, contains('"bic":"NORDSESS"'));
+      // updated_fields reports what was sent and nothing else, so a caller can
+      // tell a dropped field from an applied one.
+      expect(result['updated_fields'], [
+        'iban',
+        'bic',
+        'account_number',
+        'notes',
+        'active',
+        'currency_code',
+      ]);
+      expect((result as Map).containsKey('name'), isFalse);
+    });
+
+    test('a rename reports only name', () async {
+      final result = await _tool(
+        'update_account',
+        client: fireflyMockClient(),
+      ).run({'account_id': '5', 'name': 'Main'});
+
+      expect(result['name'], 'Main');
+      expect(result['updated_fields'], ['name']);
+    });
+
+    test('forwards liability terms and balances', () async {
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'update_account',
+            client: fireflyMockClient(recordBodies: bodies),
+          ).run({
+            'account_id': '6',
+            'type': 'liability',
+            'account_role': 'ccAsset',
+            'liability_type': 'mortgage',
+            'liability_direction': 'debit',
+            'interest': 2.5,
+            'interest_period': 'half-year',
+            'include_net_worth': false,
+            'opening_balance': -1500.5,
+            'opening_balance_date': '2026-01-01',
+            'virtual_balance': 25,
+          });
+
+      expect(result['ok'], isTrue);
+      expect(bodies.single, contains('"liability_type":"mortgage"'));
+      expect(bodies.single, contains('"liability_direction":"debit"'));
+      expect(bodies.single, contains('"interest_period":"half-year"'));
+      expect(bodies.single, contains('"account_role":"ccAsset"'));
+      expect(bodies.single, contains('"opening_balance":"-1500.50"'));
+      expect(bodies.single, contains('"opening_balance_date":"2026-01-01"'));
+      expect(bodies.single, contains('"virtual_balance":"25.00"'));
+      expect(bodies.single, contains('"include_net_worth":false'));
+      expect(result['updated_fields'], hasLength(10));
+    });
+  });
+
   group('transactions', () {
     test('create_transaction creates', () async {
       final result =
@@ -272,6 +448,25 @@ void main() {
 
       expect(result['ok'], isTrue);
       expect(result['deleted'], isTrue);
+    });
+
+    test('a listing carries the journal id and the group title', () async {
+      // match_statement reports one leg of a split, and only the journal id
+      // addresses a leg: the group id reaches every leg at once.
+      final result = await _tool(
+        'get_transactions',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+        ),
+      ).run({});
+
+      final listed = (result['transactions'] as List<Object?>)
+          .cast<Map<String, Object?>>();
+      final group = listed.firstWhere((t) => t['id'] == '77');
+
+      expect(group['journal_id'], '811');
+      expect(group['group_title'], 'Rent and fees');
+      expect(group['split_count'], 2);
     });
 
     test('search_transactions searches by description', () async {
@@ -1279,6 +1474,121 @@ void main() {
     });
   });
 
+  group('find_account collisions', () {
+    test('a shared key comes back on the wire, keyed by its tier', () async {
+      // The engine's collisions map is tested, but nothing pinned the shape an
+      // agent actually reads, and the map is keyed by every matching tier, not
+      // only identifiers.
+      final client = fireflyMockClient(collidingNames: true);
+      final result = await _tool(
+        'find_account',
+        client: client,
+      ).run({'query': 'Sparkonto'});
+
+      final collisions = (result['collisions'] as List<Object?>)
+          .cast<Map<String, Object?>>();
+      expect(collisions, isNotEmpty);
+      for (final collision in collisions) {
+        expect(collision['key'], isA<String>());
+        expect(collision['key'], contains(':'));
+        expect(collision['account_ids'], isA<List<Object?>>());
+        expect((collision['account_ids'] as List).length, greaterThan(1));
+      }
+      expect(result['ambiguous'], isTrue);
+      for (final candidate
+          in (result['candidates'] as List<Object?>)
+              .cast<Map<String, Object?>>()) {
+        expect(candidate['confidence'], isNot('exact'));
+      }
+    });
+  });
+
+  group('find_account batching', () {
+    test('many texts resolve from one read of the accounts', () async {
+      // A ledger here holds nearly two thousand payees and takes seconds to
+      // read. Resolving a statement one row at a time paid that per row.
+      final calls = <Uri>[];
+      final result =
+          await _tool(
+            'find_account',
+            client: fireflyMockClient(record: calls),
+          ).run({
+            'queries': ['Checking', 'BOLANEBANK', 'nothing like an account'],
+            'types': ['asset', 'expense'],
+          });
+
+      expect(result['ok'], isTrue);
+      final results = (result['results'] as List<Object?>)
+          .cast<Map<String, Object?>>();
+      expect(results, hasLength(3));
+      expect(results.map((r) => r['query']), [
+        'Checking',
+        'BOLANEBANK',
+        'nothing like an account',
+      ]);
+      // Each text gets its own verdict, including none at all.
+      expect(results.last['candidate_count'], 0);
+      expect(result['accounts_read'], isA<int>());
+
+      // Two account types, so two list requests however many texts were given.
+      final listed = calls.where(
+        (u) =>
+            u.path.endsWith('/accounts') &&
+            u.queryParameters.containsKey('type'),
+      );
+      expect(listed, hasLength(2));
+    });
+
+    test('a single query keeps the flat shape', () async {
+      final result = await _tool(
+        'find_account',
+        client: fireflyMockClient(),
+      ).run({'query': 'Checking'});
+
+      expect(result.containsKey('results'), isFalse);
+      expect(result['query'], 'Checking');
+      expect(result['candidates'], isA<List<Object?>>());
+    });
+
+    test('query and queries together is refused', () async {
+      final calls = <Uri>[];
+      final result =
+          await _tool(
+            'find_account',
+            client: fireflyMockClient(record: calls),
+          ).run({
+            'query': 'a',
+            'queries': ['b'],
+          });
+
+      expect(result['code'], 'bad_input');
+      expect(calls, isEmpty);
+    });
+
+    test('an empty batch is refused before any request', () async {
+      final calls = <Uri>[];
+      final tool = _tool(
+        'find_account',
+        client: fireflyMockClient(record: calls),
+      );
+
+      expect((await tool.run({'queries': <String>[]}))['code'], 'bad_input');
+      expect(
+        (await tool.run({
+          'queries': ['  ', ''],
+        }))['code'],
+        'bad_input',
+      );
+      expect(
+        (await tool.run({
+          'queries': [for (var i = 0; i < 201; i++) 'q$i'],
+        }))['error'],
+        contains('200'),
+      );
+      expect(calls, isEmpty);
+    });
+  });
+
   group('match_statement', () {
     Map<String, Object?> statementArgs() => {
       'account_id': '5',
@@ -1364,12 +1674,12 @@ void main() {
       final result = await _tool(
         'find_account',
         client: fireflyMockClient(),
-      ).run({'query': 'Common Allkonto 12 345 678'});
+      ).run({'query': 'Joint Current 123 456 789'});
 
       final candidate =
           (result['candidates'] as List<Object?>).first as Map<String, Object?>;
       expect(candidate['matched_on'], contains('account_number'));
-      expect(candidate['identifier_hint'], 'account number ending 3821');
+      expect(candidate['identifier_hint'], 'account number ending 6789');
       expect(candidate['confidence'], 'exact');
       expect(candidate['requires_confirmation'], isFalse);
     });
@@ -1378,12 +1688,12 @@ void main() {
       final result = await _tool(
         'find_account',
         client: fireflyMockClient(),
-      ).run({'query': 'whatever', 'iban': 'SE45 5000 0000 0583 9825 7466'});
+      ).run({'query': 'whatever', 'iban': 'SE41 0000 0000 0012 3456 7890'});
 
       final candidate =
           (result['candidates'] as List<Object?>).first as Map<String, Object?>;
-      expect(candidate['identifier_hint'], 'iban ending 7466');
-      expect(jsonEncode(result), isNot(contains('5839825746')));
+      expect(candidate['identifier_hint'], 'iban ending 7890');
+      expect(jsonEncode(result), isNot(contains('1234567890')));
     });
   });
 
@@ -1461,6 +1771,21 @@ void main() {
 
       expect(result['code'], 'bad_input');
       expect(result['error'], contains('amount_format'));
+    });
+
+    test('an omitted window is refused rather than defaulted', () async {
+      final tool = _tool('match_statement', client: fireflyMockClient());
+      final noStart = {...base()}..remove('start_date');
+      final noEnd = {...base()}..remove('end_date');
+
+      // Defaulting either end would silently match against a window the caller
+      // never asked for, and report the arithmetic as if it had.
+      expect((await tool.run(noStart))['error'], contains('start_date'));
+      expect((await tool.run(noEnd))['error'], contains('end_date'));
+      expect(
+        (await tool.run({...base(), 'start_date': '  '}))['code'],
+        'bad_input',
+      );
     });
 
     test('more than a thousand rows is refused', () async {
