@@ -3138,6 +3138,18 @@ class AppLocalizationsSv extends AppLocalizations {
       'Utländska beloppet måste vara ett giltigt tal större än 0.';
 
   @override
+  String get exportFireflyData => 'Säkerhetskopiera Firefly-data';
+
+  @override
+  String get exportFireflyDataDescription =>
+      'Sparar en ögonblicksbild av dina Firefly-data till en JSON-fil: konton, transaktioner med varje delpost, budgetar, kategorier, etiketter, räkningar, spargrisar, återkommande regler och valutor.\n\nDetta är inte en fullständig säkerhetskopia. Firefly III har ingen inbyggd säkerhetskopiering, och en app som går via dess API kan inte nå databasen, uppladdade bilagor eller instansnyckeln. För att återställa ett fungerande Firefly krävs ett volymarkiv taget på servern; se distributionsguiden.';
+
+  @override
+  String fireflyDataExportedTo(String path) {
+    return 'Firefly-data exporterade till $path';
+  }
+
+  @override
   String get missingInformation => 'Saknad information';
 
   @override

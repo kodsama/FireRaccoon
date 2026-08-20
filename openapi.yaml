@@ -1269,6 +1269,14 @@ x-mcp:
           payback_date:
             type: string
             description: Payback transfer date (YYYY-MM-DD)
+    export_firefly_data:
+      description: >
+        Snapshot of everything the Firefly API will hand over: accounts,
+        transactions with every split leg, budgets, categories, tags, bills,
+        piggy banks, recurring rules and currencies. Not a backup: an API
+        client cannot reach the database, the attachments or the instance key,
+        so restoring an instance still needs the volume archive.
+      mapsTo: GET /api/v1/accounts
     find_incomplete_transactions:
       description: >
         Find transactions missing bookkeeping, for filling the blanks:

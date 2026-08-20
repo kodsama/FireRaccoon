@@ -11,6 +11,7 @@ import 'package:fireracoon_engine/fireracoon_engine.dart';
 
 import '../l10n/l10n_extensions.dart';
 import '../models/settings_bundle.dart';
+import '../providers/data_providers.dart';
 import '../providers/people_providers.dart';
 import '../providers/settings_export_import_provider.dart';
 import '../utils/app_feedback.dart';
@@ -91,6 +92,40 @@ class SettingsBackupSection extends ConsumerWidget {
     );
   }
 
+  /// Writes a snapshot of the Firefly data itself, which the settings bundle
+  /// deliberately leaves out.
+  ///
+  /// No share sheet, unlike the settings export: this is a full financial
+  /// record, and its place is a file on disk rather than whatever the sheet
+  /// happens to offer.
+  Future<void> _exportFireflyData(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final api = ref.read(apiServiceProvider);
+    if (api == null) {
+      showErrorToast(context, l10n.notConnected);
+      return;
+    }
+
+    try {
+      final snapshot = await DataExportService(api).export();
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+      final path = await jsonStoreDocumentsPath(
+        'fireracoon_firefly_data_$timestamp.json',
+      );
+      await jsonStoreWrite(
+        path,
+        const JsonEncoder.withIndent('  ').convert(snapshot.toJson()),
+      );
+      _log.info('Exported Firefly data snapshot: ${snapshot.counts}');
+      if (!context.mounted) return;
+      showInfoToast(context, l10n.fireflyDataExportedTo(path));
+    } catch (error) {
+      _log.severe('Firefly data export failed', error);
+      if (!context.mounted) return;
+      showErrorToast(context, '$error');
+    }
+  }
+
   Future<void> _import(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final confirmed = await showConfirmationDialog(
@@ -165,6 +200,13 @@ class SettingsBackupSection extends ConsumerWidget {
             onTap: () => _export(context, ref),
           ),
           _explainer(context, l10n.exportSettingsDescription, enabled: true),
+          const Divider(height: 1),
+          ListTile(
+            leading: const Icon(LucideIcons.databaseBackup, size: 20),
+            title: Text(l10n.exportFireflyData),
+            onTap: () => _exportFireflyData(context, ref),
+          ),
+          _explainer(context, l10n.exportFireflyDataDescription, enabled: true),
           const Divider(height: 1),
           ListTile(
             leading: const Icon(LucideIcons.upload, size: 20),

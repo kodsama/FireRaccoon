@@ -16,6 +16,7 @@ export 'models/tag.dart';
 export 'models/transaction.dart';
 export 'models/transaction_page.dart';
 export 'logging/app_logger.dart';
+export 'services/data_export_service.dart';
 export 'services/firefly_api_exception.dart';
 export 'services/account_resolution.dart';
 export 'services/statement_matching.dart';

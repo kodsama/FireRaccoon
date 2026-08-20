@@ -108,7 +108,7 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 
 ## Available tools
 
-58 tools, 31 of which write. The two that carry a bank import lead the table and
+59 tools, 31 of which write. The two that carry a bank import lead the table and
 are described under [Importing a statement](#importing-a-statement).
 
 | Tool | Description | Writes |
@@ -129,6 +129,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `update_transaction` | Update a transaction; omitted fields keep their value | yes |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides | yes |
 | `delete_transaction` | Delete a transaction group and its splits | yes |
+| `export_firefly_data` | Snapshot of every entity the API exposes, for taking before a bulk change |  |
 | `find_incomplete_transactions` | Transactions missing a description, category, budget, tags, payee, notes or piggy bank |  |
 | `search_transactions` | Full-text search, for matching statement lines |  |
 | `get_budgets` | List budgets with spent amounts |  |
