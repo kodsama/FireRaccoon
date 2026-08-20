@@ -1274,7 +1274,10 @@ x-mcp:
       mapsTo: GET /api/v1/search/transactions
       required: [query]
     create_transaction:
-      description: Create a transaction
+      description: >
+        Create a transaction. Pass splits to write one journal with
+        several legs, such as a loan payment divided into amortisation,
+        interest and fee.
       mapsTo: POST /api/v1/transactions
       required: [type, date, amount, description]
     update_transaction:
@@ -1284,7 +1287,9 @@ x-mcp:
     duplicate_transaction:
       description: >
         Copy a transaction into a new one, applying any passed field as an
-        override. The original is untouched.
+        override. The original is untouched. Every leg of a split group is
+        carried over, and amount cannot override a group: pass splits to
+        restate the legs. A copy is never reconciled.
       mapsTo: POST /api/v1/transactions
       required: [transaction_id]
     delete_transaction:

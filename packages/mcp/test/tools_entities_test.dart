@@ -440,6 +440,152 @@ void main() {
       );
     });
 
+    test('get_transaction returns the legs of a split group', () async {
+      // Regression: a group reported split_count and nothing else, so a caller
+      // meaning to copy one could not see what it was copying. amount is the
+      // group total while description belongs to the first leg, which read as
+      // one payment of the whole sum labelled with its first line.
+      final result = await _tool(
+        'get_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+        ),
+      ).run({'transaction_id': '77'});
+
+      final group = result['transaction'] as Map<String, Object?>;
+      expect(group['amount'], 1225.0);
+      expect(group['split_count'], 2);
+      final splits = (group['splits'] as List).cast<Map<String, Object?>>();
+      expect(splits.map((s) => s['amount']), [1200.0, 25.0]);
+      expect(splits.map((s) => s['description']), ['Rent', 'Service fee']);
+      expect(splits.map((s) => s['journal_id']), ['811', '812']);
+    });
+
+    test('a listing still reports only how many legs there are', () async {
+      // A 26-leg card bill in a 500-row page would be most of the response.
+      final result = await _tool(
+        'get_transactions',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+        ),
+      ).run({});
+
+      final group = (result['transactions'] as List)
+          .cast<Map<String, Object?>>()
+          .firstWhere((t) => t['id'] == '77');
+      expect(group['split_count'], 2);
+      expect(group.containsKey('splits'), isFalse);
+    });
+
+    test('duplicate_transaction carries every leg of a split group', () async {
+      // Regression: the copy was built from the top-level fields alone, so a
+      // three-leg loan payment became one leg of the first leg's amount. The
+      // money and the breakdown both went missing, silently.
+      final bodies = <String>[];
+      final result = await _tool(
+        'duplicate_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '77', 'date': '2026-03-01'});
+
+      expect(result['ok'], isTrue);
+      final sent = jsonDecode(bodies.single) as Map<String, Object?>;
+      final legs = (sent['transactions'] as List).cast<Map<String, Object?>>();
+      expect(legs.map((l) => l['amount']), ['1200.00', '25.00']);
+      expect(legs.map((l) => l['description']), ['Rent', 'Service fee']);
+      expect(sent['group_title'], 'Rent and fees');
+      // Nothing has been checked against a statement yet.
+      expect(legs.every((l) => l['reconciled'] == false), isTrue);
+      expect(
+        legs.every((l) => (l['date'] as String).startsWith('2026-03-01')),
+        isTrue,
+      );
+    });
+
+    test('duplicate_transaction refuses an amount for a split group', () async {
+      // One figure does not say how to divide it, and guessing is how a fixed
+      // amortisation gets scaled along with its interest.
+      final calls = <Uri>[];
+      final result = await _tool(
+        'duplicate_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+          record: calls,
+        ),
+      ).run({'transaction_id': '77', 'amount': 1300});
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('2 legs'));
+      expect(result['error'], contains('splits'));
+      expect(calls.where((u) => u.path.endsWith('/transactions')), isEmpty);
+    });
+
+    test('create_transaction writes the legs it is given', () async {
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'create_transaction',
+            client: fireflyMockClient(recordBodies: bodies),
+          ).run({
+            'type': 'withdrawal',
+            'date': '2026-09-01',
+            'amount': 9889,
+            'description': 'Mortgage',
+            'source_id': '5',
+            'currency_code': 'EUR',
+            'splits': [
+              {
+                'amount': 3400,
+                'description': 'Amortisation',
+                'destination_name': 'Lender',
+              },
+              {
+                'amount': 3508,
+                'description': 'Interest 1',
+                'destination_name': 'Lender',
+              },
+              {
+                'amount': 2981,
+                'description': 'Interest 2',
+                'destination_name': 'Lender',
+              },
+            ],
+          });
+
+      expect(result['ok'], isTrue);
+      final sent = jsonDecode(bodies.single) as Map<String, Object?>;
+      final legs = (sent['transactions'] as List).cast<Map<String, Object?>>();
+      expect(legs.map((l) => l['amount']), ['3400.00', '3508.00', '2981.00']);
+      // The account and currency were given once for the group.
+      expect(legs.every((l) => l['source_id'] == '5'), isTrue);
+      expect(legs.every((l) => l['currency_code'] == 'EUR'), isTrue);
+      expect(sent['group_title'], 'Mortgage');
+    });
+
+    test('create_transaction refuses a leg without an amount', () async {
+      final calls = <Uri>[];
+      final result =
+          await _tool(
+            'create_transaction',
+            client: fireflyMockClient(record: calls),
+          ).run({
+            'type': 'withdrawal',
+            'date': '2026-09-01',
+            'amount': 100,
+            'description': 'Mortgage',
+            'splits': [
+              {'amount': 60, 'description': 'One'},
+              {'description': 'Two'},
+            ],
+          });
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('splits[1].amount'));
+      expect(calls.where((u) => u.path.endsWith('/transactions')), isEmpty);
+    });
+
     test('delete_transaction deletes the group', () async {
       final result = await _tool(
         'delete_transaction',

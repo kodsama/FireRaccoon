@@ -103,7 +103,38 @@ Map<String, Object?> _accountJson(Account account) => {
   'active': account.active,
 };
 
-Map<String, Object?> _transactionJson(Transaction transaction) => {
+/// One leg of a split group, in the shape the write tools accept back.
+///
+/// Deliberately mirrors an entry of the `splits` argument, so a caller can read
+/// a group and hand the same legs to `create_transaction` unchanged.
+Map<String, Object?> _transactionSplitJson(Transaction split) => {
+  'journal_id': split.journalId,
+  'type': split.type,
+  'amount': split.amount,
+  'description': split.description,
+  'source_id': split.sourceId,
+  'source_name': split.sourceName,
+  'destination_id': split.destinationId,
+  'destination_name': split.destinationName,
+  'category_id': split.categoryId,
+  'category_name': split.categoryName,
+  'budget_id': split.budgetId,
+  'bill_id': split.billId,
+  'tags': split.tags,
+  'notes': split.notes,
+  'reconciled': split.reconciled,
+};
+
+/// [withSplits] adds the legs of a split group.
+///
+/// On a group, `amount` is the total while the other top-level fields belong to
+/// the first leg, so a three-leg mortgage otherwise reads as one payment of the
+/// whole amount described as its amortisation line. Listings stay lean and say
+/// only how many legs there are; a caller that means to copy one fetches it.
+Map<String, Object?> _transactionJson(
+  Transaction transaction, {
+  bool withSplits = false,
+}) => {
   'id': transaction.id,
   // One leg of a split is only addressable by its journal id; the group id
   // reaches the whole group. match_statement reports a leg, so a caller acting
@@ -136,6 +167,11 @@ Map<String, Object?> _transactionJson(Transaction transaction) => {
   'foreign_amount': transaction.foreignAmount,
   'foreign_currency_code': transaction.foreignCurrencyCode,
   'split_count': transaction.resolvedSplits().length,
+  if (withSplits && transaction.isSplitGroup)
+    'splits': [
+      for (final split in transaction.resolvedSplits())
+        _transactionSplitJson(split),
+    ],
   'reconciled': transaction.isReconciled,
   'partially_reconciled': transaction.isPartiallyReconciled,
 };
@@ -230,6 +266,55 @@ Map<String, Object?> _paginateClientSide(
 
 /// Builds a Transaction from tool arguments, reusing [base] for anything the
 /// caller did not supply. [base] is null on create.
+/// One leg the caller stated, falling back to the group's arguments for
+/// anything it left out.
+///
+/// So an account or a currency is given once for the whole group and only the
+/// amount, description and category vary per leg, which is how a loan payment
+/// or a card bill is actually written.
+Transaction _splitFromArgs(
+  Map<String, Object?> leg,
+  Map<String, Object?> args, {
+  required String type,
+  required DateTime date,
+  required String currencyCode,
+  required String currencySymbol,
+  required int index,
+}) {
+  String? pick(String key) => (leg[key] as String?) ?? (args[key] as String?);
+
+  final amount = (leg['amount'] as num?)?.toDouble();
+  if (amount == null || amount <= 0) {
+    throw ArgumentError('splits[$index].amount must be greater than zero');
+  }
+  final description =
+      (leg['description'] as String?) ?? (args['description'] as String?) ?? '';
+  if (description.trim().isEmpty) {
+    throw ArgumentError('splits[$index].description is required');
+  }
+  return Transaction(
+    id: '0',
+    type: (leg['type'] as String?) ?? type,
+    date: date,
+    amount: amount,
+    description: description,
+    sourceName: pick('source_name') ?? '',
+    destinationName: pick('destination_name') ?? '',
+    categoryName: pick('category_name') ?? '',
+    currencySymbol: currencySymbol,
+    currencyCode: (leg['currency_code'] as String?) ?? currencyCode,
+    sourceId: pick('source_id'),
+    destinationId: pick('destination_id'),
+    categoryId: pick('category_id'),
+    budgetId: pick('budget_id'),
+    billId: pick('bill_id'),
+    notes: pick('notes'),
+    tags: leg.containsKey('tags')
+        ? _strList(leg['tags'])
+        : (args.containsKey('tags') ? _strList(args['tags']) : const []),
+  );
+}
+
 Transaction _transactionFromArgs(
   Map<String, Object?> args, {
   Transaction? base,
@@ -242,18 +327,68 @@ Transaction _transactionFromArgs(
       'type must be withdrawal, deposit, or transfer, got "$type"',
     );
   }
-  final amount = (args['amount'] as num?)?.toDouble() ?? base?.amount;
+  final date = _optionalDate(args['date'], 'date') ?? base?.date;
+  if (date == null) {
+    throw ArgumentError('date is required');
+  }
+
+  final statedLegs = args['splits'];
+  if (statedLegs != null && statedLegs is! List) {
+    throw ArgumentError('splits must be a list of legs');
+  }
+  final legs = statedLegs is List ? statedLegs : const [];
+  final copyingGroup = legs.isEmpty && (base?.isSplitGroup ?? false);
+
+  // A single amount says nothing about how to divide it across legs, and
+  // guessing is how a mortgage's fixed amortisation gets scaled along with its
+  // interest. The caller restates the legs or leaves them alone.
+  if (copyingGroup && args.containsKey('amount')) {
+    throw ArgumentError(
+      'amount cannot override a group of ${base!.resolvedSplits().length} '
+      'legs; pass splits to restate them',
+    );
+  }
+
+  final currencyCode =
+      (args['currency_code'] as String?) ?? base?.currencyCode ?? '';
+  final currencySymbol = base?.currencySymbol ?? '';
+
+  final splits = <Transaction>[
+    if (legs.isNotEmpty)
+      for (final (index, leg) in legs.indexed)
+        _splitFromArgs(
+          leg is Map<String, Object?>
+              ? leg
+              : throw ArgumentError('splits[$index] must be an object'),
+          args,
+          type: type,
+          date: date,
+          currencyCode: currencyCode,
+          currencySymbol: currencySymbol,
+          index: index,
+        )
+    else if (copyingGroup)
+      // A copy is not reconciled: nothing has been checked against a statement
+      // yet, whatever was true of the original.
+      for (final split in base!.resolvedSplits())
+        split.copyWith(id: '0', date: date, reconciled: false),
+  ];
+
+  final leadingLeg = splits.isEmpty ? null : splits.first;
+  final amount =
+      leadingLeg?.amount ??
+      (args['amount'] as num?)?.toDouble() ??
+      base?.amount;
   if (amount == null || amount <= 0) {
     throw ArgumentError('amount must be greater than zero');
   }
   final description =
-      (args['description'] as String?) ?? base?.description ?? '';
+      leadingLeg?.description ??
+      (args['description'] as String?) ??
+      base?.description ??
+      '';
   if (description.trim().isEmpty) {
     throw ArgumentError('description is required');
-  }
-  final date = _optionalDate(args['date'], 'date') ?? base?.date;
-  if (date == null) {
-    throw ArgumentError('date is required');
   }
   return Transaction(
     id: id,
@@ -261,25 +396,106 @@ Transaction _transactionFromArgs(
     date: date,
     amount: amount,
     description: description,
-    sourceName: (args['source_name'] as String?) ?? base?.sourceName ?? '',
+    splits: splits,
+    groupTitle: splits.length > 1
+        ? (args['group_title'] as String?) ??
+              base?.groupTitle ??
+              (args['description'] as String?) ??
+              description
+        : null,
+    // The model keeps the first leg in the top-level fields, so they mirror it
+    // when there are legs. Serialisation reads the legs either way; this is
+    // what makes the returned object describe itself the way a fetched one
+    // does.
+    sourceName:
+        leadingLeg?.sourceName ??
+        (args['source_name'] as String?) ??
+        base?.sourceName ??
+        '',
     destinationName:
-        (args['destination_name'] as String?) ?? base?.destinationName ?? '',
+        leadingLeg?.destinationName ??
+        (args['destination_name'] as String?) ??
+        base?.destinationName ??
+        '',
     categoryName:
-        (args['category_name'] as String?) ?? base?.categoryName ?? '',
-    currencySymbol: base?.currencySymbol ?? '',
-    currencyCode:
-        (args['currency_code'] as String?) ?? base?.currencyCode ?? '',
-    sourceId: (args['source_id'] as String?) ?? base?.sourceId,
-    destinationId: (args['destination_id'] as String?) ?? base?.destinationId,
-    categoryId: (args['category_id'] as String?) ?? base?.categoryId,
-    budgetId: (args['budget_id'] as String?) ?? base?.budgetId,
-    notes: (args['notes'] as String?) ?? base?.notes,
-    tags: args.containsKey('tags')
-        ? _strList(args['tags'])
-        : (base?.tags ?? const []),
-    billId: (args['bill_id'] as String?) ?? base?.billId,
+        leadingLeg?.categoryName ??
+        (args['category_name'] as String?) ??
+        base?.categoryName ??
+        '',
+    currencySymbol: currencySymbol,
+    currencyCode: leadingLeg?.currencyCode ?? currencyCode,
+    sourceId:
+        leadingLeg?.sourceId ??
+        (args['source_id'] as String?) ??
+        base?.sourceId,
+    destinationId:
+        leadingLeg?.destinationId ??
+        (args['destination_id'] as String?) ??
+        base?.destinationId,
+    categoryId:
+        leadingLeg?.categoryId ??
+        (args['category_id'] as String?) ??
+        base?.categoryId,
+    budgetId:
+        leadingLeg?.budgetId ??
+        (args['budget_id'] as String?) ??
+        base?.budgetId,
+    notes: leadingLeg?.notes ?? (args['notes'] as String?) ?? base?.notes,
+    tags: leadingLeg != null
+        ? leadingLeg.tags
+        : (args.containsKey('tags')
+              ? _strList(args['tags'])
+              : (base?.tags ?? const [])),
+    billId: leadingLeg?.billId ?? (args['bill_id'] as String?) ?? base?.billId,
   );
 }
+
+/// The `splits` argument create and duplicate accept.
+///
+/// A leg takes the group's values for anything it omits, so the account and the
+/// currency are given once and only the amount, description and category vary,
+/// which is how a loan payment or a card bill is written.
+Map<String, Object?> _splitsFieldSchema() => {
+  'group_title': {
+    'type': 'string',
+    'description':
+        'Title for a multi-leg group. Defaults to the top-level description.',
+  },
+  'splits': {
+    'type': 'array',
+    'minItems': 1,
+    'description':
+        'Legs of a split transaction, such as the amortisation, interest and '
+        'fee of one loan payment. Omit for a single-leg transaction. Each leg '
+        'inherits any field it does not set from the top-level arguments.',
+    'items': {
+      'type': 'object',
+      'required': ['amount'],
+      'properties': {
+        'amount': {'type': 'number', 'exclusiveMinimum': 0},
+        'description': {'type': 'string'},
+        'type': {
+          'type': 'string',
+          'enum': ['withdrawal', 'deposit', 'transfer'],
+        },
+        'currency_code': {'type': 'string'},
+        'source_id': {'type': 'string'},
+        'source_name': {'type': 'string'},
+        'destination_id': {'type': 'string'},
+        'destination_name': {'type': 'string'},
+        'category_id': {'type': 'string'},
+        'category_name': {'type': 'string'},
+        'budget_id': {'type': 'string'},
+        'bill_id': {'type': 'string'},
+        'notes': {'type': 'string'},
+        'tags': {
+          'type': 'array',
+          'items': {'type': 'string'},
+        },
+      },
+    },
+  },
+};
 
 /// Shared schema for the fields create, update, and duplicate all accept.
 Map<String, Object?> _transactionFieldSchema() => {
@@ -1548,7 +1764,10 @@ List<McpTool> buildTools({
         }
         final api = service();
         final transaction = await api.getTransaction(transactionId);
-        return {'ok': true, 'transaction': _transactionJson(transaction)};
+        return {
+          'ok': true,
+          'transaction': _transactionJson(transaction, withSplits: true),
+        };
       },
     ),
     McpTool(
@@ -1578,7 +1797,10 @@ List<McpTool> buildTools({
         final updated = await api.updateTransaction(
           current.withReconciled(reconciled),
         );
-        return {'ok': true, 'transaction': _transactionJson(updated)};
+        return {
+          'ok': true,
+          'transaction': _transactionJson(updated, withSplits: true),
+        };
       },
     ),
     McpTool(
@@ -1742,11 +1964,13 @@ List<McpTool> buildTools({
       description:
           'Create a Firefly III transaction. Use source_id/destination_id when '
           'the account ids are known, or source_name/destination_name to let '
-          'Firefly match or create the other side.',
+          'Firefly match or create the other side. Pass splits to write one '
+          'journal with several legs, such as a loan payment divided into '
+          'amortisation, interest and fee.',
       inputSchema: {
         'type': 'object',
         'required': ['type', 'date', 'amount', 'description'],
-        'properties': _transactionFieldSchema(),
+        'properties': {..._transactionFieldSchema(), ..._splitsFieldSchema()},
       },
       run: (args) async {
         final Transaction draft;
@@ -1759,7 +1983,7 @@ List<McpTool> buildTools({
         return {
           'ok': true,
           'transaction_id': created.id,
-          'transaction': _transactionJson(created),
+          'transaction': _transactionJson(created, withSplits: true),
         };
       },
     ),
@@ -1799,7 +2023,7 @@ List<McpTool> buildTools({
         return {
           'ok': true,
           'transaction_id': saved.id,
-          'transaction': _transactionJson(saved),
+          'transaction': _transactionJson(saved, withSplits: true),
         };
       },
     ),
@@ -1809,7 +2033,10 @@ List<McpTool> buildTools({
       description:
           'Copy an existing transaction into a new one. Any field passed '
           'overrides the copy, so the date or amount can change in the same '
-          'call. The original is left untouched.',
+          'call. The original is left untouched. Every leg of a split group '
+          'is carried over; amount cannot override a group, since one figure '
+          'does not say how to divide it, so pass splits to restate the legs. '
+          'A copy is never reconciled.',
       inputSchema: {
         'type': 'object',
         'required': ['transaction_id'],
@@ -1819,6 +2046,7 @@ List<McpTool> buildTools({
             'description': 'Transaction group ID to copy.',
           },
           ..._transactionFieldSchema(),
+          ..._splitsFieldSchema(),
         },
       },
       run: (args) async {
@@ -1840,7 +2068,7 @@ List<McpTool> buildTools({
           'ok': true,
           'copied_from': id,
           'transaction_id': created.id,
-          'transaction': _transactionJson(created),
+          'transaction': _transactionJson(created, withSplits: true),
         };
       },
     ),
