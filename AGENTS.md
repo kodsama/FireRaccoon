@@ -50,7 +50,7 @@ See `docs/adr/0002-local-vs-server-mode.md` and `docs/deployment.md`.
 
 Accounts, transactions, budgets, budget limits, categories, tags, bills, piggy
 banks, recurrences, currencies, reconciliation, and the on-device projection:
-57 tools, 31 of them write-gated. The rich account prognosis behind the UI is
+58 tools, 31 of them write-gated. The rich account prognosis behind the UI is
 the one engine capability with no tool
 (`docs/adr/0001-projection-vs-prognosis.md`). `get_capabilities` returns the
 live catalog and the write-gated names a `viewer` key is refused. Domain terms
@@ -72,6 +72,7 @@ live in `CONTEXT.md`.
 | `update_transaction` | Update a transaction; omitted fields keep their value |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides |
 | `delete_transaction` | Delete a transaction group and every split in it |
+| `find_incomplete_transactions` | Transactions missing a description, category, budget, tags, payee, notes or piggy bank |
 | `search_transactions` | Full-text search, for matching statement lines |
 | `find_account` | Resolve raw bank text to an account; matches account number and IBAN before any name tier, returns ranked candidates with a reason and a last-four hint, never the identifier |
 | `match_statement` | Match statement rows against recorded split legs; reports matched, near-matched and missing rows with the arithmetic that proves it |
