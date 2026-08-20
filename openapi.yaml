@@ -1448,7 +1448,10 @@ x-mcp:
       mapsTo: DELETE /api/v1/piggy-banks/{piggyBankId}
       required: [piggy_bank_id]
     get_recurrences:
-      description: List recurring transaction rules
+      description: >
+        List recurring transaction rules, each with the lines it creates:
+        amount, source and destination accounts, category, budget, bill
+        and tags.
       mapsTo: GET /api/v1/recurrences
     delete_recurrence:
       description: >
