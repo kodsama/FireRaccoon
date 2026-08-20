@@ -162,7 +162,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `create_piggy_bank` | Create a piggy bank | yes |
 | `update_piggy_bank` | Update a piggy bank | yes |
 | `delete_piggy_bank` | Delete a piggy bank | yes |
-| `get_recurrences` | List recurring transaction rules |  |
+| `get_recurrences` | List recurring rules, each with the amount, accounts, category, budget and tags of the lines it creates |  |
 | `get_recurrence_transactions` | Transactions a recurring rule has created |  |
 | `create_recurrence` | Create a recurring rule | yes |
 | `update_recurrence` | Update a recurring rule; omitted fields keep their value | yes |

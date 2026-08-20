@@ -107,7 +107,7 @@ live in `CONTEXT.md`.
 | `create_piggy_bank` | Create a piggy bank linked to asset accounts |
 | `update_piggy_bank` | Update a piggy bank; omitted fields keep their value |
 | `delete_piggy_bank` | Delete a piggy bank; linked accounts are untouched |
-| `get_recurrences` | List recurring transaction rules |
+| `get_recurrences` | List recurring rules, each with the amount, accounts, category, budget and tags of the lines it creates |
 | `get_recurrence_transactions` | Transactions a recurring rule has created |
 | `create_recurrence` | Create a recurring rule |
 | `update_recurrence` | Replace a recurring rule; every field to keep must be passed |

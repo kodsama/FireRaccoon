@@ -801,6 +801,37 @@ void main() {
       expect(rule['first_date'], '2026-09-01');
     });
 
+    test('get_recurrences names what each rule moves and between which '
+        'accounts', () async {
+      // Regression: the listing carried only a title and its dates, so a
+      // ledger with one standing transfer per person offered nothing but
+      // identical titles and a caller could not say which rule to correct.
+      final result = await _tool(
+        'get_recurrences',
+        client: fireflyMockClient(),
+      ).run({});
+
+      final rule =
+          (result['recurrences'] as List).single as Map<String, Object?>;
+      expect(rule['type'], 'withdrawal');
+
+      final line =
+          (rule['transactions'] as List).single as Map<String, Object?>;
+      expect(line['amount'], 1200.0);
+      expect(line['currency_code'], 'EUR');
+      expect(line['source_name'], 'Joint Current');
+      expect(line['destination_name'], 'Landlord');
+      expect(line['category_name'], 'Housing');
+      expect(line['budget_name'], 'Fixed costs');
+      expect(line['tags'], ['standing']);
+
+      final repetition =
+          (rule['repetitions'] as List).single as Map<String, Object?>;
+      expect(repetition['type'], 'monthly');
+      expect(repetition['moment'], '1');
+      expect(repetition['weekend'], 'createAnyway');
+    });
+
     test('create_recurrence creates a rule', () async {
       final result = await _tool(
         'create_recurrence',
