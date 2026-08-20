@@ -3050,6 +3050,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get invalidForeignAmount => '外币金额必须是大于0的有效数字。';
 
   @override
+  String get missingInformation => '缺失信息';
+
+  @override
   String get missingDescription => '请输入描述。';
 
   @override

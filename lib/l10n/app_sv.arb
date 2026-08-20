@@ -1630,6 +1630,7 @@
   "noSuggestions": "Inga matchande förslag",
   "invalidAmount": "Beloppet måste vara ett giltigt tal större än 0.",
   "invalidForeignAmount": "Utländska beloppet måste vara ett giltigt tal större än 0.",
+  "missingInformation": "Saknad information",
   "missingDescription": "Ange en beskrivning.",
   "missingAmount": "Ange ett belopp.",
   "missingAccounts": "Välj både käll- och destinationskonto.",

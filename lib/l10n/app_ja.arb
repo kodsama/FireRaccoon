@@ -1705,6 +1705,7 @@
   "noSuggestions": "該当する候補がありません",
   "invalidAmount": "金額は0より大きい有効な数値である必要があります。",
   "invalidForeignAmount": "外貨金額は0より大きい有効な数値である必要があります。",
+  "missingInformation": "未入力の項目",
   "missingDescription": "説明を入力してください。",
   "missingAmount": "金額を入力してください。",
   "missingAccounts": "送金元口座と送金先口座の両方を選択してください。",

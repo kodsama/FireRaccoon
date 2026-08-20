@@ -3138,6 +3138,9 @@ class AppLocalizationsSv extends AppLocalizations {
       'Utländska beloppet måste vara ett giltigt tal större än 0.';
 
   @override
+  String get missingInformation => 'Saknad information';
+
+  @override
   String get missingDescription => 'Ange en beskrivning.';
 
   @override
