@@ -218,6 +218,6 @@ The MCP layer is a thin adapter — all business logic lives in `packages/engine
 - Treat an agent key like a password. It grants whatever its person can do.
 - Revoking a key drops the connections it had open: the desktop app restarts its MCP isolate on any key change.
 - Prefer stdio transport so the key stays in the parent process environment.
-- Only digests are persisted, so neither a stolen `DATA_DIR` nor a stolen keychain entry yields a working key.
+- The secret is stored alongside its digest so its owner can read the key back instead of reissuing it, which means a stolen `DATA_DIR` or keychain entry does yield working keys. That is the same exposure the Firefly PAT already carries in the same store, and an agent key grants strictly less than the PAT does. Revoke the keys if either is lost.
 - Check a key's last-used stamp in Settings before assuming an unused key is safe to keep.
 - Do not expose port 8787 to untrusted networks.
