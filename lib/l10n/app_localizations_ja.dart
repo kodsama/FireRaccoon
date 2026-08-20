@@ -3052,6 +3052,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get invalidForeignAmount => '外貨金額は0より大きい有効な数値である必要があります。';
 
   @override
+  String get missingInformation => '未入力の項目';
+
+  @override
   String get missingDescription => '説明を入力してください。';
 
   @override

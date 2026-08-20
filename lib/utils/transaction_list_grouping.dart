@@ -89,6 +89,7 @@ TransactionListGroups buildTransactionListGroups({
   required AppLocalizations l10n,
   bool isRacoon = false,
   ReconciledFilter reconciledFilter = ReconciledFilter.all,
+  Set<TransactionField> missingFields = const {},
   DateTime? referenceDate,
   String? sumAccount,
 }) {
@@ -105,6 +106,10 @@ TransactionListGroups buildTransactionListGroups({
     }
     if (!transaction.matchesSearch(searchQuery)) continue;
     if (!matchesReconciledFilter(transaction, reconciledFilter)) continue;
+    if (missingFields.isNotEmpty &&
+        !hasMissingFields(transaction, fields: missingFields)) {
+      continue;
+    }
 
     filtered.add(transaction);
     if (isFutureTransaction(transaction.date, reference: referenceDate)) {

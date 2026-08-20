@@ -154,6 +154,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
     required AppLocalizations l10n,
     bool isRacoon = false,
     ReconciledFilter reconciledFilter = ReconciledFilter.all,
+    Set<TransactionField> missingFields = const {},
     String? sumAccount,
   }) {
     final cached = _cachedGroups;
@@ -163,6 +164,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
         cached.groupType == type &&
         cached.isRacoon == isRacoon &&
         cached.reconciledFilter == reconciledFilter &&
+        _sameFieldSet(cached.missingFields, missingFields) &&
         cached.sumAccount == sumAccount &&
         identical(cached.format, format) &&
         identical(cached.l10n, l10n) &&
@@ -179,6 +181,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       l10n: l10n,
       isRacoon: isRacoon,
       reconciledFilter: reconciledFilter,
+      missingFields: missingFields,
       sumAccount: sumAccount,
     );
     _cachedGroups = _CachedTransactionListGroups(
@@ -188,12 +191,21 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       groupType: type,
       isRacoon: isRacoon,
       reconciledFilter: reconciledFilter,
+      missingFields: missingFields,
       sumAccount: sumAccount,
       format: format,
       l10n: l10n,
       groups: groups,
     );
     return groups;
+  }
+
+  bool _sameFieldSet(Set<TransactionField> left, Set<TransactionField> right) {
+    if (left.length != right.length) return false;
+    for (final value in left) {
+      if (!right.contains(value)) return false;
+    }
+    return true;
   }
 
   bool _sameStringSet(Set<String> left, Set<String> right) {
@@ -711,6 +723,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       l10n: l10n,
       isRacoon: fun.isRacoon,
       reconciledFilter: routeFilters.reconciledFilter,
+      missingFields: routeFilters.missingFields,
       // Sums are signed from the filtered account's perspective so incoming
       // transfers count positive.
       sumAccount: filterAccount,
@@ -894,7 +907,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
         searchQuery.isNotEmpty ||
         routeFilters.type != TransactionTypeFilter.all ||
         routeFilters.hasCustomDateRange ||
-        routeFilters.reconciledFilter != ReconciledFilter.all;
+        routeFilters.reconciledFilter != ReconciledFilter.all ||
+        routeFilters.missingFields.isNotEmpty;
 
     return Scaffold(
       backgroundColor: colors.pageBg,
@@ -958,6 +972,33 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                     currentFilter: filterAccount,
                     l10n: l10n,
                   ),
+                  _MissingFieldsFilterButton(
+                    selected: routeFilters.missingFields,
+                    l10n: l10n,
+                    onChanged: (fields) {
+                      context.goPreservingSearch(
+                        TransactionsRoute.location(
+                          account: routeFilters.account,
+                          accounts: routeFilters.accounts,
+                          group: routeFilters.group,
+                          category: routeFilters.category,
+                          period: routeFilters.period,
+                          type: routeFilters.type,
+                          from: routeFilters.from != null
+                              ? ExpenseRouteFilters.formatDate(
+                                  routeFilters.from!,
+                                )
+                              : null,
+                          to: routeFilters.to != null
+                              ? ExpenseRouteFilters.formatDate(routeFilters.to!)
+                              : null,
+                          reconcile: routeFilters.reconcile,
+                          reconciledFilter: routeFilters.reconciledFilter,
+                          missingFields: fields,
+                        ),
+                      );
+                    },
+                  ),
                   _ReconciledFilterButton(
                     currentFilter: routeFilters.reconciledFilter,
                     l10n: l10n,
@@ -980,6 +1021,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                               : null,
                           reconcile: routeFilters.reconcile,
                           reconciledFilter: value,
+                          missingFields: routeFilters.missingFields,
                         ),
                       );
                     },
@@ -1375,6 +1417,7 @@ class _CachedTransactionListGroups {
   final TransactionGroupType groupType;
   final bool isRacoon;
   final ReconciledFilter reconciledFilter;
+  final Set<TransactionField> missingFields;
   final String? sumAccount;
   final LocaleFormatting format;
   final AppLocalizations l10n;
@@ -1387,6 +1430,7 @@ class _CachedTransactionListGroups {
     required this.groupType,
     required this.isRacoon,
     required this.reconciledFilter,
+    required this.missingFields,
     required this.sumAccount,
     required this.format,
     required this.l10n,
@@ -1527,6 +1571,88 @@ class _ReconciledFilterButton extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 _label(currentFilter),
+                style: TextStyle(
+                  color: colors.text,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Narrows the list to rows missing bookkeeping, one gap at a time.
+///
+/// Each gap is picked separately because incomplete is not a single standard:
+/// a ledger that never uses piggy banks is not missing one on every row.
+class _MissingFieldsFilterButton extends StatelessWidget {
+  final Set<TransactionField> selected;
+  final AppLocalizations l10n;
+  final ValueChanged<Set<TransactionField>> onChanged;
+
+  const _MissingFieldsFilterButton({
+    required this.selected,
+    required this.l10n,
+    required this.onChanged,
+  });
+
+  String _label(TransactionField field) {
+    return switch (field) {
+      TransactionField.description => l10n.description,
+      TransactionField.category => l10n.category,
+      TransactionField.budget => l10n.budgetLabel,
+      TransactionField.tags => l10n.tags,
+      TransactionField.payee => l10n.payee,
+      TransactionField.notes => l10n.notes,
+      TransactionField.piggyBank => l10n.piggyBank,
+    };
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final active = selected.isNotEmpty;
+
+    return PopupMenuButton<TransactionField>(
+      onSelected: (field) {
+        final next = {...selected};
+        if (!next.remove(field)) next.add(field);
+        onChanged(next);
+      },
+      itemBuilder: (context) => [
+        for (final field in TransactionField.values)
+          CheckedPopupMenuItem(
+            value: field,
+            checked: selected.contains(field),
+            child: Text(_label(field)),
+          ),
+      ],
+      child: Tooltip(
+        message: l10n.missingInformation,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: active
+                ? colors.accent.acc.withValues(alpha: 0.08)
+                : colors.surface,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: active
+                  ? colors.accent.acc.withValues(alpha: 0.35)
+                  : colors.border,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(LucideIcons.circleHelp, size: 16, color: colors.text),
+              const SizedBox(width: 8),
+              Text(
+                active
+                    ? '${l10n.missingInformation} (${selected.length})'
+                    : l10n.missingInformation,
                 style: TextStyle(
                   color: colors.text,
                   fontWeight: FontWeight.w500,

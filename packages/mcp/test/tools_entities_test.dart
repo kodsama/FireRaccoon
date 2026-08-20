@@ -615,6 +615,66 @@ void main() {
       expect(group['split_count'], 2);
     });
 
+    test(
+      'find_incomplete_transactions reports the rows and the counts',
+      () async {
+        final result =
+            await _tool(
+              'find_incomplete_transactions',
+              client: fireflyMockClient(),
+            ).run({
+              'fields': ['tags'],
+            });
+
+        expect(result['ok'], isTrue);
+        final listed = (result['transactions'] as List)
+            .cast<Map<String, Object?>>();
+        // Only the first mock row carries tags.
+        expect(listed.map((t) => t['id']), containsAll(['2', '3']));
+        expect(
+          listed.every((t) => (t['missing'] as List).contains('tags')),
+          isTrue,
+        );
+        expect((result['missing_counts'] as Map)['tags'], listed.length);
+      },
+    );
+
+    test(
+      'find_incomplete_transactions never asks a deposit for a budget',
+      () async {
+        // The deposit in the mock has no budget and never can have one, so only
+        // the withdrawal without one is work anybody can do.
+        final result =
+            await _tool(
+              'find_incomplete_transactions',
+              client: fireflyMockClient(),
+            ).run({
+              'fields': ['budget'],
+            });
+
+        final ids = (result['transactions'] as List)
+            .cast<Map<String, Object?>>()
+            .map((t) => t['id']);
+        expect(ids, ['3']);
+        expect((result['missing_counts'] as Map)['budget'], 1);
+      },
+    );
+
+    test('find_incomplete_transactions refuses an unknown field', () async {
+      final calls = <Uri>[];
+      final result =
+          await _tool(
+            'find_incomplete_transactions',
+            client: fireflyMockClient(record: calls),
+          ).run({
+            'fields': ['colour'],
+          });
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('colour'));
+      expect(calls, isEmpty);
+    });
+
     test('search_transactions searches by description', () async {
       final calls = <Uri>[];
       final result = await _tool(
