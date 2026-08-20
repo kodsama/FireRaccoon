@@ -370,15 +370,19 @@ class RecurrenceInput {
           : RecurrenceRepetitionInput._formatDate(repeatUntil!),
       'apply_rules': applyRules,
       'active': active,
+      // Firefly decides what a valid source and destination are, and how far a
+      // repetition's moment may run, from the type on the request. Leaving it
+      // off an update made it read a transfer as a withdrawal: the asset
+      // account on the receiving end came back "could not find a valid
+      // destination account", and a monthly rule falling after the 10th came
+      // back "moment may not be greater than 10". The same body with the type
+      // on it is accepted, so it goes on both.
+      'type': type.apiValue,
       'repetitions': repetitions.map((r) => r.toJson()).toList(),
       'transactions': transactions
           .map((t) => t.toJson(isUpdate: isUpdate))
           .toList(),
     };
-
-    if (!isUpdate) {
-      body['type'] = type.apiValue;
-    }
 
     final trimmedDescription = description?.trim();
     if (trimmedDescription != null && trimmedDescription.isNotEmpty) {
