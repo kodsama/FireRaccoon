@@ -58,6 +58,45 @@ Future<Isolate> _spawnWithNonMapMessage(
   );
 }
 
+/// Reports a bound port, then throws, so the isolate's onError port delivers
+/// an [error, stackTrace] pair rather than a clean exit.
+Future<void> _readyThenThrow(SendPort sendPort) async {
+  sendPort.send(const {'ready': 19002});
+  await Future<void>.delayed(const Duration(milliseconds: 200));
+  throw StateError('bind lost');
+}
+
+/// First spawn reports ready then throws; later spawns run the real entry.
+class _ThrowOnceSpawner {
+  var spawns = 0;
+
+  Future<Isolate> call(
+    void Function(McpIsolateConfig) entry,
+    McpIsolateConfig message, {
+    String? debugName,
+    SendPort? onExit,
+    SendPort? onError,
+  }) {
+    spawns++;
+    if (spawns == 1) {
+      return Isolate.spawn<SendPort>(
+        _readyThenThrow,
+        message.send,
+        debugName: debugName,
+        onExit: onExit,
+        onError: onError,
+      );
+    }
+    return Isolate.spawn(
+      entry,
+      message,
+      debugName: debugName,
+      onExit: onExit,
+      onError: onError,
+    );
+  }
+}
+
 /// Counts spawns while delegating to the real server entry.
 class _CountingSpawner {
   var spawns = 0;
@@ -580,6 +619,27 @@ void main() {
   });
 
   group('isolate death', () {
+    test('an isolate that throws reports what it threw', () async {
+      // onExit says only that the isolate is gone; onError carries the reason,
+      // and the status line is the only place a person sees it.
+      final spawner = _ThrowOnceSpawner();
+      final service = McpService(spawn: spawner.call);
+      addTearDown(service.stop);
+
+      await service.sync(
+        fireflyUrl: _url,
+        fireflyToken: _token,
+        agentKeys: [_issue().record],
+        people: _people,
+        basePort: 18985,
+      );
+      await _waitUntil(() => service.error != null);
+
+      expect(service.running, isFalse);
+      expect(service.port, isNull);
+      expect(service.error, contains('bind lost'));
+    });
+
     test('a dead isolate stops being advertised as running', () async {
       final spawner = _CrashOnceSpawner();
       final service = McpService(spawn: spawner.call);

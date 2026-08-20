@@ -691,7 +691,9 @@ class AppServer {
         final map = value.map((k, v) => MapEntry(k.toString(), v.toString()));
         final hash = map['passwordHash'] ?? '';
         final salt = map['salt'] ?? map['passwordSalt'] ?? '';
-        if (hash.isEmpty || salt.isEmpty) continue;
+        // Forwarded even when incomplete so replacePeopleConfig can refuse it.
+        // Dropping it here meant a person's password quietly failed to import
+        // and the caller was told the request succeeded.
         authImports[entry.key.toString()] = {
           'passwordHash': hash,
           'salt': salt,
@@ -739,8 +741,15 @@ class AppServer {
         repository.personForSession(session)?['id'] != personId) {
       return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
     }
-    final body =
-        jsonDecode(await request.readAsString()) as Map<String, dynamic>;
+    // Every sibling PUT answers a malformed body with 400 through
+    // _requireAuthPut. Casting here without one turned a bad request into a
+    // 500, which reads as the server's fault.
+    final Map<String, dynamic> body;
+    try {
+      body = jsonDecode(await request.readAsString()) as Map<String, dynamic>;
+    } on Object {
+      return _json({'ok': false, 'error': 'Invalid JSON body'}, status: 400);
+    }
     final b64 = body['pngBase64'] as String? ?? '';
     if (b64.isEmpty) {
       repository.state.avatars.remove(personId);
