@@ -1269,6 +1269,15 @@ x-mcp:
           payback_date:
             type: string
             description: Payback transfer date (YYYY-MM-DD)
+    find_incomplete_transactions:
+      description: >
+        Find transactions missing bookkeeping, for filling the blanks:
+        description, category, budget, tags, payee, notes or piggy_bank. Judged
+        leg by leg, so half a split group left uncategorised is found. A field
+        that cannot apply is never reported: a deposit is not missing a budget
+        and a transfer is not missing a payee.
+      mapsTo: GET /api/v1/transactions
+      required: [fields]
     search_transactions:
       description: Full-text transaction search, for matching bank statement lines
       mapsTo: GET /api/v1/search/transactions
