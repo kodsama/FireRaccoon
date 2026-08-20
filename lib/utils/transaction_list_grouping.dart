@@ -98,7 +98,9 @@ TransactionListGroups buildTransactionListGroups({
     }
   }
 
-  future.sort((a, b) => a.date.compareTo(b.date));
+  // Newest first, the same direction as every dated group below, so the list
+  // does not reverse itself where the future block begins.
+  future.sort((a, b) => b.date.compareTo(a.date));
 
   final groups = map.values.map((group) {
     if (groupType == TransactionGroupType.date) {
