@@ -3137,6 +3137,18 @@ class AppLocalizationsEn extends AppLocalizations {
       'Foreign amount must be a valid number greater than 0.';
 
   @override
+  String get exportFireflyData => 'Back up Firefly data';
+
+  @override
+  String get exportFireflyDataDescription =>
+      'Saves a snapshot of your Firefly data to a JSON file: accounts, transactions with every split, budgets, categories, tags, bills, piggy banks, recurring rules and currencies.\n\nThis is not a full backup. Firefly III has no backup feature, and an app talking to its API cannot reach the database, uploaded attachments or the instance key. Restoring a working Firefly needs a volume archive taken on the server; see the deployment guide.';
+
+  @override
+  String fireflyDataExportedTo(String path) {
+    return 'Firefly data exported to $path';
+  }
+
+  @override
   String get missingInformation => 'Missing information';
 
   @override

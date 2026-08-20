@@ -3052,6 +3052,18 @@ class AppLocalizationsJa extends AppLocalizations {
   String get invalidForeignAmount => '外貨金額は0より大きい有効な数値である必要があります。';
 
   @override
+  String get exportFireflyData => 'Firefly データをバックアップ';
+
+  @override
+  String get exportFireflyDataDescription =>
+      'Firefly のデータのスナップショットを JSON ファイルに保存します。口座、各分割を含む取引、予算、カテゴリ、タグ、請求、貯金箱、繰り返しルール、通貨。\n\nこれは完全なバックアップではありません。Firefly III にバックアップ機能はなく、API 経由で通信するアプリはデータベース、アップロードされた添付ファイル、インスタンスキーには到達できません。動作する Firefly を復元するにはサーバー上で取得したボリュームアーカイブが必要です。デプロイガイドを参照してください。';
+
+  @override
+  String fireflyDataExportedTo(String path) {
+    return 'Firefly データを $path にエクスポートしました';
+  }
+
+  @override
   String get missingInformation => '未入力の項目';
 
   @override

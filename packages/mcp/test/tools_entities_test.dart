@@ -615,6 +615,47 @@ void main() {
       expect(group['split_count'], 2);
     });
 
+    test('export_firefly_data snapshots every entity with a receipt', () async {
+      final result = await _tool(
+        'export_firefly_data',
+        client: fireflyMockClient(),
+      ).run({});
+
+      expect(result['ok'], isTrue);
+      final export = result['export'] as Map<String, Object?>;
+      final counts = export['counts'] as Map<String, Object?>;
+      expect(counts['accounts'], greaterThan(0));
+      expect(counts['transactions'], greaterThan(0));
+      expect(export['transactions'], isA<List<Object?>>());
+      // A snapshot that read like a backup would be worse than none.
+      expect(export['excludes'], contains('database'));
+    });
+
+    test('export_firefly_data counts_only leaves the rows out', () async {
+      final result = await _tool(
+        'export_firefly_data',
+        client: fireflyMockClient(),
+      ).run({'counts_only': true});
+
+      final export = result['export'] as Map<String, Object?>;
+      expect(result['counts_only'], isTrue);
+      expect((export['counts'] as Map)['accounts'], greaterThan(0));
+      expect(export.containsKey('transactions'), isFalse);
+      expect(export.containsKey('accounts'), isFalse);
+      // The receipt still says what a full snapshot would and would not hold.
+      expect(export['excludes'], contains('database'));
+      expect(export['covers'], contains('transactions'));
+    });
+
+    test('export_firefly_data refuses an inverted window', () async {
+      final result = await _tool(
+        'export_firefly_data',
+        client: fireflyMockClient(),
+      ).run({'start_date': '2026-02-01', 'end_date': '2026-01-01'});
+
+      expect(result['code'], 'bad_input');
+    });
+
     test(
       'find_incomplete_transactions reports the rows and the counts',
       () async {

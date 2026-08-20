@@ -163,6 +163,21 @@ void main() {
     await confirmDialogWithChallenge(tester);
   }
 
+  testWidgets('the Firefly data row says it is not a full backup', (
+    tester,
+  ) async {
+    await pumpSection(tester);
+
+    expect(find.text('Back up Firefly data'), findsOneWidget);
+    // Firefly has no backup feature and an API client cannot reach the
+    // database, so a row that read like a full backup would mislead at exactly
+    // the moment it matters.
+    expect(
+      explainerContaining(tester, 'This is not a full backup').data,
+      contains('database'),
+    );
+  });
+
   testWidgets('each row explains what a backup carries and what it drops', (
     tester,
   ) async {

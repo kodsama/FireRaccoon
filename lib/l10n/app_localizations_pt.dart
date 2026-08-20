@@ -3151,6 +3151,18 @@ class AppLocalizationsPt extends AppLocalizations {
       'O montante em moeda estrangeira deve ser um número válido superior a 0.';
 
   @override
+  String get exportFireflyData => 'Copiar dados do Firefly';
+
+  @override
+  String get exportFireflyDataDescription =>
+      'Guarda um instantâneo dos seus dados do Firefly num ficheiro JSON: contas, transações com cada divisão, orçamentos, categorias, etiquetas, faturas, mealheiros, regras recorrentes e moedas.\n\nNão é uma cópia de segurança completa. O Firefly III não tem função de cópia de segurança, e uma aplicação que usa a sua API não consegue alcançar a base de dados, os anexos carregados nem a chave da instância. Restaurar um Firefly funcional exige um arquivo de volumes feito no servidor; consulte o guia de implantação.';
+
+  @override
+  String fireflyDataExportedTo(String path) {
+    return 'Dados do Firefly exportados para $path';
+  }
+
+  @override
   String get missingInformation => 'Informação em falta';
 
   @override
