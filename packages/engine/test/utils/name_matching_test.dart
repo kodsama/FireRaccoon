@@ -85,6 +85,55 @@ void main() {
     });
   });
 
+  group('foldAccountNameWithoutNumber', () {
+    test('sets aside the number a bank prints after the label', () {
+      // Regression: the whole account line folded as one string, so the digits
+      // went into the name comparison and matched no ledger name at all.
+      expect(
+        foldAccountNameWithoutNumber('Joint Current 12 345 678'),
+        'jointcurrent',
+      );
+    });
+
+    test('reads a number whatever it is grouped or punctuated as', () {
+      // 3-3-3 and 2-3-3 both occur on one bank's exports, and a clearing
+      // number is written onto the front with a hyphen.
+      expect(
+        foldAccountNameWithoutNumber('Vardagskonto 98 765 432'),
+        'vardagskonto',
+      );
+      expect(
+        foldAccountNameWithoutNumber('Lönekonto 1234-87654321'),
+        'lonekonto',
+      );
+    });
+
+    test('folds the label the way a name is folded', () {
+      expect(foldAccountNameWithoutNumber('Nordvest AB 12345'), 'nordvest');
+    });
+
+    test('leaves a line with no trailing number alone', () {
+      expect(foldAccountNameWithoutNumber('E.ON Försäljning'), isNull);
+    });
+
+    test('leaves an interior digit run alone', () {
+      // Only a trailing run is an account number; digits in the middle are
+      // part of the name.
+      expect(foldAccountNameWithoutNumber('Konto 24 Timmar'), isNull);
+    });
+
+    test('has no label for a line that is nothing but a number', () {
+      expect(foldAccountNameWithoutNumber('12345678'), isNull);
+      expect(foldAccountNameWithoutNumber('1234-56789012'), isNull);
+    });
+
+    test('rejects a label shorter than the prefix minimum', () {
+      // Equality is the only tier a two-character label could reach, and it
+      // would answer outright on evidence this thin.
+      expect(foldAccountNameWithoutNumber('XY 12345'), isNull);
+    });
+  });
+
   group('prefixMatches', () {
     test('accepts a truncated bank name against the full name', () {
       expect(prefixMatches('nordiskl', 'nordisklotto'), isTrue);

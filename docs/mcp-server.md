@@ -194,6 +194,14 @@ equality (0.8), a bidirectional prefix (0.6), and a folded substring (0.4, never
 better than weak). An identifier hit ends the search, so a name coincidence is
 never appended below one and cannot dilute an answer the ledger already gave.
 
+A bank writes an account line as a label and then a number, and those digits
+fold into the name, so on a ledger carrying no identifiers the line as printed
+matched nothing at all: passing the account number, the strongest signal the
+tool has, made the answer strictly worse than passing the label alone. When
+every tier has missed, the name tiers now run once more against the label with
+the trailing number set aside, and each reason says so. Nothing that pass finds
+comes back exact, so it always asks rather than answers.
+
 Every candidate carries `matched_on`, the `reasons` it matched, a `score`, a
 `confidence` of exact, probable, or weak, and `requires_confirmation`, set for
 anything short of exact. The tool ranks; it never picks. `ambiguous` is true when
