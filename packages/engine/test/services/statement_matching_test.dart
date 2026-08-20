@@ -620,4 +620,121 @@ void main() {
       expect(result.needsInput.single.candidates, isEmpty);
     });
   });
+
+  group('one line paying a whole journal', () {
+    test('a mortgage split is matched by its summed legs', () {
+      // Found against a real ledger: the bank debits one amount and the
+      // journal records amortisation plus the interest on each loan. Matching
+      // legs only, the row read as missing and its legs as strangers, which is
+      // the shape that makes an importer add a second mortgage payment.
+      final group = _splitGroup(
+        id: '500',
+        splits: [
+          _leg(
+            id: '500',
+            journalId: '9001',
+            date: DateTime(2026, 8, 1),
+            amount: 3400,
+            description: 'amortisation',
+          ),
+          _leg(
+            id: '500',
+            journalId: '9002',
+            date: DateTime(2026, 8, 1),
+            amount: 3473,
+            description: 'interest loan 1',
+          ),
+          _leg(
+            id: '500',
+            journalId: '9003',
+            date: DateTime(2026, 8, 1),
+            amount: 3016,
+            description: 'interest loan 2',
+          ),
+        ],
+      );
+
+      final plan = _match(
+        rows: [
+          _row(
+            rowId: 'r1',
+            date: DateTime(2026, 8, 3),
+            amount: -9889,
+            text: 'BOLANEBANK',
+          ),
+        ],
+        recorded: [group],
+      );
+
+      expect(plan.matched, hasLength(1));
+      final match = plan.matched.single;
+      expect(match.legsConsumed, 3);
+      expect(match.groupAmount, closeTo(-9889, 0.005));
+      expect(match.recordedAmount, closeTo(-9889, 0.005));
+      expect(match.amountDelta, closeTo(0, 0.005));
+      expect(match.reasons.single, contains('3 legs'));
+      // Every leg is spent, so none is reported as unexplained.
+      expect(plan.unmatchedRecorded, isEmpty);
+      expect(plan.missing, isEmpty);
+    });
+
+    test('a leg that matches outright keeps priority over its group', () {
+      // The more specific reading wins: a row equal to one leg must not eat
+      // the whole journal and orphan the rest.
+      final group = _splitGroup(
+        id: '600',
+        splits: [
+          _leg(
+            id: '600',
+            journalId: '1',
+            date: DateTime(2026, 8, 1),
+            amount: 100,
+          ),
+          _leg(
+            id: '600',
+            journalId: '2',
+            date: DateTime(2026, 8, 1),
+            amount: 50,
+          ),
+        ],
+      );
+
+      final plan = _match(
+        rows: [_row(rowId: 'r1', date: DateTime(2026, 8, 1), amount: -100)],
+        recorded: [group],
+      );
+
+      expect(plan.matched.single.legsConsumed, 1);
+      expect(plan.unmatchedRecorded, hasLength(1));
+      expect(plan.unmatchedRecorded.single.signedAmount, closeTo(-50, 0.005));
+    });
+
+    test('a group whose sum is off by a krona is not claimed', () {
+      final group = _splitGroup(
+        id: '700',
+        splits: [
+          _leg(
+            id: '700',
+            journalId: '1',
+            date: DateTime(2026, 8, 1),
+            amount: 100,
+          ),
+          _leg(
+            id: '700',
+            journalId: '2',
+            date: DateTime(2026, 8, 1),
+            amount: 50,
+          ),
+        ],
+      );
+
+      final plan = _match(
+        rows: [_row(rowId: 'r1', date: DateTime(2026, 8, 1), amount: -151)],
+        recorded: [group],
+      );
+
+      expect(plan.matched, isEmpty);
+      expect(plan.missing, hasLength(1));
+    });
+  });
 }
