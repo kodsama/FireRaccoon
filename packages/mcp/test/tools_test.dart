@@ -149,14 +149,15 @@ void main() {
         });
 
         // The engine subtracts a day from whatever end it is handed, so a
-        // single-day window has to arrive as the day after. Passing the caller's
-        // date through unchanged inverts the range and Firefly drops the filter.
+        // single-day window has to arrive as the day after. That leaves start
+        // and end equal, which Firefly refuses outright rather than tolerating,
+        // so the engine widens by a day and trims the answer back.
         final ranged = calls.where(
           (u) => u.queryParameters.containsKey('start'),
         );
         expect(ranged, isNotEmpty, reason: 'no date range was sent at all');
         expect(ranged.first.queryParameters['start'], '2026-08-20');
-        expect(ranged.first.queryParameters['end'], '2026-08-20');
+        expect(ranged.first.queryParameters['end'], '2026-08-21');
       },
     );
 

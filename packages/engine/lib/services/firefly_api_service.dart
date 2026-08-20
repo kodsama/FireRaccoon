@@ -92,17 +92,46 @@ class FireflyApiService implements FireflyService {
 
   /// Query fragment for an inclusive-start, exclusive-end date window,
   /// matching the app-wide [DateRangeBounds] convention.
+  ///
+  /// Firefly refuses a window whose start is not strictly before its end, and a
+  /// single day converts to exactly that, so a one-day window is asked for a
+  /// day wider rather than refused. [_trimToWindow] puts the extra day back, so
+  /// a statement covering one date reconciles like any other.
   String _rangeQuery({DateTime? start, DateTime? end}) {
     final parts = <String>[];
-    if (start != null) {
-      final startDay = DateTime(start.year, start.month, start.day);
-      parts.add('start=${_formatApiDate(startDay)}');
-    }
+    final startDay = start == null
+        ? null
+        : DateTime(start.year, start.month, start.day);
+    if (startDay != null) parts.add('start=${_formatApiDate(startDay)}');
     if (end != null) {
-      final inclusiveEnd = end.subtract(const Duration(days: 1));
+      var inclusiveEnd = end.subtract(const Duration(days: 1));
+      if (startDay != null && !inclusiveEnd.isAfter(startDay)) {
+        inclusiveEnd = startDay.add(const Duration(days: 1));
+      }
       parts.add('end=${_formatApiDate(inclusiveEnd)}');
     }
     return parts.join('&');
+  }
+
+  /// Drops what the widening in [_rangeQuery] pulled in, so a caller reading a
+  /// one-day window sees that day and not its neighbour.
+  ///
+  /// Only a widened request is trimmed. Every other window is returned as
+  /// Firefly answered it, which is what the callers that pad deliberately rely
+  /// on.
+  List<Transaction> _trimToWindow(
+    List<Transaction> transactions, {
+    DateTime? start,
+    DateTime? end,
+  }) {
+    if (start == null || end == null) return transactions;
+    final from = DateTime(start.year, start.month, start.day);
+    if (end.subtract(const Duration(days: 1)).isAfter(from)) {
+      return transactions;
+    }
+    return transactions
+        .where((t) => !t.date.isBefore(from) && t.date.isBefore(end))
+        .toList();
   }
 
   String _transactionsPath({DateTime? start, DateTime? end, String? type}) {
@@ -556,9 +585,13 @@ class FireflyApiService implements FireflyService {
     final effectiveStart = start ?? DateTime.now().subtract(_defaultLookback);
     return _runLogged(
       'getTransactions',
-      () => _fetchAllTransactionPages(
-        _transactionsPath(start: effectiveStart, end: end, type: type),
-        onFirstPage: onFirstPage,
+      () async => _trimToWindow(
+        await _fetchAllTransactionPages(
+          _transactionsPath(start: effectiveStart, end: end, type: type),
+          onFirstPage: onFirstPage,
+        ),
+        start: effectiveStart,
+        end: end,
       ),
       context: {'start': effectiveStart, 'end': end, 'type': type},
     );
@@ -644,7 +677,11 @@ class FireflyApiService implements FireflyService {
         : '/api/v1/accounts/$accountId/transactions?$range';
     return _runLogged(
       'getAccountTransactions',
-      () => _fetchAllTransactionPages(path),
+      () async => _trimToWindow(
+        await _fetchAllTransactionPages(path),
+        start: start,
+        end: end,
+      ),
       context: {'accountId': accountId, 'start': start, 'end': end},
     );
   }
