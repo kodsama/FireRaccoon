@@ -126,6 +126,8 @@ class StatementMatch {
     required this.dateFieldUsed,
     required this.amountDeltaPct,
     required this.reasons,
+    this.legsConsumed = 1,
+    this.groupAmount,
     this.blockedReason,
   });
 
@@ -140,6 +142,14 @@ class StatementMatch {
   /// higher reads positive.
   final double amountDeltaPct;
 
+  /// Legs this row paid. More than one when a single bank line settled a whole
+  /// split journal, which is how a mortgage arrives: one debit covering
+  /// amortisation and the interest on each loan.
+  final int legsConsumed;
+
+  /// The summed legs when this row paid a whole journal, null for a single leg.
+  final double? groupAmount;
+
   final List<String> reasons;
 
   /// `split_group` when correcting this leg would move a journal whose other
@@ -147,8 +157,8 @@ class StatementMatch {
   final String? blockedReason;
 
   double get statementAmount => row.amount;
-  double get recordedAmount => leg.signedAmount;
-  double get amountDelta => leg.signedAmount - row.amount;
+  double get recordedAmount => groupAmount ?? leg.signedAmount;
+  double get amountDelta => recordedAmount - row.amount;
 }
 
 /// Whether the statement's own numbers add up, before the ledger is consulted.
@@ -385,14 +395,25 @@ StatementPlan matchStatementRows({
 
   final takenRows = <int>{};
   final takenLegs = <int>{};
-  final matched = _consume(
-    candidates: _exactCandidates(rows, legs),
-    rows: rows,
-    legs: legs,
-    takenRows: takenRows,
-    takenLegs: takenLegs,
-    blockSplitGroups: false,
+  final matched = <StatementMatch>[
+    ..._consume(
+      candidates: _exactCandidates(rows, legs),
+      rows: rows,
+      legs: legs,
+      takenRows: takenRows,
+      takenLegs: takenLegs,
+      blockSplitGroups: false,
+    ),
+  ];
+  matched.addAll(
+    _consumeGroups(
+      rows: rows,
+      legs: legs,
+      takenRows: takenRows,
+      takenLegs: takenLegs,
+    ),
   );
+
   final near = _consume(
     candidates: _nearCandidates(rows, legs, takenRows, takenLegs),
     rows: rows,
@@ -567,6 +588,67 @@ List<_Candidate> _nearCandidates(
   }
   candidates.sort(_byNearConfidence);
   return candidates;
+}
+
+/// Pairs a row with a whole split journal when one bank line paid all its legs.
+///
+/// A card statement lists each split separately, so a leg is the right unit
+/// there. A mortgage arrives the other way round: the bank debits one amount
+/// and the ledger records amortisation and the interest on each loan as legs of
+/// one journal. Matching legs only, that row looks missing and its legs look
+/// like strangers, which is the shape that makes an importer create a second
+/// mortgage payment every month.
+List<StatementMatch> _consumeGroups({
+  required List<StatementRow> rows,
+  required List<LedgerLeg> legs,
+  required Set<int> takenRows,
+  required Set<int> takenLegs,
+}) {
+  final byGroup = <String, List<int>>{};
+  for (var index = 0; index < legs.length; index++) {
+    if (takenLegs.contains(index)) continue;
+    byGroup.putIfAbsent(legs[index].transactionId, () => <int>[]).add(index);
+  }
+  // Sorted so the same statement always produces the same assignment.
+  final groupIds = byGroup.keys.toList()..sort();
+
+  final matches = <StatementMatch>[];
+  for (var rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+    if (takenRows.contains(rowIndex)) continue;
+    final row = rows[rowIndex];
+    for (final id in groupIds) {
+      final indexes = byGroup[id]!;
+      if (indexes.length < 2) continue;
+      if (indexes.any(takenLegs.contains)) continue;
+      final total = indexes.fold<double>(
+        0,
+        (sum, index) => sum + legs[index].signedAmount,
+      );
+      if (!_equal(total, row.amount)) continue;
+      final fit = _dateFit(row, legs[indexes.first].date);
+      if (fit.days > kStatementDateToleranceDays) continue;
+
+      takenRows.add(rowIndex);
+      takenLegs.addAll(indexes);
+      matches.add(
+        StatementMatch(
+          row: row,
+          leg: legs[indexes.first],
+          dateDeltaDays: fit.days,
+          dateFieldUsed: fit.field,
+          amountDeltaPct: 0,
+          legsConsumed: indexes.length,
+          groupAmount: total,
+          reasons: [
+            'one line paid the whole journal: ${indexes.length} legs summing '
+                'to ${total.toStringAsFixed(2)}',
+          ],
+        ),
+      );
+      break;
+    }
+  }
+  return matches;
 }
 
 List<StatementMatch> _consume({
