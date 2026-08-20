@@ -518,16 +518,65 @@ Map<String, Object?> _pageJson(TransactionPageResult result) => {
   'transactions': result.transactions.map(_transactionJson).toList(),
 };
 
+/// One line of a recurring rule: what it moves, between which accounts, and the
+/// bookkeeping a transaction created from it inherits.
+Map<String, Object?> _recurrenceLineJson(RecurrenceTransactionLine line) => {
+  'description': line.description,
+  'amount': line.amount,
+  'currency_code': line.currencyCode,
+  'foreign_amount': line.foreignAmount,
+  'foreign_currency_code': line.foreignCurrencyCode,
+  'source_id': line.sourceId,
+  'source_name': line.sourceName,
+  'destination_id': line.destinationId,
+  'destination_name': line.destinationName,
+  'category_id': line.categoryId,
+  'category_name': line.categoryName,
+  'budget_id': line.budgetId,
+  'budget_name': line.budgetName,
+  'bill_id': line.billId,
+  'bill_name': line.billName,
+  'tags': line.tags,
+};
+
+Map<String, Object?> _recurrenceRepetitionJson(
+  RecurrenceRepetition repetition,
+) => {
+  'type': repetition.type.apiValue,
+  'moment': repetition.moment,
+  'skip': repetition.skip,
+  'weekend': repetition.weekend.name,
+};
+
+/// A recurring rule with the lines it creates.
+///
+/// The lines are what make two rules telling apart: a title carries no accounts
+/// and no amount, so a ledger with one standing transfer per person offers only
+/// identical titles to choose between. Without them a caller cannot say which
+/// rule to correct, and `find_account` cannot be pointed at the payee a rule
+/// already names.
 Map<String, Object?> _recurrenceJson(Recurrence recurrence) => {
   'id': recurrence.id,
   'title': recurrence.title,
+  'type': recurrence.type.apiValue,
   'description': recurrence.description,
   'active': recurrence.active,
+  'apply_rules': recurrence.applyRules,
+  'notes': recurrence.notes,
   'first_date': _dateOnly(recurrence.firstDate),
+  'latest_date': recurrence.latestDate == null
+      ? null
+      : _dateOnly(recurrence.latestDate!),
   'repeat_until': recurrence.repeatUntil == null
       ? null
       : _dateOnly(recurrence.repeatUntil!),
   'nr_of_repetitions': recurrence.nrOfRepetitions,
+  'repetitions': [
+    for (final r in recurrence.repetitions) _recurrenceRepetitionJson(r),
+  ],
+  'transactions': [
+    for (final line in recurrence.transactions) _recurrenceLineJson(line),
+  ],
 };
 
 Map<String, Object?> _recurrenceFieldSchema() => {
@@ -2835,26 +2884,18 @@ List<McpTool> buildTools({
     ),
     McpTool(
       name: 'get_recurrences',
-      description: 'List recurring transaction rules.',
+      description:
+          'List recurring transaction rules, each with the lines it creates: '
+          'amount, source and destination accounts, category, budget, bill and '
+          'tags. Those name the payee behind a standing payment and are what '
+          'tells two rules with the same title apart.',
       inputSchema: const {'type': 'object', 'properties': {}},
       run: (_) async {
         final recurrences = await service().getRecurrences();
         return {
           'ok': true,
           'count': recurrences.length,
-          'recurrences': [
-            for (final r in recurrences)
-              {
-                'id': r.id,
-                'title': r.title,
-                'active': r.active,
-                'first_date': _dateOnly(r.firstDate),
-                'repeat_until': r.repeatUntil == null
-                    ? null
-                    : _dateOnly(r.repeatUntil!),
-                'nr_of_repetitions': r.nrOfRepetitions,
-              },
-          ],
+          'recurrences': [for (final r in recurrences) _recurrenceJson(r)],
         };
       },
     ),
