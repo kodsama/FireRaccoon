@@ -73,6 +73,11 @@ const int _minSubstring = 5;
 const String _ibanChecksumWarning =
     'supplied iban failed mod-97; identifier tiers skipped';
 
+/// Appended to a reason earned against the label of an account line rather than
+/// the whole line, so the person reading it knows what was not compared.
+const String _numberSetAside =
+    ', with the account number in the query set aside';
+
 /// Ranks [accounts] against a raw bank string and whatever identifiers the
 /// caller already holds.
 ///
@@ -83,6 +88,13 @@ const String _ibanChecksumWarning =
 /// answer the ledger already gave. Only when all three miss do the name tiers
 /// run: folded equality (0.8), a bidirectional prefix (0.6), then a folded
 /// substring (0.4, never stronger than [MatchConfidence.weak]).
+///
+/// A bank prints an account line as a label and then a number, and the digits
+/// fold into the name, so a ledger carrying no identifiers answers such a line
+/// on no tier at all. When every tier has missed, the name tiers run once more
+/// against the label alone. Nothing that pass finds comes back exact, so a
+/// caller always has a person confirm it: the digits named no account, and the
+/// equality tier is out of its reach either way.
 ///
 /// Nothing here promises uniqueness that Firefly does not enforce: two accounts
 /// can carry the same account number, and when they do both come back
@@ -125,17 +137,27 @@ AccountResolution resolveAccountCandidates({
 
   var skippedBlankNames = 0;
   if (matches.isEmpty) {
-    for (final account in pool) {
-      final folded = foldAccountName(account.name);
-      if (folded.isEmpty) {
-        // An empty folded name is a prefix of every query, so it is counted
-        // and dropped rather than matched.
-        skippedBlankNames++;
-        continue;
-      }
-      final hit = _nameHit(folded, queryName);
-      if (hit != null) matches.add(_Match(account, [hit]));
-    }
+    skippedBlankNames = _appendNameMatches(pool, queryName, matches);
+  }
+
+  // The account line a bank prints resolves on no tier at all when the ledger
+  // carries no identifiers: the digits match nothing, and they fold into the
+  // name and defeat the name tiers with them. Setting the number aside is
+  // weaker evidence than a name that matched the line as written, so it runs
+  // only when nothing did.
+  //
+  // Nothing it finds can come back exact. A folded query always begins with
+  // its own label, so a ledger name equal to the label prefix-matches the line
+  // as written and the pass above has already claimed it; what is left for this
+  // one is a longer name (0.6) or a name that merely contains the label (0.4).
+  final queryLabel = foldAccountNameWithoutNumber(query);
+  if (matches.isEmpty && queryLabel != null) {
+    skippedBlankNames = _appendNameMatches(
+      pool,
+      queryLabel,
+      matches,
+      qualifier: _numberSetAside,
+    );
   }
 
   matches.sort((a, b) {
@@ -257,13 +279,36 @@ List<_Hit> _identifierHits(
   return hits;
 }
 
-_Hit? _nameHit(String folded, String queryName) {
+/// Runs the name tiers over [pool], appending what hit to [matches], and returns
+/// how many accounts were dropped for folding to a blank name.
+int _appendNameMatches(
+  List<Account> pool,
+  String queryName,
+  List<_Match> matches, {
+  String qualifier = '',
+}) {
+  var skippedBlankNames = 0;
+  for (final account in pool) {
+    final folded = foldAccountName(account.name);
+    if (folded.isEmpty) {
+      // An empty folded name is a prefix of every query, so it is counted and
+      // dropped rather than matched.
+      skippedBlankNames++;
+      continue;
+    }
+    final hit = _nameHit(folded, queryName, qualifier: qualifier);
+    if (hit != null) matches.add(_Match(account, [hit]));
+  }
+  return skippedBlankNames;
+}
+
+_Hit? _nameHit(String folded, String queryName, {String qualifier = ''}) {
   if (folded == queryName) {
     return _Hit(
       tier: 'name',
       value: queryName,
       score: 0.8,
-      reason: 'the folded name equals the folded query $queryName',
+      reason: 'the folded name equals the folded query $queryName$qualifier',
     );
   }
   if (prefixMatches(folded, queryName)) {
@@ -273,7 +318,7 @@ _Hit? _nameHit(String folded, String queryName) {
       score: 0.6,
       reason:
           'the folded name $folded and the folded query $queryName are '
-          'prefixes of one another',
+          'prefixes of one another$qualifier',
     );
   }
   if (math.min(folded.length, queryName.length) >= _minSubstring &&
@@ -285,7 +330,7 @@ _Hit? _nameHit(String folded, String queryName) {
       cap: MatchConfidence.weak,
       reason:
           'one of the folded name $folded and the folded query $queryName '
-          'contains the other',
+          'contains the other$qualifier',
     );
   }
   return null;
