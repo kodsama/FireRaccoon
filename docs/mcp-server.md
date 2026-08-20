@@ -122,12 +122,12 @@ are described under [Importing a statement](#importing-a-statement).
 | `set_primary_currency` | Change the default currency | yes |
 | `get_accounts` | List accounts with balances |  |
 | `get_transactions` | Transactions, filterable by account, date window, and reconciled state |  |
-| `get_transaction` | One transaction by group ID |  |
+| `get_transaction` | One transaction by group ID, with the legs of a split group |  |
 | `set_transaction_reconciled` | Mark reconciled or unreconciled | yes |
 | `store_reconciliation` | Store an account reconciliation with optional correction | yes |
-| `create_transaction` | Create a transaction | yes |
+| `create_transaction` | Create a transaction, one leg or several | yes |
 | `update_transaction` | Update a transaction; omitted fields keep their value | yes |
-| `duplicate_transaction` | Copy a transaction, with optional overrides | yes |
+| `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides | yes |
 | `delete_transaction` | Delete a transaction group and its splits | yes |
 | `search_transactions` | Full-text search, for matching statement lines |  |
 | `get_budgets` | List budgets with spent amounts |  |
@@ -274,6 +274,26 @@ Acting on a plan is separate: `update_transaction` corrects a near match,
 `create_transaction` or `duplicate_transaction` writes a missing row. Setting
 `account_number` or `iban` on a payee with `update_account` is what upgrades the
 next import from a name guess to an identifier lookup.
+
+### Writing a split
+
+One bank line often pays a journal with several legs: a loan payment divided
+into amortisation and interest, or a card bill that settles a month of
+purchases. `get_transaction` returns those legs under `splits`, so a caller can
+read one and write the same shape back. A listing reports only `split_count`,
+since a 26-leg bill would otherwise be most of the page.
+
+`duplicate_transaction` carries every leg. It refuses an `amount` on a group,
+because one figure does not say how to divide it across legs and a loan's fixed
+amortisation must not be scaled along with its interest; pass `splits` to
+restate them. A copy is never reconciled, whatever the original was.
+
+`create_transaction` takes the same `splits`, where each leg inherits anything
+it omits from the top-level arguments, so the account and currency are given
+once and only the amount, description and category vary. Reconciling a
+credit card is not one of these: `store_reconciliation` builds that payback from
+the purchases it settles, which is what keeps the group title and the per-leg
+links identical to what the app writes.
 
 ## Managing keys
 
