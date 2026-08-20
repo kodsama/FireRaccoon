@@ -3163,6 +3163,9 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le montant en devise étrangère doit être un nombre valide supérieur à 0.';
 
   @override
+  String get missingInformation => 'Informations manquantes';
+
+  @override
   String get missingDescription => 'Veuillez saisir une description.';
 
   @override

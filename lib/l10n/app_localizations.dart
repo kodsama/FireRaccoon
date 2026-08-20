@@ -5716,6 +5716,12 @@ abstract class AppLocalizations {
   /// **'Foreign amount must be a valid number greater than 0.'**
   String get invalidForeignAmount;
 
+  /// No description provided for @missingInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Missing information'**
+  String get missingInformation;
+
   /// No description provided for @missingDescription.
   ///
   /// In en, this message translates to:

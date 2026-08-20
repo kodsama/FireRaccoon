@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fireracoon/l10n/app_localizations_en.dart';
-import 'package:fireracoon/models/transaction.dart';
 import 'package:fireracoon/providers/data_providers.dart';
 import 'package:fireracoon/utils/locale_formatting.dart';
 import 'package:fireracoon/utils/transaction_list_grouping.dart';
+import 'package:fireracoon_engine/fireracoon_engine.dart';
 
 Transaction _tx({
   required String id,
@@ -224,6 +224,59 @@ void main() {
         expect(result.groups, isEmpty);
       },
     );
+
+    test('narrows to rows missing a field when asked', () {
+      final tagged = Transaction(
+        id: 'tagged',
+        type: 'withdrawal',
+        date: DateTime(2026, 6, 2),
+        amount: 10,
+        description: 'Test',
+        sourceName: 'Checking',
+        destinationName: 'Groceries',
+        categoryName: 'Food',
+        currencySymbol: '\u20ac',
+        currencyCode: 'EUR',
+        tags: const ['weekly'],
+      );
+      final untagged = Transaction(
+        id: 'untagged',
+        type: 'withdrawal',
+        date: DateTime(2026, 6, 3),
+        amount: 10,
+        description: 'Test',
+        sourceName: 'Checking',
+        destinationName: 'Groceries',
+        categoryName: 'Food',
+        currencySymbol: '\u20ac',
+        currencyCode: 'EUR',
+      );
+
+      final filtered = buildTransactionListGroups(
+        transactions: [tagged, untagged],
+        activeAccountFilters: {},
+        searchQuery: '',
+        groupType: TransactionGroupType.date,
+        format: format,
+        l10n: l10n,
+        referenceDate: DateTime(2026, 7, 9),
+        missingFields: const {TransactionField.tags},
+      );
+
+      expect(filtered.filteredTransactions.map((t) => t.id), ['untagged']);
+
+      // No field asked for narrows nothing, rather than everything.
+      final unfiltered = buildTransactionListGroups(
+        transactions: [tagged, untagged],
+        activeAccountFilters: {},
+        searchQuery: '',
+        groupType: TransactionGroupType.date,
+        format: format,
+        l10n: l10n,
+        referenceDate: DateTime(2026, 7, 9),
+      );
+      expect(unfiltered.filteredTransactions, hasLength(2));
+    });
 
     test('groups future transactions by month, newest first', () {
       final result = buildTransactionListGroups(

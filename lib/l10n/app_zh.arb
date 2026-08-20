@@ -1630,6 +1630,7 @@
   "noSuggestions": "无匹配建议",
   "invalidAmount": "金额必须是大于0的有效数字。",
   "invalidForeignAmount": "外币金额必须是大于0的有效数字。",
+  "missingInformation": "缺失信息",
   "missingDescription": "请输入描述。",
   "missingAmount": "请输入金额。",
   "missingAccounts": "请同时选择来源账户和目标账户。",

@@ -1782,6 +1782,7 @@
   "noSuggestions": "No matching suggestions",
   "invalidAmount": "Amount must be a valid number greater than 0.",
   "invalidForeignAmount": "Foreign amount must be a valid number greater than 0.",
+  "missingInformation": "Missing information",
   "missingDescription": "Please enter a description.",
   "missingAmount": "Please enter an amount.",
   "missingAccounts": "Please select both source and destination accounts.",
