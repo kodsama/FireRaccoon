@@ -43,7 +43,7 @@ Map<String, Object?> assetAccountsBody({String balance = '2500.00'}) => {
         'name': 'Checking',
         'type': 'asset',
         'account_role': 'defaultAsset',
-        'iban': 'SE4550000000058398257466',
+        'iban': 'SE4100000000001234567890',
         'account_number': '123456789',
         'current_balance': balance,
         'currency_symbol': '€',
@@ -83,7 +83,7 @@ Map<String, Object?> expenseAccountsBody() => {
       'id': '20',
       'type': 'accounts',
       'attributes': {
-        'name': 'MORTGAGE LENDER',
+        'name': 'BOLANEBANKEN',
         'type': 'expense',
         'current_balance': '0.00',
         'currency_symbol': '\u20ac',
@@ -294,6 +294,7 @@ Map<String, Object?> transactionEnvelope(Map<String, Object?> item) => {
 
 MockClient fireflyMockClient({
   bool aboutOk = true,
+  bool collidingNames = false,
   bool heavySpending = false,
   Map<String, Map<String, Object?>> transactionOverrides = const {},
   List<Uri>? record,
@@ -362,6 +363,35 @@ MockClient fireflyMockClient({
     }
     if (path.startsWith('/api/v1/currencies/') && path.endsWith('/primary')) {
       return http.Response('', 204);
+    }
+    if (path == '/api/v1/accounts' &&
+        collidingNames &&
+        request.url.queryParameters['type'] == 'asset') {
+      // Two accounts whose folded names share a prefix, so no single candidate
+      // can honestly come back exact.
+      return jsonHttpResponse({
+        'data': [
+          for (final row in [
+            ('40', 'Sparkonto Alfa'),
+            ('41', 'Sparkonto Beta'),
+          ])
+            {
+              'id': row.$1,
+              'type': 'accounts',
+              'attributes': {
+                'name': row.$2,
+                'type': 'asset',
+                'account_role': 'savingAsset',
+                'current_balance': '1.00',
+                'currency_symbol': '€',
+                'currency_code': 'EUR',
+              },
+            },
+        ],
+        'meta': {
+          'pagination': {'total_pages': 1},
+        },
+      });
     }
     if (path == '/api/v1/accounts' &&
         request.url.queryParameters['type'] == 'asset') {

@@ -171,20 +171,20 @@ void main() {
   group('signedAmountForSplitById', () {
     test('recovers the sign a name shared across types nets to zero', () {
       // Firefly makes account names unique only within a type, so an asset
-      // account and an expense account can both be called VA Syd. The
+      // account and an expense account can both be called Va Ttn. The
       // name-keyed reader sees one split as both legs and returns 0.0, which
       // leaves a statement short by this row with no error raised.
       final split = _tx(
         type: 'withdrawal',
         date: DateTime(2026, 7, 3),
         amount: 481,
-        source: 'VA Syd',
+        source: 'Va Ttn',
         sourceId: '4',
-        destination: 'VA Syd',
+        destination: 'Va Ttn',
         destinationId: '19',
       );
 
-      expect(signedAmountForSplit(split, 'VA Syd'), 0);
+      expect(signedAmountForSplit(split, 'Va Ttn'), 0);
       expect(signedAmountForSplitById(split, '4'), -481);
       expect(signedAmountForSplitById(split, '19'), 481);
     });
@@ -342,13 +342,13 @@ void main() {
           type: 'withdrawal',
           date: DateTime(2026, 7, 3),
           amount: 481,
-          source: 'VA Syd',
+          source: 'Va Ttn',
           sourceId: '4',
-          destination: 'VA Syd',
+          destination: 'Va Ttn',
           destinationId: '19',
         );
 
-        expect(transactionAffectsAccount(tx, 'VA Syd'), isFalse);
+        expect(transactionAffectsAccount(tx, 'Va Ttn'), isFalse);
         expect(transactionAffectsAccountId(tx, '4'), isTrue);
         expect(transactionAffectsAccountId(tx, '7'), isFalse);
       },

@@ -15,6 +15,8 @@ class SealedStore {
   SealedStore._(this._dataDir, this._dataKey);
 
   static const _headerName = 'store.header';
+
+  /// Production cost of turning DATA_PASSWORD into the key-encrypting key.
   static const _pbkdf2Iterations = 210000;
   static const _saltLength = 16;
   static const _dekLength = 32;
@@ -32,9 +34,15 @@ class SealedStore {
   }
 
   /// Creates a new store when [dataDir] has no header, otherwise unlocks it.
+  ///
+  /// [iterations] applies only when creating: unlocking reads the count out of
+  /// the header, so a store stays openable after this default changes. Tests
+  /// pass a low count because each derive at the production cost takes long
+  /// enough that a test opening two stores exceeds the 30 second timeout.
   static Future<SealedStore> open({
     required String dataDirPath,
     required String password,
+    int iterations = _pbkdf2Iterations,
   }) async {
     if (password.isEmpty) {
       throw ArgumentError('password must not be empty');
@@ -50,6 +58,7 @@ class SealedStore {
         dataDir: dataDir,
         password: password,
         headerFile: headerFile,
+        iterations: iterations,
       );
     }
     return _unlock(
@@ -63,6 +72,7 @@ class SealedStore {
     required Directory dataDir,
     required String password,
     required File headerFile,
+    required int iterations,
   }) async {
     final random = Random.secure();
     final salt = Uint8List.fromList(
@@ -71,7 +81,7 @@ class SealedStore {
     final dekBytes = Uint8List.fromList(
       List<int>.generate(_dekLength, (_) => random.nextInt(256)),
     );
-    final kek = await _deriveKek(password, salt);
+    final kek = await _deriveKek(password, salt, iterations);
     final aes = AesGcm.with256bits();
     final wrapped = await aes.encrypt(
       dekBytes,
@@ -81,7 +91,7 @@ class SealedStore {
     final header = <String, Object?>{
       'v': 1,
       'kdf': 'pbkdf2-hmac-sha256',
-      'iterations': _pbkdf2Iterations,
+      'iterations': iterations,
       'salt': base64Encode(salt),
       'nonce': base64Encode(wrapped.nonce),
       'mac': base64Encode(wrapped.mac.bytes),
@@ -104,7 +114,13 @@ class SealedStore {
       throw StateError('Unsupported store header version: ${header['v']}');
     }
     final salt = base64Decode(header['salt'] as String);
-    final kek = await _deriveKek(password, salt);
+    // Read from the header, never from the constant: deriving with a different
+    // count than the store was sealed with fails as SecretBoxAuthenticationError
+    // and is reported as a wrong password, so changing the default would have
+    // locked every existing store out permanently.
+    final iterations =
+        (header['iterations'] as num?)?.toInt() ?? _pbkdf2Iterations;
+    final kek = await _deriveKek(password, salt, iterations);
     final aes = AesGcm.with256bits();
     try {
       final dekBytes = await aes.decrypt(
@@ -124,10 +140,14 @@ class SealedStore {
     }
   }
 
-  static Future<SecretKey> _deriveKek(String password, List<int> salt) {
+  static Future<SecretKey> _deriveKek(
+    String password,
+    List<int> salt,
+    int iterations,
+  ) {
     final pbkdf2 = Pbkdf2(
       macAlgorithm: Hmac.sha256(),
-      iterations: _pbkdf2Iterations,
+      iterations: iterations,
       bits: 256,
     );
     return pbkdf2.deriveKey(

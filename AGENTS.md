@@ -15,7 +15,7 @@ without touching the GUI.
    MCP tool, auth requirements, and transport options.
 2. **Read OpenAPI.** `openapi.yaml` documents the Firefly III REST subset and
    mirrors MCP tools under `x-mcp.tools`.
-3. **Get an agent key.** Issue one in Settings under MCP. It is shown once and
+3. **Get an agent key.** Issue one in Settings under MCP. Its owner can read it back later from the same panel, and
    acts as the person who created it, so a viewer's key gets read-only tools.
    Set `FIRERACOON_URL` and `FIRERACOON_API_KEY`. Firefly III credentials are
    never accepted here, and tools take no credential arguments.
@@ -50,7 +50,7 @@ See `docs/adr/0002-local-vs-server-mode.md` and `docs/deployment.md`.
 
 Accounts, transactions, budgets, budget limits, categories, tags, bills, piggy
 banks, recurrences, currencies, reconciliation, and the on-device projection:
-55 tools, 31 of them write-gated. The rich account prognosis behind the UI is
+57 tools, 31 of them write-gated. The rich account prognosis behind the UI is
 the one engine capability with no tool
 (`docs/adr/0001-projection-vs-prognosis.md`). `get_capabilities` returns the
 live catalog and the write-gated names a `viewer` key is refused. Domain terms
@@ -73,9 +73,11 @@ live in `CONTEXT.md`.
 | `duplicate_transaction` | Copy a transaction, with optional overrides |
 | `delete_transaction` | Delete a transaction group and every split in it |
 | `search_transactions` | Full-text search, for matching statement lines |
+| `find_account` | Resolve raw bank text to an account; matches account number and IBAN before any name tier, returns ranked candidates with a reason and a last-four hint, never the identifier |
+| `match_statement` | Match statement rows against recorded split legs; reports matched, near-matched and missing rows with the arithmetic that proves it |
 | `get_budgets` | List budgets with spent amounts |
 | `get_budget_transactions` | Transactions for a budget |
-| `update_account` | Rename an account |
+| `update_account` | Change a name, IBAN, BIC, account number, notes, role, currency, liability terms or opening balance; at least one field required |
 | `update_budget` | Update a budget name, active flag, notes, and auto-budget |
 | `delete_budget` | Delete a budget |
 | `get_account` | One account, optionally as it stood on a date |

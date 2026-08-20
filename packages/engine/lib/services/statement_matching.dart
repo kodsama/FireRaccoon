@@ -27,6 +27,7 @@ const String _payeeTextReason =
 
 const String _unparsedRowsPresent = 'unparsed_rows_present';
 const String _statementSelfCheckFailed = 'statement_self_check_failed';
+const String _planDoesNotCloseGap = 'plan_does_not_close_gap';
 const String _balancesNotSupplied = 'balances_not_supplied';
 
 const String _amountFormatField = 'amount_format';
@@ -453,6 +454,9 @@ StatementPlan matchStatementRows({
     disagreementReason = _statementSelfCheckFailed;
   } else {
     agrees = gapClosedByPlan;
+    // Without this the commonest disagreement, a plan that leaves the balance
+    // gap open, came back as agrees:false with no reason at all.
+    if (!gapClosedByPlan) disagreementReason = _planDoesNotCloseGap;
   }
 
   return StatementPlan(

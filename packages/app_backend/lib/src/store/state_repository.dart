@@ -435,10 +435,10 @@ class StateRepository {
 
   /// Records that [key] was just used, if it is a valid agent key.
   ///
-  /// The in-memory record always advances so `/api/agent-keys` reads back what
-  /// just happened, but the encrypted store is only rewritten once per
-  /// [keys.kAgentKeyUsageInterval]: an agent polling every few seconds would
-  /// otherwise re-encrypt the whole document on every request.
+  /// Throttled by [kAgentKeyUsageInterval]: a chatty agent would otherwise
+  /// rewrite the encrypted store on every call. The in-memory record and the
+  /// store wait for the interval together, so `/api/agent-keys` can report a
+  /// stamp up to that interval old.
   Future<void> touchAgentKey(String? key, {DateTime? now}) async {
     final identity = identityForAgentKey(key);
     if (identity == null) return;

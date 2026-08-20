@@ -31,7 +31,7 @@ dart pub get
 export FIRERACOON_URL=https://fireracoon.example
 export FIRERACOON_API_KEY=frcn_...
 
-# Stdio transport (default — MCP clients spawn this process)
+# Stdio transport (the default; MCP clients spawn this process)
 dart run fireracoon_mcp
 
 # TCP transport on localhost:8787
@@ -51,7 +51,7 @@ See also [`openapi.yaml`](../openapi.yaml) and [`AGENTS.md`](../AGENTS.md) at th
 
 A ready-to-copy config lives at [`docs/mcp-client-config.json`](mcp-client-config.json). Set `FIRERACOON_URL` and `FIRERACOON_API_KEY`, then merge into your client's MCP settings.
 
-**From the repository root** (recommended — paths work out of the box):
+**From the repository root** (recommended, since paths work out of the box):
 
 ```json
 {
@@ -108,8 +108,13 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 
 ## Available tools
 
+57 tools, 31 of which write. The two that carry a bank import lead the table and
+are described under [Importing a statement](#importing-a-statement).
+
 | Tool | Description | Writes |
 |------|-------------|--------|
+| `find_account` | Resolve raw bank text to an account, one string or a batch, ranked with the reason each candidate matched |  |
+| `match_statement` | Pair statement rows against recorded split legs, with the arithmetic behind every verdict |  |
 | `get_capabilities` | Server version, tool catalog, the write-gated list, and the person behind the presented key |  |
 | `check_connection` | Ping Firefly III (`/api/v1/about`) |  |
 | `get_current_user` | Authenticated Firefly user profile |  |
@@ -127,7 +132,7 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 | `search_transactions` | Full-text search, for matching statement lines |  |
 | `get_budgets` | List budgets with spent amounts |  |
 | `get_budget_transactions` | Transactions for a budget |  |
-| `update_account` | Rename an account | yes |
+| `update_account` | Name, identifiers, notes, role, currency, liability terms, or balances; omitted fields keep their value | yes |
 | `update_budget` | Update a budget; omitted fields keep their value | yes |
 | `delete_budget` | Delete a budget | yes |
 | `get_account` | One account, optionally as of a date |  |
@@ -172,6 +177,96 @@ to, so an agent that has been running a while does not have to have kept the
 `initialize` response. It is null when the server was started without a key,
 which is only the case for an unauthenticated stdio run.
 
+## Importing a statement
+
+Two tools carry a bank import, and neither writes. They report what they found
+and the arithmetic behind it; every change to the ledger stays a separate,
+deliberate call.
+
+### Resolving a name to an account
+
+`find_account` turns raw bank text into candidates. It matches on the account
+number and the IBAN before it looks at any name, so a payee that carries an
+identifier is resolved by the ledger rather than by a string that reads alike.
+The tiers run in a fixed order with fixed scores: account number (1.0), IBAN
+(1.0), the IBAN's BBAN against the digits in the query (0.9), then folded name
+equality (0.8), a bidirectional prefix (0.6), and a folded substring (0.4, never
+better than weak). An identifier hit ends the search, so a name coincidence is
+never appended below one and cannot dilute an answer the ledger already gave.
+
+Every candidate carries `matched_on`, the `reasons` it matched, a `score`, a
+`confidence` of exact, probable, or weak, and `requires_confirmation`, set for
+anything short of exact. The tool ranks; it never picks. `ambiguous` is true when
+the top two scores are less than 0.05 apart, or when more than one account
+answered to the same key, and it is read off the full ranking rather than the
+truncated one, so a `limit` of 1 cannot hide the runner-up that made the leader
+doubtful.
+
+Exact is a uniqueness claim as much as a score claim, and nothing here promises
+uniqueness Firefly does not enforce. Two accounts can carry the same account
+number, and when they do both come back probable and listed under `collisions`
+rather than either one coming back exact. That applies to every tier, not only
+identifiers: two accounts whose folded names share a prefix collide the same
+way, keyed by the tier that matched, so a caller reading `collisions` must not
+assume a duplicate account number. An `iban` argument shaped like an IBAN
+that fails its mod-97 check skips the identifier tiers altogether and says so
+under `warnings`: matching on a number the caller mistyped is worse than falling
+through to the name. A clearing number or a bare account number is not a corrupt
+IBAN, so the check only speaks for a string shaped like one.
+
+The identifier it matched on does not come back. A candidate reports `has_iban`,
+`has_account_number`, and an `identifier_hint` naming the last four digits, which
+is enough for a person to confirm the right account without the number itself
+entering the transcript.
+
+### Matching rows against the ledger
+
+`match_statement` pairs the rows of an export against the split legs recorded on
+one account. The unit is a leg, not a journal: a statement line pays one leg, so
+a split group offers as many units as it has legs touching the account and each
+is spent at most once. Exact pairs are consumed first, then the near pass runs
+over what is left on both sides, which is what stops two rows of the same amount
+on the same day from collapsing onto one transaction.
+
+Near matches are the interesting half. A recurring charge written ahead of time
+from an estimate sits in the ledger at the estimated amount, and then the bank
+takes the real one. That row is neither missing nor a clean match, so it comes
+back under `near_matches` with `amount_delta`, `amount_delta_pct`,
+`date_delta_days`, and the reasons it fell short, for a person to correct rather
+than for the tool to overwrite. A near match whose journal is a split group
+carries `blocked_reason: split_group`: correcting that leg would move a journal
+whose other legs the statement says nothing about.
+
+Tolerances are fixed constants, not arguments, and every response echoes them
+under `window` so a caller can read the rule that produced its verdicts.
+
+| Field | Value | Governs |
+|-------|-------|---------|
+| `date_tolerance_days` | 3 | how far a recorded leg may sit from a row and still be claimed as the same event |
+| `near_date_tolerance_days` | 5 | the wider window the near pass reports over |
+| `near_amount_tolerance_pct` | 0.10 | how far a near candidate's amount may differ from the row |
+| `amount_equality_tolerance` | 0.005 | below which two amounts are the same amount |
+
+The `arithmetic` block is the proof: the statement rows sum, the recorded sum,
+their difference, the gap the opening and closing balances imply, the sum of the
+missing rows, and whether writing those rows would move the ledger by exactly
+that gap (`gap_closed_by_plan`). `agrees` is null when no balances were supplied,
+since there is then nothing to agree with. `statement_self_check` answers the
+narrower question of whether the statement's own numbers add up, before the
+ledger is consulted at all.
+
+A row whose amount will not read under the settled decimal grammar is not
+guessed at. It comes back under `needs_input` with what it would be worth under
+each grammar, and its presence alone is enough to refuse to say the arithmetic
+agrees.
+
+### Closing the loop
+
+Acting on a plan is separate: `update_transaction` corrects a near match,
+`create_transaction` or `duplicate_transaction` writes a missing row. Setting
+`account_number` or `iban` on a payee with `update_account` is what upgrades the
+next import from a name guess to an identifier lookup.
+
 ## Managing keys
 
 Server mode exposes the same operations over HTTP, authenticated with a normal session:
@@ -211,7 +306,7 @@ LLM client ──stdio/TCP──► McpServer ──► buildTools() ──► F
                  └──► McpAuthenticator ──► agent key → person → role
 ```
 
-The MCP layer is a thin adapter — all business logic lives in `packages/engine`.
+The MCP layer is a thin adapter; all business logic lives in `packages/engine`.
 
 ## Security
 

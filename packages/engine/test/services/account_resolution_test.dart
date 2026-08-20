@@ -30,10 +30,10 @@ void main() {
       // alongside the account the digits already named.
       final resolution = resolveAccountCandidates(
         accounts: [
-          _account(id: '1', name: 'Sparkonto', accountNumber: '12 345 678'),
-          _account(id: '2', name: 'Common Allkonto'),
+          _account(id: '1', name: 'Sparkonto', accountNumber: '123 456 789'),
+          _account(id: '2', name: 'Joint Current'),
         ],
-        query: 'Common Allkonto 12 345 678',
+        query: 'Joint Current 123 456 789',
       );
 
       expect(resolution.candidates, hasLength(1));
@@ -50,9 +50,9 @@ void main() {
 
     test('matches the account number the caller already holds', () {
       final resolution = resolveAccountCandidates(
-        accounts: [_account(id: '1', accountNumber: '5713-43821')],
+        accounts: [_account(id: '1', accountNumber: '1234-56789')],
         query: 'Överföring',
-        accountNumber: '12 345 678',
+        accountNumber: '123 456 789',
       );
 
       expect(resolution.candidates.single.matchedOn, ['account_number']);
@@ -98,10 +98,10 @@ void main() {
           _account(
             id: '1',
             name: 'Vardagskonto',
-            iban: 'SE87 0000 0000 0005 7134 3821',
+            iban: 'SE87 0000 0000 0001 2345 6789',
           ),
         ],
-        query: 'Common Allkonto 12 345 678',
+        query: 'Joint Current 123 456 789',
       );
 
       final only = resolution.candidates.single;
@@ -116,11 +116,11 @@ void main() {
           _account(
             id: '1',
             name: 'Vardagskonto',
-            accountNumber: '12 345 678',
-            iban: 'SE87 0000 0000 0005 7134 3821',
+            accountNumber: '123 456 789',
+            iban: 'SE87 0000 0000 0001 2345 6789',
           ),
         ],
-        query: 'Betalning 12 345 678',
+        query: 'Betalning 123 456 789',
       );
 
       final only = resolution.candidates.single;
@@ -141,7 +141,7 @@ void main() {
             iban: 'SE8700000000001234567890',
           ),
         ],
-        query: 'Utbetalning 12 345 678',
+        query: 'Utbetalning 123 456 789',
       );
 
       expect(resolution.candidates, isEmpty);
@@ -164,14 +164,10 @@ void main() {
       // keep, since nothing stops two accounts holding one number.
       final resolution = resolveAccountCandidates(
         accounts: [
-          _account(id: '4', name: 'VA SYD', accountNumber: '123456789'),
-          _account(
-            id: '19',
-            name: 'Vasyd Vatten',
-            accountNumber: '12 345 678',
-          ),
+          _account(id: '4', name: 'VA TTN', accountNumber: '123456789'),
+          _account(id: '19', name: 'Vattn Verk', accountNumber: '123 456 789'),
         ],
-        query: 'Betalning 12 345 678',
+        query: 'Betalning 123 456 789',
       );
 
       expect(
@@ -190,14 +186,14 @@ void main() {
     test('demotes two accounts that fold to the same name', () {
       final resolution = resolveAccountCandidates(
         accounts: [
-          _account(id: '4', name: 'VA SYD'),
-          _account(id: '19', name: 'Va Syd'),
+          _account(id: '4', name: 'VA TTN'),
+          _account(id: '19', name: 'Va Ttn'),
         ],
-        query: 'VASYD',
+        query: 'VATTN',
       );
 
       expect(resolution.collisions, {
-        'name:vasyd': ['19', '4'],
+        'name:vattn': ['19', '4'],
       });
       expect(
         resolution.candidates.map((c) => c.confidence),
@@ -211,10 +207,10 @@ void main() {
     test('ranks folded equality above a prefix and calls it unambiguous', () {
       final resolution = resolveAccountCandidates(
         accounts: [
-          _account(id: '1', name: 'Svenska Spel AB'),
-          _account(id: '2', name: 'AB Svenska Spelbutiken'),
+          _account(id: '1', name: 'Nordisk Lotto AB'),
+          _account(id: '2', name: 'AB Nordisk Lottobutiken'),
         ],
-        query: 'SVENSKA SPEL',
+        query: 'NORDISK LOTTO',
       );
 
       expect(resolution.candidates.map((c) => c.account.id), ['1', '2']);
@@ -233,10 +229,10 @@ void main() {
       // which hands the truncated bank text to whichever name shares letters.
       final resolution = resolveAccountCandidates(
         accounts: [
-          _account(id: '1', name: 'Svenska Spel'),
-          _account(id: '2', name: 'Svenska Handelsbanken'),
+          _account(id: '1', name: 'Nordisk Lotto'),
+          _account(id: '2', name: 'Nordisk Bank'),
         ],
-        query: 'AB SVENSKA S',
+        query: 'AB NORDISK L',
       );
 
       expect(resolution.candidates.single.account.id, '1');
@@ -284,7 +280,7 @@ void main() {
     test('keeps a blank-named account eligible for the identifier tiers', () {
       final resolution = resolveAccountCandidates(
         accounts: [_account(id: '1', name: '  ', accountNumber: '123456789')],
-        query: 'Betalning 12 345 678',
+        query: 'Betalning 123 456 789',
       );
 
       expect(resolution.candidates.single.account.id, '1');
@@ -303,7 +299,7 @@ void main() {
         ],
         query: 'Betalning',
         iban: _validIban,
-        accountNumber: '12 345 678',
+        accountNumber: '123 456 789',
       );
 
       expect(resolution.candidates.map((c) => c.matchedOn), [
@@ -319,16 +315,16 @@ void main() {
       // the caller reads as settled.
       final resolution = resolveAccountCandidates(
         accounts: [
-          _account(id: '1', name: 'Vasyd Vatten'),
-          _account(id: '2', name: 'Vasyd Elnat'),
-          _account(id: '3', name: 'Vasyd Avfall'),
+          _account(id: '1', name: 'Vattn Verk'),
+          _account(id: '2', name: 'Vattn Elnat'),
+          _account(id: '3', name: 'Vattn Avfall'),
         ],
-        query: 'VASYD',
+        query: 'VATTN',
         limit: 1,
       );
 
       expect(resolution.candidates, hasLength(1));
-      expect(resolution.collisions['name_prefix:vasyd'], ['1', '2', '3']);
+      expect(resolution.collisions['name_prefix:vattn'], ['1', '2', '3']);
       expect(resolution.ambiguous, isTrue);
     });
   });
@@ -341,7 +337,7 @@ void main() {
         accounts: [
           _account(id: '1', name: 'Sparkonto', accountNumber: '123456789'),
         ],
-        query: 'Sparkonto 12 345 678',
+        query: 'Sparkonto 123 456 789',
         iban: 'SE45 5000 0000 0583 9825 7467',
       );
 
@@ -355,13 +351,13 @@ void main() {
     });
 
     test('does not run mod-97 on a clearing number', () {
-      // Regression: a Handelsbanken clearing number reported as a corrupt
+      // Regression: a bank clearing number reported as a corrupt
       // IBAN, which throws away every identifier tier for the whole call.
       final resolution = resolveAccountCandidates(
         accounts: [
           _account(id: '1', name: 'Sparkonto', accountNumber: '123456789'),
         ],
-        query: 'Betalning 12 345 678',
+        query: 'Betalning 123 456 789',
         iban: '6000',
       );
 

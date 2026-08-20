@@ -650,6 +650,28 @@ void main() {
       expect(await withPeople.read(agentKeysProvider.future), hasLength(1));
     });
 
+    test('issuing refuses when nobody is signed in', () async {
+      // With People on, a key has to belong to someone. Falling back to the
+      // device owner here would mint a key that answers as nobody and inherits
+      // whatever role the implicit owner carries.
+      final container = ProviderContainer(
+        overrides: [
+          peopleProvider.overrideWith(
+            () => StaticPeopleNotifier([
+              _person('p1', 'Ada', PersonRole.admin),
+            ], signedIn: false),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(agentKeysProvider.future);
+
+      await expectLater(
+        container.read(agentKeysProvider.notifier).issue('Claude'),
+        throwsA(isA<StateError>()),
+      );
+    });
+
     test('keys of a deleted person are pruned on rebuild', () async {
       final first = containerFor([
         _person('p1', 'Ada', PersonRole.admin),
