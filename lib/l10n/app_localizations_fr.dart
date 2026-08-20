@@ -3163,6 +3163,18 @@ class AppLocalizationsFr extends AppLocalizations {
       'Le montant en devise étrangère doit être un nombre valide supérieur à 0.';
 
   @override
+  String get exportFireflyData => 'Sauvegarder les données Firefly';
+
+  @override
+  String get exportFireflyDataDescription =>
+      'Enregistre un instantané de vos données Firefly dans un fichier JSON : comptes, transactions avec chaque ventilation, budgets, catégories, étiquettes, factures, tirelires, règles récurrentes et devises.\n\nCe n\'est pas une sauvegarde complète. Firefly III n\'a pas de fonction de sauvegarde, et une application qui passe par son API ne peut pas atteindre la base de données, les pièces jointes ni la clé de l\'instance. Restaurer un Firefly fonctionnel exige une archive de volumes prise sur le serveur ; voir le guide de déploiement.';
+
+  @override
+  String fireflyDataExportedTo(String path) {
+    return 'Données Firefly exportées vers $path';
+  }
+
+  @override
   String get missingInformation => 'Informations manquantes';
 
   @override

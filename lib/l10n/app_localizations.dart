@@ -5716,6 +5716,24 @@ abstract class AppLocalizations {
   /// **'Foreign amount must be a valid number greater than 0.'**
   String get invalidForeignAmount;
 
+  /// No description provided for @exportFireflyData.
+  ///
+  /// In en, this message translates to:
+  /// **'Back up Firefly data'**
+  String get exportFireflyData;
+
+  /// No description provided for @exportFireflyDataDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Saves a snapshot of your Firefly data to a JSON file: accounts, transactions with every split, budgets, categories, tags, bills, piggy banks, recurring rules and currencies.\n\nThis is not a full backup. Firefly III has no backup feature, and an app talking to its API cannot reach the database, uploaded attachments or the instance key. Restoring a working Firefly needs a volume archive taken on the server; see the deployment guide.'**
+  String get exportFireflyDataDescription;
+
+  /// No description provided for @fireflyDataExportedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Firefly data exported to {path}'**
+  String fireflyDataExportedTo(String path);
+
   /// No description provided for @missingInformation.
   ///
   /// In en, this message translates to:

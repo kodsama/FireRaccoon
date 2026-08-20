@@ -3050,6 +3050,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get invalidForeignAmount => '外币金额必须是大于0的有效数字。';
 
   @override
+  String get exportFireflyData => '备份 Firefly 数据';
+
+  @override
+  String get exportFireflyDataDescription =>
+      '将您的 Firefly 数据快照保存为 JSON 文件：账户、包含每个拆分的交易、预算、分类、标签、账单、存钱罐、周期规则和货币。\n\n这不是完整备份。Firefly III 没有备份功能，通过其 API 通信的应用无法访问数据库、已上传的附件或实例密钥。恢复可用的 Firefly 需要在服务器上制作的卷归档；请参阅部署指南。';
+
+  @override
+  String fireflyDataExportedTo(String path) {
+    return 'Firefly 数据已导出到 $path';
+  }
+
+  @override
   String get missingInformation => '缺失信息';
 
   @override
