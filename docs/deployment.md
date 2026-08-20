@@ -258,6 +258,21 @@ App only, app next to Firefly, or full Firefly stack on
 [Cosmos Cloud](https://cosmos-cloud.io/): see [Cosmos Cloud](cosmos-cloud.md)
 and the JSON files under [`examples/`](examples/).
 
+### What backs up what
+
+Three separate things, and only the first can rebuild a working instance:
+
+| | Covers | Leaves out | Taken from |
+|---|---|---|---|
+| `tool/firefly_backup.sh` | Firefly database, uploaded attachments, `compose.yml` | nothing needed to restore, given `APP_KEY` | the server shell |
+| **Back up Firefly data** (Settings) | accounts, transactions with every split, budgets, categories, tags, bills, piggy banks, recurring rules, currencies | database, attachments, `APP_KEY`, budget limits, rules, webhooks | the app, or `export_firefly_data` over MCP |
+| **Export settings** (Settings) | people, roles, account assignments and classifications, layout, preferences, the Firefly URL | agent keys, your Firefly data, profile photos, biometrics | the app |
+
+The data export is a portable, readable snapshot, useful for taking before a
+bulk change so there is something to compare against, and reachable over MCP so
+an agent can take one first. It is not a substitute for the volume archive: an
+API client cannot reach the database, the attachments or the instance key.
+
 ### Backup and restore (Docker)
 
 Firefly III has no built-in backup. For this Compose stack, use

@@ -2111,6 +2111,69 @@ List<McpTool> buildTools({
       },
     ),
     McpTool(
+      name: 'export_firefly_data',
+      description:
+          'Read a snapshot of everything the Firefly API will hand over: '
+          'accounts, transactions with every split leg, budgets, categories, '
+          'tags, bills, piggy banks, recurring rules and currencies. Take one '
+          'before a bulk change so there is something to compare against. It '
+          'is not a backup: Firefly has no backup endpoint and an API client '
+          'cannot reach the database, the attachments or the instance key, so '
+          'restoring a working instance still needs the volume archive. Pass '
+          'counts_only to check what is there without moving the whole thing.',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'start_date': {
+            'type': 'string',
+            'description':
+                'YYYY-MM-DD. Limits the transactions only; every other entity '
+                'is read whole. Defaults to the service lookback.',
+          },
+          'end_date': {
+            'type': 'string',
+            'description': 'YYYY-MM-DD, inclusive. Transactions only.',
+          },
+          'counts_only': {
+            'type': 'boolean',
+            'default': false,
+            'description':
+                'Return the receipt without the rows, for confirming a '
+                'snapshot is worth taking before taking it.',
+          },
+        },
+      },
+      run: (args) async {
+        final DateTime? start;
+        final DateTime? inclusiveEnd;
+        try {
+          start = _optionalDate(args['start_date'], 'start_date');
+          inclusiveEnd = _optionalDate(args['end_date'], 'end_date');
+        } on ArgumentError catch (e) {
+          return _badInput('${e.message}');
+        }
+        if (start != null &&
+            inclusiveEnd != null &&
+            inclusiveEnd.isBefore(start)) {
+          return _badInput('end_date must not precede start_date');
+        }
+
+        final snapshot = await DataExportService(
+          service(),
+        ).export(from: start, to: inclusiveEnd?.add(const Duration(days: 1)));
+        final countsOnly = args['counts_only'] as bool? ?? false;
+        final json = snapshot.toJson();
+        if (countsOnly) {
+          // Everything but the rows, so the receipt reads the same either way.
+          json.removeWhere(
+            (key, value) =>
+                value is List && key != 'covers' && key != 'excludes',
+          );
+        }
+        return {'ok': true, 'counts_only': countsOnly, 'export': json};
+      },
+    ),
+    McpTool(
       name: 'find_incomplete_transactions',
       description:
           'Find transactions missing bookkeeping, for filling the blanks: '
