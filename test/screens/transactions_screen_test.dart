@@ -10,6 +10,17 @@ import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/test_data.dart';
 
+/// Expansion of a bare header, for the future block, which is a header over
+/// month groups rather than over rows.
+bool _headerExpanded(WidgetTester tester, Finder header) {
+  final widget = tester.widget<TransactionMonthHeader>(
+    find
+        .ancestor(of: header, matching: find.byType(TransactionMonthHeader))
+        .first,
+  );
+  return widget.expanded ?? false;
+}
+
 bool _isExpandedForHeader(WidgetTester tester, Finder header) {
   final group = tester.widget<SliverCollapsibleTransactionGroup>(
     find
@@ -524,7 +535,7 @@ void main() {
   });
 
   testWidgets(
-    'TransactionsScreen keeps future transactions collapsed until expanded',
+    'TransactionsScreen reveals future months, then the rows inside one',
     (tester) async {
       configureLargeScreen(tester);
       addTearDown(tester.view.resetPhysicalSize);
@@ -566,18 +577,29 @@ void main() {
 
       final futureHeader = find.text('Future transactions');
       expect(futureHeader, findsOneWidget);
-      expect(_isExpandedForHeader(tester, futureHeader), isFalse);
+      expect(_headerExpanded(tester, futureHeader), isFalse);
+      expect(find.text('March 2099'), findsNothing);
 
       await tester.tap(futureHeader);
       await tester.pumpAndSettle();
 
-      expect(_isExpandedForHeader(tester, futureHeader), isTrue);
+      // The months carry the expected balance, so the block opens onto them
+      // and the rows sit one level further in.
+      expect(_headerExpanded(tester, futureHeader), isTrue);
+      final monthHeader = find.text('March 2099');
+      expect(monthHeader, findsOneWidget);
+      expect(find.text('Scheduled rent'), findsNothing);
+
+      await tester.tap(monthHeader);
+      await tester.pumpAndSettle();
+
       expect(find.text('Scheduled rent'), findsWidgets);
 
       await tester.tap(futureHeader);
       await tester.pumpAndSettle();
 
-      expect(_isExpandedForHeader(tester, futureHeader), isFalse);
+      expect(_headerExpanded(tester, futureHeader), isFalse);
+      expect(find.text('March 2099'), findsNothing);
     },
   );
 

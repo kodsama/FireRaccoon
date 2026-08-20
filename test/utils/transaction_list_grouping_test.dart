@@ -224,5 +224,91 @@ void main() {
         expect(result.groups, isEmpty);
       },
     );
+
+    test('groups future transactions by month, newest first', () {
+      final result = buildTransactionListGroups(
+        transactions: [
+          _tx(id: 'aug1', date: DateTime(2026, 8, 25), amount: 100),
+          _tx(id: 'aug2', date: DateTime(2026, 8, 28), amount: 50),
+          _tx(id: 'sep', date: DateTime(2026, 9, 10), amount: 30),
+        ],
+        activeAccountFilters: {},
+        searchQuery: '',
+        groupType: TransactionGroupType.date,
+        format: format,
+        l10n: l10n,
+        referenceDate: DateTime(2026, 8, 21),
+        sumAccount: 'Checking',
+      );
+
+      expect(result.futureGroups.map((g) => g.key), [
+        'September 2026',
+        'August 2026',
+      ]);
+      expect(result.futureGroups.first.transactions.map((t) => t.id), ['sep']);
+      expect(result.futureGroups.last.transactions.map((t) => t.id), [
+        'aug2',
+        'aug1',
+      ]);
+      // Withdrawals leave the account they are summed against.
+      expect(result.futureGroups.last.sum, -150);
+      expect(result.futureGroups.first.sum, -30);
+    });
+
+    test('groups the future by month whatever the grouping in use', () {
+      // The block answers what the balance will be as each month closes, which
+      // grouping by payee would not.
+      final result = buildTransactionListGroups(
+        transactions: [_tx(id: 'f', date: DateTime(2026, 9, 10))],
+        activeAccountFilters: {},
+        searchQuery: '',
+        groupType: TransactionGroupType.payee,
+        format: format,
+        l10n: l10n,
+        referenceDate: DateTime(2026, 8, 21),
+      );
+
+      expect(result.futureGroups.single.key, 'September 2026');
+    });
+  });
+
+  group('expectedBalanceByFutureMonth', () {
+    test('carries each month forward from the opening balance', () {
+      final groups = buildTransactionListGroups(
+        transactions: [
+          _tx(id: 'aug', date: DateTime(2026, 8, 25), amount: 100),
+          _tx(id: 'sep', date: DateTime(2026, 9, 10), amount: 30),
+          _tx(id: 'oct', date: DateTime(2026, 10, 5), amount: 20),
+        ],
+        activeAccountFilters: {},
+        searchQuery: '',
+        groupType: TransactionGroupType.date,
+        format: format,
+        l10n: l10n,
+        referenceDate: DateTime(2026, 8, 21),
+        sumAccount: 'Checking',
+      ).futureGroups;
+
+      final expected = expectedBalanceByFutureMonth(
+        openingBalance: 1000,
+        futureGroups: groups,
+      );
+
+      // Walked in calendar order even though the groups arrive newest first,
+      // so each month carries everything before it.
+      expect(expected['August 2026'], 900);
+      expect(expected['September 2026'], 870);
+      expect(expected['October 2026'], 850);
+    });
+
+    test('has nothing to report without future months', () {
+      expect(
+        expectedBalanceByFutureMonth(
+          openingBalance: 10,
+          futureGroups: const [],
+        ),
+        isEmpty,
+      );
+    });
   });
 }
