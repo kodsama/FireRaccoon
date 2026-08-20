@@ -738,8 +738,13 @@ Map<String, Object?> _legJson(LedgerLeg leg) => {
 Map<String, Object?> _statementMatchJson(StatementMatch match) => {
   'row_id': match.row.rowId,
   ..._legJson(match.leg),
+  // More than one when a single bank line settled a whole split journal, in
+  // which case no individual leg is the match and the sum is what agreed.
+  'legs_consumed': match.legsConsumed,
+  'group_amount': match.groupAmount,
   'statement_amount': match.row.amount,
-  'amount_delta': match.row.amount - match.leg.signedAmount,
+  'recorded_amount': match.recordedAmount,
+  'amount_delta': match.amountDelta,
   'amount_delta_pct': match.amountDeltaPct,
   'date_delta_days': match.dateDeltaDays,
   'date_field_used': match.dateFieldUsed,
