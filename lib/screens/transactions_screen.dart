@@ -778,6 +778,14 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
     final sortedKeys = listGroups.sortedKeys;
     ensureDefaultGroupExpansion(sortedKeys);
     final futureTxs = listGroups.futureTransactions;
+    // A running balance only means something for one account at a time, so
+    // without one the months show their own total and nothing more.
+    final expectedFutureBalances = balance == null
+        ? const <String, double>{}
+        : expectedBalanceByFutureMonth(
+            openingBalance: balance,
+            futureGroups: listGroups.futureGroups,
+          );
     final loadedCount = filteredTxs.length;
 
     final subtitleParts = <String>[
@@ -1213,23 +1221,75 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
             )
           else ...[
             if (futureTxs.isNotEmpty)
-              SliverPadding(
-                padding: const EdgeInsets.symmetric(horizontal: 30),
-                sliver: SliverCollapsibleTransactionGroup(
-                  label: l10n.futureTransactions,
-                  subtitle: l10n.transactionsCount(futureTxs.length),
-                  sum: sumTransactionAmounts(
+              Builder(
+                builder: (context) {
+                  final futureShown =
+                      futureExpanded || listGroups.groups.isEmpty;
+                  final futureSum = sumTransactionAmounts(
                     futureTxs,
                     accountName: filterAccount,
-                  ),
-                  currencySymbol: futureTxs.first.currencySymbol,
-                  transactions: futureTxs,
-                  filterAccount: filterAccount,
-                  expanded: futureExpanded || listGroups.groups.isEmpty,
-                  onToggle: toggleFutureCollapse,
-                  format: format,
-                  balanceCheckSelection: balanceCheckSelection,
-                ),
+                  );
+                  return SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30),
+                    sliver: SliverMainAxisGroup(
+                      slivers: [
+                        SliverToBoxAdapter(
+                          child: Tooltip(
+                            message: futureShown
+                                ? l10n.tooltipCollapseDetails
+                                : l10n.tooltipExpandDetails,
+                            child: InkWell(
+                              onTap: toggleFutureCollapse,
+                              child: TransactionMonthHeader(
+                                label: l10n.futureTransactions,
+                                subtitle: l10n.transactionsCount(
+                                  futureTxs.length,
+                                ),
+                                trailingLabel: format.formatSignedMoney(
+                                  futureSum,
+                                  futureTxs.first.currencySymbol,
+                                ),
+                                trailingColor: futureSum >= 0
+                                    ? colors.success
+                                    : colors.text,
+                                expanded: futureShown,
+                                interactive: false,
+                              ),
+                            ),
+                          ),
+                        ),
+                        if (futureShown)
+                          for (final group in listGroups.futureGroups)
+                            SliverCollapsibleTransactionGroup(
+                              label: group.key,
+                              // What the balance will be once this month has
+                              // closed, which is the reason for the months.
+                              subtitle:
+                                  expectedFutureBalances[group.key] == null
+                                  ? null
+                                  : l10n.reconcileExpectedBalance(
+                                      format.formatMoney(
+                                        expectedFutureBalances[group.key]!,
+                                        group.currencySymbol,
+                                      ),
+                                    ),
+                              sum: group.sum,
+                              currencySymbol: group.currencySymbol,
+                              transactions: group.transactions,
+                              filterAccount: filterAccount,
+                              // Namespaced: a future month and a posted month
+                              // can carry the same label, and they collapse
+                              // independently.
+                              expanded: isGroupExpanded('future:${group.key}'),
+                              onToggle: () =>
+                                  toggleGroupCollapse('future:${group.key}'),
+                              format: format,
+                              balanceCheckSelection: balanceCheckSelection,
+                            ),
+                      ],
+                    ),
+                  );
+                },
               ),
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 30),
