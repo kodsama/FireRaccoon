@@ -879,6 +879,37 @@ void main() {
       expect(json['transactions'], hasLength(1));
     });
 
+    test('sends the type on an update as well as a store', () {
+      // Regression: the type was omitted on update, and Firefly reads the
+      // valid account types and the repetition's moment ceiling off it. A
+      // transfer was validated as a withdrawal, so the asset account receiving
+      // the money came back "could not find a valid destination account" and a
+      // monthly rule on the 20th came back "moment may not be greater than 10".
+      final input = RecurrenceInput(
+        type: RecurrenceTransactionType.transfer,
+        title: 'Common fees',
+        firstDate: DateTime(2026, 10, 20),
+        repetitions: const [
+          RecurrenceRepetitionInput(
+            type: RecurrenceRepetitionType.monthly,
+            moment: '20',
+          ),
+        ],
+        transactions: const [
+          RecurrenceTransactionInput(
+            description: 'Common fees',
+            amount: 7000,
+            currencyCode: 'SEK',
+            sourceId: '1',
+            destinationId: '2',
+          ),
+        ],
+      );
+
+      expect(input.toJson(isUpdate: true)['type'], 'transfer');
+      expect(input.toJson(isUpdate: false)['type'], 'transfer');
+    });
+
     test('serializes repeat_until when set', () {
       final json = RecurrenceInput(
         type: RecurrenceTransactionType.withdrawal,
@@ -937,7 +968,7 @@ void main() {
       );
 
       final json = input.toJson(isUpdate: true);
-      expect(json.containsKey('type'), isFalse);
+      expect(json['type'], 'deposit');
       expect(json['description'], 'quarterly bonus');
       expect(json['notes'], 'tracked');
       expect(json['nr_of_repetitions'], 4);
