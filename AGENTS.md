@@ -65,12 +65,12 @@ live in `CONTEXT.md`.
 | `set_primary_currency` | Change the default currency |
 | `get_accounts` | List accounts with balances; pass types to reach payees |
 | `get_transactions` | Transactions, filterable by account, date window, and reconciled state |
-| `get_transaction` | One transaction by group ID; Firefly answers 401 for a journal ID |
+| `get_transaction` | One transaction by group ID, with the legs of a split group; Firefly answers 401 for a journal ID |
 | `set_transaction_reconciled` | Mark reconciled or unreconciled |
 | `store_reconciliation` | Reconcile an account; optional correction, and a payback transfer for `ccAsset` |
-| `create_transaction` | Create a transaction |
+| `create_transaction` | Create a transaction, one leg or several |
 | `update_transaction` | Update a transaction; omitted fields keep their value |
-| `duplicate_transaction` | Copy a transaction, with optional overrides |
+| `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides |
 | `delete_transaction` | Delete a transaction group and every split in it |
 | `search_transactions` | Full-text search, for matching statement lines |
 | `find_account` | Resolve raw bank text to an account; matches account number and IBAN before any name tier, returns ranked candidates with a reason and a last-four hint, never the identifier |
