@@ -3137,6 +3137,9 @@ class AppLocalizationsEn extends AppLocalizations {
       'Foreign amount must be a valid number greater than 0.';
 
   @override
+  String get missingInformation => 'Missing information';
+
+  @override
   String get missingDescription => 'Please enter a description.';
 
   @override

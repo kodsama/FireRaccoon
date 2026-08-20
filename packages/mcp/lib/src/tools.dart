@@ -240,8 +240,12 @@ DateTime? _optionalDate(Object? raw, String field) {
   return parsed;
 }
 
-/// Slices [all] into a page, for endpoints Firefly cannot window server-side.
-Map<String, Object?> _paginateClientSide(
+/// One page of [all] and the pagination describing it, for endpoints Firefly
+/// cannot window server-side.
+///
+/// Separate from [_paginateClientSide] because a caller that annotates each row
+/// needs the transactions, not a finished response.
+({List<Transaction> items, Map<String, Object?> pagination}) _pageOf(
   List<Transaction> all, {
   required int page,
   required int limit,
@@ -249,18 +253,30 @@ Map<String, Object?> _paginateClientSide(
   final total = all.length;
   final totalPages = total == 0 ? 0 : ((total + limit - 1) ~/ limit);
   final start = (page - 1) * limit;
-  final slice = start >= total
-      ? const <Transaction>[]
-      : all.sublist(start, min(start + limit, total));
-  return {
-    'ok': true,
-    'pagination': {
+  return (
+    items: start >= total
+        ? const <Transaction>[]
+        : all.sublist(start, min(start + limit, total)),
+    pagination: {
       'current_page': page,
       'total_pages': totalPages,
       'total': total,
       'filtered_client_side': true,
     },
-    'transactions': slice.map(_transactionJson).toList(),
+  );
+}
+
+/// Slices [all] into a page, for endpoints Firefly cannot window server-side.
+Map<String, Object?> _paginateClientSide(
+  List<Transaction> all, {
+  required int page,
+  required int limit,
+}) {
+  final slice = _pageOf(all, page: page, limit: limit);
+  return {
+    'ok': true,
+    'pagination': slice.pagination,
+    'transactions': slice.items.map(_transactionJson).toList(),
   };
 }
 
@@ -2092,6 +2108,126 @@ List<McpTool> buildTools({
         }
         await service().deleteTransaction(id);
         return {'ok': true, 'transaction_id': id, 'deleted': true};
+      },
+    ),
+    McpTool(
+      name: 'find_incomplete_transactions',
+      description:
+          'Find transactions missing bookkeeping, for filling the blanks: '
+          'description, category, budget, tags, payee, notes or piggy_bank. '
+          'Judged leg by leg, so half a split group left uncategorised is '
+          'found. A field that cannot apply is never reported: a deposit is not '
+          'missing a budget and a transfer is not missing a payee.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['fields'],
+        'properties': {
+          'fields': {
+            'type': 'array',
+            'minItems': 1,
+            'description':
+                'Which gaps to look for. Asked one at a time because '
+                'incomplete is not a single standard: a ledger that never uses '
+                'piggy banks is not missing one on every row.',
+            'items': {
+              'type': 'string',
+              'enum': [for (final f in TransactionField.values) f.name],
+            },
+          },
+          'account_id': {
+            'type': 'string',
+            'description': 'Limit to one account. Defaults to every account.',
+          },
+          'start_date': {'type': 'string', 'description': 'YYYY-MM-DD.'},
+          'end_date': {
+            'type': 'string',
+            'description': 'YYYY-MM-DD, inclusive.',
+          },
+          'page': {'type': 'integer', 'minimum': 1, 'default': 1},
+          'limit': {
+            'type': 'integer',
+            'minimum': 1,
+            'maximum': 500,
+            'default': 50,
+          },
+        },
+      },
+      run: (args) async {
+        final requested = _strList(args['fields']);
+        if (requested.isEmpty) {
+          return _badInput('fields must name at least one gap to look for');
+        }
+        final byName = {
+          for (final field in TransactionField.values) field.name: field,
+        };
+        final fields = <TransactionField>{};
+        for (final name in requested) {
+          final field = byName[name];
+          if (field == null) {
+            return _badInput(
+              'unknown field "$name". Expected one of: '
+              '${byName.keys.join(', ')}',
+            );
+          }
+          fields.add(field);
+        }
+
+        final DateTime? start;
+        final DateTime? inclusiveEnd;
+        try {
+          start = _optionalDate(args['start_date'], 'start_date');
+          inclusiveEnd = _optionalDate(args['end_date'], 'end_date');
+        } on ArgumentError catch (e) {
+          return _badInput('${e.message}');
+        }
+        final end = inclusiveEnd?.add(const Duration(days: 1));
+
+        final api = service();
+        final accountId = (args['account_id'] as String?)?.trim();
+        final transactions = accountId != null && accountId.isNotEmpty
+            ? await api.getAccountTransactions(
+                accountId,
+                start: start,
+                end: end,
+              )
+            : await api.getTransactions(start: start, end: end);
+
+        final incomplete = transactionsMissingFields(
+          transactions,
+          fields: fields,
+        );
+        final page = (args['page'] as num?)?.toInt() ?? 1;
+        final limit = (args['limit'] as num?)?.toInt() ?? 50;
+        final slice = _pageOf(incomplete, page: page, limit: limit);
+
+        return {
+          'ok': true,
+          'fields': [for (final field in fields) field.name],
+          'scanned': transactions.length,
+          // Where the work is, over the whole match rather than this page. One
+          // transaction counts towards every field it lacks.
+          'missing_counts': {
+            for (final entry in countMissingByField(
+              incomplete,
+              fields: fields,
+            ).entries)
+              entry.key.name: entry.value,
+          },
+          'pagination': slice.pagination,
+          'transactions': [
+            for (final transaction in slice.items)
+              {
+                ..._transactionJson(transaction),
+                'missing': [
+                  for (final field in missingTransactionFields(
+                    transaction,
+                    fields: fields,
+                  ))
+                    field.name,
+                ],
+              },
+          ],
+        };
       },
     ),
     McpTool(

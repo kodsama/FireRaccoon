@@ -1630,6 +1630,7 @@
   "noSuggestions": "Nenhuma sugestão encontrada",
   "invalidAmount": "O montante deve ser um número válido superior a 0.",
   "invalidForeignAmount": "O montante em moeda estrangeira deve ser um número válido superior a 0.",
+  "missingInformation": "Informação em falta",
   "missingDescription": "Por favor insira uma descrição.",
   "missingAmount": "Por favor insira um montante.",
   "missingAccounts": "Por favor selecione a conta de origem e destino.",

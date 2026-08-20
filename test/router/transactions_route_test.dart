@@ -173,6 +173,41 @@ void main() {
       expect(uri.queryParameters['reconciled_filter'], 'reconciled');
     });
 
+    test('missing-field filters round-trip through the query', () {
+      final uri = Uri.parse(
+        TransactionsRoute.location(
+          missingFields: const {
+            TransactionField.tags,
+            TransactionField.category,
+          },
+        ),
+      );
+
+      // Declaration order, so the same selection always makes the same link.
+      expect(uri.queryParameters['missing'], 'category,tags');
+      expect(TransactionsRoute.filtersFromUri(uri).missingFields, {
+        TransactionField.category,
+        TransactionField.tags,
+      });
+    });
+
+    test('an unrecognised missing field is ignored, not fatal', () {
+      // A stale link narrows the list less than it asked rather than failing
+      // to open at all.
+      final filters = TransactionsRoute.filtersFromUri(
+        Uri.parse('/transactions?missing=category,colour'),
+      );
+
+      expect(filters.missingFields, {TransactionField.category});
+    });
+
+    test('no missing filter leaves the parameter off entirely', () {
+      final uri = Uri.parse(TransactionsRoute.location());
+
+      expect(uri.queryParameters.containsKey('missing'), isFalse);
+      expect(TransactionsRoute.filtersFromUri(uri).missingFields, isEmpty);
+    });
+
     test('state helpers read account, accounts, group, and filters', () {
       final router = GoRouter(
         routes: [
