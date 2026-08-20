@@ -481,10 +481,30 @@ class AppServer {
     final locked = _lockedResponse();
     if (locked != null) return locked;
     final session = _session(request);
+    final refused = _refuseAgentKey(session);
+    if (refused != null) return refused;
     if (!repository.isAdmin(session)) {
       return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
     }
     return _json({'ok': true, ...repository.backupSecretsForAdmin()});
+  }
+
+  /// Refuses a request carrying an agent key instead of a person's session.
+  ///
+  /// An agent key is a scoped credential for reading and writing the ledger.
+  /// personForSession resolves one to its owner, so an admin's key satisfies
+  /// isAdmin and would otherwise reach the material that lets its holder become
+  /// the account: the Firefly token, other people's password hashes, and the
+  /// settings that point the app at a different server. issueAgentKey already
+  /// refuses keys for the same reason.
+  Response? _refuseAgentKey(String? session) {
+    if (session == null || repository.identityForAgentKey(session) == null) {
+      return null;
+    }
+    return _json({
+      'ok': false,
+      'error': 'Agent keys cannot reach credentials or account settings',
+    }, status: 403);
   }
 
   Future<Response> _requireAdminPut(
@@ -494,6 +514,8 @@ class AppServer {
     final locked = _lockedResponse();
     if (locked != null) return locked;
     final session = _session(request);
+    final refused = _refuseAgentKey(session);
+    if (refused != null) return refused;
     if (!repository.isAdmin(session)) {
       return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
     }
@@ -597,6 +619,8 @@ class AppServer {
     final locked = _lockedResponse();
     if (locked != null) return locked;
     final session = _session(request);
+    final refused = _refuseAgentKey(session);
+    if (refused != null) return refused;
     if (!repository.isAdmin(session)) {
       return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
     }
