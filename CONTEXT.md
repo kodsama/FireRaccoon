@@ -20,7 +20,7 @@ code comments, ADRs, and MCP descriptions.
 | **Prognosis** | Rich account forecast in the UI (`AccountPrognosisService`) |
 | **Write-ahead** | Materializing upcoming recurrence occurrences as future transactions |
 | **Reconciliation** | Marking journals reconciled and optionally posting a correction; for `ccAsset` accounts, also creating a multi-split payback transfer |
-| **Agent key** | Credential an MCP client presents (`frcn_…`); bound to a person, stored as a digest, revocable |
+| **Agent key** | Credential an MCP client presents (`frcn_…`); bound to a person, stored with its digest so the owner can read it back, revocable |
 
 ## Money objects
 
