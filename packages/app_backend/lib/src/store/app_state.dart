@@ -47,7 +47,9 @@ class AppState {
   Map<String, dynamic> undo;
   Map<String, dynamic> sessions;
 
-  /// MCP agent keys, digest-only. See `AgentKey` in fireracoon_engine.
+  /// MCP agent keys. Each record carries its digest and, so the owner can
+  /// read the key back rather than reissue it, the secret itself. See
+  /// `AgentKey` in fireracoon_engine.
   List<Map<String, dynamic>> agentKeys;
 
   /// personId → base64 PNG

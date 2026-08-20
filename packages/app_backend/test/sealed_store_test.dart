@@ -380,6 +380,75 @@ void main() {
     expect(restarted.isStoreLocked, isFalse);
   });
 
+  test('an admin agent key cannot read the PAT or password hashes', () async {
+    final sealed = await SealedStore.open(
+      dataDirPath: tmp.path,
+      password: 'correct-horse-battery',
+    );
+    final repo = StateRepository(sealed);
+    await repo.load();
+    await repo.setup(
+      adminName: 'Alex',
+      adminPassword: 'Password1!',
+      fireflyUrl: 'https://firefly.example',
+      fireflyToken: 'ff-token-secret',
+    );
+    final login = await repo.login(name: 'Alex', password: 'Password1!');
+    final issued = await repo.issueAgentKey(
+      sessionToken: login.token,
+      label: 'Claude',
+    );
+
+    final server = await AppServer.open(
+      ServerConfig(
+        mode: FireracoonMode.server,
+        dataDir: tmp.path,
+        dataPassword: 'correct-horse-battery',
+        port: 0,
+        webRoot: tmp.path,
+      ),
+    );
+
+    // personForSession resolves an agent key to its owner, so an admin's key
+    // satisfies isAdmin. Without a guard it reads back the Firefly token and
+    // every person's password hash, which turns one leaked agent key into the
+    // credential the whole design exists to keep away from agents.
+    final asAgent = await server.handler(
+      Request(
+        'GET',
+        Uri.parse('http://localhost/api/state/backup-secrets'),
+        headers: {'x-fireracoon-session': issued.secret},
+      ),
+    );
+    expect(asAgent.statusCode, 403);
+    final refused =
+        jsonDecode(await asAgent.readAsString()) as Map<String, dynamic>;
+    expect(refused['error'], contains('Agent keys'));
+
+    // Writing the Firefly connection is the other half: an agent key that can
+    // point the app at another server exfiltrates just as effectively.
+    final writeFirefly = await server.handler(
+      Request(
+        'PUT',
+        Uri.parse('http://localhost/api/state/firefly'),
+        headers: {'x-fireracoon-session': issued.secret},
+        body: jsonEncode({'url': 'https://attacker.test', 'token': 'stolen'}),
+      ),
+    );
+    expect(writeFirefly.statusCode, 403);
+
+    // The person's own session still works, so the guard refuses the
+    // credential rather than the permission.
+    final asPerson = await server.handler(
+      Request(
+        'GET',
+        Uri.parse('http://localhost/api/state/backup-secrets'),
+        headers: {'x-fireracoon-session': login.token},
+      ),
+    );
+    expect(asPerson.statusCode, 200);
+  });
+
   test('backup-secrets is admin-only and returns PAT', () async {
     final sealed = await SealedStore.open(
       dataDirPath: tmp.path,
