@@ -288,6 +288,113 @@ void main() {
     });
   });
 
+  group('account line numbers', () {
+    test('resolves the line a bank prints when nothing carries an '
+        'identifier', () {
+      // Regression: the digits fold into the name, so passing the account line
+      // whole returned nothing at all while passing the label alone returned a
+      // candidate. Adding the strongest signal made the answer strictly worse.
+      final resolution = resolveAccountCandidates(
+        accounts: [_account(id: '1', name: 'SHB Joint Current')],
+        query: 'Joint Current 12 345 678',
+      );
+
+      final only = resolution.candidates.single;
+      expect(only.account.id, '1');
+      expect(only.matchedOn, ['name_substring']);
+      expect(only.reasons.single, contains('account number in the query'));
+      expect(only.confidence, MatchConfidence.weak);
+    });
+
+    test('reaches a longer name, and never answers outright', () {
+      // 0.6 is the best this pass can score: a folded query begins with its own
+      // label, so a name equal to the label is claimed by the pass over the
+      // line as written and the equality tier is out of reach here. Everything
+      // this pass offers therefore wants confirming.
+      final resolution = resolveAccountCandidates(
+        accounts: [_account(id: '1', name: 'Joint Current Account')],
+        query: 'Joint Current 12 345 678',
+      );
+
+      final only = resolution.candidates.single;
+      expect(only.matchedOn, ['name_prefix']);
+      expect(only.score, 0.6);
+      expect(only.confidence, MatchConfidence.probable);
+      expect(only.reasons.single, contains('account number in the query'));
+    });
+
+    test('a name equal to the label is claimed by the line as written', () {
+      // Pins why the equality tier is unreachable above: this resolves on the
+      // first pass, against the whole line, not on the label alone.
+      final resolution = resolveAccountCandidates(
+        accounts: [_account(id: '1', name: 'Joint Current')],
+        query: 'Joint Current 12 345 678',
+      );
+
+      final only = resolution.candidates.single;
+      expect(only.matchedOn, ['name_prefix']);
+      expect(only.reasons.single, isNot(contains('set aside')));
+    });
+
+    test('prefers the line as written over the label alone', () {
+      final resolution = resolveAccountCandidates(
+        accounts: [
+          _account(id: '1', name: 'Joint Current 12 345 678'),
+          _account(id: '2', name: 'SHB Joint Current'),
+        ],
+        query: 'Joint Current 12 345 678',
+      );
+
+      final only = resolution.candidates.single;
+      expect(only.account.id, '1');
+      expect(only.confidence, MatchConfidence.exact);
+    });
+
+    test('leaves the label alone once an identifier has answered', () {
+      final resolution = resolveAccountCandidates(
+        accounts: [
+          _account(id: '1', name: 'Sparkonto', accountNumber: '12345678'),
+          _account(id: '2', name: 'SHB Joint Current'),
+        ],
+        query: 'Joint Current 12 345 678',
+      );
+
+      final only = resolution.candidates.single;
+      expect(only.account.id, '1');
+      expect(only.matchedOn, ['account_number']);
+    });
+
+    test('flags two accounts the label cannot tell apart', () {
+      // Two people's identically named accounts, which is the case that makes
+      // guessing dangerous: the number is the only thing that separates them.
+      final resolution = resolveAccountCandidates(
+        accounts: [
+          _account(id: '1', name: 'Ada - SHB Personal Current'),
+          _account(id: '2', name: 'Bo - SHB Personal Current'),
+        ],
+        query: 'Personal Current 98 765 432',
+      );
+
+      expect(resolution.candidates, hasLength(2));
+      expect(resolution.ambiguous, isTrue);
+      expect(
+        resolution.candidates.every(
+          (c) => c.confidence == MatchConfidence.weak,
+        ),
+        isTrue,
+      );
+    });
+
+    test('offers nothing for a line that is only a number', () {
+      final resolution = resolveAccountCandidates(
+        accounts: [_account(id: '1', name: 'Sparkonto')],
+        query: '12 345 678',
+      );
+
+      expect(resolution.candidates, isEmpty);
+    });
+  });
+
   group('ambiguity', () {
     test('flags two certain answers reached on different tiers', () {
       // Regression: two accounts both scoring 1.0 on different keys collide on

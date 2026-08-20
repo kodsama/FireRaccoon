@@ -24,6 +24,7 @@ const int _minStrippedLength = 3;
 final RegExp _whitespace = RegExp(r'\s+');
 final RegExp _nonAlphanumeric = RegExp(r'[^\p{L}\p{N}]', unicode: true);
 final RegExp _nonDigit = RegExp(r'[^0-9]');
+final RegExp _trailingNumber = RegExp(r'[\s\-]*\d[\d\s\-]*$');
 final RegExp _nonIdentifier = RegExp(r'[^A-Z0-9]');
 final RegExp _ibanShape = RegExp(r'^[A-Z]{2}[0-9]{2}[A-Z0-9]+$');
 final RegExp _leadingZeros = RegExp(r'^0+');
@@ -105,6 +106,28 @@ String foldAccountName(String raw) {
     );
   }
   return _collapse(tokens.join());
+}
+
+/// [raw] folded with a trailing account number set aside, or null when there is
+/// nothing left worth comparing.
+///
+/// A bank prints an account line as a label and then a number, and
+/// [foldAccountName] keeps digits, so `Joint Current 12 345 678` folds to
+/// `jointcurrent12345678` and equals, prefixes and contains no ledger name at
+/// all. The digits belong to the identifier tiers; once those have missed, the
+/// label is the only part of the line a ledger name can answer to.
+///
+/// Only a trailing run goes, so `Konto 24 Timmar` is compared as written.
+/// Null when there was no number to set aside, and when the line was nothing
+/// but a number. Null too below [kNameMatchMinPrefix]: the prefix and substring
+/// tiers carry their own floors, so a label that short could only ever be acted
+/// on by outright equality, which is more than two or three characters of a
+/// bank's line are worth.
+String? foldAccountNameWithoutNumber(String raw) {
+  final label = raw.replaceFirst(_trailingNumber, '');
+  if (label.length == raw.length) return null;
+  final folded = foldAccountName(label);
+  return folded.length >= kNameMatchMinPrefix ? folded : null;
 }
 
 List<String> _strippedUnlessTooShort(
