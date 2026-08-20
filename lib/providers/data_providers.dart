@@ -229,6 +229,38 @@ final accountTransactionsProvider =
       return service.getAccountTransactions(account.id);
     });
 
+/// One account and the day to read its balance at.
+///
+/// Value equality is what lets Riverpod cache a day rather than refetch it on
+/// every rebuild, so [date] must already be a plain calendar day.
+class AccountBalanceDateKey {
+  const AccountBalanceDateKey({required this.accountId, required this.date});
+
+  final String accountId;
+  final DateTime date;
+
+  @override
+  bool operator ==(Object other) =>
+      other is AccountBalanceDateKey &&
+      other.accountId == accountId &&
+      other.date == date;
+
+  @override
+  int get hashCode => Object.hash(accountId, date);
+}
+
+/// Ledger balance for one account at the end of [AccountBalanceDateKey.date].
+///
+/// Firefly answers this directly and counts everything dated up to that day,
+/// future-dated rows included, so a date ahead of today gives the balance the
+/// ledger already expects rather than a forecast of it.
+final accountBalanceAtDateProvider =
+    FutureProvider.family<double, AccountBalanceDateKey>((ref, key) async {
+      final service = _requireService(ref, 'accountBalanceAtDateProvider');
+      _log.fine('Loading balance for account=${key.accountId} at ${key.date}');
+      return service.getAccountBalanceAtDate(key.accountId, key.date);
+    });
+
 final budgetsProvider = FutureProvider<List<Budget>>((ref) async {
   final service = _requireService(ref, 'budgetsProvider');
   _log.fine('Loading budgets');
