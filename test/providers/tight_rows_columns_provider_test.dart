@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:fireracoon/providers/tight_rows_columns_provider.dart';
+import 'package:fireracoon/store/secure_storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -53,7 +54,9 @@ void main() {
       container.read(tightRowsColumnsProvider).contains(TightRowColumn.date),
       false,
     );
-    expect(secureStorage['tightRowsColumns'], isNotNull);
+    // Secrets share one keychain item, so the assertion is that the choice
+    // was persisted, not which item it landed in.
+    expect(await appSecureStorage.read(key: 'tightRowsColumns'), isNotNull);
 
     // Toggle it back on.
     await notifier.toggleColumn(TightRowColumn.date);

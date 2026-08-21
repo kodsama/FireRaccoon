@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:fireracoon/deployment/deployment_providers.dart';
+import 'package:fireracoon/store/secure_storage.dart';
 import 'package:fireracoon/deployment/fireracoon_mode.dart';
 import 'package:fireracoon/models/people_models.dart';
 import 'package:fireracoon/providers/agent_keys_provider.dart';
@@ -83,8 +84,12 @@ void main() {
       await store.save([issued.record]);
 
       // The keychain is what protects this, and it already holds the Firefly
-      // PAT, which grants strictly more than any agent key.
-      expect(secureStorage[kAgentKeysStorageKey], contains(issued.secret));
+      // PAT, which grants strictly more than any agent key. Secrets share one
+      // keychain item, so this asks the store rather than naming the item.
+      expect(
+        await appSecureStorage.read(key: kAgentKeysStorageKey),
+        contains(issued.secret),
+      );
       expect((await store.load()).single.secret, issued.secret);
     });
 
@@ -441,8 +446,13 @@ void main() {
       final record = first.read(agentKeysProvider.notifier).localRecords.single;
 
       // Rewrite storage the way an older version left it: digest, no secret.
+      // Through the store, not the raw map: secrets share one keychain item, so
+      // a stray item of the old shape would just be migrated alongside.
       final json = record.toJson().cast<String, Object?>()..remove('secret');
-      secureStorage[kAgentKeysStorageKey] = jsonEncode([json]);
+      await appSecureStorage.write(
+        key: kAgentKeysStorageKey,
+        value: jsonEncode([json]),
+      );
 
       final second = containerFor(people);
       final views = await second.read(agentKeysProvider.future);
