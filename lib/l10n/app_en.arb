@@ -1945,5 +1945,6 @@
   },
   "settingsExportSubject": "FireRacoon settings",
   "settingsExportText": "FireRacoon settings backup",
-  "recordedBalance": "Recorded"
+  "recordedBalance": "Recorded",
+  "upcoming": "Upcoming"
 }

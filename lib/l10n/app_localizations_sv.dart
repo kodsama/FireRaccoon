@@ -3550,4 +3550,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get recordedBalance => 'Bokfört';
+
+  @override
+  String get upcoming => 'Kommande';
 }

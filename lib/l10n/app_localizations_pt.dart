@@ -3564,4 +3564,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get recordedBalance => 'Registado';
+
+  @override
+  String get upcoming => 'Próximas';
 }

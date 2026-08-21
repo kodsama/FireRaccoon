@@ -1720,5 +1720,6 @@
   "biometricUnlockReason": "Lås upp FireRacoon",
   "biometricEnableReason": "Bekräfta för att aktivera biometrisk upplåsning",
   "biometricUnlockFailed": "Biometrisk upplåsning avbröts eller misslyckades.",
-  "recordedBalance": "Bokfört"
+  "recordedBalance": "Bokfört",
+  "upcoming": "Kommande"
 }

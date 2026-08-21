@@ -3461,4 +3461,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get recordedBalance => '記録済み';
+
+  @override
+  String get upcoming => '今後';
 }
