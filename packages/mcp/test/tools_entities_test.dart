@@ -430,6 +430,143 @@ void main() {
       expect((result['transaction'] as Map)['id'], 'created-1');
     });
 
+    test(
+      'duplicate_transaction keeps the foreign side of a conversion',
+      () async {
+        // Firefly refuses a transfer between accounts of different currencies
+        // without a foreign amount, so dropping it on the copy made every
+        // cross-currency duplicate a 422.
+        final bodies = <String>[];
+        final result = await _tool(
+          'duplicate_transaction',
+          client: fireflyMockClient(
+            transactionOverrides: {
+              '1': transactionItem(
+                id: '1',
+                type: 'transfer',
+                amount: '10000.00',
+                foreignAmount: '14463.32',
+                foreignCurrencyCode: 'SEK',
+              ),
+            },
+            recordBodies: bodies,
+          ),
+        ).run({'transaction_id': '1', 'date': '2026-08-04'});
+
+        expect(result['ok'], isTrue);
+        final posted = jsonDecode(bodies.last) as Map<String, Object?>;
+        final leg = (posted['transactions'] as List).first as Map;
+        expect(leg['foreign_amount'], '14463.32');
+        expect(leg['foreign_currency_code'], 'SEK');
+      },
+    );
+
+    test(
+      'duplicate_transaction refuses a new amount without a new rate',
+      () async {
+        // The rate cannot be read off the local amount, and carrying the old
+        // foreign figure over would pair this month's amount with last month's
+        // rate. Scaling it would invent a rate and record it as fact.
+        await expectLater(
+          _tool(
+            'duplicate_transaction',
+            client: fireflyMockClient(
+              transactionOverrides: {
+                '1': transactionItem(
+                  id: '1',
+                  type: 'transfer',
+                  amount: '10000.00',
+                  foreignAmount: '14463.32',
+                  foreignCurrencyCode: 'SEK',
+                ),
+              },
+            ),
+          ).run({'transaction_id': '1', 'amount': 15000.0}),
+          completion(
+            containsPair(
+              'error',
+              allOf(contains('14463.32 SEK'), contains('pass foreign_amount')),
+            ),
+          ),
+        );
+      },
+    );
+
+    test('a stated foreign amount rides along with the new one', () async {
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'duplicate_transaction',
+            client: fireflyMockClient(
+              transactionOverrides: {
+                '1': transactionItem(
+                  id: '1',
+                  type: 'transfer',
+                  amount: '10000.00',
+                  foreignAmount: '14463.32',
+                  foreignCurrencyCode: 'SEK',
+                ),
+              },
+              recordBodies: bodies,
+            ),
+          ).run({
+            'transaction_id': '1',
+            'date': '2026-08-04',
+            'amount': 15000.0,
+            'foreign_amount': 22036.25,
+          });
+
+      expect(result['ok'], isTrue);
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['amount'], '15000.00');
+      expect(leg['foreign_amount'], '22036.25');
+      expect(leg['foreign_currency_code'], 'SEK');
+    });
+
+    test('create_transaction can state both sides of a conversion', () async {
+      // Without this there was no way to write a cross-currency transfer at
+      // all: the field was not on the schema and never reached the payload.
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'create_transaction',
+            client: fireflyMockClient(recordBodies: bodies),
+          ).run({
+            'type': 'transfer',
+            'date': '2026-08-04',
+            'amount': 15000.0,
+            'description': 'Exchanged to SEK',
+            'source_id': '5',
+            'destination_id': '9',
+            'foreign_amount': 22036.25,
+            'foreign_currency_code': 'SEK',
+          });
+
+      expect(result['ok'], isTrue);
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['foreign_amount'], '22036.25');
+      expect(leg['foreign_currency_code'], 'SEK');
+    });
+
+    test('a foreign amount of zero is refused, not written', () async {
+      await expectLater(
+        _tool('create_transaction', client: fireflyMockClient()).run({
+          'type': 'transfer',
+          'date': '2026-08-04',
+          'amount': 15000.0,
+          'description': 'Exchanged to SEK',
+          'foreign_amount': 0,
+        }),
+        completion(
+          containsPair('error', contains('foreign_amount must be greater')),
+        ),
+      );
+    });
+
     test('duplicate_transaction fails when the source is gone', () async {
       await expectLater(
         _tool(
