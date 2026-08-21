@@ -3579,4 +3579,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get recordedBalance => 'Enregistré';
+
+  @override
+  String get upcoming => 'À venir';
 }

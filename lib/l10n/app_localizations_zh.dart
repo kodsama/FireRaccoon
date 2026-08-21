@@ -3457,4 +3457,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get recordedBalance => '已记账';
+
+  @override
+  String get upcoming => '即将到来';
 }

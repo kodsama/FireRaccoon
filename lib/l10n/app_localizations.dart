@@ -6465,6 +6465,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recorded'**
   String get recordedBalance;
+
+  /// No description provided for @upcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get upcoming;
 }
 
 class _AppLocalizationsDelegate

@@ -1720,5 +1720,6 @@
   "biometricUnlockReason": "Desbloquear o FireRacoon",
   "biometricEnableReason": "Confirme para ativar o desbloqueio biométrico",
   "biometricUnlockFailed": "O desbloqueio biométrico foi cancelado ou falhou.",
-  "recordedBalance": "Registado"
+  "recordedBalance": "Registado",
+  "upcoming": "Próximas"
 }

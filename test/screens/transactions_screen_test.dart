@@ -578,7 +578,7 @@ void main() {
       final futureHeader = find.text('Future transactions');
       expect(futureHeader, findsOneWidget);
       expect(_headerExpanded(tester, futureHeader), isFalse);
-      expect(find.text('March 2099'), findsNothing);
+      expect(find.text('March 2099 · Upcoming'), findsNothing);
 
       await tester.tap(futureHeader);
       await tester.pumpAndSettle();
@@ -586,8 +586,9 @@ void main() {
       // The months carry the expected balance, so the block opens onto them
       // and the rows sit one level further in.
       expect(_headerExpanded(tester, futureHeader), isTrue);
-      final monthHeader = find.text('March 2099');
+      final monthHeader = find.text('March 2099 · Upcoming');
       expect(monthHeader, findsOneWidget);
+      // Marked, so it cannot be mistaken for the posted month of the same name.
       expect(find.text('Scheduled rent'), findsNothing);
 
       await tester.tap(monthHeader);
@@ -599,7 +600,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(_headerExpanded(tester, futureHeader), isFalse);
-      expect(find.text('March 2099'), findsNothing);
+      expect(find.text('March 2099 · Upcoming'), findsNothing);
     },
   );
 
