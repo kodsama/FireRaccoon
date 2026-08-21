@@ -27,8 +27,13 @@ RUN find build/web -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.wasm' -o
 # Native (or QEMU) compile for linux/amd64 or linux/arm64.
 FROM dart:stable AS server-build
 WORKDIR /app
+# app_backend depends on the engine by path, so ../engine has to exist before
+# pub can resolve anything at all. Manifests first, both packages, so a change
+# to source alone does not re-resolve the world.
+COPY packages/engine/pubspec.yaml packages/engine/pubspec.lock /engine/
 COPY packages/app_backend/pubspec.yaml packages/app_backend/pubspec.lock ./
 RUN dart pub get
+COPY packages/engine/ /engine/
 COPY packages/app_backend/ ./
 RUN dart pub get && dart compile exe bin/fireracoon_server.dart -o /app/fireracoon_server
 
