@@ -43,7 +43,7 @@ extension TightRowColumnL10n on TightRowColumn {
 }
 
 class TightRowsColumnsNotifier extends Notifier<Set<TightRowColumn>> {
-  static const _storage = appSecureStorage;
+  static final _storage = appSecureStorage;
   static const _storageKey = 'tightRowsColumns';
 
   static const Set<TightRowColumn> defaultColumns = {
