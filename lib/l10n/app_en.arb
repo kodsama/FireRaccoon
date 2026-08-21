@@ -1940,5 +1940,6 @@
     }
   },
   "settingsExportSubject": "FireRacoon settings",
-  "settingsExportText": "FireRacoon settings backup"
+  "settingsExportText": "FireRacoon settings backup",
+  "upcoming": "Upcoming"
 }

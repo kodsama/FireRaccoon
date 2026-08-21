@@ -3532,4 +3532,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsExportText => 'FireRacoon settings backup';
+
+  @override
+  String get upcoming => 'Upcoming';
 }

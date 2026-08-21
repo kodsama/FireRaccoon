@@ -1715,5 +1715,6 @@
   "unlockWithBiometricsDescription": "Utilisez Face ID, Touch ID, une empreinte ou le code de l’appareil sur l’écran de connexion.",
   "biometricUnlockReason": "Déverrouiller FireRacoon",
   "biometricEnableReason": "Confirmez pour activer le déverrouillage biométrique",
-  "biometricUnlockFailed": "Le déverrouillage biométrique a été annulé ou a échoué."
+  "biometricUnlockFailed": "Le déverrouillage biométrique a été annulé ou a échoué.",
+  "upcoming": "À venir"
 }
