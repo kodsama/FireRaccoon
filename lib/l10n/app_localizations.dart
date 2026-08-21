@@ -5101,8 +5101,32 @@ abstract class AppLocalizations {
   /// No description provided for @tooltipAccountEndOfMonthBalance.
   ///
   /// In en, this message translates to:
-  /// **'Projected balance at the end of this month, including scheduled transactions, recurrences, and bills.'**
+  /// **'Projected balance at the selected date, including scheduled transactions, recurrences, and bills.'**
   String get tooltipAccountEndOfMonthBalance;
+
+  /// No description provided for @tooltipBalanceDatePick.
+  ///
+  /// In en, this message translates to:
+  /// **'Show balances at another date'**
+  String get tooltipBalanceDatePick;
+
+  /// No description provided for @tooltipBalanceDateReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to the end of this month'**
+  String get tooltipBalanceDateReset;
+
+  /// No description provided for @tooltipBalanceBeyondForecast.
+  ///
+  /// In en, this message translates to:
+  /// **'The forecast does not reach this far ahead, so this is the last projected figure.'**
+  String get tooltipBalanceBeyondForecast;
+
+  /// No description provided for @tooltipRecordedBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance the ledger holds through this date, including transactions already dated ahead.'**
+  String get tooltipRecordedBalance;
 
   /// No description provided for @tooltipBudgetName.
   ///
@@ -6435,6 +6459,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'FireRacoon settings backup'**
   String get settingsExportText;
+
+  /// No description provided for @recordedBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded'**
+  String get recordedBalance;
 
   /// No description provided for @upcoming.
   ///

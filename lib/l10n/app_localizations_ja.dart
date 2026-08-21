@@ -2721,7 +2721,20 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipAccountCurrentBalance => '本日時点の Firefly からの現在残高。';
 
   @override
-  String get tooltipAccountEndOfMonthBalance => '予定取引、定期項目、請求を含む今月末の予測残高。';
+  String get tooltipAccountEndOfMonthBalance =>
+      '選択した日付の予測残高（予定取引、繰り返し取引、請求書を含む）。';
+
+  @override
+  String get tooltipBalanceDatePick => '別の日付の残高を表示';
+
+  @override
+  String get tooltipBalanceDateReset => '今月末に戻す';
+
+  @override
+  String get tooltipBalanceBeyondForecast => '予測はこの日付まで届いていないため、これは最後の予測値です。';
+
+  @override
+  String get tooltipRecordedBalance => 'この日付までに台帳が保持している残高（先付けされた取引を含む）。';
 
   @override
   String get tooltipBudgetName => 'この支出予算の名前。';
@@ -3445,6 +3458,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get settingsExportText => 'FireRacoon settings backup';
+
+  @override
+  String get recordedBalance => '記録済み';
 
   @override
   String get upcoming => '今後';

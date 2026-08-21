@@ -755,4 +755,91 @@ void main() {
       expect(container.read(transactionsProvider).isLoading, isTrue);
     });
   });
+
+  group('the accounts view balance date', () {
+    test('defaults to the last moment of the current month', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      // Nothing picked yet, so the view reports what it always reported.
+      expect(container.read(accountBalanceDateProvider), isNull);
+      final resolved = container.read(resolvedAccountBalanceDateProvider);
+      expect(resolved, endOfMonthFor(DateTime.now()));
+      // The last moment of the day, or a balance "at" a date would miss
+      // everything dated that day.
+      expect(resolved.hour, 23);
+      expect(resolved.minute, 59);
+      expect(resolved.second, 59);
+    });
+
+    test('endOfMonthFor lands on the last day of the month', () {
+      expect(endOfMonthFor(DateTime(2026, 2, 3)).day, 28);
+      expect(endOfMonthFor(DateTime(2028, 2, 3)).day, 29);
+      expect(
+        endOfMonthFor(DateTime(2026, 12, 1)),
+        DateTime(2026, 12, 31, 23, 59, 59),
+      );
+    });
+
+    test('a picked date is carried to the end of that day', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container
+          .read(accountBalanceDateProvider.notifier)
+          .select(DateTime(2027, 3, 15, 9));
+
+      expect(
+        container.read(resolvedAccountBalanceDateProvider),
+        DateTime(2027, 3, 15, 23, 59, 59),
+      );
+    });
+
+    test('reset goes back to the end of the current month', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container
+          .read(accountBalanceDateProvider.notifier)
+          .select(DateTime(2027, 3, 15));
+      container.read(accountBalanceDateProvider.notifier).reset();
+
+      expect(container.read(accountBalanceDateProvider), isNull);
+      expect(
+        container.read(resolvedAccountBalanceDateProvider),
+        endOfMonthFor(DateTime.now()),
+      );
+    });
+
+    test('selecting null is the same as resetting', () {
+      final container = ProviderContainer();
+      addTearDown(container.dispose);
+
+      container
+          .read(accountBalanceDateProvider.notifier)
+          .select(DateTime(2027, 3, 15));
+      container.read(accountBalanceDateProvider.notifier).select(null);
+
+      expect(container.read(accountBalanceDateProvider), isNull);
+    });
+  });
+
+  group('AccountBalanceDateKey', () {
+    test('two keys for the same account and day are one cache entry', () {
+      final march15 = DateTime(2027, 3, 15);
+      final a = AccountBalanceDateKey(accountId: '1', date: march15);
+      final b = AccountBalanceDateKey(accountId: '1', date: march15);
+      final otherAccount = AccountBalanceDateKey(accountId: '2', date: march15);
+      final otherDay = AccountBalanceDateKey(
+        accountId: '1',
+        date: DateTime(2027, 3, 16),
+      );
+
+      expect(a, b);
+      expect(a.hashCode, b.hashCode);
+      expect(a, isNot(otherAccount));
+      expect(a, isNot(otherDay));
+      expect(a == Object(), isFalse);
+    });
+  });
 }
