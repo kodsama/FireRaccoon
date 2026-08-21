@@ -16,6 +16,8 @@ Transaction _leg({
   String currencyCode = _currency,
   String sourceId = _accountId,
   String destinationId = '9',
+  double? foreignAmount,
+  String? foreignCurrencyCode,
 }) {
   return Transaction(
     id: id,
@@ -31,6 +33,8 @@ Transaction _leg({
     currencyCode: currencyCode,
     sourceId: sourceId,
     destinationId: destinationId,
+    foreignAmount: foreignAmount,
+    foreignCurrencyCode: foreignCurrencyCode,
   );
 }
 
@@ -394,6 +398,72 @@ void main() {
       expect(plan.excludedForeignCurrencySplits, 1);
       expect(plan.matched, isEmpty);
       expect(plan.arithmetic.recordedSum, 0);
+      expect(plan.missing.single.rowId, 'r1');
+    });
+
+    test('a conversion into this account pairs on its foreign amount', () {
+      // A pocket-to-pocket exchange is booked in the source currency, and the
+      // statement only ever shows what landed. Excluding it reported the row as
+      // missing, and writing it would have duplicated the conversion.
+      final plan = _match(
+        rows: [_row(rowId: 'r1', date: DateTime(2026, 8, 3), amount: 3228.98)],
+        recorded: [
+          _leg(
+            id: 'a',
+            date: DateTime(2026, 8, 3),
+            amount: 4600,
+            currencyCode: 'EUR',
+            sourceId: '9',
+            destinationId: _accountId,
+            foreignAmount: 3228.98,
+            foreignCurrencyCode: _currency,
+          ),
+        ],
+      );
+
+      expect(plan.excludedForeignCurrencySplits, 0);
+      expect(plan.missing, isEmpty);
+      expect(plan.matched.single.recordedAmount, 3228.98);
+      expect(plan.arithmetic.recordedSum, 3228.98);
+    });
+
+    test('a conversion out of this account keeps its sign', () {
+      final plan = _match(
+        rows: [_row(rowId: 'r1', date: DateTime(2026, 8, 3), amount: -1500)],
+        recorded: [
+          _leg(
+            id: 'a',
+            date: DateTime(2026, 8, 3),
+            amount: 2137,
+            currencyCode: 'EUR',
+            foreignAmount: 1500,
+            foreignCurrencyCode: _currency,
+          ),
+        ],
+      );
+
+      expect(plan.matched.single.recordedAmount, -1500);
+      expect(plan.arithmetic.recordedSum, -1500);
+    });
+
+    test('a foreign leg whose other side is a third currency stays out', () {
+      // Neither figure is in the statement's currency, so there is nothing to
+      // compare and folding it in would label two currencies with one code.
+      final plan = _match(
+        rows: [_row(rowId: 'r1', date: DateTime(2026, 8, 3), amount: -481)],
+        recorded: [
+          _leg(
+            id: 'a',
+            date: DateTime(2026, 8, 3),
+            amount: 481,
+            currencyCode: 'EUR',
+            foreignAmount: 52,
+            foreignCurrencyCode: 'USD',
+          ),
+        ],
+      );
+
+      expect(plan.excludedForeignCurrencySplits, 1);
       expect(plan.missing.single.rowId, 'r1');
     });
 
