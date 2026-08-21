@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
 import '../models/account.dart';
 import '../models/transaction.dart';
@@ -347,12 +348,13 @@ class _AccountEntityCardState extends ConsumerState<AccountEntityCard> {
       currentBalance,
       acc.currencySymbol,
     );
-    final endOfMonthText = widget.prognosis == null
-        ? null
-        : widget.format.formatMoney(
-            widget.prognosis!.endOfMonth.expected,
-            acc.currencySymbol,
-          );
+    final atDate = _balanceAtDate(
+      ref: ref,
+      l10n: l10n,
+      account: acc,
+      prognosis: widget.prognosis,
+      format: widget.format,
+    );
 
     return ExpandableEntityCard(
       expanded: widget.isExpanded,
@@ -492,13 +494,13 @@ class _AccountEntityCardState extends ConsumerState<AccountEntityCard> {
                 color: isPositive ? colors.text : colors.danger,
               ),
             ),
-            if (endOfMonthText != null) ...[
+            if (atDate != null) ...[
               const SizedBox(height: 8),
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
-                    '${l10n.projectedEndOfMonth}: ',
+                    '${atDate.label}: ',
                     style: TextStyle(
                       color: widget.prognosis!.showWarning
                           ? colors.warning
@@ -507,8 +509,8 @@ class _AccountEntityCardState extends ConsumerState<AccountEntityCard> {
                     ),
                   ),
                   _accountBalanceAmount(
-                    tooltip: l10n.tooltipAccountEndOfMonthBalance,
-                    text: endOfMonthText,
+                    tooltip: atDate.tooltip,
+                    text: atDate.forecast,
                     style: TextStyle(
                       color: widget.prognosis!.showWarning
                           ? colors.warning
@@ -516,6 +518,23 @@ class _AccountEntityCardState extends ConsumerState<AccountEntityCard> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (atDate.recorded != null) ...[
+                    Text(
+                      '  ·  ${l10n.recordedBalance}: ',
+                      style: TextStyle(
+                        color: colors.text3,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    _accountBalanceAmount(
+                      tooltip: l10n.tooltipRecordedBalance,
+                      text: atDate.recorded!,
+                      style: TextStyle(
+                        color: colors.text3,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],
@@ -660,12 +679,13 @@ class _AccountEntityCompactRowState
       currentBalance,
       acc.currencySymbol,
     );
-    final endOfMonthText = widget.prognosis == null
-        ? null
-        : widget.format.formatMoney(
-            widget.prognosis!.endOfMonth.expected,
-            acc.currencySymbol,
-          );
+    final atDate = _balanceAtDate(
+      ref: ref,
+      l10n: l10n,
+      account: acc,
+      prognosis: widget.prognosis,
+      format: widget.format,
+    );
 
     return ExpandableEntityCompactRow(
       expanded: widget.isExpanded,
@@ -726,11 +746,11 @@ class _AccountEntityCompactRowState
                             color: isPositive ? colors.text : colors.danger,
                           ),
                         ),
-                        if (endOfMonthText != null) ...[
+                        if (atDate != null) ...[
                           const SizedBox(width: 12),
                           _accountBalanceAmount(
-                            tooltip: l10n.tooltipAccountEndOfMonthBalance,
-                            text: endOfMonthText,
+                            tooltip: atDate.tooltip,
+                            text: atDate.forecast,
                             style: TextStyle(
                               fontFamily: 'Roboto Slab',
                               fontSize: 13,
@@ -740,6 +760,19 @@ class _AccountEntityCompactRowState
                                   : colors.text3,
                             ),
                           ),
+                          if (atDate.recorded != null) ...[
+                            const SizedBox(width: 8),
+                            _accountBalanceAmount(
+                              tooltip: l10n.tooltipRecordedBalance,
+                              text: atDate.recorded!,
+                              style: TextStyle(
+                                fontFamily: 'Roboto Slab',
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: colors.text3,
+                              ),
+                            ),
+                          ],
                         ],
                       ],
                     ),
@@ -791,7 +824,12 @@ class _AccountTightRowsHeaderRowState
         AccountColumn.account => l10n.filterAccount,
         AccountColumn.role => 'Role',
         AccountColumn.balance => l10n.balance,
-        AccountColumn.endOfMonth => 'End of Month',
+        // The column reports whichever date the header picked, so the label
+        // has to say which one rather than claim the end of the month.
+        AccountColumn.endOfMonth =>
+          ref
+              .watch(localeFormattingProvider)
+              .formatMediumDate(ref.watch(resolvedAccountBalanceDateProvider)),
       };
       final icon = switch (col) {
         AccountColumn.account => LucideIcons.landmark,
@@ -1041,12 +1079,13 @@ class _AccountEntityTightRowState extends ConsumerState<AccountEntityTightRow> {
       currentBalance,
       acc.currencySymbol,
     );
-    final endOfMonthText = widget.prognosis == null
-        ? null
-        : widget.format.formatMoney(
-            widget.prognosis!.endOfMonth.expected,
-            acc.currencySymbol,
-          );
+    final atDate = _balanceAtDate(
+      ref: ref,
+      l10n: l10n,
+      account: acc,
+      prognosis: widget.prognosis,
+      format: widget.format,
+    );
 
     return ExpandableEntityCompactRow(
       expanded: widget.isExpanded,
@@ -1113,10 +1152,10 @@ class _AccountEntityTightRowState extends ConsumerState<AccountEntityTightRow> {
               case AccountColumn.endOfMonth:
                 return Align(
                   alignment: Alignment.centerRight,
-                  child: endOfMonthText != null
+                  child: atDate != null
                       ? _accountBalanceAmount(
-                          tooltip: l10n.tooltipAccountEndOfMonthBalance,
-                          text: endOfMonthText,
+                          tooltip: atDate.tooltip,
+                          text: atDate.forecast,
                           style: TextStyle(
                             fontFamily: 'Roboto Slab',
                             fontSize: 11,
@@ -1186,4 +1225,65 @@ Future<bool> confirmDeleteAccount(BuildContext context, Account account) {
     message: context.l10n.deleteAccountConfirmBody(account.name),
     confirmLabel: context.l10n.delete,
   ).then((value) => value == true);
+}
+
+/// The two figures the accounts view reports for the selected date.
+///
+/// The forecast is what the projection expects by then, including scheduled and
+/// recurring activity that is not written down yet. The recorded figure is what
+/// the ledger actually holds through that day, future-dated rows included. They
+/// answer different questions and a divergence between them is the interesting
+/// part, so both are shown rather than one standing in for the other.
+class _BalanceAtDate {
+  const _BalanceAtDate({
+    required this.label,
+    required this.forecast,
+    required this.recorded,
+    required this.tooltip,
+  });
+
+  final String label;
+  final String forecast;
+  final String? recorded;
+
+  /// Says what the figure is, what the ledger already holds, and when the
+  /// forecast stopped modelling. The tight rows have no room for a second
+  /// number, so the tooltip is where they say it.
+  final String tooltip;
+}
+
+_BalanceAtDate? _balanceAtDate({
+  required WidgetRef ref,
+  required AppLocalizations l10n,
+  required Account account,
+  required AccountPrognosis? prognosis,
+  required LocaleFormatting format,
+}) {
+  if (prognosis == null) return null;
+  final date = ref.watch(resolvedAccountBalanceDateProvider);
+  final recorded = ref.watch(
+    accountBalanceAtDateProvider(
+      AccountBalanceDateKey(
+        accountId: account.id,
+        date: DateTime(date.year, date.month, date.day),
+      ),
+    ),
+  );
+  final recordedText = recorded.hasValue
+      ? format.formatMoney(recorded.value!, account.currencySymbol)
+      : null;
+  return _BalanceAtDate(
+    label: format.formatMediumDate(date),
+    forecast: format.formatMoney(
+      prognosis.snapshotOn(date).expected,
+      account.currencySymbol,
+    ),
+    recorded: recordedText,
+    tooltip: [
+      l10n.tooltipAccountEndOfMonthBalance,
+      if (recordedText != null) '${l10n.recordedBalance}: $recordedText',
+      if (prognosis.reachesBeyondForecast(date))
+        l10n.tooltipBalanceBeyondForecast,
+    ].join('\n'),
+  );
 }

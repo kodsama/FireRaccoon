@@ -1513,7 +1513,11 @@
   "tooltipClearDate": "Supprimer la date sélectionnée.",
   "tooltipAccountName": "Nom affiché dans les listes et rapports.",
   "tooltipAccountCurrentBalance": "Solde actuel dans Firefly à ce jour.",
-  "tooltipAccountEndOfMonthBalance": "Solde prévu en fin de mois, incluant transactions programmées, récurrences et factures.",
+  "tooltipAccountEndOfMonthBalance": "Solde prévu à la date sélectionnée, y compris les transactions planifiées, les récurrences et les factures.",
+  "tooltipBalanceDatePick": "Afficher les soldes à une autre date",
+  "tooltipBalanceDateReset": "Revenir à la fin du mois",
+  "tooltipBalanceBeyondForecast": "La prévision ne va pas aussi loin, il s'agit donc du dernier montant projeté.",
+  "tooltipRecordedBalance": "Solde enregistré dans le grand livre jusqu'à cette date, y compris les transactions déjà datées à l'avance.",
   "tooltipBudgetName": "Nom de ce budget de dépenses.",
   "tooltipBudgetAmount": "Montant limite pour cette période de budget.",
   "tooltipSubscriptionName": "Nom de la facture ou abonnement récurrent.",
@@ -1716,5 +1720,6 @@
   "biometricUnlockReason": "Déverrouiller FireRacoon",
   "biometricEnableReason": "Confirmez pour activer le déverrouillage biométrique",
   "biometricUnlockFailed": "Le déverrouillage biométrique a été annulé ou a échoué.",
+  "recordedBalance": "Enregistré",
   "upcoming": "À venir"
 }

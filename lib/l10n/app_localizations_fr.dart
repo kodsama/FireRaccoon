@@ -2799,7 +2799,21 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tooltipAccountEndOfMonthBalance =>
-      'Solde prévu en fin de mois, incluant transactions programmées, récurrences et factures.';
+      'Solde prévu à la date sélectionnée, y compris les transactions planifiées, les récurrences et les factures.';
+
+  @override
+  String get tooltipBalanceDatePick => 'Afficher les soldes à une autre date';
+
+  @override
+  String get tooltipBalanceDateReset => 'Revenir à la fin du mois';
+
+  @override
+  String get tooltipBalanceBeyondForecast =>
+      'La prévision ne va pas aussi loin, il s\'agit donc du dernier montant projeté.';
+
+  @override
+  String get tooltipRecordedBalance =>
+      'Solde enregistré dans le grand livre jusqu\'à cette date, y compris les transactions déjà datées à l\'avance.';
 
   @override
   String get tooltipBudgetName => 'Nom de ce budget de dépenses.';
@@ -3562,6 +3576,9 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get settingsExportText => 'FireRacoon settings backup';
+
+  @override
+  String get recordedBalance => 'Enregistré';
 
   @override
   String get upcoming => 'À venir';

@@ -1590,7 +1590,11 @@
   "tooltipClearDate": "Remove the selected date.",
   "tooltipAccountName": "Display name shown in lists and reports.",
   "tooltipAccountCurrentBalance": "Current balance from Firefly as of today.",
-  "tooltipAccountEndOfMonthBalance": "Projected balance at the end of this month, including scheduled transactions, recurrences, and bills.",
+  "tooltipAccountEndOfMonthBalance": "Projected balance at the selected date, including scheduled transactions, recurrences, and bills.",
+  "tooltipBalanceDatePick": "Show balances at another date",
+  "tooltipBalanceDateReset": "Back to the end of this month",
+  "tooltipBalanceBeyondForecast": "The forecast does not reach this far ahead, so this is the last projected figure.",
+  "tooltipRecordedBalance": "Balance the ledger holds through this date, including transactions already dated ahead.",
   "tooltipBudgetName": "Name for this spending budget.",
   "tooltipBudgetAmount": "Limit amount for this budget period.",
   "tooltipSubscriptionName": "Name of the recurring bill or subscription.",
@@ -1941,5 +1945,6 @@
   },
   "settingsExportSubject": "FireRacoon settings",
   "settingsExportText": "FireRacoon settings backup",
+  "recordedBalance": "Recorded",
   "upcoming": "Upcoming"
 }

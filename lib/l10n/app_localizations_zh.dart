@@ -2719,7 +2719,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipAccountCurrentBalance => '截至今天的 Firefly 当前余额。';
 
   @override
-  String get tooltipAccountEndOfMonthBalance => '本月末预计余额，包含已安排交易、定期规则和账单。';
+  String get tooltipAccountEndOfMonthBalance => '所选日期的预计余额，包含计划交易、周期性交易和账单。';
+
+  @override
+  String get tooltipBalanceDatePick => '显示其他日期的余额';
+
+  @override
+  String get tooltipBalanceDateReset => '回到本月末';
+
+  @override
+  String get tooltipBalanceBeyondForecast => '预测未覆盖到这么远，因此这是最后一个预测数值。';
+
+  @override
+  String get tooltipRecordedBalance => '账簿截至该日期的余额，包含已提前记日期的交易。';
 
   @override
   String get tooltipBudgetName => '此支出预算的名称。';
@@ -3442,6 +3454,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsExportText => 'FireRacoon settings backup';
+
+  @override
+  String get recordedBalance => '已记账';
 
   @override
   String get upcoming => '即将到来';
