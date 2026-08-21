@@ -6435,6 +6435,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'FireRacoon settings backup'**
   String get settingsExportText;
+
+  /// No description provided for @upcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get upcoming;
 }
 
 class _AppLocalizationsDelegate

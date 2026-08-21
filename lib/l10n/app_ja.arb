@@ -1790,5 +1790,6 @@
   "unlockWithBiometricsDescription": "ログイン画面で Face ID、Touch ID、指紋、または端末の PIN を使います。",
   "biometricUnlockReason": "FireRacoon のロックを解除",
   "biometricEnableReason": "生体認証のロック解除を有効にするには確認してください",
-  "biometricUnlockFailed": "生体認証によるロック解除がキャンセルされたか失敗しました。"
+  "biometricUnlockFailed": "生体認証によるロック解除がキャンセルされたか失敗しました。",
+  "upcoming": "今後"
 }
