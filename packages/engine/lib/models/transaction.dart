@@ -1,5 +1,10 @@
 class Transaction {
   final String id;
+
+  /// Firefly's per-leg journal id. [id] is the enclosing group's id, which
+  /// every leg of a split shares, so this is the only handle on one leg.
+  /// On a group object it is the first leg's.
+  final String? journalId;
   final String type; // 'withdrawal', 'deposit', 'transfer'
   final DateTime date;
   final double amount;
@@ -30,6 +35,7 @@ class Transaction {
 
   Transaction({
     required this.id,
+    this.journalId,
     required this.type,
     required this.date,
     required this.amount,
@@ -91,11 +97,11 @@ class Transaction {
     final attrs = json['attributes'] as Map<String, dynamic>;
     final txs = attrs['transactions'] as List<dynamic>? ?? [];
     final groupTitle = attrs['group_title'] as String?;
-    final journalId = json['id'] as String;
+    final groupId = json['id'] as String;
 
     if (txs.isEmpty) {
       return Transaction(
-        id: journalId,
+        id: groupId,
         type: 'withdrawal',
         date: DateTime.now(),
         amount: 0,
@@ -112,7 +118,7 @@ class Transaction {
     final parsed = txs
         .map(
           (tx) => _fromSplitMap(
-            journalId: journalId,
+            groupId: groupId,
             groupTitle: groupTitle,
             tx: tx as Map<String, dynamic>,
           ),
@@ -127,7 +133,7 @@ class Transaction {
   }
 
   static Transaction _fromSplitMap({
-    required String journalId,
+    required String groupId,
     required String? groupTitle,
     required Map<String, dynamic> tx,
   }) {
@@ -137,7 +143,8 @@ class Transaction {
         : <String>[];
 
     return Transaction(
-      id: journalId,
+      id: groupId,
+      journalId: tx['transaction_journal_id']?.toString(),
       type: tx['type'] as String? ?? 'withdrawal',
       // Firefly returns offset-aware timestamps; convert to local time so
       // calendar-field reads (day grouping, future checks) match the user's
@@ -189,6 +196,7 @@ class Transaction {
 
   Transaction copyWith({
     String? id,
+    String? journalId,
     String? type,
     DateTime? date,
     double? amount,
@@ -224,6 +232,7 @@ class Transaction {
   }) {
     return Transaction(
       id: id ?? this.id,
+      journalId: journalId ?? this.journalId,
       type: type ?? this.type,
       date: date ?? this.date,
       amount: amount ?? this.amount,

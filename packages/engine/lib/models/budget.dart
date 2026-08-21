@@ -120,19 +120,22 @@ class BudgetInput {
   });
 
   Map<String, dynamic> toJson() {
-    final body = <String, dynamic>{
-      'name': name,
-      'active': active,
-      'auto_budget_type': autoBudgetType.apiValue,
-    };
+    final body = <String, dynamic>{'name': name, 'active': active};
 
     final trimmedNotes = notes?.trim();
     if (trimmedNotes != null && trimmedNotes.isNotEmpty) {
       body['notes'] = trimmedNotes;
     }
 
+    // Auto-budget keys are omitted entirely when there is nothing to set.
+    // Firefly (6.6.6) rejects every attempt to send an empty one: `none` alone
+    // is "The amount is required", `none` with 0 is "must be more than zero",
+    // and null is "invalid auto budget type". Omitting the keys is the only
+    // accepted shape, and it leaves an existing auto-budget untouched, which is
+    // what a partial update should do. Clearing one is not expressible here.
     if (autoBudgetType != AutoBudgetType.none) {
       final amount = autoBudgetAmount ?? 0;
+      body['auto_budget_type'] = autoBudgetType.apiValue;
       body['auto_budget_amount'] = amount.toStringAsFixed(2);
       body['auto_budget_period'] =
           (autoBudgetPeriod ?? AutoBudgetPeriod.monthly).apiValue;

@@ -7,8 +7,8 @@
         "packages/mcp/bin/fireracoon_mcp.dart"
       ],
       "env": {
-        "FIREFLY_URL": "http://localhost:8081",
-        "FIREFLY_TOKEN": "YOUR_PERSONAL_ACCESS_TOKEN"
+        "FIRERACOON_URL": "https://fireracoon.example",
+        "FIRERACOON_API_KEY": "frcn_YOUR_AGENT_KEY"
       }
     }
   }

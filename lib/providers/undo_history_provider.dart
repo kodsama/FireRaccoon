@@ -209,12 +209,14 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
     try {
       // Yield so Notifier.build can finish before we touch [state].
       await Future<void>.value();
+      if (!ref.mounted) return;
       final client = ref.read(serverSessionProvider.notifier).client;
       if (client == null || client.sessionToken == null) {
         state = state.copyWith(isHydrated: true, limit: limit);
         return;
       }
       final snap = await client.fetchState();
+      if (!ref.mounted) return;
       final undo = snap['undo'];
       if (undo is Map) {
         await _applyDecodedHistory(
@@ -226,6 +228,7 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
       }
       state = state.copyWith(isHydrated: true, limit: limit);
     } on Object {
+      if (!ref.mounted) return;
       state = state.copyWith(isHydrated: true, limit: limit);
     }
   }

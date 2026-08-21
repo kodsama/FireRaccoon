@@ -46,7 +46,8 @@ bash tool/setup-hooks.sh
 - [ ] `flutter analyze` and package tests pass
 - [ ] New behavior has tests when practical
 - [ ] User-facing changes update `docs/` or `README.md`
-- [ ] MCP tool changes update `openapi.yaml`, `docs/mcp-server.md`, and `AGENTS.md`
+- [ ] MCP tool changes update `openapi.yaml`, `docs/mcp-server.md`, `AGENTS.md`,
+      `CONTEXT.md`, and the surface note in `packages/mcp/lib/src/schema.dart`
 - [ ] No secrets, tokens, or personal data in commits
 
 ## Code conventions

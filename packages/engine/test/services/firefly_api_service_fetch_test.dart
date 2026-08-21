@@ -101,6 +101,80 @@ void main() {
       },
     );
 
+    test('getAccountTransactions asks a one-day window Firefly will '
+        'accept', () async {
+      // Regression: a single date converted to start == end, which Firefly
+      // refuses with "the start must be a date before end", so a statement
+      // covering one day could not be reconciled at all.
+      late Uri firstUri;
+      final client = MockClient((request) async {
+        firstUri = request.url;
+        return jsonHttpResponse(
+          transactionsPageBody(
+            items: [
+              transactionItem(id: '1', date: '2026-09-01'),
+              transactionItem(id: '2', date: '2026-09-02'),
+            ],
+            total: 2,
+          ),
+        );
+      });
+
+      final result = await serviceWith(client).getAccountTransactions(
+        '42',
+        start: DateTime(2026, 9, 1),
+        end: DateTime(2026, 9, 2),
+      );
+
+      expect(firstUri.queryParameters['start'], '2026-09-01');
+      expect(firstUri.queryParameters['end'], '2026-09-02');
+      // The day the widening pulled in is not the caller's, so it goes back.
+      expect(result.map((t) => t.id), ['1']);
+    });
+
+    test('getTransactions trims a widened one-day window too', () async {
+      final client = MockClient((request) async {
+        return jsonHttpResponse(
+          transactionsPageBody(
+            items: [
+              transactionItem(id: '1', date: '2026-09-01'),
+              transactionItem(id: '2', date: '2026-09-02'),
+            ],
+            total: 2,
+          ),
+        );
+      });
+
+      final result = await serviceWith(
+        client,
+      ).getTransactions(start: DateTime(2026, 9, 1), end: DateTime(2026, 9, 2));
+
+      expect(result.map((t) => t.id), ['1']);
+    });
+
+    test('a window wider than a day is returned as Firefly answered', () async {
+      // Callers that pad on purpose rely on getting the padding back.
+      final client = MockClient((request) async {
+        return jsonHttpResponse(
+          transactionsPageBody(
+            items: [
+              transactionItem(id: '1', date: '2026-09-01'),
+              transactionItem(id: '2', date: '2026-09-05'),
+            ],
+            total: 2,
+          ),
+        );
+      });
+
+      final result = await serviceWith(client).getAccountTransactions(
+        '42',
+        start: DateTime(2026, 9, 1),
+        end: DateTime(2026, 9, 4),
+      );
+
+      expect(result.map((t) => t.id), ['1', '2']);
+    });
+
     test('getBudgetTransactions passes range', () async {
       late Uri firstUri;
       final client = MockClient((request) async {

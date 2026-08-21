@@ -736,20 +736,30 @@ Future<void> _showChangePasswordDialog(
                   return;
                 }
                 final notifier = ref.read(peopleProvider.notifier);
-                if (person.hasPassword) {
-                  final ok = await notifier.changePassword(
-                    person.id,
-                    oldPassword: oldController.text,
-                    newPassword: newController.text,
-                  );
-                  if (!ok) {
-                    setState(() => error = l10n.currentPasswordIncorrect);
-                    return;
+                try {
+                  if (person.hasPassword) {
+                    final ok = await notifier.changePassword(
+                      person.id,
+                      oldPassword: oldController.text,
+                      newPassword: newController.text,
+                    );
+                    if (!ok) {
+                      setState(() => error = l10n.currentPasswordIncorrect);
+                      return;
+                    }
+                  } else {
+                    await notifier.setPassword(person.id, newController.text);
                   }
-                } else {
-                  await notifier.setPassword(person.id, newController.text);
+                } on Object catch (e) {
+                  setState(() => error = e.toString());
+                  return;
                 }
-                if (ctx.mounted) Navigator.of(ctx).pop();
+                if (!ctx.mounted) return;
+                Navigator.of(ctx).pop();
+                final messenger = ScaffoldMessenger.maybeOf(context);
+                messenger?.showSnackBar(
+                  SnackBar(content: Text(l10n.passwordChanged)),
+                );
               },
               child: Text(l10n.save),
             ),

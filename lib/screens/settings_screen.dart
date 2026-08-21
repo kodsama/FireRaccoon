@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fireracoon_engine/fireracoon_engine.dart';
 
+import '../deployment/deployment_providers.dart';
 import '../l10n/l10n_extensions.dart';
 import '../fun_modes/fun_mode.dart';
-import '../providers/mcp_provider.dart';
 import '../providers/app_info_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/data_providers.dart';
@@ -22,6 +22,7 @@ import '../widgets/theme_style_picker.dart';
 import '../widgets/autocomplete_text_field.dart';
 import '../widgets/small_loading_indicator.dart';
 import '../widgets/confirmation_dialog.dart';
+import '../widgets/mcp_settings_section.dart';
 import '../widgets/people_settings_section.dart';
 import '../widgets/settings_backup_section.dart';
 import '../widgets/side_menu_settings_section.dart';
@@ -842,13 +843,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     ),
                   ),
                 ],
-                if (mcpDesktopSupported) ...[
-                  const Divider(height: 1),
-                  _McpStatusTile(service: ref.watch(mcpServiceProvider)),
-                ],
               ],
             ),
           ),
+        ],
+        // Its own section, not part of the Firefly connection: these credentials
+        // are for agents talking to FireRacoon, and any signed-in person may
+        // issue one for themselves rather than only a connection admin.
+        if (mcpDesktopSupported ||
+            ref.watch(deploymentConfigProvider).isServer) ...[
+          const SizedBox(height: 24),
+          Text(
+            l10n.mcpServerCredentials,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 16),
+          const Card(child: McpSettingsSection()),
         ],
         ...ref
             .watch(packageInfoProvider)
@@ -868,36 +878,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               error: (_, _) => const <Widget>[],
             ),
       ],
-    );
-  }
-}
-
-class _McpStatusTile extends StatelessWidget {
-  const _McpStatusTile({required this.service});
-
-  final McpService service;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final colors = context.colors;
-    final statusColor = service.error != null
-        ? colors.danger
-        : service.running
-        ? colors.success
-        : colors.warning;
-    return ListTile(
-      leading: Icon(Icons.hub, color: statusColor),
-      title: Text(l10n.mcpServer),
-      subtitle: Text(
-        [
-          mcpStatusLabel(l10n, service),
-          if (service.running && service.authToken != null)
-            'mcpToken: ${service.authToken}',
-        ].join('\n'),
-      ),
-      isThreeLine: service.running && service.authToken != null,
-      trailing: service.running ? Text(':${service.port}') : null,
     );
   }
 }

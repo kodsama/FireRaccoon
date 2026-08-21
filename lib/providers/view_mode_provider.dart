@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../store/secure_storage.dart';
 
 enum ViewMode { standard, compact, tight }
 
 class ViewModeNotifier extends Notifier<ViewMode> {
-  static const _storage = FlutterSecureStorage();
+  static const _storage = appSecureStorage;
   static const _storageKey = 'globalViewMode';
 
   @override

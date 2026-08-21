@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
+import '../store/secure_storage.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:fireracoon_engine/fireracoon_engine.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
@@ -54,7 +56,7 @@ class AuthNotifier extends Notifier<AuthSettings> {
     FlutterSecureStorage? storage,
     http.Client? httpClient,
     DebugEnvLoader? debugEnvLoader,
-  }) : _storage = storage ?? const FlutterSecureStorage(),
+  }) : _storage = storage ?? appSecureStorage,
        _httpClient = httpClient ?? http.Client(),
        _debugEnvLoader = debugEnvLoader ?? loadDebugEnvCredentials;
 

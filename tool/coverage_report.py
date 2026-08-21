@@ -103,6 +103,9 @@ def main() -> int:
     p.add_argument("--app", default="coverage/lcov.info")
     p.add_argument("--engine", default="packages/engine/coverage/lcov.info")
     p.add_argument("--mcp", default="packages/mcp/coverage/lcov.info")
+    p.add_argument(
+        "--backend", default="packages/app_backend/coverage/lcov.info"
+    )
     p.add_argument("--check", action="store_true")
     p.add_argument(
         "--engine-min",
@@ -120,6 +123,11 @@ def main() -> int:
         default=float(os.environ.get("APP_LOGIC_MIN", "99")),
     )
     p.add_argument(
+        "--backend-min",
+        type=float,
+        default=float(os.environ.get("BACKEND_MIN", "70")),
+    )
+    p.add_argument(
         "--ui-min",
         type=float,
         default=float(os.environ.get("UI_MIN", "60")),
@@ -129,9 +137,11 @@ def main() -> int:
     app = parse_lcov(args.app)
     engine = parse_lcov(args.engine)
     mcp = parse_lcov(args.mcp)
+    backend = parse_lcov(args.backend)
 
     engine_r, _, _ = summarize(engine, lambda _rel: True)
     mcp_r, _, _ = summarize(mcp, lambda _rel: True)
+    backend_r, _, _ = summarize(backend, lambda _rel: True)
 
     def app_logic(rel: str) -> bool:
         if excluded_app(rel):
@@ -147,6 +157,7 @@ def main() -> int:
 
     print(f"Engine:    {engine_r:.1f}%  (min {args.engine_min})")
     print(f"MCP:       {mcp_r:.1f}%  (min {args.mcp_min})")
+    print(f"Backend:   {backend_r:.1f}%  (min {args.backend_min})")
     print(f"App logic: {logic_r:.1f}%  (min {args.app_logic_min})")
     print(f"UI:        {ui_r:.1f}%  (min {args.ui_min})")
 
@@ -157,6 +168,7 @@ def main() -> int:
     for label, value, minimum in (
         ("Engine", engine_r, args.engine_min),
         ("MCP", mcp_r, args.mcp_min),
+        ("Backend", backend_r, args.backend_min),
         ("App logic", logic_r, args.app_logic_min),
         ("UI", ui_r, args.ui_min),
     ):

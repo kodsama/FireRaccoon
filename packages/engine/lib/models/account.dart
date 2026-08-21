@@ -77,6 +77,10 @@ class Account {
       openingBalanceDate: attrs['opening_balance_date'] != null
           ? DateTime.tryParse(attrs['opening_balance_date'].toString())
           : null,
+      virtualBalance: double.tryParse(
+        attrs['virtual_balance']?.toString() ?? '',
+      ),
+      interest: double.tryParse(attrs['interest']?.toString() ?? ''),
       interestPeriod: attrs['interest_period'] as String?,
     );
   }

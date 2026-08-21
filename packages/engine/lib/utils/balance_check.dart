@@ -84,7 +84,7 @@ double? parseBalanceAmount(String? text) {
 BalanceCheckResult compareBalances({
   required double expected,
   required String? enteredText,
-  double tolerance = 0.005,
+  double tolerance = kAmountEqualityTolerance,
 }) {
   final entered = parseBalanceAmount(enteredText);
   if (enteredText == null || enteredText.trim().isEmpty) {
@@ -103,3 +103,9 @@ BalanceCheckResult compareBalances({
     difference: difference,
   );
 }
+
+/// Two amounts are the same when they agree to the cent.
+///
+/// The statement matcher and the balance check both decide "same amount", and a
+/// second copy of this number would let them drift apart silently.
+const double kAmountEqualityTolerance = 0.005;

@@ -8,6 +8,8 @@ Transaction _tx({
   required double amount,
   String source = 'Checking',
   String destination = 'Store',
+  String? sourceId,
+  String? destinationId,
   String category = 'Food',
   String? budgetId,
   List<Transaction> splits = const [],
@@ -20,6 +22,8 @@ Transaction _tx({
     description: 'Parent',
     sourceName: source,
     destinationName: destination,
+    sourceId: sourceId,
+    destinationId: destinationId,
     categoryName: category,
     currencySymbol: '€',
     currencyCode: 'EUR',
@@ -119,6 +123,36 @@ void main() {
     });
   });
 
+  group('signedAmountForAccountById', () {
+    test('sums split effects on the account holding that id', () {
+      final tx = _tx(
+        type: 'withdrawal',
+        date: DateTime(2026, 7, 1),
+        amount: 30,
+        splits: [
+          _tx(
+            type: 'withdrawal',
+            date: DateTime(2026, 7, 1),
+            amount: 30,
+            sourceId: '4',
+            destinationId: '19',
+          ),
+          _tx(
+            type: 'withdrawal',
+            date: DateTime(2026, 7, 1),
+            amount: 20,
+            sourceId: '4',
+            destinationId: '21',
+          ),
+        ],
+      );
+
+      expect(signedAmountForAccountById(tx, '4'), -50);
+      expect(signedAmountForAccountById(tx, '19'), 30);
+      expect(signedAmountForAccountById(tx, '7'), 0);
+    });
+  });
+
   group('signedAmountForSplit', () {
     test('transfer leg signs match the viewed account', () {
       final split = _tx(
@@ -131,6 +165,86 @@ void main() {
 
       expect(signedAmountForSplit(split, 'A'), -100);
       expect(signedAmountForSplit(split, 'B'), 100);
+    });
+  });
+
+  group('signedAmountForSplitById', () {
+    test('recovers the sign a name shared across types nets to zero', () {
+      // Firefly makes account names unique only within a type, so an asset
+      // account and an expense account can both be called Va Ttn. The
+      // name-keyed reader sees one split as both legs and returns 0.0, which
+      // leaves a statement short by this row with no error raised.
+      final split = _tx(
+        type: 'withdrawal',
+        date: DateTime(2026, 7, 3),
+        amount: 481,
+        source: 'Va Ttn',
+        sourceId: '4',
+        destination: 'Va Ttn',
+        destinationId: '19',
+      );
+
+      expect(signedAmountForSplit(split, 'Va Ttn'), 0);
+      expect(signedAmountForSplitById(split, '4'), -481);
+      expect(signedAmountForSplitById(split, '19'), 481);
+    });
+
+    test('a negative amount reverses both legs', () {
+      final split = _tx(
+        type: 'transfer',
+        date: DateTime(2026, 7, 20),
+        amount: -6500,
+        sourceId: '4',
+        destinationId: '19',
+      );
+
+      expect(signedAmountForSplitById(split, '4'), 6500);
+      expect(signedAmountForSplitById(split, '19'), -6500);
+    });
+
+    test('a split naming its legs by id contributes nothing to a third', () {
+      // Falling through to the type switch once the ids are known would charge
+      // every withdrawal in the ledger against whatever account was asked for.
+      final sourceOnly = _tx(
+        type: 'withdrawal',
+        date: DateTime(2026, 7, 5),
+        amount: 75,
+        sourceId: '4',
+      );
+      final destinationOnly = _tx(
+        type: 'deposit',
+        date: DateTime(2026, 7, 5),
+        amount: 75,
+        destinationId: '4',
+      );
+
+      expect(signedAmountForSplitById(sourceOnly, '19'), 0);
+      expect(signedAmountForSplitById(destinationOnly, '19'), 0);
+    });
+
+    test('the same id on both legs nets to zero', () {
+      final split = _tx(
+        type: 'transfer',
+        date: DateTime(2026, 7, 1),
+        amount: 50,
+        sourceId: '4',
+        destinationId: '4',
+      );
+
+      expect(signedAmountForSplitById(split, '4'), 0);
+    });
+
+    test('a split carrying no ids falls back to the type sign', () {
+      // Splits built locally before a write carry names only, so the id reader
+      // has to stay usable there rather than reporting every line as zero.
+      Transaction untyped(String type, double amount) =>
+          _tx(type: type, date: DateTime(2026, 7, 1), amount: amount);
+
+      expect(signedAmountForSplitById(untyped('deposit', 75), '4'), 75);
+      expect(signedAmountForSplitById(untyped('deposit', -75), '4'), -75);
+      expect(signedAmountForSplitById(untyped('withdrawal', 75), '4'), -75);
+      expect(signedAmountForSplitById(untyped('withdrawal', -75), '4'), 75);
+      expect(signedAmountForSplitById(untyped('transfer', 75), '4'), 0);
     });
   });
 
@@ -218,6 +332,27 @@ void main() {
       expect(transactionAffectsAccount(tx, 'Checking'), isTrue);
       expect(transactionAffectsAccount(tx, 'Other'), isFalse);
     });
+  });
+
+  group('transactionAffectsAccountId', () {
+    test(
+      'true for a shared name the name-keyed check reports as untouched',
+      () {
+        final tx = _tx(
+          type: 'withdrawal',
+          date: DateTime(2026, 7, 3),
+          amount: 481,
+          source: 'Va Ttn',
+          sourceId: '4',
+          destination: 'Va Ttn',
+          destinationId: '19',
+        );
+
+        expect(transactionAffectsAccount(tx, 'Va Ttn'), isFalse);
+        expect(transactionAffectsAccountId(tx, '4'), isTrue);
+        expect(transactionAffectsAccountId(tx, '7'), isFalse);
+      },
+    );
   });
 
   group('applySplitBalanceDelta', () {

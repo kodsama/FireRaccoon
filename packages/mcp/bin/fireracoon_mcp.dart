@@ -1,60 +1,89 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 
+import 'package:fireracoon_engine/fireracoon_engine.dart';
 import 'package:fireracoon_mcp/fireracoon_mcp.dart';
 
+const _usage = '''
+fireracoon_mcp: MCP server for FireRacoon
+
+  --tcp [--port N]   serve on localhost TCP (default 8787) instead of stdio
+  schema             emit the JSON tool catalog and exit
+
+Credentials (a FireRacoon account, never a Firefly III token):
+  FIRERACOON_URL       base URL of the FireRacoon server
+  FIRERACOON_API_KEY   agent key issued in Settings under MCP
+
+The key inherits its person's role: viewers get read-only tools. Firefly III
+credentials stay on the server, which proxies calls through /api/firefly.
+''';
+
 /// Entry point for the FireRacoon MCP server.
-///
-/// - Default: **stdio** transport (MCP clients spawn this binary)
-/// - `--tcp [--port N]`: localhost TCP (default 8787); requires `MCP_TOKEN`
-/// - `schema` / `--schema`: emit JSON tool catalog and exit
-///
-/// Credentials: `FIREFLY_URL` and `FIREFLY_TOKEN`, or per-tool arguments.
-/// TCP auth: `MCP_TOKEN` (or `--mcp-token`), sent as `initialize.params.mcpToken`.
 Future<void> main(List<String> args) async {
+  final url = Platform.environment['FIRERACOON_URL']?.trim() ?? '';
+  final key = Platform.environment['FIRERACOON_API_KEY']?.trim() ?? '';
+
   if (args.contains('schema') || args.contains('--schema')) {
-    final url = Platform.environment['FIREFLY_URL'];
-    final token = Platform.environment['FIREFLY_TOKEN'];
     stdout.writeln(
-      JsonEncoder.withIndent(
-        '  ',
-      ).convert(buildMcpSchema(defaultUrl: url, defaultToken: token)),
+      JsonEncoder.withIndent('  ').convert(
+        buildMcpSchema(
+          target: url.isEmpty || key.isEmpty
+              ? null
+              : FireflyTarget(baseUrl: '$url/api/firefly', bearer: key),
+        ),
+      ),
     );
     return;
   }
 
-  final url = Platform.environment['FIREFLY_URL'];
-  final token = Platform.environment['FIREFLY_TOKEN'];
-  final server = McpServer(
-    tools: buildTools(defaultUrl: url, defaultToken: token),
+  if (url.isEmpty || key.isEmpty) {
+    stderr.write(_usage);
+    exitCode = 64;
+    return;
+  }
+
+  final authenticator = BackendAuthenticator(baseUrl: url);
+  final identity = await authenticator.authenticate(key);
+  if (identity == null) {
+    stderr.writeln(
+      'FIRERACOON_API_KEY was rejected by $url. Check the key is current and '
+      'the server is reachable and unlocked.',
+    );
+    exitCode = 77;
+    return;
+  }
+  stderr.writeln(
+    'Authenticated as ${identity.personName} (${identity.role}); '
+    'write access: ${identity.canWrite}',
   );
+
+  McpServer serverFor(String bearer, AgentIdentity caller) {
+    return McpServer(
+      tools: buildTools(
+        target: FireflyTarget(
+          baseUrl: authenticator.fireflyProxyBase,
+          bearer: bearer,
+        ),
+        identity: caller,
+      ),
+    );
+  }
 
   if (args.contains('--tcp')) {
     final port = _intAfter(args, '--port') ?? 8787;
-    final mcpToken =
-        _stringAfter(args, '--mcp-token') ??
-        Platform.environment['MCP_TOKEN'] ??
-        _generateToken();
-    if (Platform.environment['MCP_TOKEN'] == null &&
-        _stringAfter(args, '--mcp-token') == null) {
-      stderr.writeln(
-        'MCP_TOKEN not set; generated ephemeral token for this session:\n'
-        '  $mcpToken\n'
-        'Pass it as initialize.params.mcpToken (or set MCP_TOKEN next time).',
-      );
-    }
     await serveTcp(
-      server,
+      // Each connection's own key becomes its Firefly bearer, so the backend
+      // stays the authority on what that key may do.
+      server: (caller, agentKey) => serverFor(agentKey, caller),
+      authenticator: authenticator,
       port: port,
-      authToken: mcpToken,
       onLog: stderr.writeln,
     );
     stderr.writeln('fireracoon MCP server ready (tcp). Ctrl-C to stop.');
     await Completer<void>().future;
   } else {
-    await serveStdio(server);
+    await serveStdio(serverFor(key, identity), identity: identity);
   }
 }
 
@@ -62,16 +91,4 @@ int? _intAfter(List<String> args, String flag) {
   final i = args.indexOf(flag);
   if (i < 0 || i + 1 >= args.length) return null;
   return int.tryParse(args[i + 1]);
-}
-
-String? _stringAfter(List<String> args, String flag) {
-  final i = args.indexOf(flag);
-  if (i < 0 || i + 1 >= args.length) return null;
-  return args[i + 1];
-}
-
-String _generateToken() {
-  final random = Random.secure();
-  final bytes = List<int>.generate(24, (_) => random.nextInt(256));
-  return base64UrlEncode(bytes).replaceAll('=', '');
 }
