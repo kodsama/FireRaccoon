@@ -1513,7 +1513,11 @@
   "tooltipClearDate": "移除所选日期。",
   "tooltipAccountName": "在列表和报表中显示的名称。",
   "tooltipAccountCurrentBalance": "截至今天的 Firefly 当前余额。",
-  "tooltipAccountEndOfMonthBalance": "本月末预计余额，包含已安排交易、定期规则和账单。",
+  "tooltipAccountEndOfMonthBalance": "所选日期的预计余额，包含计划交易、周期性交易和账单。",
+  "tooltipBalanceDatePick": "显示其他日期的余额",
+  "tooltipBalanceDateReset": "回到本月末",
+  "tooltipBalanceBeyondForecast": "预测未覆盖到这么远，因此这是最后一个预测数值。",
+  "tooltipRecordedBalance": "账簿截至该日期的余额，包含已提前记日期的交易。",
   "tooltipBudgetName": "此支出预算的名称。",
   "tooltipBudgetAmount": "此预算周期的限额金额。",
   "tooltipSubscriptionName": "定期账单或订阅的名称。",
@@ -1715,5 +1719,6 @@
   "unlockWithBiometricsDescription": "在登录界面使用面容、指纹或设备 PIN。",
   "biometricUnlockReason": "解锁 FireRacoon",
   "biometricEnableReason": "确认以启用生物识别解锁",
-  "biometricUnlockFailed": "生物识别解锁已取消或失败。"
+  "biometricUnlockFailed": "生物识别解锁已取消或失败。",
+  "recordedBalance": "已记账"
 }

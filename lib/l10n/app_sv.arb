@@ -1513,7 +1513,11 @@
   "tooltipClearDate": "Ta bort det valda datumet.",
   "tooltipAccountName": "Visningsnamn i listor och rapporter.",
   "tooltipAccountCurrentBalance": "Aktuellt saldo från Firefly per idag.",
-  "tooltipAccountEndOfMonthBalance": "Prognostiserat saldo vid månadens slut, inklusive schemalagda transaktioner, återkommande poster och räkningar.",
+  "tooltipAccountEndOfMonthBalance": "Prognostiserat saldo på det valda datumet, inklusive planerade transaktioner, upprepningar och räkningar.",
+  "tooltipBalanceDatePick": "Visa saldon vid ett annat datum",
+  "tooltipBalanceDateReset": "Tillbaka till månadens slut",
+  "tooltipBalanceBeyondForecast": "Prognosen sträcker sig inte så långt fram, så detta är den sista beräknade siffran.",
+  "tooltipRecordedBalance": "Saldo som bokföringen håller till och med detta datum, inklusive transaktioner som redan är daterade framåt.",
   "tooltipBudgetName": "Namn på denna utgiftsbudget.",
   "tooltipBudgetAmount": "Gränsbelopp för denna budgetperiod.",
   "tooltipSubscriptionName": "Namn på återkommande räkning eller prenumeration.",
@@ -1715,5 +1719,6 @@
   "unlockWithBiometricsDescription": "Använd Face ID, Touch ID, fingeravtryck eller enhetens PIN på inloggningsskärmen.",
   "biometricUnlockReason": "Lås upp FireRacoon",
   "biometricEnableReason": "Bekräfta för att aktivera biometrisk upplåsning",
-  "biometricUnlockFailed": "Biometrisk upplåsning avbröts eller misslyckades."
+  "biometricUnlockFailed": "Biometrisk upplåsning avbröts eller misslyckades.",
+  "recordedBalance": "Bokfört"
 }
