@@ -325,6 +325,10 @@ Transaction _splitFromArgs(
     budgetId: pick('budget_id'),
     billId: pick('bill_id'),
     notes: pick('notes'),
+    foreignAmount:
+        (leg['foreign_amount'] as num?)?.toDouble() ??
+        (args['foreign_amount'] as num?)?.toDouble(),
+    foreignCurrencyCode: pick('foreign_currency_code'),
     tags: leg.containsKey('tags')
         ? _strList(leg['tags'])
         : (args.containsKey('tags') ? _strList(args['tags']) : const []),
@@ -398,6 +402,35 @@ Transaction _transactionFromArgs(
   if (amount == null || amount <= 0) {
     throw ArgumentError('amount must be greater than zero');
   }
+
+  final statedForeign = (args['foreign_amount'] as num?)?.toDouble();
+  if (statedForeign != null && statedForeign <= 0) {
+    throw ArgumentError('foreign_amount must be greater than zero');
+  }
+  // Carrying the original's foreign amount alongside a new local one would
+  // pair this month's figure with last month's rate. Nobody can derive the
+  // rate from the local amount alone, so the caller states it or nothing is
+  // written: scaling it would invent an exchange rate and record it as fact.
+  if (leadingLeg == null &&
+      statedForeign == null &&
+      args.containsKey('amount') &&
+      base?.foreignAmount != null &&
+      amount != base!.amount) {
+    final was = [
+      base.foreignAmount!.toStringAsFixed(2),
+      ?base.foreignCurrencyCode,
+    ].join(' ');
+    throw ArgumentError(
+      'amount overrides a transaction carrying a foreign amount of $was; '
+      'pass foreign_amount too, since the rate cannot be derived',
+    );
+  }
+  final foreignAmount =
+      leadingLeg?.foreignAmount ?? statedForeign ?? base?.foreignAmount;
+  final foreignCurrencyCode =
+      leadingLeg?.foreignCurrencyCode ??
+      (args['foreign_currency_code'] as String?) ??
+      base?.foreignCurrencyCode;
   final description =
       leadingLeg?.description ??
       (args['description'] as String?) ??
@@ -457,6 +490,8 @@ Transaction _transactionFromArgs(
         (args['budget_id'] as String?) ??
         base?.budgetId,
     notes: leadingLeg?.notes ?? (args['notes'] as String?) ?? base?.notes,
+    foreignAmount: foreignAmount,
+    foreignCurrencyCode: foreignCurrencyCode,
     tags: leadingLeg != null
         ? leadingLeg.tags
         : (args.containsKey('tags')
@@ -523,6 +558,18 @@ Map<String, Object?> _transactionFieldSchema() => {
   'amount': {'type': 'number', 'exclusiveMinimum': 0},
   'description': {'type': 'string'},
   'currency_code': {'type': 'string'},
+  'foreign_amount': {
+    'type': 'number',
+    'exclusiveMinimum': 0,
+    'description':
+        'What the other side received, when the two accounts hold different '
+        'currencies. Firefly requires it on such a transfer and refuses the '
+        'write without it.',
+  },
+  'foreign_currency_code': {
+    'type': 'string',
+    'description': 'Currency of foreign_amount. Defaults to the other side.',
+  },
   'source_id': {'type': 'string'},
   'source_name': {'type': 'string'},
   'destination_id': {'type': 'string'},
