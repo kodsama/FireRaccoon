@@ -60,7 +60,7 @@ jobs:
 
       - name: Test app backend package
         working-directory: packages/app_backend
-        run: dart test
+        run: dart test --coverage=coverage
 
       - name: Test Flutter app with coverage
         run: flutter test --coverage
