@@ -180,13 +180,21 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
       await _hydrateFromServer(limit);
       return;
     }
-    final path = await _historyPath();
-    if (!await jsonStoreExists(path)) {
-      state = state.copyWith(isHydrated: true, limit: limit);
-      return;
-    }
+    // Reading the file is three async gaps wide, and whoever asked for this
+    // notifier can be gone by the end of any of them. Touching [state] then
+    // throws, which is how a disposed container turned into a failure in a
+    // test that had already finished. The server path above already guards
+    // every gap; this one did not guard any.
     try {
+      final path = await _historyPath();
+      if (!ref.mounted) return;
+      if (!await jsonStoreExists(path)) {
+        if (!ref.mounted) return;
+        state = state.copyWith(isHydrated: true, limit: limit);
+        return;
+      }
       final raw = await jsonStoreRead(path);
+      if (!ref.mounted) return;
       if (raw == null || raw.trim().isEmpty) {
         state = state.copyWith(isHydrated: true, limit: limit);
         return;
@@ -201,6 +209,7 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
         limit: limit,
       );
     } on Object {
+      if (!ref.mounted) return;
       state = state.copyWith(isHydrated: true, limit: limit);
     }
   }
@@ -253,6 +262,7 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
     final adjustedCursor = normalizedEntries.isEmpty
         ? -1
         : cursor.clamp(-1, normalizedEntries.length - 1);
+    if (!ref.mounted) return;
     state = state.copyWith(
       entries: normalizedEntries,
       cursor: adjustedCursor,
