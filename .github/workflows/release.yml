@@ -507,6 +507,12 @@ jobs:
   release:
     name: Publish GitHub Release
     needs: [android, ios, macos, windows, linux, web, docker]
+    # One failing target must not discard the ones that built. 0.1.8 built six
+    # platforms and published nothing, because the container image failed and
+    # this job was skipped with it. The run still reports failure, and the
+    # release body names what is missing, so a partial release is loud rather
+    # than quiet.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -518,6 +524,7 @@ jobs:
         with:
           path: artifacts
           pattern: '*-artifacts'
+          if-no-files-found: warn
 
       - name: Download symbol artifacts
         uses: actions/download-artifact@v4
@@ -526,10 +533,46 @@ jobs:
           pattern: '*-symbols'
           if-no-files-found: warn
 
+      - name: Note any target that did not build
+        id: missing
+        run: |
+          expected="android ios macos windows linux web docker"
+          missing=""
+          for target in $expected; do
+            if [ ! -d "artifacts/${target}-artifacts" ]; then
+              missing="${missing} ${target}"
+            fi
+          done
+          missing="${missing# }"
+          if [ -z "$missing" ]; then
+            echo "every target built"
+            echo "any=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "::warning::incomplete release, no artifacts from:${missing}"
+          echo "any=true" >> "$GITHUB_OUTPUT"
+          {
+            echo 'body<<RELEASE_EOF'
+            echo ''
+            echo '> [!WARNING]'
+            echo "> Incomplete release. These targets did not build, so their"
+            echo "> artifacts are absent: ${missing}."
+            echo '> Fix the build and re-push the tag to replace this release.'
+            echo 'RELEASE_EOF'
+          } >> "$GITHUB_OUTPUT"
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
           fail_on_unmatched_files: false
+          append_body: ${{ steps.missing.outputs.any == 'true' }}
+          body: ${{ steps.missing.outputs.body }}
           files: |
             artifacts/**/*
+
+      - name: Fail the job when the release is incomplete
+        if: steps.missing.outputs.any == 'true'
+        run: |
+          echo "::error::published an incomplete release; see the warning above"
+          exit 1
