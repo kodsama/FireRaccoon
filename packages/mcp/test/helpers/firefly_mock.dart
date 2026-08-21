@@ -244,6 +244,8 @@ Map<String, Object?> transactionItem({
   String? notes,
   List<String> tags = const [],
   bool reconciled = false,
+  String? foreignAmount,
+  String? foreignCurrencyCode,
 }) => {
   'id': id,
   'type': 'transactions',
@@ -268,6 +270,8 @@ Map<String, Object?> transactionItem({
         'tags': tags,
         'currency_symbol': '€',
         'currency_code': 'EUR',
+        'foreign_amount': foreignAmount,
+        'foreign_currency_code': foreignCurrencyCode,
         'reconciled': reconciled,
       },
     ],

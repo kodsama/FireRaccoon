@@ -297,6 +297,19 @@ credit card is not one of these: `store_reconciliation` builds that payback from
 the purchases it settles, which is what keeps the group title and the per-leg
 links identical to what the app writes.
 
+### Writing across two currencies
+
+A transfer between accounts holding different currencies needs both figures, and
+Firefly refuses the write with a 422 on `foreign_amount` when only one is given.
+Pass `foreign_amount`, and `foreign_currency_code` when it is not the receiving
+account's own.
+
+`duplicate_transaction` carries both sides of the original. It refuses an
+`amount` override on a transaction that has a foreign amount unless
+`foreign_amount` comes with it: the rate cannot be read off the local figure,
+carrying the old one over would pair this month's amount with last month's rate,
+and scaling it would invent a rate and record it as fact.
+
 ## Managing keys
 
 Server mode exposes the same operations over HTTP, authenticated with a normal session:
