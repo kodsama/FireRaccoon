@@ -22,6 +22,9 @@ class TransactionsRouteFilters {
   final bool reconcile;
   final ReconciledFilter reconciledFilter;
 
+  /// Bookkeeping gaps the list is narrowed to, empty for no narrowing.
+  final Set<TransactionField> missingFields;
+
   const TransactionsRouteFilters({
     this.category,
     this.period = ExpensePeriod.month,
@@ -34,6 +37,7 @@ class TransactionsRouteFilters {
     this.defaultDashboardPeriod = kDefaultDashboardPeriod,
     this.reconcile = false,
     this.reconciledFilter = ReconciledFilter.all,
+    this.missingFields = const {},
   });
 
   bool get hasCustomDateRange => from != null || to != null;
@@ -91,6 +95,7 @@ class TransactionsRoute {
     String? to,
     bool reconcile = false,
     ReconciledFilter reconciledFilter = ReconciledFilter.all,
+    Set<TransactionField> missingFields = const {},
     DashboardPeriod defaultDashboardPeriod = kDefaultDashboardPeriod,
   }) {
     final defaultParams = expenseParamsFromDashboardPeriod(
@@ -144,6 +149,14 @@ class TransactionsRoute {
       'reconciled_filter': reconciledFilter != ReconciledFilter.all
           ? reconciledFilter.name
           : null,
+      // Stable order so the same selection always makes the same link.
+      'missing': missingFields.isEmpty
+          ? null
+          : (TransactionField.values
+                    .where(missingFields.contains)
+                    .map((field) => field.name)
+                    .toList())
+                .join(','),
     });
   }
 
@@ -173,6 +186,7 @@ class TransactionsRoute {
       ReconciledFilter.values,
       ReconciledFilter.all,
     );
+    final missingFields = missingFieldsFromUri(uri);
 
     if (!hasPeriodParam && !hasCustomDates) {
       return TransactionsRouteFilters(
@@ -192,6 +206,7 @@ class TransactionsRoute {
         defaultDashboardPeriod: defaultDashboardPeriod,
         reconcile: RouteQuery.param(uri, 'reconcile') == '1',
         reconciledFilter: reconciledFilter,
+        missingFields: missingFields,
       );
     }
 
@@ -217,6 +232,7 @@ class TransactionsRoute {
       defaultDashboardPeriod: defaultDashboardPeriod,
       reconcile: RouteQuery.param(uri, 'reconcile') == '1',
       reconciledFilter: reconciledFilter,
+      missingFields: missingFields,
     );
   }
 
@@ -227,6 +243,19 @@ class TransactionsRoute {
 
   static List<String> accountsFrom(GoRouterState state) =>
       accountsFromUri(state.uri);
+
+  /// Bookkeeping gaps named in `missing`, ignoring anything unrecognised.
+  ///
+  /// A stale link naming a field that no longer exists narrows the list less
+  /// than asked rather than failing to open at all.
+  static Set<TransactionField> missingFieldsFromUri(Uri uri) {
+    final raw = RouteQuery.param(uri, 'missing');
+    if (raw == null || raw.trim().isEmpty) return const {};
+    final byName = {
+      for (final field in TransactionField.values) field.name: field,
+    };
+    return {for (final name in raw.split(',')) ?byName[name.trim()]};
+  }
 
   static List<String> accountsFromUri(Uri uri) {
     final raw = RouteQuery.param(uri, 'accounts');

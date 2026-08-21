@@ -35,8 +35,9 @@ flutter analyze || fail "flutter analyze reported issues"
 
 section "4/5  tests"
 ( cd packages/engine && dart test --coverage=coverage ) || fail "engine tests failed"
-dart test packages/mcp || fail "mcp tests failed"
-( cd packages/app_backend && dart test ) || fail "app_backend tests failed"
+( cd packages/mcp && dart test --coverage=coverage ) || fail "mcp tests failed"
+( cd packages/app_backend && dart test --coverage=coverage ) \
+  || fail "app_backend tests failed"
 flutter test --coverage || fail "flutter tests failed"
 
 section "5/5  coverage gate"

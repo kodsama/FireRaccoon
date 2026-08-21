@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fireracoon/l10n/app_localizations_en.dart';
-import 'package:fireracoon/models/transaction.dart';
 import 'package:fireracoon/providers/data_providers.dart';
 import 'package:fireracoon/utils/locale_formatting.dart';
 import 'package:fireracoon/utils/transaction_list_grouping.dart';
+import 'package:fireracoon_engine/fireracoon_engine.dart';
 
 Transaction _tx({
   required String id,
@@ -217,9 +217,151 @@ void main() {
         );
 
         expect(result.filteredTransactions, hasLength(3));
-        expect(result.futureTransactions.map((t) => t.id), ['f3', 'f2', 'f1']);
+        // Newest first, the direction the dated groups below already use.
+        // Regression: the future block sorted the other way, so the list
+        // reversed itself where that block began.
+        expect(result.futureTransactions.map((t) => t.id), ['f1', 'f2', 'f3']);
         expect(result.groups, isEmpty);
       },
     );
+
+    test('narrows to rows missing a field when asked', () {
+      final tagged = Transaction(
+        id: 'tagged',
+        type: 'withdrawal',
+        date: DateTime(2026, 6, 2),
+        amount: 10,
+        description: 'Test',
+        sourceName: 'Checking',
+        destinationName: 'Groceries',
+        categoryName: 'Food',
+        currencySymbol: '\u20ac',
+        currencyCode: 'EUR',
+        tags: const ['weekly'],
+      );
+      final untagged = Transaction(
+        id: 'untagged',
+        type: 'withdrawal',
+        date: DateTime(2026, 6, 3),
+        amount: 10,
+        description: 'Test',
+        sourceName: 'Checking',
+        destinationName: 'Groceries',
+        categoryName: 'Food',
+        currencySymbol: '\u20ac',
+        currencyCode: 'EUR',
+      );
+
+      final filtered = buildTransactionListGroups(
+        transactions: [tagged, untagged],
+        activeAccountFilters: {},
+        searchQuery: '',
+        groupType: TransactionGroupType.date,
+        format: format,
+        l10n: l10n,
+        referenceDate: DateTime(2026, 7, 9),
+        missingFields: const {TransactionField.tags},
+      );
+
+      expect(filtered.filteredTransactions.map((t) => t.id), ['untagged']);
+
+      // No field asked for narrows nothing, rather than everything.
+      final unfiltered = buildTransactionListGroups(
+        transactions: [tagged, untagged],
+        activeAccountFilters: {},
+        searchQuery: '',
+        groupType: TransactionGroupType.date,
+        format: format,
+        l10n: l10n,
+        referenceDate: DateTime(2026, 7, 9),
+      );
+      expect(unfiltered.filteredTransactions, hasLength(2));
+    });
+
+    test('groups future transactions by month, newest first', () {
+      final result = buildTransactionListGroups(
+        transactions: [
+          _tx(id: 'aug1', date: DateTime(2026, 8, 25), amount: 100),
+          _tx(id: 'aug2', date: DateTime(2026, 8, 28), amount: 50),
+          _tx(id: 'sep', date: DateTime(2026, 9, 10), amount: 30),
+        ],
+        activeAccountFilters: {},
+        searchQuery: '',
+        groupType: TransactionGroupType.date,
+        format: format,
+        l10n: l10n,
+        referenceDate: DateTime(2026, 8, 21),
+        sumAccount: 'Checking',
+      );
+
+      expect(result.futureGroups.map((g) => g.key), [
+        'September 2026',
+        'August 2026',
+      ]);
+      expect(result.futureGroups.first.transactions.map((t) => t.id), ['sep']);
+      expect(result.futureGroups.last.transactions.map((t) => t.id), [
+        'aug2',
+        'aug1',
+      ]);
+      // Withdrawals leave the account they are summed against.
+      expect(result.futureGroups.last.sum, -150);
+      expect(result.futureGroups.first.sum, -30);
+    });
+
+    test('groups the future by month whatever the grouping in use', () {
+      // The block answers what the balance will be as each month closes, which
+      // grouping by payee would not.
+      final result = buildTransactionListGroups(
+        transactions: [_tx(id: 'f', date: DateTime(2026, 9, 10))],
+        activeAccountFilters: {},
+        searchQuery: '',
+        groupType: TransactionGroupType.payee,
+        format: format,
+        l10n: l10n,
+        referenceDate: DateTime(2026, 8, 21),
+      );
+
+      expect(result.futureGroups.single.key, 'September 2026');
+    });
+  });
+
+  group('expectedBalanceByFutureMonth', () {
+    test('carries each month forward from the opening balance', () {
+      final groups = buildTransactionListGroups(
+        transactions: [
+          _tx(id: 'aug', date: DateTime(2026, 8, 25), amount: 100),
+          _tx(id: 'sep', date: DateTime(2026, 9, 10), amount: 30),
+          _tx(id: 'oct', date: DateTime(2026, 10, 5), amount: 20),
+        ],
+        activeAccountFilters: {},
+        searchQuery: '',
+        groupType: TransactionGroupType.date,
+        format: format,
+        l10n: l10n,
+        referenceDate: DateTime(2026, 8, 21),
+        sumAccount: 'Checking',
+      ).futureGroups;
+
+      final expected = expectedBalanceByFutureMonth(
+        openingBalance: 1000,
+        futureGroups: groups,
+      );
+
+      // Walked in calendar order even though the groups arrive newest first,
+      // so each month carries everything before it.
+      expect(expected['August 2026'], 900);
+      expect(expected['September 2026'], 870);
+      expect(expected['October 2026'], 850);
+    });
+
+    test('has nothing to report without future months', () {
+      expect(
+        expectedBalanceByFutureMonth(
+          openingBalance: 10,
+          futureGroups: const [],
+        ),
+        isEmpty,
+      );
+    });
   });
 }

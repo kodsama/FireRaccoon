@@ -58,8 +58,9 @@ restarts unlock automatically; users only enter their account password.
 - **Theming** light/dark, Classic / Spectrum / Raccoon palettes (six accents
   each), Comfortaa + Roboto Slab
 - **Locales** English, French, Swedish, Portuguese, Japanese, Chinese
-- **MCP server** accounts, transactions, budgets, projections, and dashboard
-  KPIs for LLM clients (desktop embeds it; mobile and web do not)
+- **MCP server** accounts, transactions, budgets, projections, dashboard KPIs,
+  and bank statement matching for LLM clients (desktop embeds it; mobile and web
+  do not)
 
 ## Quick start
 
@@ -118,10 +119,20 @@ Replace `CHANGE_ME_*` secrets on full stacks. Guide:
 
 Agents should use the MCP server rather than scraping the UI. Stdio for
 Cursor/CLI; TCP when the desktop app is running (see Settings for the bound
-port and token).
+port). Agents authenticate with a FireRacoon agent key issued in Settings under
+MCP, never with your Firefly III token. A key acts as the person who created it,
+so a viewer's key gets read-only tools; `get_capabilities` names the person the
+presented key resolved to.
+
+For bank imports, `find_account` resolves raw statement text to an account by
+account number or IBAN before it considers any name, and `match_statement` pairs
+statement rows against the split legs already recorded, flagging the ones where a
+charge written ahead from an estimate drifted from what the bank actually took.
+Both are read-only and hand back the arithmetic behind every verdict, so writing
+to the ledger stays a separate call.
 
 ```bash
-FIREFLY_URL=http://localhost:8082/firefly-local FIREFLY_TOKEN=... \
+FIRERACOON_URL=https://fireracoon.example FIRERACOON_API_KEY=frcn_... \
   dart run packages/mcp/bin/fireracoon_mcp.dart
 ```
 

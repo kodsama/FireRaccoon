@@ -1,14 +1,19 @@
+import 'dart:convert';
 import 'dart:io';
 
+import 'package:fireracoon/deployment/deployment_providers.dart';
+import 'package:fireracoon/deployment/fireracoon_mode.dart';
 import 'package:fireracoon/models/account_prognosis.dart';
 import 'package:fireracoon/models/people_models.dart';
 import 'package:fireracoon/models/settings_bundle.dart';
 import 'package:fireracoon/providers/account_classification_provider.dart';
+import 'package:fireracoon/providers/agent_keys_provider.dart';
 import 'package:fireracoon/providers/auth_provider.dart';
 import 'package:fireracoon/providers/default_period_provider.dart';
 import 'package:fireracoon/providers/locale_provider.dart';
 import 'package:fireracoon/providers/people_providers.dart';
 import 'package:fireracoon/providers/prognosis_settings_provider.dart';
+import 'package:fireracoon/providers/server_session_provider.dart';
 import 'package:fireracoon/providers/settings_export_import_provider.dart';
 import 'package:fireracoon/providers/theme_provider.dart';
 import 'package:fireracoon/providers/tight_rows_columns_provider.dart';
@@ -16,8 +21,10 @@ import 'package:fireracoon/providers/transaction_page_size_provider.dart';
 import 'package:fireracoon/providers/undo_history_provider.dart';
 import 'package:fireracoon/providers/view_mode_provider.dart';
 import 'package:fireracoon/providers/write_ahead_provider.dart';
+import 'package:fireracoon/store/remote_server_client.dart';
 import 'package:fireracoon/theme/app_colors.dart';
 import 'package:fireracoon/theme/theme_palette.dart';
+import 'package:fireracoon/utils/password_policy.dart';
 import 'package:fireracoon_engine/utils/dashboard_period.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -26,6 +33,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -133,7 +142,9 @@ void main() {
           ),
         );
 
-    final bundle = container.read(settingsExportImportProvider).buildBundle();
+    final bundle = await container
+        .read(settingsExportImportProvider)
+        .buildBundle();
     expect(bundle.schemaVersion, kSettingsBundleSchemaVersion);
     expect(bundle.device['themeMode'], 'dark');
     expect(bundle.device['locale'], 'ja');
@@ -153,6 +164,39 @@ void main() {
     expect(bundle.transactionColumns, isNotNull);
   });
 
+  test('an exported bundle carries no agent key material', () async {
+    final container = await buildContainer();
+    addTearDown(container.dispose);
+    await waitHydrated(container);
+    await container
+        .read(peopleProvider.notifier)
+        .addPerson(name: 'Alex', colorValue: 0xFF3B82F6);
+    await container.read(agentKeysProvider.future);
+    final secret = await container
+        .read(agentKeysProvider.notifier)
+        .issue('Claude Desktop');
+    final record = container
+        .read(agentKeysProvider.notifier)
+        .localRecords
+        .single;
+
+    final bundle = await container
+        .read(settingsExportImportProvider)
+        .buildBundle();
+    final encoded = await bundle.encodeSealed(passphrase);
+
+    // Keys live in the keychain or the sealed store and go nowhere else: a
+    // backup file is a copy someone can carry off the machine.
+    for (final material in [secret, record.hash, record.id]) {
+      expect(
+        encoded,
+        isNot(contains(material)),
+        reason: 'agent key material must not reach a settings backup',
+      );
+      expect(bundle.toString(), isNot(contains(material)));
+    }
+  });
+
   test('applyBundle overwrites people and device settings', () async {
     final container = await buildContainer();
     addTearDown(container.dispose);
@@ -162,7 +206,9 @@ void main() {
         .read(peopleProvider.notifier)
         .addPerson(name: 'Local', colorValue: 0xFF3B82F6);
 
-    final existing = container.read(settingsExportImportProvider).buildBundle();
+    final existing = await container
+        .read(settingsExportImportProvider)
+        .buildBundle();
     final bundle = SettingsBundle(
       schemaVersion: kSettingsBundleSchemaVersion,
       exportedAtIso: '2026-08-04T00:00:00.000Z',
@@ -259,7 +305,7 @@ void main() {
       );
       await notifier.setRequirePasswordLogin(true);
 
-      final exported = container
+      final exported = await container
           .read(settingsExportImportProvider)
           .buildBundle();
       expect(exported.needsSecretsPassphrase, isTrue);
@@ -398,5 +444,376 @@ void main() {
     final decoded = img.decodeImage(normalized)!;
     expect(decoded.width, kAvatarStoredEdge);
     expect(decoded.height, kAvatarStoredEdge);
+  });
+
+  group('server mode backup secrets', () {
+    Future<ProviderContainer> buildServerContainer({
+      required http.Client httpClient,
+      String? sessionToken = 'sess',
+    }) async {
+      final prefs = await SharedPreferences.getInstance();
+      if (sessionToken != null) {
+        FlutterSecureStoragePlatform.instance =
+            TestFlutterSecureStoragePlatform({
+              'serverSessionToken': sessionToken,
+            });
+      } else {
+        FlutterSecureStoragePlatform.instance =
+            TestFlutterSecureStoragePlatform({});
+      }
+      final client = RemoteServerClient(
+        baseUrl: 'http://example.test',
+        sessionToken: sessionToken,
+        httpClient: httpClient,
+      );
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          deploymentConfigProvider.overrideWithValue(
+            const DeploymentConfig(
+              mode: FireracoonMode.server,
+              apiBase: 'http://example.test',
+            ),
+          ),
+          authProvider.overrideWith(
+            () => AuthNotifier(storage: const FlutterSecureStorage()),
+          ),
+          serverSessionProvider.overrideWith(
+            () => ServerSessionNotifier(
+              storage: const FlutterSecureStorage(),
+              clientFactory: (_) => client,
+            ),
+          ),
+          peopleProvider.overrideWith(
+            () => PeopleNotifier(
+              storage: const FlutterSecureStorage(),
+              biometricAuth: FakeBiometricAuth(),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(serverSessionProvider.future);
+      return container;
+    }
+
+    Map<String, dynamic> serverState() => {
+      'storeLocked': false,
+      'storeExists': true,
+      'setupRequired': false,
+      'me': {'id': 'admin_1', 'name': 'Alex', 'role': 'admin'},
+      'people': [
+        {
+          'id': 'admin_1',
+          'name': 'Alex',
+          'role': 'admin',
+          'hasPassword': true,
+          'createdAt': '2026-08-01T00:00:00.000Z',
+        },
+      ],
+      'accountOwnerships': const <dynamic>[],
+      'requirePasswordLogin': true,
+    };
+
+    test(
+      'buildBundle seals PAT and portable hashes from backup-secrets',
+      () async {
+        SharedPreferences.setMockInitialValues({});
+        final container = await buildServerContainer(
+          httpClient: MockClient((request) async {
+            if (request.url.path.endsWith('/api/capabilities')) {
+              return http.Response(
+                jsonEncode({
+                  'storeLocked': false,
+                  'storeExists': true,
+                  'setupRequired': false,
+                }),
+                200,
+              );
+            }
+            if (request.url.path.endsWith('/api/state/backup-secrets')) {
+              return http.Response(
+                jsonEncode({
+                  'ok': true,
+                  'firefly': {
+                    'url': 'https://firefly.example',
+                    'token': 'ff-token-secret',
+                    'allowInsecure': true,
+                  },
+                  'requirePasswordLogin': true,
+                  'peopleAuth': {
+                    'admin_1': {
+                      'passwordHash': 'portable-hash',
+                      'salt': 'portable-salt',
+                    },
+                  },
+                }),
+                200,
+              );
+            }
+            if (request.url.path.endsWith('/api/state')) {
+              return http.Response(jsonEncode(serverState()), 200);
+            }
+            return http.Response('{}', 200);
+          }),
+        );
+        await waitHydrated(container);
+        await container
+            .read(peopleProvider.notifier)
+            .syncFromServerStore(loggedInPersonId: 'admin_1');
+
+        final bundle = await container
+            .read(settingsExportImportProvider)
+            .buildBundle();
+        expect(bundle.needsSecretsPassphrase, isTrue);
+        expect(bundle.firefly?.serverUrl, 'https://firefly.example');
+        expect(bundle.firefly?.apiToken, 'ff-token-secret');
+        expect(bundle.firefly?.allowInsecure, isTrue);
+        expect(bundle.people.requirePasswordLogin, isTrue);
+        expect(bundle.people.people.single.passwordHash, 'portable-hash');
+        expect(bundle.people.people.single.salt, 'portable-salt');
+      },
+    );
+
+    test('buildBundle clears passwords when peopleAuth is missing', () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = await buildServerContainer(
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state/backup-secrets')) {
+            return http.Response(
+              jsonEncode({
+                'ok': true,
+                'firefly': {
+                  'url': 'https://firefly.example',
+                  'token': 'ff-token-secret',
+                },
+                'requirePasswordLogin': false,
+                'peopleAuth': 'not-a-map',
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state')) {
+            return http.Response(jsonEncode(serverState()), 200);
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+      await waitHydrated(container);
+      await container
+          .read(peopleProvider.notifier)
+          .syncFromServerStore(loggedInPersonId: 'admin_1');
+
+      final bundle = await container
+          .read(settingsExportImportProvider)
+          .buildBundle();
+      expect(bundle.people.people.single.hasPassword, isFalse);
+      expect(bundle.people.requirePasswordLogin, isFalse);
+    });
+
+    test('buildBundle accepts passwordSalt and drops placeholders', () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = await buildServerContainer(
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state/backup-secrets')) {
+            return http.Response(
+              jsonEncode({
+                'ok': true,
+                'firefly': {'url': '', 'token': ''},
+                'requirePasswordLogin': true,
+                'peopleAuth': {
+                  'admin_1': {
+                    'passwordHash': 'portable-hash',
+                    'passwordSalt': 'portable-salt',
+                  },
+                  'other': {'passwordHash': 'server', 'salt': 'server'},
+                  'missing': 'not-a-map',
+                },
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state')) {
+            return http.Response(
+              jsonEncode({
+                ...serverState(),
+                'people': [
+                  ...serverState()['people'] as List,
+                  {
+                    'id': 'other',
+                    'name': 'Other',
+                    'role': 'user',
+                    'hasPassword': true,
+                    'createdAt': '2026-08-01T00:00:00.000Z',
+                  },
+                  {
+                    'id': 'missing',
+                    'name': 'Missing',
+                    'role': 'user',
+                    'hasPassword': false,
+                    'createdAt': '2026-08-01T00:00:00.000Z',
+                  },
+                ],
+              }),
+              200,
+            );
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+      await waitHydrated(container);
+      await container
+          .read(peopleProvider.notifier)
+          .syncFromServerStore(loggedInPersonId: 'admin_1');
+
+      final bundle = await container
+          .read(settingsExportImportProvider)
+          .buildBundle();
+      expect(bundle.firefly, isNull);
+      final byId = {for (final p in bundle.people.people) p.id: p};
+      expect(byId['admin_1']?.passwordHash, 'portable-hash');
+      expect(byId['admin_1']?.salt, 'portable-salt');
+      expect(byId['other']?.hasPassword, isFalse);
+      expect(byId['missing']?.hasPassword, isFalse);
+    });
+
+    test('buildBundle ignores backup-secrets fetch failures', () async {
+      SharedPreferences.setMockInitialValues({});
+      final container = await buildServerContainer(
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state/backup-secrets')) {
+            return http.Response(jsonEncode({'error': 'forbidden'}), 403);
+          }
+          if (request.url.path.endsWith('/api/state')) {
+            return http.Response(jsonEncode(serverState()), 200);
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+      await waitHydrated(container);
+
+      final bundle = await container
+          .read(settingsExportImportProvider)
+          .buildBundle();
+      expect(bundle.firefly, isNull);
+      expect(bundle.needsSecretsPassphrase, isFalse);
+    });
+
+    test('applyBundle pushes Firefly PAT to the server', () async {
+      SharedPreferences.setMockInitialValues({});
+      Map<String, dynamic>? putFireflyBody;
+      Map<String, dynamic>? putPeopleBody;
+      final container = await buildServerContainer(
+        httpClient: MockClient((request) async {
+          if (request.url.path.endsWith('/api/capabilities')) {
+            return http.Response(
+              jsonEncode({
+                'storeLocked': false,
+                'storeExists': true,
+                'setupRequired': false,
+              }),
+              200,
+            );
+          }
+          if (request.url.path.endsWith('/api/state')) {
+            return http.Response(jsonEncode(serverState()), 200);
+          }
+          if (request.url.path.endsWith('/api/state/firefly')) {
+            putFireflyBody = jsonDecode(request.body) as Map<String, dynamic>;
+            return http.Response(jsonEncode({'ok': true}), 200);
+          }
+          if (request.url.path.endsWith('/api/state/people')) {
+            putPeopleBody = jsonDecode(request.body) as Map<String, dynamic>;
+            final people = (putPeopleBody!['people'] as List)
+                .cast<Map<String, dynamic>>();
+            return http.Response(
+              jsonEncode({
+                ...serverState(),
+                'people': people
+                    .map(
+                      (p) => {
+                        ...p,
+                        'hasPassword': true,
+                        'createdAt':
+                            p['createdAt'] ?? '2026-08-01T00:00:00.000Z',
+                      },
+                    )
+                    .toList(),
+              }),
+              200,
+            );
+          }
+          return http.Response('{}', 200);
+        }),
+      );
+      await waitHydrated(container);
+
+      final hashed = hashPassword('Correct-Horse9!');
+      await container
+          .read(settingsExportImportProvider)
+          .applyBundle(
+            SettingsBundle(
+              schemaVersion: kSettingsBundleSchemaVersion,
+              exportedAtIso: '2026-08-04T00:00:00.000Z',
+              device: const {},
+              people: SettingsPeopleBundle(
+                people: [
+                  Person(
+                    id: 'admin_1',
+                    name: 'Alex',
+                    colorValue: 0xFF1565C0,
+                    role: PersonRole.admin,
+                    passwordHash: hashed.hash,
+                    salt: hashed.salt,
+                    createdAtIso: '2026-08-01T00:00:00.000Z',
+                  ),
+                ],
+                requirePasswordLogin: true,
+              ),
+              firefly: const SettingsFireflyBundle(
+                serverUrl: 'https://imported.example',
+                apiToken: 'imported-token',
+                allowInsecure: true,
+              ),
+            ),
+          );
+
+      expect(putFireflyBody?['url'], 'https://imported.example');
+      expect(putFireflyBody?['token'], 'imported-token');
+      expect(putFireflyBody?['allowInsecure'], isTrue);
+      expect(putPeopleBody?['authImports'], isA<Map<String, dynamic>>());
+      final authImports = putPeopleBody!['authImports'] as Map<String, dynamic>;
+      expect(authImports['admin_1'], isA<Map<String, dynamic>>());
+    });
   });
 }

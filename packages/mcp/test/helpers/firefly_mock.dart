@@ -43,6 +43,8 @@ Map<String, Object?> assetAccountsBody({String balance = '2500.00'}) => {
         'name': 'Checking',
         'type': 'asset',
         'account_role': 'defaultAsset',
+        'iban': 'SE4100000000001234567890',
+        'account_number': '123456789',
         'current_balance': balance,
         'currency_symbol': '€',
         'currency_code': 'EUR',
@@ -74,6 +76,46 @@ Map<String, Object?> liabilityAccountsBody() => {
   },
 };
 
+/// Payees: in Firefly an expense account is who you paid.
+Map<String, Object?> expenseAccountsBody() => {
+  'data': [
+    {
+      'id': '20',
+      'type': 'accounts',
+      'attributes': {
+        'name': 'BOLANEBANKEN',
+        'type': 'expense',
+        'current_balance': '0.00',
+        'currency_symbol': '\u20ac',
+        'currency_code': 'EUR',
+      },
+    },
+  ],
+  'meta': {
+    'pagination': {'total_pages': 1},
+  },
+};
+
+/// Payers: a revenue account is who paid you.
+Map<String, Object?> revenueAccountsBody() => {
+  'data': [
+    {
+      'id': '30',
+      'type': 'accounts',
+      'attributes': {
+        'name': 'Employer',
+        'type': 'revenue',
+        'current_balance': '0.00',
+        'currency_symbol': '\u20ac',
+        'currency_code': 'EUR',
+      },
+    },
+  ],
+  'meta': {
+    'pagination': {'total_pages': 1},
+  },
+};
+
 Map<String, Object?> budgetsBody() => {
   'data': [
     {
@@ -93,6 +135,100 @@ Map<String, Object?> budgetsBody() => {
   ],
 };
 
+/// `{'data': {'id': …, 'attributes': {key: name}}}`, the shape Firefly uses for
+/// categories (`name`) and tags (`tag`).
+Map<String, Object?> namedEnvelope(
+  String id,
+  String name, {
+  String key = 'name',
+}) => {
+  'data': {
+    'id': id,
+    'attributes': {key: name},
+  },
+};
+
+Map<String, Object?> budgetLimitEnvelope({String amount = '400.00'}) => {
+  'data': {
+    'id': '11',
+    'attributes': {
+      'budget_id': '3',
+      'start': '2026-01-01',
+      'end': '2026-01-31',
+      'amount': amount,
+      'currency_code': 'EUR',
+      'currency_symbol': '€',
+    },
+  },
+};
+
+Map<String, Object?> billEnvelope({String name = 'Rent'}) => {
+  'data': {
+    'id': '9',
+    'attributes': {
+      'name': name,
+      'amount_min': '1200.00',
+      'amount_max': '1250.00',
+      'amount_avg': '1225.00',
+      'currency_code': 'EUR',
+      'currency_symbol': '€',
+      'date': '2026-03-01',
+      'repeat_freq': 'monthly',
+      'active': true,
+    },
+  },
+};
+
+Map<String, Object?> piggyEnvelope({String name = 'New Laptop'}) => {
+  'data': {
+    'id': '4',
+    'attributes': {
+      'name': name,
+      'target_amount': '2500.00',
+      'current_amount': '100.00',
+      'currency_code': 'EUR',
+      'currency_symbol': '€',
+      'start_date': '2026-01-01T00:00:00+00:00',
+      'accounts': [
+        {'account_id': '5', 'name': 'Checking', 'current_amount': '100.00'},
+      ],
+    },
+  },
+};
+
+Map<String, Object?> recurrenceEnvelope({String title = 'Salary'}) => {
+  'data': {
+    'id': '12',
+    'attributes': {
+      'type': 'withdrawal',
+      'title': title,
+      'first_date': '2026-09-01',
+      'repeat_until': '2027-09-01',
+      'active': true,
+      'apply_rules': true,
+      'repetitions': [
+        {'type': 'monthly', 'moment': '1', 'skip': 0, 'weekend': 1},
+      ],
+      'transactions': [
+        {
+          'id': '55',
+          'description': 'Rent payment',
+          'amount': '1200.00',
+          'currency_code': 'EUR',
+          'currency_symbol': '€',
+          'source_id': '5',
+          'source_name': 'Joint Current',
+          'destination_id': '9',
+          'destination_name': 'Landlord',
+          'category_name': 'Housing',
+          'budget_name': 'Fixed costs',
+          'tags': ['standing'],
+        },
+      ],
+    },
+  },
+};
+
 Map<String, Object?> transactionItem({
   String id = '1',
   String type = 'withdrawal',
@@ -101,6 +237,12 @@ Map<String, Object?> transactionItem({
   String description = 'Groceries',
   String sourceName = 'Checking',
   String destinationName = 'Store',
+  String? sourceId,
+  String? destinationId,
+  String? budgetName,
+  String? billName,
+  String? notes,
+  List<String> tags = const [],
   bool reconciled = false,
 }) => {
   'id': id,
@@ -112,9 +254,18 @@ Map<String, Object?> transactionItem({
         'date': date,
         'amount': amount,
         'description': description,
+        'source_id': sourceId,
         'source_name': sourceName,
+        'destination_id': destinationId,
         'destination_name': destinationName,
+        'category_id': '7',
         'category_name': 'Food',
+        'budget_id': budgetName == null ? null : '3',
+        'budget_name': budgetName,
+        'bill_id': billName == null ? null : '4',
+        'bill_name': billName,
+        'notes': notes,
+        'tags': tags,
         'currency_symbol': '€',
         'currency_code': 'EUR',
         'reconciled': reconciled,
@@ -148,11 +299,23 @@ Map<String, Object?> transactionEnvelope(Map<String, Object?> item) => {
 
 MockClient fireflyMockClient({
   bool aboutOk = true,
+  bool collidingNames = false,
   bool heavySpending = false,
   Map<String, Map<String, Object?>> transactionOverrides = const {},
+  List<Uri>? record,
+  List<String>? recordBodies,
 }) {
   final transactions = <String, Map<String, Object?>>{
-    '1': transactionItem(id: '1', reconciled: false),
+    '1': transactionItem(
+      id: '1',
+      reconciled: false,
+      sourceId: '5',
+      destinationId: '9',
+      budgetName: 'Housekeeping',
+      billName: 'Weekly shop',
+      notes: 'bank text: ICA SUPERMARKET',
+      tags: ['groceries', 'shared'],
+    ),
     '2': transactionItem(
       id: '2',
       type: 'deposit',
@@ -187,6 +350,8 @@ MockClient fireflyMockClient({
   };
 
   return MockClient((request) async {
+    record?.add(request.url);
+    if (request.body.isNotEmpty) recordBodies?.add(request.body);
     final path = request.url.path;
     final method = request.method;
 
@@ -205,6 +370,35 @@ MockClient fireflyMockClient({
       return http.Response('', 204);
     }
     if (path == '/api/v1/accounts' &&
+        collidingNames &&
+        request.url.queryParameters['type'] == 'asset') {
+      // Two accounts whose folded names share a prefix, so no single candidate
+      // can honestly come back exact.
+      return jsonHttpResponse({
+        'data': [
+          for (final row in [
+            ('40', 'Sparkonto Alfa'),
+            ('41', 'Sparkonto Beta'),
+          ])
+            {
+              'id': row.$1,
+              'type': 'accounts',
+              'attributes': {
+                'name': row.$2,
+                'type': 'asset',
+                'account_role': 'savingAsset',
+                'current_balance': '1.00',
+                'currency_symbol': '€',
+                'currency_code': 'EUR',
+              },
+            },
+        ],
+        'meta': {
+          'pagination': {'total_pages': 1},
+        },
+      });
+    }
+    if (path == '/api/v1/accounts' &&
         request.url.queryParameters['type'] == 'asset') {
       return jsonHttpResponse(
         assetAccountsBody(balance: heavySpending ? '1000.00' : '2500.00'),
@@ -214,13 +408,175 @@ MockClient fireflyMockClient({
         request.url.queryParameters['type'] == 'liability') {
       return jsonHttpResponse(liabilityAccountsBody());
     }
-    if (path == '/api/v1/budgets') {
+    if (path == '/api/v1/accounts' &&
+        request.url.queryParameters['type'] == 'expense') {
+      return jsonHttpResponse(expenseAccountsBody());
+    }
+    if (path == '/api/v1/accounts' &&
+        request.url.queryParameters['type'] == 'revenue') {
+      return jsonHttpResponse(revenueAccountsBody());
+    }
+    if (path == '/api/v1/budgets' && method != 'POST') {
       return jsonHttpResponse(budgetsBody());
     }
     if (path == '/api/v1/budgets/3/transactions') {
       return jsonHttpResponse(
         transactionsPageBody(items: [transactions['1']!]),
       );
+    }
+    if (path == '/api/v1/search/transactions') {
+      return jsonHttpResponse(
+        transactionsPageBody(items: [transactions['1']!]),
+      );
+    }
+    if (path == '/api/v1/chart/balance/balance') {
+      return jsonHttpResponse([
+        {
+          'label': 'Checking',
+          'entries': {'2026-01-01': '100', '2026-02-01': '250'},
+        },
+      ]);
+    }
+    if (path == '/api/v1/accounts' && method == 'POST') {
+      final body = jsonDecode(request.body) as Map<String, dynamic>;
+      return jsonHttpResponse({
+        'data': {
+          'id': 'new-account',
+          'attributes': {
+            'name': body['name'],
+            'type': body['type'],
+            'account_role': body['account_role'],
+            'liability_type': body['liability_type'],
+            'liability_direction': body['liability_direction'],
+            'current_balance': '0.00',
+            'currency_code': body['currency_code'] ?? 'EUR',
+            'currency_symbol': '€',
+            'active': true,
+          },
+        },
+      }, status: 201);
+    }
+    if (path == '/api/v1/budgets' && method == 'POST') {
+      final data = budgetsBody()['data']! as List<Object?>;
+      return jsonHttpResponse(
+        transactionEnvelope(data.first as Map<String, Object?>),
+        status: 201,
+      );
+    }
+    if (path == '/api/v1/budgets/3/limits') {
+      if (method == 'POST') {
+        return jsonHttpResponse(budgetLimitEnvelope(), status: 201);
+      }
+      return jsonHttpResponse({
+        'data': [budgetLimitEnvelope()['data']],
+      });
+    }
+    if (path == '/api/v1/budgets/3/limits/11' && method == 'PUT') {
+      return jsonHttpResponse(budgetLimitEnvelope(amount: '450.00'));
+    }
+    if (path == '/api/v1/categories') {
+      if (method == 'POST') {
+        return jsonHttpResponse(namedEnvelope('c1', 'Groceries'), status: 201);
+      }
+      return jsonHttpResponse({
+        'data': [namedEnvelope('c1', 'Food')['data']],
+      });
+    }
+    if (path.startsWith('/api/v1/categories/')) {
+      if (method == 'DELETE') return http.Response('', 204);
+      return jsonHttpResponse(namedEnvelope('c1', 'Renamed'));
+    }
+    if (path == '/api/v1/tags') {
+      if (method == 'POST') {
+        return jsonHttpResponse(
+          namedEnvelope('t1', 'shared', key: 'tag'),
+          status: 201,
+        );
+      }
+      return jsonHttpResponse({
+        'data': [namedEnvelope('t1', 'urgent', key: 'tag')['data']],
+      });
+    }
+    if (path.startsWith('/api/v1/tags/')) {
+      if (method == 'DELETE') return http.Response('', 204);
+      return jsonHttpResponse(namedEnvelope('t1', 'renamed', key: 'tag'));
+    }
+    if (path == '/api/v1/bills') {
+      if (method == 'POST') {
+        return jsonHttpResponse(billEnvelope(), status: 201);
+      }
+      return jsonHttpResponse({
+        'data': [billEnvelope()['data']],
+      });
+    }
+    if (path == '/api/v1/bills/9/transactions') {
+      return jsonHttpResponse(
+        transactionsPageBody(items: [transactions['1']!]),
+      );
+    }
+    if (path.startsWith('/api/v1/bills/')) {
+      if (method == 'DELETE') return http.Response('', 204);
+      return jsonHttpResponse(billEnvelope(name: 'Rent raised'));
+    }
+    if (path == '/api/v1/piggy-banks') {
+      if (method == 'POST') {
+        return jsonHttpResponse(piggyEnvelope(), status: 201);
+      }
+      return jsonHttpResponse({
+        'data': [piggyEnvelope()['data']],
+      });
+    }
+    if (path.startsWith('/api/v1/piggy-banks/')) {
+      if (method == 'DELETE') return http.Response('', 204);
+      return jsonHttpResponse(piggyEnvelope(name: 'Laptop 2'));
+    }
+    if (path == '/api/v1/recurrences') {
+      if (method == 'POST') {
+        return jsonHttpResponse(recurrenceEnvelope(), status: 201);
+      }
+      return jsonHttpResponse({
+        'data': [recurrenceEnvelope()['data']],
+      });
+    }
+    if (path == '/api/v1/recurrences/12/transactions') {
+      return jsonHttpResponse(
+        transactionsPageBody(items: [transactions['1']!]),
+      );
+    }
+    if (path.startsWith('/api/v1/recurrences/')) {
+      if (method == 'DELETE') return http.Response('', 204);
+      return jsonHttpResponse(recurrenceEnvelope(title: 'Salary raised'));
+    }
+    if (path == '/api/v1/currencies') {
+      return jsonHttpResponse({
+        'data': [
+          {
+            'id': '1',
+            'attributes': {
+              'code': 'EUR',
+              'name': 'Euro',
+              'symbol': '€',
+              'enabled': true,
+              'primary': true,
+            },
+          },
+        ],
+      });
+    }
+    // Single account, used by get_account and get_account_balance_at_date.
+    if (path.startsWith('/api/v1/accounts/') &&
+        !path.endsWith('/transactions') &&
+        method == 'GET') {
+      final accountId = path.split('/')[4];
+      final body = assetAccountsBody();
+      final match = (body['data'] as List)
+          .cast<Map<String, Object?>>()
+          .where((item) => item['id'] == accountId)
+          .toList();
+      if (match.isEmpty) {
+        return jsonHttpResponse({'message': 'Not found'}, status: 404);
+      }
+      return jsonHttpResponse({'data': match.first});
     }
     if (path.startsWith('/api/v1/accounts/') &&
         path.endsWith('/transactions')) {
@@ -291,6 +647,9 @@ MockClient fireflyMockClient({
       if (method == 'DELETE') {
         return http.Response('', 204);
       }
+    }
+    if (path.startsWith('/api/v1/accounts/') && method == 'DELETE') {
+      return http.Response('', 204);
     }
     if (path.startsWith('/api/v1/accounts/') && method == 'PUT') {
       final data = assetAccountsBody()['data']! as List<Object?>;

@@ -115,6 +115,7 @@ abstract class FireflyService {
     required String name,
     required String type,
     required String currencyCode,
+    String? role,
   });
   Future<Account> createLiability(LiabilityInput input);
   Future<List<Category>> getCategories();

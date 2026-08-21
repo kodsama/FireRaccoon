@@ -1,3 +1,5 @@
+import 'package:fireracoon_engine/utils/agent_key.dart' as keys;
+
 import '../crypto/passwords.dart';
 import '../crypto/sealed_store.dart';
 import 'app_state.dart';
@@ -97,15 +99,45 @@ class StateRepository {
     return person;
   }
 
+  /// Admin-only backup payload: Firefly PAT + salted password hashes.
+  ///
+  /// Used by settings export so server mode can seal the same secrets blob as
+  /// local mode. Never include this in the public `/api/state` snapshot.
+  Map<String, dynamic> backupSecretsForAdmin() {
+    final peopleAuth = <String, Map<String, String>>{};
+    for (final entry in _state.authByPersonId.entries) {
+      final raw = entry.value;
+      if (raw is! Map) continue;
+      final auth = raw.map((k, v) => MapEntry(k.toString(), v));
+      final hash = auth['passwordHash'] as String?;
+      final salt = auth['passwordSalt'] as String?;
+      if (hash == null || hash.isEmpty || salt == null || salt.isEmpty) {
+        continue;
+      }
+      peopleAuth[entry.key] = {'passwordHash': hash, 'salt': salt};
+    }
+    return {
+      'firefly': {
+        'url': _state.firefly.url,
+        'token': _state.firefly.token,
+        'allowInsecure': _state.firefly.allowInsecure,
+      },
+      'requirePasswordLogin': _state.requirePasswordLogin,
+      'peopleAuth': peopleAuth,
+    };
+  }
+
   /// Replaces people profiles, ownerships, and optional password updates.
   ///
   /// Existing password hashes are kept unless [passwordUpdates] supplies a
-  /// new plaintext password for that person id.
+  /// new plaintext password for that person id, or [authImports] supplies a
+  /// portable hash/salt pair (settings import from local or another server).
   Future<void> replacePeopleConfig({
     required List<Map<String, dynamic>> people,
     required List<Map<String, dynamic>> accountOwnerships,
     required bool requirePasswordLogin,
     Map<String, String> passwordUpdates = const {},
+    Map<String, Map<String, String>> authImports = const {},
   }) async {
     if (people.isEmpty) {
       throw ArgumentError('At least one person is required');
@@ -136,6 +168,25 @@ class StateRepository {
         final hashed = await hashPassword(plaintext);
         passwordHash = hashed.hash;
         passwordSalt = hashed.salt;
+      } else {
+        final imported = authImports[id];
+        if (imported != null) {
+          final hash = imported['passwordHash']?.trim() ?? '';
+          final salt =
+              (imported['salt'] ?? imported['passwordSalt'])?.trim() ?? '';
+          if (hash.isEmpty || salt.isEmpty) {
+            throw ArgumentError(
+              'authImports for $id needs passwordHash and salt',
+            );
+          }
+          if (hash == 'server' || salt == 'server') {
+            throw ArgumentError(
+              'authImports cannot use server password placeholders',
+            );
+          }
+          passwordHash = hash;
+          passwordSalt = salt;
+        }
       }
 
       nextPeople.add({
@@ -172,6 +223,25 @@ class StateRepository {
       throw ArgumentError('At least one admin is required');
     }
 
+    final previousHadPassword = previousAuth.values.any((value) {
+      if (value is! Map) return false;
+      return _authEntryHasPassword(
+        value.map((k, v) => MapEntry(k.toString(), v)),
+      );
+    });
+    final nextHasPassword = nextAuth.values.any((value) {
+      if (value is! Map) return false;
+      return _authEntryHasPassword(
+        value.map((k, v) => MapEntry(k.toString(), v)),
+      );
+    });
+    if (previousHadPassword && !nextHasPassword) {
+      throw ArgumentError('Cannot remove the last remaining password');
+    }
+    if (requirePasswordLogin && !nextHasPassword) {
+      throw ArgumentError('Password login requires at least one password');
+    }
+
     _state.people = nextPeople;
     _state.peopleAuth = {
       'byPersonId': nextAuth,
@@ -179,6 +249,15 @@ class StateRepository {
     };
     _state.accountOwnerships = accountOwnerships;
     await save();
+  }
+
+  static bool _authEntryHasPassword(Map<String, dynamic> auth) {
+    final hash = auth['passwordHash'];
+    final salt = auth['passwordSalt'];
+    return hash is String &&
+        hash.isNotEmpty &&
+        salt is String &&
+        salt.isNotEmpty;
   }
 
   Future<({String token, Map<String, dynamic> person})> login({
@@ -221,12 +300,25 @@ class StateRepository {
     await save();
   }
 
+  /// Resolves a bearer to its person. Accepts both credential kinds a client
+  /// may hold: a browser/app session token, or an MCP agent key.
   Map<String, dynamic>? personForSession(String? sessionToken) {
     if (sessionToken == null || sessionToken.isEmpty) return null;
     final session = _state.sessions[hashSessionToken(sessionToken)];
-    if (session is! Map) return null;
+    if (session is! Map) {
+      final identity = identityForAgentKey(sessionToken);
+      return identity == null ? null : _personById(identity.personId);
+    }
     final personId = session['personId'] as String?;
     if (personId == null) return null;
+    return _personById(personId);
+  }
+
+  String? roleForSession(String? sessionToken) {
+    return personForSession(sessionToken)?['role'] as String?;
+  }
+
+  Map<String, dynamic>? _personById(String personId) {
     final person = _state.people.cast<Map<String, dynamic>?>().firstWhere(
       (p) => p?['id'] == personId,
       orElse: () => null,
@@ -236,8 +328,163 @@ class StateRepository {
     return _publicPerson(person, auth);
   }
 
-  String? roleForSession(String? sessionToken) {
-    return personForSession(sessionToken)?['role'] as String?;
+  List<keys.AgentKey> get _agentKeys => [
+    for (final raw in _state.agentKeys) ?keys.AgentKey.fromJson(raw),
+  ];
+
+  keys.AgentKeyPerson? _keyPerson(String personId) {
+    final person = _state.people.cast<Map<String, dynamic>?>().firstWhere(
+      (p) => p?['id'] == personId,
+      orElse: () => null,
+    );
+    if (person == null) return null;
+    return keys.AgentKeyPerson(
+      id: personId,
+      name: person['name'] as String? ?? '',
+      role: person['role'] as String? ?? 'viewer',
+    );
+  }
+
+  /// Identity an MCP agent key grants, or null when it is not a valid key.
+  keys.AgentIdentity? identityForAgentKey(String? key) {
+    return keys.resolveAgentKey(key, keys: _agentKeys, person: _keyPerson);
+  }
+
+  /// Keys visible to [sessionToken]: an admin sees every key, anyone else sees
+  /// only the keys issued to them.
+  List<Map<String, dynamic>> agentKeysFor(String? sessionToken) {
+    final person = personForSession(sessionToken);
+    if (person == null) return const [];
+    final personId = person['id'] as String?;
+    final all = isAdmin(sessionToken);
+    return [
+      for (final key in _agentKeys)
+        if (all || key.personId == personId) key.toPublicJson().cast(),
+    ];
+  }
+
+  /// Reveals the secret of [keyId], or null when it is not readable.
+  ///
+  /// Owner-only, deliberately narrower than [agentKeysFor]: an admin can see
+  /// that someone else has a key and revoke it, but reading their credential is
+  /// not part of administering them. Returns null for a key issued before
+  /// secrets were retained, which has to be reissued instead.
+  String? agentKeySecret({
+    required String? sessionToken,
+    required String keyId,
+  }) {
+    final person = personForSession(sessionToken);
+    final personId = person?['id'] as String?;
+    if (personId == null) return null;
+    // An agent key must not be able to read any secret, including its own:
+    // that would let one leaked key enumerate the rest of its person's keys.
+    if (identityForAgentKey(sessionToken) != null) return null;
+    for (final key in _agentKeys) {
+      if (key.id == keyId && key.personId == personId) return key.secret;
+    }
+    return null;
+  }
+
+  /// Mints a key for the caller's own account. The secret is returned once here
+  /// and stays readable afterwards through [agentKeySecret].
+  Future<({String secret, Map<String, dynamic> key})> issueAgentKey({
+    required String? sessionToken,
+    required String label,
+  }) async {
+    final person = personForSession(sessionToken);
+    final personId = person?['id'] as String?;
+    if (personId == null) {
+      throw StateError('Unauthorized');
+    }
+    if (label.trim().isEmpty) {
+      throw ArgumentError('label is required');
+    }
+    final issued = keys.issueAgentKey(
+      personId: personId,
+      label: label,
+      id: newId(),
+      now: DateTime.now().toUtc(),
+    );
+    _state.agentKeys.add(issued.record.toJson().cast<String, dynamic>());
+    await save();
+    return (
+      secret: issued.secret,
+      key: issued.record.toPublicJson().cast<String, dynamic>(),
+    );
+  }
+
+  /// Revokes [keyId]. A person may revoke their own keys; admins may revoke any.
+  Future<bool> revokeAgentKey({
+    required String? sessionToken,
+    required String keyId,
+  }) async {
+    final person = personForSession(sessionToken);
+    final personId = person?['id'] as String?;
+    if (personId == null) return false;
+    final index = _state.agentKeys.indexWhere((raw) => raw['id'] == keyId);
+    if (index < 0) return false;
+    final owner = _state.agentKeys[index]['personId'] as String?;
+    if (owner != personId && !isAdmin(sessionToken)) return false;
+    if (_state.agentKeys[index]['revokedAt'] != null) return true;
+    _state.agentKeys[index]['revokedAt'] = DateTime.now()
+        .toUtc()
+        .toIso8601String();
+    await save();
+    return true;
+  }
+
+  /// Records that [key] was just used, if it is a valid agent key.
+  ///
+  /// Throttled by [kAgentKeyUsageInterval]: a chatty agent would otherwise
+  /// rewrite the encrypted store on every call. The in-memory record and the
+  /// store wait for the interval together, so `/api/agent-keys` can report a
+  /// stamp up to that interval old.
+  Future<void> touchAgentKey(String? key, {DateTime? now}) async {
+    final identity = identityForAgentKey(key);
+    if (identity == null) return;
+    final index = _state.agentKeys.indexWhere(
+      (raw) => raw['id'] == identity.keyId,
+    );
+    if (index < 0) return;
+
+    final at = (now ?? DateTime.now()).toUtc();
+    final previous = DateTime.tryParse(
+      _state.agentKeys[index]['lastUsedAt'] as String? ?? '',
+    );
+    if (!keys.shouldRecordAgentKeyUse(previous, at)) return;
+    _state.agentKeys[index]['lastUsedAt'] = at.toIso8601String();
+    await save();
+  }
+
+  /// Deletes a revoked key's record. A person may forget their own; admins may
+  /// forget any.
+  ///
+  /// Revoked only: dropping a live key's record would revoke it as a side
+  /// effect, and those are separate intentions.
+  Future<bool> forgetAgentKey({
+    required String? sessionToken,
+    required String keyId,
+  }) async {
+    final person = personForSession(sessionToken);
+    final personId = person?['id'] as String?;
+    if (personId == null) return false;
+    final index = _state.agentKeys.indexWhere((raw) => raw['id'] == keyId);
+    if (index < 0) return false;
+    final raw = _state.agentKeys[index];
+    if (raw['personId'] != personId && !isAdmin(sessionToken)) return false;
+    if (raw['revokedAt'] == null) return false;
+    _state.agentKeys.removeAt(index);
+    await save();
+    return true;
+  }
+
+  /// Drops the keys of a person who no longer exists, so a recycled person id
+  /// cannot inherit their agent access.
+  Future<void> pruneAgentKeys() async {
+    final ids = _state.people.map((p) => p['id']).toSet();
+    final before = _state.agentKeys.length;
+    _state.agentKeys.removeWhere((raw) => !ids.contains(raw['personId']));
+    if (_state.agentKeys.length != before) await save();
   }
 
   bool canWrite(String? sessionToken) {

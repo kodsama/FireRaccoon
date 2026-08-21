@@ -95,6 +95,7 @@ class AppServer {
       ..post('/api/logout', _logout)
       ..get('/api/me', _me)
       ..get('/api/state', _state)
+      ..get('/api/state/backup-secrets', _backupSecrets)
       ..put('/api/state/device-prefs', _putDevicePrefs)
       ..put('/api/state/classifications', _putClassifications)
       ..put('/api/state/side-menu', _putSideMenu)
@@ -105,6 +106,11 @@ class AppServer {
       ..put('/api/state/undo', _putUndo)
       ..put('/api/state/firefly', _putFirefly)
       ..put('/api/state/people', _putPeople)
+      ..get('/api/agent-keys', _listAgentKeys)
+      ..post('/api/agent-keys', _issueAgentKey)
+      ..get('/api/agent-keys/<keyId>/secret', _revealAgentKey)
+      ..delete('/api/agent-keys/<keyId>/record', _forgetAgentKey)
+      ..delete('/api/agent-keys/<keyId>', _revokeAgentKey)
       ..get('/api/avatars/<personId>', _getAvatar)
       ..put('/api/avatars/<personId>', _putAvatar)
       ..all('/api/firefly/<path|.*>', _fireflyProxyTagged)
@@ -136,12 +142,31 @@ class AppServer {
     return Pipeline()
         .addMiddleware(logRequests())
         .addMiddleware(_cors)
+        .addMiddleware(_recordAgentKeyUse)
         .addHandler(cascade.handler);
   }
 
   Future<HttpServer> serve() {
     return shelf_io.serve(handler, InternetAddress.anyIPv4, config.port);
   }
+
+  /// Stamps `lastUsedAt` on whichever agent key carried this request.
+  ///
+  /// One middleware rather than a call per handler, so the Firefly proxy counts
+  /// as use too: a long-running agent that only reads should not look idle.
+  /// Runs after the handler, so a rejected key leaves no trace.
+  Middleware get _recordAgentKeyUse => (inner) {
+    return (request) async {
+      final response = await inner(request);
+      if (isStoreLocked) return response;
+      try {
+        await repository.touchAgentKey(_session(request));
+      } on Object {
+        // A usage stamp is bookkeeping: never fail a served request over it.
+      }
+      return response;
+    };
+  };
 
   Middleware get _cors => (inner) {
     return (request) async {
@@ -317,11 +342,119 @@ class AppServer {
   Future<Response> _me(Request request) async {
     final locked = _lockedResponse();
     if (locked != null) return locked;
-    final person = repository.personForSession(_session(request));
+    final token = _session(request);
+    final person = repository.personForSession(token);
     if (person == null) {
       return _json({'ok': false, 'error': 'Unauthorized'}, status: 401);
     }
-    return _json({'ok': true, 'person': person});
+    // MCP clients authenticate here to learn which account and role their key
+    // grants before they start calling tools.
+    final identity = repository.identityForAgentKey(token);
+    return _json({
+      'ok': true,
+      'person': person,
+      if (identity != null) 'agentKeyId': identity.keyId,
+    });
+  }
+
+  Future<Response> _listAgentKeys(Request request) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    final session = _session(request);
+    if (repository.personForSession(session) == null) {
+      return _json({'ok': false, 'error': 'Unauthorized'}, status: 401);
+    }
+    return _json({'ok': true, 'keys': repository.agentKeysFor(session)});
+  }
+
+  Future<Response> _issueAgentKey(Request request) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    final session = _session(request);
+    if (repository.personForSession(session) == null) {
+      return _json({'ok': false, 'error': 'Unauthorized'}, status: 401);
+    }
+    // An agent key must not be able to mint more keys: that would turn one
+    // leaked secret into permanent access no revocation could reach.
+    if (repository.identityForAgentKey(session) != null) {
+      return _json({
+        'ok': false,
+        'error': 'Agent keys cannot issue agent keys',
+      }, status: 403);
+    }
+    try {
+      final body =
+          jsonDecode(await request.readAsString()) as Map<String, dynamic>;
+      final issued = await repository.issueAgentKey(
+        sessionToken: session,
+        label: body['label'] as String? ?? '',
+      );
+      // The only time the secret is ever readable.
+      return _json({
+        'ok': true,
+        'key': issued.key,
+        'secret': issued.secret,
+      }, status: 201);
+    } on ArgumentError catch (e) {
+      return _json({'ok': false, 'error': e.message}, status: 400);
+    } on StateError catch (e) {
+      return _json({'ok': false, 'error': e.message}, status: 401);
+    }
+  }
+
+  Future<Response> _revealAgentKey(Request request, String keyId) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    final session = _session(request);
+    if (repository.personForSession(session) == null) {
+      return _json({'ok': false, 'error': 'Unauthorized'}, status: 401);
+    }
+    final secret = repository.agentKeySecret(
+      sessionToken: session,
+      keyId: keyId,
+    );
+    if (secret == null) {
+      // Same answer for "not yours", "no such key", and "issued before secrets
+      // were kept": none of them should confirm another person's key exists.
+      return _json({'ok': false, 'error': 'Not found'}, status: 404);
+    }
+    return _json({'ok': true, 'secret': secret});
+  }
+
+  /// Deletes a revoked key's record. Revoking is [_revokeAgentKey]; this is the
+  /// separate step of clearing it from the list afterwards.
+  Future<Response> _forgetAgentKey(Request request, String keyId) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    final session = _session(request);
+    if (repository.personForSession(session) == null) {
+      return _json({'ok': false, 'error': 'Unauthorized'}, status: 401);
+    }
+    final forgotten = await repository.forgetAgentKey(
+      sessionToken: session,
+      keyId: keyId,
+    );
+    if (!forgotten) {
+      return _json({'ok': false, 'error': 'Not found'}, status: 404);
+    }
+    return _json({'ok': true, 'keys': repository.agentKeysFor(session)});
+  }
+
+  Future<Response> _revokeAgentKey(Request request, String keyId) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    final session = _session(request);
+    if (repository.personForSession(session) == null) {
+      return _json({'ok': false, 'error': 'Unauthorized'}, status: 401);
+    }
+    final revoked = await repository.revokeAgentKey(
+      sessionToken: session,
+      keyId: keyId,
+    );
+    if (!revoked) {
+      return _json({'ok': false, 'error': 'Not found'}, status: 404);
+    }
+    return _json({'ok': true, 'keys': repository.agentKeysFor(session)});
   }
 
   Future<Response> _state(Request request) async {
@@ -343,6 +476,37 @@ class AppServer {
     });
   }
 
+  /// Admin-only: Firefly PAT + salted password hashes for settings backup.
+  Future<Response> _backupSecrets(Request request) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    final session = _session(request);
+    final refused = _refuseAgentKey(session);
+    if (refused != null) return refused;
+    if (!repository.isAdmin(session)) {
+      return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
+    }
+    return _json({'ok': true, ...repository.backupSecretsForAdmin()});
+  }
+
+  /// Refuses a request carrying an agent key instead of a person's session.
+  ///
+  /// An agent key is a scoped credential for reading and writing the ledger.
+  /// personForSession resolves one to its owner, so an admin's key satisfies
+  /// isAdmin and would otherwise reach the material that lets its holder become
+  /// the account: the Firefly token, other people's password hashes, and the
+  /// settings that point the app at a different server. issueAgentKey already
+  /// refuses keys for the same reason.
+  Response? _refuseAgentKey(String? session) {
+    if (session == null || repository.identityForAgentKey(session) == null) {
+      return null;
+    }
+    return _json({
+      'ok': false,
+      'error': 'Agent keys cannot reach credentials or account settings',
+    }, status: 403);
+  }
+
   Future<Response> _requireAdminPut(
     Request request,
     Future<void> Function(Map<String, dynamic> body) apply,
@@ -350,6 +514,8 @@ class AppServer {
     final locked = _lockedResponse();
     if (locked != null) return locked;
     final session = _session(request);
+    final refused = _refuseAgentKey(session);
+    if (refused != null) return refused;
     if (!repository.isAdmin(session)) {
       return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
     }
@@ -453,6 +619,8 @@ class AppServer {
     final locked = _lockedResponse();
     if (locked != null) return locked;
     final session = _session(request);
+    final refused = _refuseAgentKey(session);
+    if (refused != null) return refused;
     if (!repository.isAdmin(session)) {
       return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
     }
@@ -514,13 +682,35 @@ class AppServer {
       }
     }
 
+    final authImports = <String, Map<String, String>>{};
+    final rawAuthImports = body['authImports'];
+    if (rawAuthImports is Map) {
+      for (final entry in rawAuthImports.entries) {
+        final value = entry.value;
+        if (value is! Map) continue;
+        final map = value.map((k, v) => MapEntry(k.toString(), v.toString()));
+        final hash = map['passwordHash'] ?? '';
+        final salt = map['salt'] ?? map['passwordSalt'] ?? '';
+        // Forwarded even when incomplete so replacePeopleConfig can refuse it.
+        // Dropping it here meant a person's password quietly failed to import
+        // and the caller was told the request succeeded.
+        authImports[entry.key.toString()] = {
+          'passwordHash': hash,
+          'salt': salt,
+        };
+      }
+    }
+
     try {
       await repository.replacePeopleConfig(
         people: people,
         accountOwnerships: ownerships,
         requirePasswordLogin: body['requirePasswordLogin'] as bool? ?? true,
         passwordUpdates: passwordUpdates,
+        authImports: authImports,
       );
+      // A deleted person must not leave working agent keys behind.
+      await repository.pruneAgentKeys();
     } on ArgumentError catch (error) {
       return _json({'ok': false, 'error': '${error.message}'}, status: 400);
     }
@@ -551,8 +741,15 @@ class AppServer {
         repository.personForSession(session)?['id'] != personId) {
       return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
     }
-    final body =
-        jsonDecode(await request.readAsString()) as Map<String, dynamic>;
+    // Every sibling PUT answers a malformed body with 400 through
+    // _requireAuthPut. Casting here without one turned a bad request into a
+    // 500, which reads as the server's fault.
+    final Map<String, dynamic> body;
+    try {
+      body = jsonDecode(await request.readAsString()) as Map<String, dynamic>;
+    } on Object {
+      return _json({'ok': false, 'error': 'Invalid JSON body'}, status: 400);
+    }
     final b64 = body['pngBase64'] as String? ?? '';
     if (b64.isEmpty) {
       repository.state.avatars.remove(personId);

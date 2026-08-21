@@ -100,6 +100,15 @@ class RemoteServerClient {
     return _decode(response);
   }
 
+  /// Admin-only Firefly PAT + salted password hashes for settings backup.
+  Future<Map<String, dynamic>> fetchBackupSecrets() async {
+    final response = await _http.get(
+      _uri('/api/state/backup-secrets'),
+      headers: _headers(),
+    );
+    return _decode(response);
+  }
+
   Future<void> putUndo(Map<String, dynamic> undo) async {
     final response = await _http.put(
       _uri('/api/state/undo'),
@@ -131,6 +140,7 @@ class RemoteServerClient {
     required Object accountOwnerships,
     required bool requirePasswordLogin,
     Map<String, String> passwordUpdates = const {},
+    Map<String, Map<String, String>> authImports = const {},
   }) async {
     final response = await _http.put(
       _uri('/api/state/people'),
@@ -140,9 +150,62 @@ class RemoteServerClient {
         'accountOwnerships': accountOwnerships,
         'requirePasswordLogin': requirePasswordLogin,
         if (passwordUpdates.isNotEmpty) 'passwordUpdates': passwordUpdates,
+        if (authImports.isNotEmpty) 'authImports': authImports,
       }),
     );
     return _decode(response);
+  }
+
+  Future<List<Map<String, dynamic>>> fetchAgentKeys() async {
+    final response = await _http.get(
+      _uri('/api/agent-keys'),
+      headers: _headers(),
+    );
+    final body = _decode(response);
+    return [
+      for (final raw in (body['keys'] as List? ?? const []))
+        if (raw is Map) raw.cast<String, dynamic>(),
+    ];
+  }
+
+  /// Issues an MCP agent key. The returned `secret` is the only time the server
+  /// will ever hand it over.
+  Future<Map<String, dynamic>> issueAgentKey({required String label}) async {
+    final response = await _http.post(
+      _uri('/api/agent-keys'),
+      headers: _headers(jsonBody: true),
+      body: jsonEncode({'label': label}),
+    );
+    return _decode(response);
+  }
+
+  /// Reads back the secret of a key this session owns. Throws
+  /// [RemoteServerException] with 404 when it is not the caller's, or predates
+  /// secrets being retained.
+  Future<String> fetchAgentKeySecret(String keyId) async {
+    final response = await _http.get(
+      _uri('/api/agent-keys/$keyId/secret'),
+      headers: _headers(),
+    );
+    return _decode(response)['secret'] as String? ?? '';
+  }
+
+  /// Deletes a revoked key's record. Revoking is [revokeAgentKey]; this clears
+  /// it from the list afterwards.
+  Future<void> forgetAgentKey(String keyId) async {
+    final response = await _http.delete(
+      _uri('/api/agent-keys/$keyId/record'),
+      headers: _headers(),
+    );
+    _decode(response);
+  }
+
+  Future<void> revokeAgentKey(String keyId) async {
+    final response = await _http.delete(
+      _uri('/api/agent-keys/$keyId'),
+      headers: _headers(),
+    );
+    _decode(response);
   }
 
   /// Same-origin Firefly BFF base used by [FireflyApiService].

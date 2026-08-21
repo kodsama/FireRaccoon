@@ -28,10 +28,19 @@ class TransactionListGroups {
   final List<Transaction> futureTransactions;
   final List<TransactionListGroup> groups;
 
+  /// [futureTransactions] by month, newest first, whatever the grouping in use
+  /// below.
+  ///
+  /// Always by month: the point of the future block is what the balance will be
+  /// as each month closes, and grouping it by payee or category would answer a
+  /// different question.
+  final List<TransactionListGroup> futureGroups;
+
   const TransactionListGroups({
     required this.filteredTransactions,
     required this.futureTransactions,
     required this.groups,
+    this.futureGroups = const [],
   });
 
   Map<String, TransactionListGroup> get groupsByKey => {
@@ -39,6 +48,36 @@ class TransactionListGroups {
   };
 
   List<String> get sortedKeys => groups.map((group) => group.key).toList();
+}
+
+/// Balance at the end of each month in [futureGroups], keyed by group key.
+///
+/// [openingBalance] is the balance with no future activity in it, which is what
+/// Firefly reports as current. Months are walked in calendar order so each one
+/// carries everything before it, then keyed back so the caller can read them in
+/// whatever order it renders.
+///
+/// Only meaningful for one account at a time: a running total across accounts
+/// in different currencies is not a balance, so the caller passes a starting
+/// balance only when it has one.
+Map<String, double> expectedBalanceByFutureMonth({
+  required double openingBalance,
+  required List<TransactionListGroup> futureGroups,
+}) {
+  final chronological = [...futureGroups]
+    ..sort((a, b) {
+      final left = a.sortDate;
+      final right = b.sortDate;
+      if (left == null || right == null) return 0;
+      return left.compareTo(right);
+    });
+  final expected = <String, double>{};
+  var running = openingBalance;
+  for (final group in chronological) {
+    running += group.sum;
+    expected[group.key] = running;
+  }
+  return expected;
 }
 
 TransactionListGroups buildTransactionListGroups({
@@ -50,6 +89,7 @@ TransactionListGroups buildTransactionListGroups({
   required AppLocalizations l10n,
   bool isRacoon = false,
   ReconciledFilter reconciledFilter = ReconciledFilter.all,
+  Set<TransactionField> missingFields = const {},
   DateTime? referenceDate,
   String? sumAccount,
 }) {
@@ -66,6 +106,10 @@ TransactionListGroups buildTransactionListGroups({
     }
     if (!transaction.matchesSearch(searchQuery)) continue;
     if (!matchesReconciledFilter(transaction, reconciledFilter)) continue;
+    if (missingFields.isNotEmpty &&
+        !hasMissingFields(transaction, fields: missingFields)) {
+      continue;
+    }
 
     filtered.add(transaction);
     if (isFutureTransaction(transaction.date, reference: referenceDate)) {
@@ -98,7 +142,41 @@ TransactionListGroups buildTransactionListGroups({
     }
   }
 
-  future.sort((a, b) => a.date.compareTo(b.date));
+  // Newest first, the same direction as every dated group below, so the list
+  // does not reverse itself where the future block begins.
+  future.sort((a, b) => b.date.compareTo(a.date));
+
+  final futureMonths = <String, _MutableTransactionListGroup>{};
+  for (final transaction in future) {
+    final key = format.formatMonthYear(transaction.date);
+    final signedAmount = signedListAmount(transaction, accountName: sumAccount);
+    final existing = futureMonths[key];
+    if (existing == null) {
+      futureMonths[key] = _MutableTransactionListGroup(
+        key: key,
+        transactions: [transaction],
+        sum: signedAmount,
+        currencySymbol: transaction.currencySymbol,
+        sortDate: DateTime(transaction.date.year, transaction.date.month),
+      );
+    } else {
+      existing.transactions.add(transaction);
+      existing.sum += signedAmount;
+    }
+  }
+  final futureGroups =
+      futureMonths.values
+          .map(
+            (group) => TransactionListGroup(
+              key: group.key,
+              transactions: group.transactions,
+              sum: group.sum,
+              currencySymbol: group.currencySymbol,
+              sortDate: group.sortDate,
+            ),
+          )
+          .toList()
+        ..sort((a, b) => b.sortDate!.compareTo(a.sortDate!));
 
   final groups = map.values.map((group) {
     if (groupType == TransactionGroupType.date) {
@@ -123,6 +201,7 @@ TransactionListGroups buildTransactionListGroups({
     filteredTransactions: filtered,
     futureTransactions: future,
     groups: groups,
+    futureGroups: futureGroups,
   );
 }
 
