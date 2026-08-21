@@ -2783,7 +2783,21 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get tooltipAccountEndOfMonthBalance =>
-      'Prognostiserat saldo vid månadens slut, inklusive schemalagda transaktioner, återkommande poster och räkningar.';
+      'Prognostiserat saldo på det valda datumet, inklusive planerade transaktioner, upprepningar och räkningar.';
+
+  @override
+  String get tooltipBalanceDatePick => 'Visa saldon vid ett annat datum';
+
+  @override
+  String get tooltipBalanceDateReset => 'Tillbaka till månadens slut';
+
+  @override
+  String get tooltipBalanceBeyondForecast =>
+      'Prognosen sträcker sig inte så långt fram, så detta är den sista beräknade siffran.';
+
+  @override
+  String get tooltipRecordedBalance =>
+      'Saldo som bokföringen håller till och med detta datum, inklusive transaktioner som redan är daterade framåt.';
 
   @override
   String get tooltipBudgetName => 'Namn på denna utgiftsbudget.';
@@ -3533,4 +3547,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get settingsExportText => 'FireRacoon settings backup';
+
+  @override
+  String get recordedBalance => 'Bokfört';
 }

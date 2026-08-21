@@ -1513,7 +1513,11 @@
   "tooltipClearDate": "選択した日付を削除。",
   "tooltipAccountName": "一覧とレポートに表示される名前。",
   "tooltipAccountCurrentBalance": "本日時点の Firefly からの現在残高。",
-  "tooltipAccountEndOfMonthBalance": "予定取引、定期項目、請求を含む今月末の予測残高。",
+  "tooltipAccountEndOfMonthBalance": "選択した日付の予測残高（予定取引、繰り返し取引、請求書を含む）。",
+  "tooltipBalanceDatePick": "別の日付の残高を表示",
+  "tooltipBalanceDateReset": "今月末に戻す",
+  "tooltipBalanceBeyondForecast": "予測はこの日付まで届いていないため、これは最後の予測値です。",
+  "tooltipRecordedBalance": "この日付までに台帳が保持している残高（先付けされた取引を含む）。",
   "tooltipBudgetName": "この支出予算の名前。",
   "tooltipBudgetAmount": "この予算期間の上限額。",
   "tooltipSubscriptionName": "定期請求またはサブスクリプションの名前。",
@@ -1790,5 +1794,6 @@
   "unlockWithBiometricsDescription": "ログイン画面で Face ID、Touch ID、指紋、または端末の PIN を使います。",
   "biometricUnlockReason": "FireRacoon のロックを解除",
   "biometricEnableReason": "生体認証のロック解除を有効にするには確認してください",
-  "biometricUnlockFailed": "生体認証によるロック解除がキャンセルされたか失敗しました。"
+  "biometricUnlockFailed": "生体認証によるロック解除がキャンセルされたか失敗しました。",
+  "recordedBalance": "記録済み"
 }

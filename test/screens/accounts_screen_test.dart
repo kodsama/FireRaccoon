@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fireracoon/models/account.dart';
+import 'package:fireracoon/providers/data_providers.dart';
 import 'package:fireracoon/providers/view_mode_provider.dart';
 import 'package:fireracoon/screens/accounts_screen.dart';
+import 'package:fireracoon/utils/locale_formatting.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/test_data.dart';
@@ -170,6 +173,44 @@ void main() {
     expect(find.byType(ListView), findsWidgets);
   });
 
+  testWidgets('the tooltip carries the recorded balance and the caveat', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const AccountsScreen(),
+        viewMode: ViewMode.compact,
+        fireflyService: FakeFireflyService(
+          accounts: sampleAccounts,
+          balancesByDate: const {
+            '1': {'2027-03-15': 4321},
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final ref = ProviderScope.containerOf(
+      tester.element(find.byType(AccountsScreen)),
+    );
+    ref.read(accountBalanceDateProvider.notifier).select(DateTime(2027, 3, 15));
+    await tester.pumpAndSettle();
+
+    // The tight rows have one narrow column and no room for a second number,
+    // so both figures have to be reachable from the tooltip.
+    final tooltip = tester
+        .widgetList<Tooltip>(find.byType(Tooltip))
+        .map((t) => t.message)
+        .whereType<String>()
+        .firstWhere((message) => message.contains('Recorded'));
+    expect(tooltip, contains('4,321'));
+    // A date past the horizon gets the last projected figure, and says so.
+    expect(tooltip, contains('does not reach this far ahead'));
+  });
+
   testWidgets('AccountsScreen hides inactive accounts by default', (
     tester,
   ) async {
@@ -230,6 +271,128 @@ void main() {
 
     expect(find.text('Closed Savings'), findsWidgets);
     expect(find.text('Inactive'), findsWidgets);
+  });
+
+  testWidgets('the balance column opens on the end of the current month', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      await buildScreenTestApp(child: const AccountsScreen()),
+    );
+    await tester.pumpAndSettle();
+
+    // The only figure the column could show before the date became selectable,
+    // so an existing view opens exactly as it did.
+    final endOfMonth = endOfMonthFor(DateTime.now());
+    final label = LocaleFormatting(
+      const Locale('en'),
+    ).formatMediumDate(endOfMonth);
+    expect(find.text(label), findsWidgets);
+  });
+
+  testWidgets('picking a date moves the column to that date', (tester) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const AccountsScreen(),
+        fireflyService: FakeFireflyService(
+          accounts: sampleAccounts,
+          balancesByDate: const {
+            '1': {'2027-03-15': 4321},
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final ref = ProviderScope.containerOf(
+      tester.element(find.byType(AccountsScreen)),
+    );
+    ref.read(accountBalanceDateProvider.notifier).select(DateTime(2027, 3, 15));
+    await tester.pumpAndSettle();
+
+    final label = LocaleFormatting(
+      const Locale('en'),
+    ).formatMediumDate(DateTime(2027, 3, 15));
+    expect(find.text(label), findsWidgets);
+    // And the recorded balance the ledger holds through that day comes with it.
+    expect(find.textContaining('4,321'), findsWidgets);
+  });
+
+  testWidgets('the chip opens a picker and takes the date from it', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      await buildScreenTestApp(child: const AccountsScreen()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Show balances at another date'));
+    await tester.pumpAndSettle();
+
+    // Confirming without moving takes the date the chip was already showing.
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final ref = ProviderScope.containerOf(
+      tester.element(find.byType(AccountsScreen)),
+    );
+    expect(ref.read(accountBalanceDateProvider), endOfMonthFor(DateTime.now()));
+  });
+
+  testWidgets('cancelling the picker leaves the date alone', (tester) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      await buildScreenTestApp(child: const AccountsScreen()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Show balances at another date'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+
+    final ref = ProviderScope.containerOf(
+      tester.element(find.byType(AccountsScreen)),
+    );
+    expect(ref.read(accountBalanceDateProvider), isNull);
+    // And no reset control, since there is nothing to reset.
+    expect(find.byTooltip('Back to the end of this month'), findsNothing);
+  });
+
+  testWidgets('the reset control goes back to the end of the month', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      await buildScreenTestApp(child: const AccountsScreen()),
+    );
+    await tester.pumpAndSettle();
+
+    final ref = ProviderScope.containerOf(
+      tester.element(find.byType(AccountsScreen)),
+    );
+    ref.read(accountBalanceDateProvider.notifier).select(DateTime(2027, 3, 15));
+    await tester.pumpAndSettle();
+
+    // Only there once a date has been picked, so it never invites a reset of
+    // the default.
+    await tester.tap(find.byTooltip('Back to the end of this month'));
+    await tester.pumpAndSettle();
+
+    expect(ref.read(accountBalanceDateProvider), isNull);
+    final label = LocaleFormatting(
+      const Locale('en'),
+    ).formatMediumDate(endOfMonthFor(DateTime.now()));
+    expect(find.text(label), findsWidgets);
   });
 }
 
