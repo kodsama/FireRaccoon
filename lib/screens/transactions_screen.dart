@@ -1305,7 +1305,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                         if (futureShown)
                           for (final group in listGroups.futureGroups)
                             SliverCollapsibleTransactionGroup(
-                              label: group.key,
+                              // Marked, because a future month and a posted
+                              // month carry the same name and sat one above the
+                              // other with nothing to tell them apart.
+                              label: '${group.key} · ${l10n.upcoming}',
                               // What the balance will be once this month has
                               // closed, which is the reason for the months.
                               subtitle:
