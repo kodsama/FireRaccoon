@@ -38,7 +38,7 @@ class AccountsScreen extends ConsumerWidget {
     final showInactive = AccountsRoute.showInactiveFrom(routeState);
     final searchQuery = RouteQuery.searchFrom(routeState.uri);
     final accountsAsync = ref.watch(accountsProvider);
-    final effectiveAccounts = ref.watch(effectiveAccountsProvider);
+    final effectiveAccounts = ref.watch(ownedAccountsProvider);
     final customClassifications = ref.watch(accountClassificationProvider);
 
     return Scaffold(

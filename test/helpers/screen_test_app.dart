@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -29,6 +30,7 @@ Future<Widget> buildScreenTestApp({
   ViewMode viewMode = ViewMode.standard,
   AuthSettings? authSettings,
   Map<String, Object> prefsValues = const {'isRacoonMode': false},
+  List<Override> extraOverrides = const [],
 }) async {
   SharedPreferences.setMockInitialValues({
     'transactionPageSize': 50,
@@ -89,6 +91,7 @@ Future<Widget> buildScreenTestApp({
 
   return ProviderScope(
     overrides: [
+      ...extraOverrides,
       sharedPreferencesProvider.overrideWithValue(prefs),
       viewModeProvider.overrideWith(() => _StaticViewModeNotifier(viewMode)),
       authProvider.overrideWith(
