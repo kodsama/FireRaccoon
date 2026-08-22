@@ -653,15 +653,23 @@ class FireflyApiService implements FireflyService {
     String accountId, {
     required int page,
     required int limit,
+    DateTime? start,
+    DateTime? end,
   }) async {
+    final range = _rangeQuery(start: start, end: end);
+    final path = range.isEmpty
+        ? '/api/v1/accounts/$accountId/transactions'
+        : '/api/v1/accounts/$accountId/transactions?$range';
     return _runLogged(
       'getAccountTransactionsPage',
-      () => _fetchTransactionPage(
-        '/api/v1/accounts/$accountId/transactions',
-        page: page,
-        limit: limit,
-      ),
-      context: {'accountId': accountId, 'page': page, 'limit': limit},
+      () => _fetchTransactionPage(path, page: page, limit: limit),
+      context: {
+        'accountId': accountId,
+        'page': page,
+        'limit': limit,
+        'start': start,
+        'end': end,
+      },
     );
   }
 

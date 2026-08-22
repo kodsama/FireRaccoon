@@ -56,6 +56,98 @@ Widget _accountBalanceAmount({
   );
 }
 
+/// The expanded panel's transaction preview.
+///
+/// The card, compact and tight layouts each held their own copy of these three
+/// fields and the same loader, identical but for a comment, so a change to how
+/// the preview loads had to be made three times or not at all.
+mixin _AccountTransactionsPreview<T extends ConsumerStatefulWidget>
+    on ConsumerState<T> {
+  /// Rows up to and including today.
+  List<Transaction>? posted;
+
+  /// Rows the ledger already holds for days that have not happened yet.
+  List<Transaction>? upcoming;
+
+  bool loadingTx = false;
+  String? loadError;
+
+  /// The account whose rows to preview.
+  Account get previewAccount;
+
+  void resetPreview() {
+    posted = null;
+    upcoming = null;
+    loadingTx = false;
+    loadError = null;
+  }
+
+  Future<void> loadTransactions() async {
+    setState(() {
+      loadingTx = true;
+      loadError = null;
+    });
+    try {
+      final service = ref.read(apiServiceProvider);
+      if (service != null) {
+        final now = DateTime.now();
+        // _rangeQuery treats end as exclusive, so tomorrow is what includes
+        // today on one side and excludes it on the other.
+        final tomorrow = DateTime(now.year, now.month, now.day + 1);
+        // Two windows rather than one page. Firefly returns newest first, and a
+        // ledger with write-ahead recurrences has its newest rows months in the
+        // future: one page of twenty came back with eighteen future rows and
+        // almost no history on it.
+        final fetched = await Future.wait([
+          service.getAccountTransactionsPage(
+            previewAccount.id,
+            page: 1,
+            limit: 20,
+            end: tomorrow,
+          ),
+          service.getAccountTransactionsPage(
+            previewAccount.id,
+            page: 1,
+            limit: 50,
+            start: tomorrow,
+          ),
+        ]);
+        if (mounted) {
+          setState(() {
+            posted = fetched[0].transactions;
+            upcoming = fetched[1].transactions;
+            loadingTx = false;
+            loadError = null;
+          });
+        }
+      }
+    } catch (error) {
+      if (mounted) {
+        setState(() {
+          loadingTx = false;
+          posted = null;
+          upcoming = null;
+          loadError = context.l10n.errorLoadingData('$error');
+        });
+      }
+    }
+  }
+
+  void patchTransaction(Transaction updated) {
+    List<Transaction>? replaced(List<Transaction>? rows) {
+      if (rows == null) return null;
+      final index = rows.indexWhere((row) => row.id == updated.id);
+      if (index == -1) return rows;
+      return List<Transaction>.from(rows)..[index] = updated;
+    }
+
+    setState(() {
+      posted = replaced(posted);
+      upcoming = replaced(upcoming);
+    });
+  }
+}
+
 class AccountListPanel extends ConsumerWidget {
   final List<Account> accounts;
   final String? expandedAccountName;
@@ -269,71 +361,25 @@ class AccountEntityCard extends ConsumerStatefulWidget {
   ConsumerState<AccountEntityCard> createState() => _AccountEntityCardState();
 }
 
-class _AccountEntityCardState extends ConsumerState<AccountEntityCard> {
-  List<Transaction>? _transactions;
-  bool _loadingTx = false;
-  String? _loadError;
+class _AccountEntityCardState extends ConsumerState<AccountEntityCard>
+    with _AccountTransactionsPreview<AccountEntityCard> {
+  @override
+  Account get previewAccount => widget.account;
 
   @override
   void initState() {
     super.initState();
-    if (widget.isExpanded) _loadTransactions();
+    if (widget.isExpanded) loadTransactions();
   }
 
   @override
   void didUpdateWidget(covariant AccountEntityCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isExpanded && _transactions == null && !_loadingTx) {
-      _loadTransactions();
+    if (widget.isExpanded && posted == null && !loadingTx) {
+      loadTransactions();
     } else if (!widget.isExpanded) {
-      _transactions = null;
-      _loadingTx = false;
-      _loadError = null;
+      resetPreview();
     }
-  }
-
-  Future<void> _loadTransactions() async {
-    setState(() {
-      _loadingTx = true;
-      _loadError = null;
-    });
-    try {
-      final service = ref.read(apiServiceProvider);
-      if (service != null) {
-        // The expanded panel previews at most 20 rows; fetch only one page
-        // instead of the account's entire history.
-        final page = await service.getAccountTransactionsPage(
-          widget.account.id,
-          page: 1,
-          limit: 20,
-        );
-        if (mounted) {
-          setState(() {
-            _transactions = page.transactions;
-            _loadingTx = false;
-            _loadError = null;
-          });
-        }
-      }
-    } catch (error) {
-      if (mounted) {
-        setState(() {
-          _loadingTx = false;
-          _transactions = null;
-          _loadError = context.l10n.errorLoadingData('$error');
-        });
-      }
-    }
-  }
-
-  void _patchTransaction(Transaction updated) {
-    final txs = _transactions;
-    if (txs == null) return;
-    final index = txs.indexWhere((transaction) => transaction.id == updated.id);
-    if (index == -1) return;
-    setState(() {
-      _transactions = List<Transaction>.from(txs)..[index] = updated;
-    });
   }
 
   @override
@@ -361,13 +407,15 @@ class _AccountEntityCardState extends ConsumerState<AccountEntityCard> {
       onToggleExpand: widget.onToggleExpand,
       width: 320,
       expandedChild: TransactionsExpandedPanel(
-        loading: _loadingTx,
-        transactions: _transactions,
-        errorMessage: _loadError,
+        loading: loadingTx,
+        transactions: posted,
+        futureTransactions: upcoming,
+        onRefresh: loadTransactions,
+        errorMessage: loadError,
         emptyLabel: widget.emptyTransactionsLabel,
         filterAccount: acc.name,
-        onTransactionMutated: _loadTransactions,
-        onTransactionPatched: _patchTransaction,
+        onTransactionMutated: loadTransactions,
+        onTransactionPatched: patchTransaction,
         headerWidget: (acc.type == 'asset' && acc.active)
             ? _AccountReconcileTile(
                 account: acc,
@@ -600,71 +648,25 @@ class AccountEntityCompactRow extends ConsumerStatefulWidget {
 }
 
 class _AccountEntityCompactRowState
-    extends ConsumerState<AccountEntityCompactRow> {
-  List<Transaction>? _transactions;
-  bool _loadingTx = false;
-  String? _loadError;
+    extends ConsumerState<AccountEntityCompactRow>
+    with _AccountTransactionsPreview<AccountEntityCompactRow> {
+  @override
+  Account get previewAccount => widget.account;
 
   @override
   void initState() {
     super.initState();
-    if (widget.isExpanded) _loadTransactions();
+    if (widget.isExpanded) loadTransactions();
   }
 
   @override
   void didUpdateWidget(covariant AccountEntityCompactRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isExpanded && _transactions == null && !_loadingTx) {
-      _loadTransactions();
+    if (widget.isExpanded && posted == null && !loadingTx) {
+      loadTransactions();
     } else if (!widget.isExpanded) {
-      _transactions = null;
-      _loadingTx = false;
-      _loadError = null;
+      resetPreview();
     }
-  }
-
-  Future<void> _loadTransactions() async {
-    setState(() {
-      _loadingTx = true;
-      _loadError = null;
-    });
-    try {
-      final service = ref.read(apiServiceProvider);
-      if (service != null) {
-        // The expanded panel previews at most 20 rows; fetch only one page
-        // instead of the account's entire history.
-        final page = await service.getAccountTransactionsPage(
-          widget.account.id,
-          page: 1,
-          limit: 20,
-        );
-        if (mounted) {
-          setState(() {
-            _transactions = page.transactions;
-            _loadingTx = false;
-            _loadError = null;
-          });
-        }
-      }
-    } catch (error) {
-      if (mounted) {
-        setState(() {
-          _loadingTx = false;
-          _transactions = null;
-          _loadError = context.l10n.errorLoadingData('$error');
-        });
-      }
-    }
-  }
-
-  void _patchTransaction(Transaction updated) {
-    final txs = _transactions;
-    if (txs == null) return;
-    final index = txs.indexWhere((transaction) => transaction.id == updated.id);
-    if (index == -1) return;
-    setState(() {
-      _transactions = List<Transaction>.from(txs)..[index] = updated;
-    });
   }
 
   @override
@@ -691,13 +693,15 @@ class _AccountEntityCompactRowState
       expanded: widget.isExpanded,
       onToggleExpand: widget.onToggleExpand,
       expandedChild: TransactionsExpandedPanel(
-        loading: _loadingTx,
-        transactions: _transactions,
-        errorMessage: _loadError,
+        loading: loadingTx,
+        transactions: posted,
+        futureTransactions: upcoming,
+        onRefresh: loadTransactions,
+        errorMessage: loadError,
         emptyLabel: widget.emptyTransactionsLabel,
         filterAccount: acc.name,
-        onTransactionMutated: _loadTransactions,
-        onTransactionPatched: _patchTransaction,
+        onTransactionMutated: loadTransactions,
+        onTransactionPatched: patchTransaction,
         headerWidget: (acc.type == 'asset' && acc.active)
             ? _AccountReconcileTile(
                 account: acc,
@@ -1002,69 +1006,25 @@ class AccountEntityTightRow extends ConsumerStatefulWidget {
       _AccountEntityTightRowState();
 }
 
-class _AccountEntityTightRowState extends ConsumerState<AccountEntityTightRow> {
-  List<Transaction>? _transactions;
-  bool _loadingTx = false;
-  String? _loadError;
+class _AccountEntityTightRowState extends ConsumerState<AccountEntityTightRow>
+    with _AccountTransactionsPreview<AccountEntityTightRow> {
+  @override
+  Account get previewAccount => widget.account;
 
   @override
   void initState() {
     super.initState();
-    if (widget.isExpanded) _loadTransactions();
+    if (widget.isExpanded) loadTransactions();
   }
 
   @override
   void didUpdateWidget(covariant AccountEntityTightRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.isExpanded && _transactions == null && !_loadingTx) {
-      _loadTransactions();
+    if (widget.isExpanded && posted == null && !loadingTx) {
+      loadTransactions();
     } else if (!widget.isExpanded) {
-      _transactions = null;
-      _loadingTx = false;
-      _loadError = null;
+      resetPreview();
     }
-  }
-
-  Future<void> _loadTransactions() async {
-    setState(() {
-      _loadingTx = true;
-      _loadError = null;
-    });
-    try {
-      final service = ref.read(apiServiceProvider);
-      if (service != null) {
-        final page = await service.getAccountTransactionsPage(
-          widget.account.id,
-          page: 1,
-          limit: 20,
-        );
-        if (mounted) {
-          setState(() {
-            _transactions = page.transactions;
-            _loadingTx = false;
-            _loadError = null;
-          });
-        }
-      }
-    } catch (error) {
-      if (mounted) {
-        setState(() {
-          _loadingTx = false;
-          _transactions = null;
-          _loadError = context.l10n.errorLoadingData('$error');
-        });
-      }
-    }
-  }
-
-  void _patchTransaction(Transaction updated) {
-    final txs = _transactions;
-    if (txs == null) return;
-    final index = txs.indexWhere((transaction) => transaction.id == updated.id);
-    if (index == -1) return;
-    setState(() {
-      _transactions = List<Transaction>.from(txs)..[index] = updated;
-    });
   }
 
   @override
@@ -1091,13 +1051,15 @@ class _AccountEntityTightRowState extends ConsumerState<AccountEntityTightRow> {
       expanded: widget.isExpanded,
       onToggleExpand: widget.onToggleExpand,
       expandedChild: TransactionsExpandedPanel(
-        loading: _loadingTx,
-        transactions: _transactions,
-        errorMessage: _loadError,
+        loading: loadingTx,
+        transactions: posted,
+        futureTransactions: upcoming,
+        onRefresh: loadTransactions,
+        errorMessage: loadError,
         emptyLabel: widget.emptyTransactionsLabel,
         filterAccount: acc.name,
-        onTransactionMutated: _loadTransactions,
-        onTransactionPatched: _patchTransaction,
+        onTransactionMutated: loadTransactions,
+        onTransactionPatched: patchTransaction,
         headerWidget: (acc.type == 'asset' && acc.active)
             ? _AccountReconcileTile(
                 account: acc,
