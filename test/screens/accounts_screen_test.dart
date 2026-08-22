@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fireracoon/models/account.dart';
+import 'package:fireracoon_engine/fireracoon_engine.dart';
 import 'package:fireracoon/providers/data_providers.dart';
 import 'package:fireracoon/providers/view_mode_provider.dart';
 import 'package:fireracoon/screens/accounts_screen.dart';
@@ -209,6 +209,63 @@ void main() {
     expect(tooltip, contains('4,321'));
     // A date past the horizon gets the last projected figure, and says so.
     expect(tooltip, contains('does not reach this far ahead'));
+  });
+
+  testWidgets('an expanded account keeps its history out of its future', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    // Firefly returns newest first, and a ledger that materialises its
+    // recurrences has its newest rows months ahead: one page of twenty came
+    // back with eighteen future rows and no history on it at all.
+    final now = DateTime.now();
+    final past = DateTime(now.year, now.month, now.day - 2);
+    final ahead = DateTime(now.year, now.month, now.day + 40);
+    Transaction row(String id, DateTime date) => Transaction(
+      id: id,
+      type: 'withdrawal',
+      date: date,
+      amount: 100,
+      description: 'Row $id',
+      sourceName: 'Checking',
+      destinationName: 'Shop',
+      categoryName: 'Food',
+      currencySymbol: '€',
+      currencyCode: 'EUR',
+    );
+
+    final rows = [row('future', ahead), row('posted', past)];
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const AccountsScreen(),
+        initialLocation: '/accounts?account=Checking',
+        // Compact rows are full width. The card grid gives the expanded panel
+        // about 270px, where a transaction row overflows by 28px on its own,
+        // which predates this and is not what the test is about.
+        viewMode: ViewMode.compact,
+        fireflyService: FakeFireflyService(
+          accounts: sampleAccounts,
+          accountTransactionPages: {
+            '1': {
+              1: TransactionPageResult(
+                transactions: rows,
+                currentPage: 1,
+                totalPages: 1,
+                total: rows.length,
+              ),
+            },
+          },
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The posted row is listed; the future one sits behind its own heading.
+    expect(find.text('Row posted'), findsWidgets);
+    expect(find.text('Upcoming'), findsWidgets);
+    expect(find.text('Row future'), findsNothing);
   });
 
   testWidgets('AccountsScreen hides inactive accounts by default', (

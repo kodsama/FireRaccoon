@@ -241,16 +241,36 @@ class FakeFireflyService implements FireflyService {
     String accountId, {
     required int page,
     required int limit,
+    DateTime? start,
+    DateTime? end,
   }) async {
     _maybeThrow();
     await _maybeDelay();
-    return accountTransactionPages[accountId]?[page] ??
-        TransactionPageResult(
-          transactions: const [],
-          currentPage: page,
-          totalPages: 1,
-          total: 0,
-        );
+    final result = accountTransactionPages[accountId]?[page];
+    if (result == null) {
+      return TransactionPageResult(
+        transactions: const [],
+        currentPage: page,
+        totalPages: 1,
+        total: 0,
+      );
+    }
+    if (start == null && end == null) return result;
+    // The server splits by date, so a caller asking for one side of today must
+    // not be handed both. Without this a test could not tell the two apart.
+    final windowed = result.transactions
+        .where(
+          (t) =>
+              (start == null || !t.date.isBefore(start)) &&
+              (end == null || t.date.isBefore(end)),
+        )
+        .toList();
+    return TransactionPageResult(
+      transactions: windowed,
+      currentPage: page,
+      totalPages: result.totalPages,
+      total: windowed.length,
+    );
   }
 
   @override
