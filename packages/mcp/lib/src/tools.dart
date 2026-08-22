@@ -329,6 +329,8 @@ Transaction _splitFromArgs(
         (leg['foreign_amount'] as num?)?.toDouble() ??
         (args['foreign_amount'] as num?)?.toDouble(),
     foreignCurrencyCode: pick('foreign_currency_code'),
+    reconciled:
+        (leg['reconciled'] as bool?) ?? (args['reconciled'] as bool?) ?? false,
     tags: leg.containsKey('tags')
         ? _strList(leg['tags'])
         : (args.containsKey('tags') ? _strList(args['tags']) : const []),
@@ -339,6 +341,7 @@ Transaction _transactionFromArgs(
   Map<String, Object?> args, {
   Transaction? base,
   String id = '0',
+  bool carryReconciled = false,
 }) {
   final type = (args['type'] as String?) ?? base?.type;
   if (type == null ||
@@ -391,7 +394,11 @@ Transaction _transactionFromArgs(
       // A copy is not reconciled: nothing has been checked against a statement
       // yet, whatever was true of the original.
       for (final split in base!.resolvedSplits())
-        split.copyWith(id: '0', date: date, reconciled: false),
+        split.copyWith(
+          id: '0',
+          date: date,
+          reconciled: carryReconciled && split.reconciled,
+        ),
   ];
 
   final leadingLeg = splits.isEmpty ? null : splits.first;
@@ -425,6 +432,35 @@ Transaction _transactionFromArgs(
       'pass foreign_amount too, since the rate cannot be derived',
     );
   }
+  // An update that never mentions the flag must not clear it. Leaving it out
+  // sent the model default of false, so every edit silently threw away the
+  // reconciliation the person had asserted, and a refresh was the first they
+  // heard of it.
+  final reconciled =
+      (args['reconciled'] as bool?) ??
+      (carryReconciled ? base?.reconciled ?? false : false);
+
+  // Firefly will not move the money on a reconciled transaction, and
+  // toSplitJson drops those fields rather than arguing, so the change would
+  // report success and do nothing at all.
+  if (reconciled && carryReconciled) {
+    final touched = const [
+      'amount',
+      'foreign_amount',
+      'currency_code',
+      'source_id',
+      'source_name',
+      'destination_id',
+      'destination_name',
+    ].where(args.containsKey).toList();
+    if (touched.isNotEmpty) {
+      throw ArgumentError(
+        'this transaction is reconciled, so ${touched.join(', ')} cannot '
+        'change; pass reconciled:false in the same call to release it first',
+      );
+    }
+  }
+
   final foreignAmount =
       leadingLeg?.foreignAmount ?? statedForeign ?? base?.foreignAmount;
   final foreignCurrencyCode =
@@ -492,6 +528,7 @@ Transaction _transactionFromArgs(
     notes: leadingLeg?.notes ?? (args['notes'] as String?) ?? base?.notes,
     foreignAmount: foreignAmount,
     foreignCurrencyCode: foreignCurrencyCode,
+    reconciled: leadingLeg?.reconciled ?? reconciled,
     tags: leadingLeg != null
         ? leadingLeg.tags
         : (args.containsKey('tags')
@@ -569,6 +606,12 @@ Map<String, Object?> _transactionFieldSchema() => {
   'foreign_currency_code': {
     'type': 'string',
     'description': 'Currency of foreign_amount. Defaults to the other side.',
+  },
+  'reconciled': {
+    'type': 'boolean',
+    'description':
+        'Whether the transaction is reconciled. An update keeps the current '
+        'value when this is omitted. A copy is never reconciled.',
   },
   'source_id': {'type': 'string'},
   'source_name': {'type': 'string'},
@@ -2078,7 +2121,12 @@ List<McpTool> buildTools({
         final existing = await api.getTransaction(id);
         final Transaction updated;
         try {
-          updated = _transactionFromArgs(args, base: existing, id: id);
+          updated = _transactionFromArgs(
+            args,
+            base: existing,
+            id: id,
+            carryReconciled: true,
+          );
         } on ArgumentError catch (e) {
           return _badInput('${e.message}');
         }

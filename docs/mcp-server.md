@@ -297,6 +297,21 @@ credit card is not one of these: `store_reconciliation` builds that payback from
 the purchases it settles, which is what keeps the group title and the per-leg
 links identical to what the app writes.
 
+### Reconciliation survives an edit
+
+`update_transaction` keeps whatever `reconciled` the transaction already had
+when the call does not mention it. Leaving it out used to send false, so any
+edit silently discarded a reconciliation and a refresh was the first anyone
+heard of it.
+
+Firefly will not move the money on a reconciled transaction, and the payload
+drops those fields rather than arguing, so a correction reported success and
+changed nothing. Changing `amount`, `foreign_amount`, `currency_code` or either
+account on a reconciled transaction is now refused; pass `reconciled: false` in
+the same call to release it and make the change together.
+
+A copy is still never reconciled, whatever the original was.
+
 ### Writing across two currencies
 
 A transfer between accounts holding different currencies needs both figures, and

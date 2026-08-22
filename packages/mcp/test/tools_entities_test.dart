@@ -567,6 +567,117 @@ void main() {
       );
     });
 
+    test(
+      'update_transaction keeps a reconciliation it was not asked about',
+      () async {
+        // Omitting the flag sent the model default of false, so any edit threw
+        // away the reconciliation the person had asserted and a later refresh
+        // was the first they heard of it.
+        final bodies = <String>[];
+        final result =
+            await _tool(
+              'update_transaction',
+              client: fireflyMockClient(
+                transactionOverrides: {
+                  '1': transactionItem(id: '1', reconciled: true),
+                },
+                recordBodies: bodies,
+              ),
+            ).run({
+              'transaction_id': '1',
+              'notes': 'checked against the statement',
+            });
+
+        expect(result['ok'], isTrue);
+        final leg =
+            ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+                as Map;
+        expect(leg['reconciled'], isTrue);
+      },
+    );
+
+    test(
+      'update_transaction can release a reconciliation on purpose',
+      () async {
+        final bodies = <String>[];
+        await _tool(
+          'update_transaction',
+          client: fireflyMockClient(
+            transactionOverrides: {
+              '1': transactionItem(id: '1', reconciled: true),
+            },
+            recordBodies: bodies,
+          ),
+        ).run({'transaction_id': '1', 'reconciled': false});
+
+        final leg =
+            ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+                as Map;
+        expect(leg['reconciled'], isFalse);
+      },
+    );
+
+    test('moving the money on a reconciled transaction is refused', () async {
+      // Firefly will not move it and toSplitJson drops the fields rather than
+      // arguing, so the correction reported success and changed nothing.
+      await expectLater(
+        _tool(
+          'update_transaction',
+          client: fireflyMockClient(
+            transactionOverrides: {
+              '1': transactionItem(id: '1', reconciled: true),
+            },
+          ),
+        ).run({'transaction_id': '1', 'amount': 37380.0}),
+        completion(
+          containsPair(
+            'error',
+            allOf(contains('reconciled'), contains('pass reconciled:false')),
+          ),
+        ),
+      );
+    });
+
+    test('releasing and re-amounting in one call is allowed', () async {
+      final bodies = <String>[];
+      final result = await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(id: '1', reconciled: true),
+          },
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '1', 'amount': 37380.0, 'reconciled': false});
+
+      expect(result['ok'], isTrue);
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['amount'], '37380.00');
+      expect(leg['reconciled'], isFalse);
+    });
+
+    test('a copy of a reconciled transaction is not reconciled', () async {
+      // Nothing has been checked against a statement yet, whatever was true of
+      // the original.
+      final bodies = <String>[];
+      await _tool(
+        'duplicate_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(id: '1', reconciled: true),
+          },
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '1', 'date': '2026-08-18'});
+
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['reconciled'], isFalse);
+    });
+
     test('duplicate_transaction fails when the source is gone', () async {
       await expectLater(
         _tool(
