@@ -247,6 +247,18 @@ than for the tool to overwrite. A near match whose journal is a split group
 carries `blocked_reason: split_group`: correcting that leg would move a journal
 whose other legs the statement says nothing about.
 
+The fetch reaches five days past both ends of the window, because that is the
+widest gap the near pass will pair across. Reaching forward only meant a
+transaction the ledger dated the day before the statement's first row was never
+fetched, so it came back as missing and writing it would have duplicated what
+was already there. Legs outside the period stay matchable and are counted under
+`excluded.fetched_outside_period`.
+
+One call takes up to 10,000 rows. Past that, split the statement at dates where
+the two balances already agree, so no pair is cut in half: cutting at an
+arbitrary date severs a transaction the two sides date on opposite sides of the
+line, and it then reads as missing on one side and unmatched on the other.
+
 Tolerances are fixed constants, not arguments, and every response echoes them
 under `window` so a caller can read the rule that produced its verdicts.
 
