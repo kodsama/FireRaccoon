@@ -109,7 +109,21 @@ class PaginatedTransactionsNotifier
     Future.microtask(() => _loadInitial(_accountName));
   }
 
+  /// True while this load is still the one wanted and the provider is still
+  /// alive.
+  ///
+  /// The generation counter alone only catches a load that has been superseded.
+  /// It lives on the notifier, which outlives disposal, so it still matched
+  /// after the provider was gone and the state write threw out of a future
+  /// nobody awaits. That surfaced as a page load failing for no visible reason,
+  /// and as an uncaught error landing on whatever was running at the time.
+  bool _stillWanted(int generation) =>
+      ref.mounted && generation == _loadGeneration;
+
   Future<void> _loadInitial(String? accountName, {bool force = false}) async {
+    // Kicked off from a microtask, so the provider can already be gone by the
+    // time this runs.
+    if (!ref.mounted) return;
     if (_initialLoadInFlight) return;
     _initialLoadInFlight = true;
     final generation = ++_loadGeneration;
@@ -133,7 +147,7 @@ class PaginatedTransactionsNotifier
     );
     try {
       await _fetchPage(1, accountName: accountName, generation: generation);
-      if (generation != _loadGeneration) return;
+      if (!_stillWanted(generation)) return;
       // Page 1 success/error already clears isInitialLoading inside _fetchPage.
       // Do not clear it here: an early return (auth still hydrating, duplicate
       // in-flight page) would leave an empty list with no loading affordance.
@@ -307,7 +321,7 @@ class PaginatedTransactionsNotifier
       final TransactionPageResult result;
       if (accountName != null) {
         final accountId = await _resolveAccountId(accountName);
-        if (generation != _loadGeneration) return;
+        if (!_stillWanted(generation)) return;
         result = await service.getAccountTransactionsPage(
           accountId,
           page: page,
@@ -320,7 +334,7 @@ class PaginatedTransactionsNotifier
         );
       }
 
-      if (generation != _loadGeneration) return;
+      if (!_stillWanted(generation)) return;
 
       final merged = _mergePage(
         state.transactions,
@@ -347,7 +361,7 @@ class PaginatedTransactionsNotifier
         'Fetched page $page successfully (received=${result.transactions.length}, loadedPages=${state.loadedPages.length}, totalPages=${state.totalPages})',
       );
     } catch (e) {
-      if (generation != _loadGeneration) return;
+      if (!_stillWanted(generation)) return;
       _log.warning(
         'Failed to fetch page $page (prefetch=$isPrefetch, account=$accountName): $e',
       );
@@ -358,7 +372,7 @@ class PaginatedTransactionsNotifier
       // Any exit that did not mark the page loaded (early return, stale
       // generation, error) must release the loading slot for this generation.
       if (!pageLoaded &&
-          generation == _loadGeneration &&
+          _stillWanted(generation) &&
           state.loadingPages.contains(page)) {
         state = state.copyWith(
           loadingPages: Set<int>.from(state.loadingPages)..remove(page),
