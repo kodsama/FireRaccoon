@@ -288,6 +288,16 @@ Map<String, Object?> _paginateClientSide(
 /// So an account or a currency is given once for the whole group and only the
 /// amount, description and category vary per leg, which is how a loan payment
 /// or a card bill is actually written.
+/// Statement rows one `match_statement` call will take.
+///
+/// The old ceiling of 1000 was below what a real account produces: a single
+/// Revolut currency pocket held 3,978 rows over eight years, so the one export
+/// that most needed checking was the one that could not be. The matcher is
+/// quadratic in rows times legs but bails on an amount comparison, and 8,000
+/// against 8,000 finished in well under a second, so the binding constraint is
+/// the size of the response rather than the time to compute it.
+const int kStatementMaxRows = 10000;
+
 Transaction _splitFromArgs(
   Map<String, Object?> leg,
   Map<String, Object?> args, {
@@ -1316,7 +1326,7 @@ List<McpTool> buildTools({
           'rows': {
             'type': 'array',
             'minItems': 1,
-            'maxItems': 1000,
+            'maxItems': kStatementMaxRows,
             'items': {
               'type': 'object',
               'required': ['row_id', 'date', 'amount'],
@@ -1357,8 +1367,12 @@ List<McpTool> buildTools({
         if (rawRows is! List || rawRows.isEmpty) {
           return _badInput('rows must list at least one statement row');
         }
-        if (rawRows.length > 1000) {
-          return _badInput('rows must not exceed 1000 entries');
+        if (rawRows.length > kStatementMaxRows) {
+          return _badInput(
+            'rows must not exceed $kStatementMaxRows entries; '
+            'split the statement into windows at dates where the balances '
+            'already agree, so no pair is cut in half',
+          );
         }
         final parsedRows = <RawStatementRow>[];
         for (final entry in rawRows) {
@@ -1420,10 +1434,17 @@ List<McpTool> buildTools({
           return _badInput('no asset or liability account with id $accountId');
         }
 
+        // Padded by the widest tolerance the matcher will pair across, at both
+        // ends. Padding only the end meant a transaction the ledger dates the
+        // day before the statement's first row was never fetched, so it came
+        // back as missing and writing it would have duplicated what was
+        // already there. Legs outside the period stay matchable and are
+        // reported under excluded.fetched_outside_period.
+        const reach = Duration(days: kStatementNearDateToleranceDays);
         final recorded = await api.getAccountTransactions(
           accountId,
-          start: start,
-          end: inclusiveEnd.add(const Duration(days: 1)),
+          start: start.subtract(reach),
+          end: inclusiveEnd.add(reach + const Duration(days: 1)),
         );
 
         final plan = matchStatementRows(
