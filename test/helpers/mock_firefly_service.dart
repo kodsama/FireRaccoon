@@ -48,6 +48,12 @@ class FakeFireflyService implements FireflyService {
   Exception? createTransactionError;
   Exception? accountBalanceHistoriesError;
   Duration? responseDelay;
+
+  /// Windows [getAccountTransactionsPage] was asked for.
+  ///
+  /// Firefly returns nothing for a range with only one bound, which a fake that
+  /// treats a missing bound as unbounded will happily hide.
+  final List<({DateTime? start, DateTime? end})> accountPageWindows = [];
   final List<Transaction> updatedTransactions = [];
 
   Future<void> _maybeDelay() async {
@@ -246,6 +252,7 @@ class FakeFireflyService implements FireflyService {
   }) async {
     _maybeThrow();
     await _maybeDelay();
+    accountPageWindows.add((start: start, end: end));
     final result = accountTransactionPages[accountId]?[page];
     if (result == null) {
       return TransactionPageResult(
