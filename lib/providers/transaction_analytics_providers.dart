@@ -61,12 +61,10 @@ final scopedTransactionsProvider =
       ref,
       key,
     ) async {
-      final service = ref.watch(apiServiceProvider);
-      if (service == null) {
-        throw Exception(
-          'Not connected to Firefly III. Open Settings and connect your server.',
-        );
-      }
+      final service = await requireFireflyService(
+        ref,
+        'scopedTransactionsProvider',
+      );
 
       final dateRange = _dateRangeForKey(key);
       // Let the server filter by type so expense/income screens do not

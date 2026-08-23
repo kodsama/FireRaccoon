@@ -1486,6 +1486,7 @@
   "tooltipFieldDescription": "Vad den här transaktionen gäller.",
   "tooltipFieldSourceAccount": "Konto pengarna kommer från.",
   "tooltipFieldDestinationAccount": "Konto pengarna går till.",
+  "tooltipSwapTransferAccounts": "Byt plats på de två kontona.",
   "tooltipFieldDate": "Datum och tid för transaktionen.",
   "tooltipFieldAmount": "Huvudbelopp i vald valuta.",
   "tooltipFieldCurrency": "Primär valuta för den här raden.",

@@ -2708,6 +2708,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tooltipFieldDestinationAccount => 'Compte où va l\'argent.';
 
   @override
+  String get tooltipSwapTransferAccounts => 'Échanger les deux comptes.';
+
+  @override
   String get tooltipFieldDate => 'Date et heure de la transaction.';
 
   @override

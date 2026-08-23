@@ -2638,6 +2638,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipFieldDestinationAccount => '资金去向账户。';
 
   @override
+  String get tooltipSwapTransferAccounts => '交换两个账户。';
+
+  @override
   String get tooltipFieldDate => '交易日期和时间。';
 
   @override

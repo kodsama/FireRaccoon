@@ -1486,6 +1486,7 @@
   "tooltipFieldDescription": "这笔交易发生了什么。",
   "tooltipFieldSourceAccount": "资金来源账户。",
   "tooltipFieldDestinationAccount": "资金去向账户。",
+  "tooltipSwapTransferAccounts": "交换两个账户。",
   "tooltipFieldDate": "交易日期和时间。",
   "tooltipFieldAmount": "所选货币下的主金额。",
   "tooltipFieldCurrency": "该分录的主货币。",

@@ -96,8 +96,12 @@ mixin _AccountTransactionsPreview<T extends ConsumerStatefulWidget>
         final tomorrow = DateTime(now.year, now.month, now.day + 1);
         // Firefly returns nothing at all for a range with only one bound, so
         // "everything before" and "everything after" have to be spelled out.
-        final beforeAnyLedger = DateTime(1900);
-        final beyondAnyForecast = DateTime(now.year + 50);
+        // Firefly refuses a window outside 32-bit time: the start must be after
+        // 1970-01-02 and the end before 2038-01-17. A sentinel past either edge
+        // made both of these reads a 422, and a 422 here reads as an account
+        // with no transactions at all.
+        final beforeAnyLedger = DateTime(1970, 1, 3);
+        final beyondAnyForecast = DateTime(2038, 1, 16);
         // Two windows rather than one page. Firefly returns newest first, and a
         // ledger with write-ahead recurrences has its newest rows months in the
         // future: one page of twenty came back with eighteen future rows and
