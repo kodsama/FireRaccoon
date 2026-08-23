@@ -291,11 +291,12 @@ Map<String, Object?> _paginateClientSide(
 /// Statement rows one `match_statement` call will take.
 ///
 /// The old ceiling of 1000 was below what a real account produces: a single
-/// Revolut currency pocket held 3,978 rows over eight years, so the one export
-/// that most needed checking was the one that could not be. The matcher is
-/// quadratic in rows times legs but bails on an amount comparison, and 8,000
-/// against 8,000 finished in well under a second, so the binding constraint is
-/// the size of the response rather than the time to compute it.
+/// currency pocket of a multi-currency wallet can hold several thousand rows
+/// across years of history, so the one export that most needed checking was the
+/// one that could not be. The matcher is quadratic in rows times legs but bails
+/// on an amount comparison, and 8,000 against 8,000 finished in well under a
+/// second, so the binding constraint is the size of the response rather than the
+/// time to compute it.
 const int kStatementMaxRows = 10000;
 
 Transaction _splitFromArgs(

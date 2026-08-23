@@ -2144,9 +2144,9 @@ void main() {
     });
 
     test('takes a whole account, not a thousand rows of it', () async {
-      // A single Revolut currency pocket held 3,978 rows over eight years, and
-      // the old ceiling of 1000 meant the export that most needed checking was
-      // the one that could not be checked at all.
+      // One currency pocket of a multi-currency wallet can hold several
+      // thousand rows, and the old ceiling of 1000 meant the export that most
+      // needed checking was the one that could not be checked at all.
       final rows = [
         for (var i = 0; i < 4000; i++)
           {
