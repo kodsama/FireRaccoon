@@ -72,7 +72,11 @@ void main() {
 
   test('reports connected when Firefly responds with 200', () async {
     final client = MockClient(
-      (_) async => http.Response('{"version":"6"}', 200),
+      (_) async => http.Response(
+        '{"data":{"version":"6.6.6"}}',
+        200,
+        headers: {'content-type': 'application/json'},
+      ),
     );
     final container = await containerWithAuth(
       auth: AuthSettings(serverUrl: 'https://firefly.test', apiToken: 'token'),
@@ -102,7 +106,11 @@ void main() {
     var shouldFail = false;
     final client = MockClient((_) async {
       if (shouldFail) throw Exception('offline');
-      return http.Response('{"version":"6"}', 200);
+      return http.Response(
+        '{"data":{"version":"6.6.6"}}',
+        200,
+        headers: {'content-type': 'application/json'},
+      );
     });
     final container = await containerWithAuth(
       auth: AuthSettings(serverUrl: 'https://firefly.test', apiToken: 'token'),
@@ -129,7 +137,11 @@ void main() {
       var requests = 0;
       final client = MockClient((_) async {
         requests++;
-        return http.Response('{"version":"6"}', 200);
+        return http.Response(
+          '{"data":{"version":"6.6.6"}}',
+          200,
+          headers: {'content-type': 'application/json'},
+        );
       });
       final container = await containerWithAuth(
         auth: AuthSettings(

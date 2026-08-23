@@ -77,6 +77,41 @@ void main() {
       expect(currency.code, 'EUR');
     });
 
+    test('names the server URL when it answers with a web page', () async {
+      // A UI host, or one behind single sign-on, redirects to a login page that
+      // answers 200. Decoding that as JSON failed on the very first character,
+      // so the report was of malformed data when the address was the problem.
+      var requests = 0;
+      final client = MockClient((_) async {
+        requests++;
+        return http.Response(
+          '<!DOCTYPE html>\n<html lang="en"><head><title>Sign in</title>',
+          200,
+          headers: {'content-type': 'text/html; charset=utf-8'},
+        );
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await expectLater(
+        // One account type, so the count below is about retries and not about
+        // the request this fans out per type.
+        service.getAccounts(types: const ['asset']),
+        throwsA(
+          isA<FireflyApiException>().having(
+            (error) => error.toString(),
+            'message',
+            allOf(contains('web page'), contains('firefly.test')),
+          ),
+        ),
+      );
+      // Reads retry, but asking again is served the same page.
+      expect(requests, 1);
+    });
+
     test('retries read requests on 5xx before succeeding', () async {
       var attempts = 0;
       final client = MockClient((_) async {
