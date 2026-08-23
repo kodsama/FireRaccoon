@@ -94,6 +94,10 @@ mixin _AccountTransactionsPreview<T extends ConsumerStatefulWidget>
         // _rangeQuery treats end as exclusive, so tomorrow is what includes
         // today on one side and excludes it on the other.
         final tomorrow = DateTime(now.year, now.month, now.day + 1);
+        // Firefly returns nothing at all for a range with only one bound, so
+        // "everything before" and "everything after" have to be spelled out.
+        final beforeAnyLedger = DateTime(1900);
+        final beyondAnyForecast = DateTime(now.year + 50);
         // Two windows rather than one page. Firefly returns newest first, and a
         // ledger with write-ahead recurrences has its newest rows months in the
         // future: one page of twenty came back with eighteen future rows and
@@ -103,6 +107,7 @@ mixin _AccountTransactionsPreview<T extends ConsumerStatefulWidget>
             previewAccount.id,
             page: 1,
             limit: 20,
+            start: beforeAnyLedger,
             end: tomorrow,
           ),
           service.getAccountTransactionsPage(
@@ -110,6 +115,7 @@ mixin _AccountTransactionsPreview<T extends ConsumerStatefulWidget>
             page: 1,
             limit: 50,
             start: tomorrow,
+            end: beyondAnyForecast,
           ),
         ]);
         if (mounted) {
