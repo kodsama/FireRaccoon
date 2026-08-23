@@ -101,6 +101,12 @@ Map<String, Object?> _accountJson(Account account) => {
   'currency_symbol': account.currencySymbol,
   'currency_code': account.currencyCode,
   'active': account.active,
+  // find_account matches on these and update_account sets them, so leaving
+  // them out meant an identifier could be written and matched but never read
+  // back, and the only way to tell whether one was set at all was the
+  // has_account_number flag on a search result.
+  'account_number': account.accountNumber,
+  'iban': account.iban,
 };
 
 /// One leg of a split group, in the shape the write tools accept back.
@@ -299,6 +305,14 @@ Map<String, Object?> _paginateClientSide(
 /// time to compute it.
 const int kStatementMaxRows = 10000;
 
+/// True for the empty string and the empty list, which is how a caller asks for
+/// a field to be removed rather than left alone.
+bool _isEmptyValue(Object? value) {
+  if (value is String) return value.trim().isEmpty;
+  if (value is List) return value.isEmpty;
+  return false;
+}
+
 Transaction _splitFromArgs(
   Map<String, Object?> leg,
   Map<String, Object?> args, {
@@ -447,6 +461,25 @@ Transaction _transactionFromArgs(
   // sent the model default of false, so every edit silently threw away the
   // reconciliation the person had asserted, and a refresh was the first they
   // heard of it.
+  // An empty string, or an empty tag list, is how a caller says "remove this".
+  // Left to the ordinary path it was indistinguishable from not mentioning the
+  // field at all, so a note could be set but never taken away.
+  const clearable = {
+    'notes': 'notes',
+    'category_name': 'category_name',
+    'category_id': 'category_id',
+    'budget_name': 'budget_name',
+    'budget_id': 'budget_id',
+    'bill_id': 'bill_id',
+    'piggy_bank_id': 'piggy_bank_id',
+    'tags': 'tags',
+  };
+  final cleared = <String>{
+    for (final entry in clearable.entries)
+      if (args.containsKey(entry.key) && _isEmptyValue(args[entry.key]))
+        entry.value,
+  };
+
   final reconciled =
       (args['reconciled'] as bool?) ??
       (carryReconciled ? base?.reconciled ?? false : false);
@@ -540,6 +573,7 @@ Transaction _transactionFromArgs(
     foreignAmount: foreignAmount,
     foreignCurrencyCode: foreignCurrencyCode,
     reconciled: leadingLeg?.reconciled ?? reconciled,
+    clearedFields: cleared,
     tags: leadingLeg != null
         ? leadingLeg.tags
         : (args.containsKey('tags')

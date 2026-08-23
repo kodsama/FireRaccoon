@@ -161,7 +161,10 @@ void main() {
       },
     );
 
-    test('a start_date alone still sends a range', () async {
+    test('a start_date alone names the open end too', () async {
+      // An account's transactions endpoint answers a range carrying only one
+      // bound with nothing at all, so the open end has to be spelled out. The
+      // collection endpoint does not mind either way.
       final calls = <Uri>[];
       final tool = _tool(
         'get_transactions',
@@ -172,7 +175,7 @@ void main() {
 
       final ranged = calls.where((u) => u.queryParameters.containsKey('start'));
       expect(ranged.first.queryParameters['start'], '2026-01-01');
-      expect(ranged.first.queryParameters.containsKey('end'), isFalse);
+      expect(ranged.first.queryParameters['end'], isNotNull);
     });
 
     test('an unparseable date is refused before any request', () async {
