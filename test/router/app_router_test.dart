@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fireracoon/deployment/deployment_providers.dart';
 import 'package:fireracoon/deployment/fireracoon_mode.dart';
+import 'package:fireracoon/providers/auth_provider.dart';
 import 'package:fireracoon/providers/people_providers.dart';
 import 'package:fireracoon/providers/server_session_provider.dart';
 import 'package:fireracoon/providers/theme_provider.dart';
@@ -18,6 +19,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/static_auth_notifier.dart';
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -30,7 +33,13 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        // These tests build route widgets. The real notifier reads platform
+        // secure storage and a .env file, neither of which answers under
+        // flutter_test, so its deadline was still running at teardown.
+        authProvider.overrideWith(() => StaticAuthNotifier(AuthSettings())),
+      ],
     );
     addTearDown(container.dispose);
     final router = container.read(routerProvider);
@@ -76,6 +85,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        authProvider.overrideWith(() => StaticAuthNotifier(AuthSettings())),
         deploymentConfigProvider.overrideWithValue(
           const DeploymentConfig(
             mode: FireracoonMode.server,
@@ -145,7 +155,13 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        // These tests build route widgets. The real notifier reads platform
+        // secure storage and a .env file, neither of which answers under
+        // flutter_test, so its deadline was still running at teardown.
+        authProvider.overrideWith(() => StaticAuthNotifier(AuthSettings())),
+      ],
     );
     addTearDown(container.dispose);
 
