@@ -108,11 +108,17 @@ class TransactionMonthHeader extends StatelessWidget {
               Flexible(child: Text(label, style: textStyle)),
               if (subtitle != null) ...[
                 const SizedBox(width: 8),
-                Text(
-                  subtitle!,
-                  style: TextStyle(
-                    color: colors.text3,
-                    fontSize: dense ? 12 : 13,
+                // Flexible because this header is also used inside an account
+                // card, where the column is narrow enough for a subtitle to
+                // run off the end of it.
+                Flexible(
+                  child: Text(
+                    subtitle!,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colors.text3,
+                      fontSize: dense ? 12 : 13,
+                    ),
                   ),
                 ),
               ],

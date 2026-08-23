@@ -43,7 +43,12 @@ class DashboardPeriodContext {
   const DashboardPeriodContext({required this.range, required this.comparison});
 }
 
-List<Account> _accounts(Ref ref) => ref.watch(effectiveAccountsProvider);
+/// Real balances: what each account holds, whoever it is shared with.
+List<Account> _accounts(Ref ref) => ref.watch(ownedAccountsProvider);
+
+/// Share-weighted balances, for net worth and debt only.
+List<Account> _shareOfAccounts(Ref ref) =>
+    ref.watch(shareWeightedAccountsProvider);
 
 List<Transaction> _transactions(Ref ref) =>
     ref.watch(filteredTransactionsProvider);
@@ -84,7 +89,7 @@ List<Transaction> _transactionsForPeriod(Ref ref, DashboardPeriodKey key) {
 
 /// Cached net worth breakdown shared by sidebar, dashboard, and MCP callers.
 final netWorthBreakdownProvider = Provider<NetWorthBreakdown>((ref) {
-  return computeNetWorthBreakdown(_accounts(ref));
+  return computeNetWorthBreakdown(_shareOfAccounts(ref));
 });
 
 /// Cached asset accounts list.
@@ -119,7 +124,7 @@ final dashboardKpisProvider = Provider.autoDispose
       final currency = ref.watch(primaryCurrencyProvider).asData?.value.symbol;
 
       return computeDashboardKpis(
-        accounts: _accounts(ref),
+        accounts: _shareOfAccounts(ref),
         transactions: _transactionsForPeriod(ref, _periodFromKpis(key)),
         periodRange: period.range,
         comparisonRange: period.comparison,
@@ -161,7 +166,7 @@ final netWorthSparklineProvider = Provider.autoDispose
       final netWorth = ref.watch(netWorthBreakdownProvider).netWorth;
       final buckets = ref.watch(cashFlowBucketsProvider(key));
       return netWorthSparkline(
-        accounts: _accounts(ref),
+        accounts: _shareOfAccounts(ref),
         transactions: _transactionsForPeriod(ref, _periodFromBuckets(key)),
         range: period.range,
         languageCode: key.languageCode,

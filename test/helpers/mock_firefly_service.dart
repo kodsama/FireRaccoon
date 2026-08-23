@@ -48,6 +48,12 @@ class FakeFireflyService implements FireflyService {
   Exception? createTransactionError;
   Exception? accountBalanceHistoriesError;
   Duration? responseDelay;
+
+  /// Windows [getAccountTransactionsPage] was asked for.
+  ///
+  /// Firefly returns nothing for a range with only one bound, which a fake that
+  /// treats a missing bound as unbounded will happily hide.
+  final List<({DateTime? start, DateTime? end})> accountPageWindows = [];
   final List<Transaction> updatedTransactions = [];
 
   Future<void> _maybeDelay() async {
@@ -241,16 +247,37 @@ class FakeFireflyService implements FireflyService {
     String accountId, {
     required int page,
     required int limit,
+    DateTime? start,
+    DateTime? end,
   }) async {
     _maybeThrow();
     await _maybeDelay();
-    return accountTransactionPages[accountId]?[page] ??
-        TransactionPageResult(
-          transactions: const [],
-          currentPage: page,
-          totalPages: 1,
-          total: 0,
-        );
+    accountPageWindows.add((start: start, end: end));
+    final result = accountTransactionPages[accountId]?[page];
+    if (result == null) {
+      return TransactionPageResult(
+        transactions: const [],
+        currentPage: page,
+        totalPages: 1,
+        total: 0,
+      );
+    }
+    if (start == null && end == null) return result;
+    // The server splits by date, so a caller asking for one side of today must
+    // not be handed both. Without this a test could not tell the two apart.
+    final windowed = result.transactions
+        .where(
+          (t) =>
+              (start == null || !t.date.isBefore(start)) &&
+              (end == null || t.date.isBefore(end)),
+        )
+        .toList();
+    return TransactionPageResult(
+      transactions: windowed,
+      currentPage: page,
+      totalPages: result.totalPages,
+      total: windowed.length,
+    );
   }
 
   @override

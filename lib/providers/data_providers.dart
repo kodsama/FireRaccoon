@@ -302,3 +302,37 @@ final piggyBanksProvider = FutureProvider<List<PiggyBank>>((ref) async {
   _log.fine('Loading piggy banks');
   return service.getPiggyBanks();
 });
+
+/// End of the month [date] falls in, at the last moment of its last day.
+DateTime endOfMonthFor(DateTime date) =>
+    DateTime(date.year, date.month + 1, 0, 23, 59, 59);
+
+/// Day the accounts view reports balances for.
+///
+/// Null means the end of the current month, which is the only figure the column
+/// could show before the date became selectable, so nothing moves until someone
+/// picks a date.
+class AccountBalanceDateNotifier extends Notifier<DateTime?> {
+  @override
+  DateTime? build() => null;
+
+  /// Kept at the last moment of the chosen day, so a balance "at" a date
+  /// includes everything dated that day.
+  void select(DateTime? date) {
+    state = date == null
+        ? null
+        : DateTime(date.year, date.month, date.day, 23, 59, 59);
+  }
+
+  void reset() => state = null;
+}
+
+final accountBalanceDateProvider =
+    NotifierProvider<AccountBalanceDateNotifier, DateTime?>(
+      AccountBalanceDateNotifier.new,
+    );
+
+/// The date the accounts view is actually reporting.
+final resolvedAccountBalanceDateProvider = Provider<DateTime>((ref) {
+  return ref.watch(accountBalanceDateProvider) ?? endOfMonthFor(DateTime.now());
+});

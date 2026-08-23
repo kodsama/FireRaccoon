@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:fireracoon/providers/view_mode_provider.dart';
+import 'package:fireracoon/store/secure_storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -58,19 +59,19 @@ void main() {
       expect(container.read(viewModeProvider), ViewMode.compact);
 
       await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(secureStorage['globalViewMode'], 'compact');
+      expect(await appSecureStorage.read(key: 'globalViewMode'), 'compact');
 
       container.read(viewModeProvider.notifier).toggle();
       expect(container.read(viewModeProvider), ViewMode.tight);
 
       await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(secureStorage['globalViewMode'], 'tight');
+      expect(await appSecureStorage.read(key: 'globalViewMode'), 'tight');
 
       container.read(viewModeProvider.notifier).toggle();
       expect(container.read(viewModeProvider), ViewMode.standard);
 
       await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(secureStorage['globalViewMode'], 'standard');
+      expect(await appSecureStorage.read(key: 'globalViewMode'), 'standard');
     },
   );
 
@@ -83,6 +84,6 @@ void main() {
 
     await container.read(viewModeProvider.notifier).setMode(ViewMode.tight);
     expect(container.read(viewModeProvider), ViewMode.tight);
-    expect(secureStorage['globalViewMode'], 'tight');
+    expect(await appSecureStorage.read(key: 'globalViewMode'), 'tight');
   });
 }

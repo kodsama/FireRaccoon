@@ -33,6 +33,14 @@ class Transaction {
   final List<Transaction> splits;
   final bool reconciled;
 
+  /// Fields the caller means to erase, by their API name.
+  ///
+  /// [toSplitJson] leaves an empty value out, so omitting a field and emptying
+  /// one looked identical on the wire and Firefly kept what it already had.
+  /// There was no way to remove a note or a category once set. Naming the
+  /// intent keeps omission meaning "leave alone" for every existing caller.
+  final Set<String> clearedFields;
+
   Transaction({
     required this.id,
     this.journalId,
@@ -63,6 +71,7 @@ class Transaction {
     this.groupTitle,
     this.splits = const [],
     this.reconciled = false,
+    this.clearedFields = const {},
   });
 
   bool get isSplitGroup => splits.length > 1;
@@ -224,6 +233,7 @@ class Transaction {
     String? groupTitle,
     List<Transaction>? splits,
     bool? reconciled,
+    Set<String>? clearedFields,
     bool clearForeignAmount = false,
     bool clearBudget = false,
     bool clearBill = false,
@@ -270,6 +280,7 @@ class Transaction {
       groupTitle: groupTitle ?? this.groupTitle,
       splits: splits ?? this.splits,
       reconciled: reconciled ?? this.reconciled,
+      clearedFields: clearedFields ?? this.clearedFields,
     );
   }
 
@@ -333,22 +344,36 @@ class Transaction {
       }
     }
 
-    if (categoryId != null && categoryId!.isNotEmpty) {
-      split['category_id'] = categoryId;
+    // A cleared field is sent as an explicit empty, which is the only way to
+    // tell Firefly to remove what is there.
+    void put(String key, Object? value, {required bool has}) {
+      if (clearedFields.contains(key)) {
+        split[key] = key == 'tags' ? const <String>[] : '';
+      } else if (has) {
+        split[key] = value;
+      }
     }
-    if (categoryName.isNotEmpty) split['category_name'] = categoryName;
-    if (budgetId != null && budgetId!.isNotEmpty) {
-      split['budget_id'] = budgetId;
-    }
-    if (budgetName != null && budgetName!.isNotEmpty) {
-      split['budget_name'] = budgetName;
-    }
-    if (notes != null && notes!.isNotEmpty) split['notes'] = notes;
-    if (tags.isNotEmpty) split['tags'] = tags;
-    if (billId != null && billId!.isNotEmpty) split['bill_id'] = billId;
-    if (piggyBankId != null && piggyBankId!.isNotEmpty) {
-      split['piggy_bank_id'] = piggyBankId;
-    }
+
+    put(
+      'category_id',
+      categoryId,
+      has: categoryId != null && categoryId!.isNotEmpty,
+    );
+    put('category_name', categoryName, has: categoryName.isNotEmpty);
+    put('budget_id', budgetId, has: budgetId != null && budgetId!.isNotEmpty);
+    put(
+      'budget_name',
+      budgetName,
+      has: budgetName != null && budgetName!.isNotEmpty,
+    );
+    put('notes', notes, has: notes != null && notes!.isNotEmpty);
+    put('tags', tags, has: tags.isNotEmpty);
+    put('bill_id', billId, has: billId != null && billId!.isNotEmpty);
+    put(
+      'piggy_bank_id',
+      piggyBankId,
+      has: piggyBankId != null && piggyBankId!.isNotEmpty,
+    );
     if (interestDate != null) {
       split['interest_date'] = interestDate!.toIso8601String().split('T').first;
     }

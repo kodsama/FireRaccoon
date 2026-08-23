@@ -430,6 +430,311 @@ void main() {
       expect((result['transaction'] as Map)['id'], 'created-1');
     });
 
+    test(
+      'duplicate_transaction keeps the foreign side of a conversion',
+      () async {
+        // Firefly refuses a transfer between accounts of different currencies
+        // without a foreign amount, so dropping it on the copy made every
+        // cross-currency duplicate a 422.
+        final bodies = <String>[];
+        final result = await _tool(
+          'duplicate_transaction',
+          client: fireflyMockClient(
+            transactionOverrides: {
+              '1': transactionItem(
+                id: '1',
+                type: 'transfer',
+                amount: '10000.00',
+                foreignAmount: '14463.32',
+                foreignCurrencyCode: 'SEK',
+              ),
+            },
+            recordBodies: bodies,
+          ),
+        ).run({'transaction_id': '1', 'date': '2026-08-04'});
+
+        expect(result['ok'], isTrue);
+        final posted = jsonDecode(bodies.last) as Map<String, Object?>;
+        final leg = (posted['transactions'] as List).first as Map;
+        expect(leg['foreign_amount'], '14463.32');
+        expect(leg['foreign_currency_code'], 'SEK');
+      },
+    );
+
+    test(
+      'duplicate_transaction refuses a new amount without a new rate',
+      () async {
+        // The rate cannot be read off the local amount, and carrying the old
+        // foreign figure over would pair this month's amount with last month's
+        // rate. Scaling it would invent a rate and record it as fact.
+        await expectLater(
+          _tool(
+            'duplicate_transaction',
+            client: fireflyMockClient(
+              transactionOverrides: {
+                '1': transactionItem(
+                  id: '1',
+                  type: 'transfer',
+                  amount: '10000.00',
+                  foreignAmount: '14463.32',
+                  foreignCurrencyCode: 'SEK',
+                ),
+              },
+            ),
+          ).run({'transaction_id': '1', 'amount': 15000.0}),
+          completion(
+            containsPair(
+              'error',
+              allOf(contains('14463.32 SEK'), contains('pass foreign_amount')),
+            ),
+          ),
+        );
+      },
+    );
+
+    test('a stated foreign amount rides along with the new one', () async {
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'duplicate_transaction',
+            client: fireflyMockClient(
+              transactionOverrides: {
+                '1': transactionItem(
+                  id: '1',
+                  type: 'transfer',
+                  amount: '10000.00',
+                  foreignAmount: '14463.32',
+                  foreignCurrencyCode: 'SEK',
+                ),
+              },
+              recordBodies: bodies,
+            ),
+          ).run({
+            'transaction_id': '1',
+            'date': '2026-08-04',
+            'amount': 15000.0,
+            'foreign_amount': 22036.25,
+          });
+
+      expect(result['ok'], isTrue);
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['amount'], '15000.00');
+      expect(leg['foreign_amount'], '22036.25');
+      expect(leg['foreign_currency_code'], 'SEK');
+    });
+
+    test('create_transaction can state both sides of a conversion', () async {
+      // Without this there was no way to write a cross-currency transfer at
+      // all: the field was not on the schema and never reached the payload.
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'create_transaction',
+            client: fireflyMockClient(recordBodies: bodies),
+          ).run({
+            'type': 'transfer',
+            'date': '2026-08-04',
+            'amount': 15000.0,
+            'description': 'Exchanged to SEK',
+            'source_id': '5',
+            'destination_id': '9',
+            'foreign_amount': 22036.25,
+            'foreign_currency_code': 'SEK',
+          });
+
+      expect(result['ok'], isTrue);
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['foreign_amount'], '22036.25');
+      expect(leg['foreign_currency_code'], 'SEK');
+    });
+
+    test('a foreign amount of zero is refused, not written', () async {
+      await expectLater(
+        _tool('create_transaction', client: fireflyMockClient()).run({
+          'type': 'transfer',
+          'date': '2026-08-04',
+          'amount': 15000.0,
+          'description': 'Exchanged to SEK',
+          'foreign_amount': 0,
+        }),
+        completion(
+          containsPair('error', contains('foreign_amount must be greater')),
+        ),
+      );
+    });
+
+    test(
+      'update_transaction keeps a reconciliation it was not asked about',
+      () async {
+        // Omitting the flag sent the model default of false, so any edit threw
+        // away the reconciliation the person had asserted and a later refresh
+        // was the first they heard of it.
+        final bodies = <String>[];
+        final result =
+            await _tool(
+              'update_transaction',
+              client: fireflyMockClient(
+                transactionOverrides: {
+                  '1': transactionItem(id: '1', reconciled: true),
+                },
+                recordBodies: bodies,
+              ),
+            ).run({
+              'transaction_id': '1',
+              'notes': 'checked against the statement',
+            });
+
+        expect(result['ok'], isTrue);
+        final leg =
+            ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+                as Map;
+        expect(leg['reconciled'], isTrue);
+      },
+    );
+
+    test(
+      'update_transaction can release a reconciliation on purpose',
+      () async {
+        final bodies = <String>[];
+        await _tool(
+          'update_transaction',
+          client: fireflyMockClient(
+            transactionOverrides: {
+              '1': transactionItem(id: '1', reconciled: true),
+            },
+            recordBodies: bodies,
+          ),
+        ).run({'transaction_id': '1', 'reconciled': false});
+
+        final leg =
+            ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+                as Map;
+        expect(leg['reconciled'], isFalse);
+      },
+    );
+
+    test('moving the money on a reconciled transaction is refused', () async {
+      // Firefly will not move it and toSplitJson drops the fields rather than
+      // arguing, so the correction reported success and changed nothing.
+      await expectLater(
+        _tool(
+          'update_transaction',
+          client: fireflyMockClient(
+            transactionOverrides: {
+              '1': transactionItem(id: '1', reconciled: true),
+            },
+          ),
+        ).run({'transaction_id': '1', 'amount': 37380.0}),
+        completion(
+          containsPair(
+            'error',
+            allOf(contains('reconciled'), contains('pass reconciled:false')),
+          ),
+        ),
+      );
+    });
+
+    test('releasing and re-amounting in one call is allowed', () async {
+      final bodies = <String>[];
+      final result = await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(id: '1', reconciled: true),
+          },
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '1', 'amount': 37380.0, 'reconciled': false});
+
+      expect(result['ok'], isTrue);
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['amount'], '37380.00');
+      expect(leg['reconciled'], isFalse);
+    });
+
+    test('a copy of a reconciled transaction is not reconciled', () async {
+      // Nothing has been checked against a statement yet, whatever was true of
+      // the original.
+      final bodies = <String>[];
+      await _tool(
+        'duplicate_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(id: '1', reconciled: true),
+          },
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '1', 'date': '2026-08-18'});
+
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['reconciled'], isFalse);
+    });
+
+    test('an empty note removes the note', () async {
+      // toSplitJson leaves an empty value out, so emptying a field and not
+      // mentioning it looked identical on the wire and Firefly kept what it
+      // had. A note could be set and never taken away.
+      final bodies = <String>[];
+      await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(id: '1', notes: 'bank text: ICA'),
+          },
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '1', 'notes': ''});
+
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['notes'], '');
+    });
+
+    test('an omitted note is left exactly as it was', () async {
+      final bodies = <String>[];
+      await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(id: '1', notes: 'bank text: ICA'),
+          },
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '1', 'description': 'Groceries'});
+
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['notes'], 'bank text: ICA');
+    });
+
+    test('an empty tag list removes the tags', () async {
+      final bodies = <String>[];
+      await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(id: '1', tags: ['groceries', 'shared']),
+          },
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '1', 'tags': <String>[]});
+
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['tags'], isEmpty);
+    });
+
     test('duplicate_transaction fails when the source is gone', () async {
       await expectLater(
         _tool(
@@ -1867,6 +2172,21 @@ void main() {
     });
   });
 
+  test('an account reports the identifiers it can be found by', () async {
+    // find_account matches on these and update_account sets them, so leaving
+    // them out of the response meant an identifier could be written and
+    // matched but never read back, and the only way to tell whether one was
+    // set at all was a boolean on a search result.
+    final result = await _tool(
+      'get_account',
+      client: fireflyMockClient(),
+    ).run({'account_id': '5'});
+
+    final account = result['account'] as Map<String, Object?>;
+    expect(account.containsKey('account_number'), isTrue);
+    expect(account.containsKey('iban'), isTrue);
+  });
+
   group('match_statement', () {
     Map<String, Object?> statementArgs() => {
       'account_id': '5',
@@ -1876,6 +2196,66 @@ void main() {
         {'row_id': 'r1', 'date': '2026-01-15', 'amount': '-45,00'},
       ],
     };
+
+    test('reaches back far enough to see what the tolerance allows', () async {
+      // The matcher pairs a row up to five days from its recorded counterpart,
+      // but the fetch only reached forward from the statement's first row. A
+      // transaction the bank dated the day before came back as missing, and
+      // writing it would have duplicated what was already there.
+      final calls = <Uri>[];
+      await _tool(
+        'match_statement',
+        client: fireflyMockClient(record: calls),
+      ).run(statementArgs());
+
+      final fetch = calls.firstWhere(
+        (u) => u.path.contains('/accounts/5/transactions'),
+      );
+      expect(fetch.queryParameters['start'], '2025-12-27');
+      expect(fetch.queryParameters['end'], '2026-02-05');
+    });
+
+    test('takes a whole account, not a thousand rows of it', () async {
+      // One currency pocket of a multi-currency wallet can hold several
+      // thousand rows, and the old ceiling of 1000 meant the export that most
+      // needed checking was the one that could not be checked at all.
+      final rows = [
+        for (var i = 0; i < 4000; i++)
+          {
+            'row_id': 'r$i',
+            'date': '2026-01-15',
+            'amount': '-${(10 + i % 900)}.00',
+          },
+      ];
+      final result = await _tool(
+        'match_statement',
+        client: fireflyMockClient(),
+      ).run({...statementArgs(), 'rows': rows});
+
+      expect(result['ok'], isTrue);
+      expect(
+        (result['matched'] as List).length +
+            (result['missing'] as List).length +
+            (result['near_matches'] as List).length,
+        4000,
+      );
+    });
+
+    test('a statement past the ceiling says how to split it', () async {
+      final rows = [
+        for (var i = 0; i < 10001; i++)
+          {'row_id': 'r$i', 'date': '2026-01-15', 'amount': '-1.00'},
+      ];
+      final result = await _tool(
+        'match_statement',
+        client: fireflyMockClient(),
+      ).run({...statementArgs(), 'rows': rows});
+
+      expect(
+        result['error'],
+        allOf(contains('10000'), contains('balances already agree')),
+      );
+    });
 
     test('matches a row against what is recorded', () async {
       final result = await _tool(
@@ -2066,7 +2446,8 @@ void main() {
       );
     });
 
-    test('more than a thousand rows is refused', () async {
+    test('a thousand rows is well within what it will take', () async {
+      // The ceiling used to sit here, below what one real account produces.
       final result = await _tool('match_statement', client: fireflyMockClient())
           .run({
             ...base(),
@@ -2076,7 +2457,8 @@ void main() {
             ],
           });
 
-      expect(result['error'], contains('1000'));
+      expect(result['ok'], isTrue);
+      expect(result.containsKey('error'), isFalse);
     });
 
     test('a corpus that settles nothing asks rather than assuming', () async {

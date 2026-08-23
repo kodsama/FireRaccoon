@@ -1513,7 +1513,11 @@
   "tooltipClearDate": "Remover a data selecionada.",
   "tooltipAccountName": "Nome mostrado em listas e relatórios.",
   "tooltipAccountCurrentBalance": "Saldo atual no Firefly até hoje.",
-  "tooltipAccountEndOfMonthBalance": "Saldo projetado no fim do mês, incluindo transações agendadas, recorrências e contas.",
+  "tooltipAccountEndOfMonthBalance": "Saldo previsto na data selecionada, incluindo transações agendadas, recorrências e faturas.",
+  "tooltipBalanceDatePick": "Mostrar saldos noutra data",
+  "tooltipBalanceDateReset": "Voltar ao fim deste mês",
+  "tooltipBalanceBeyondForecast": "A previsão não vai tão longe, por isso este é o último valor projetado.",
+  "tooltipRecordedBalance": "Saldo registado no livro até esta data, incluindo transações já datadas à frente.",
   "tooltipBudgetName": "Nome deste orçamento de despesas.",
   "tooltipBudgetAmount": "Valor limite para este período de orçamento.",
   "tooltipSubscriptionName": "Nome da fatura ou subscrição recorrente.",
@@ -1715,5 +1719,7 @@
   "unlockWithBiometricsDescription": "Use Face ID, Touch ID, impressão digital ou o PIN do dispositivo no ecrã de login.",
   "biometricUnlockReason": "Desbloquear o FireRacoon",
   "biometricEnableReason": "Confirme para ativar o desbloqueio biométrico",
-  "biometricUnlockFailed": "O desbloqueio biométrico foi cancelado ou falhou."
+  "biometricUnlockFailed": "O desbloqueio biométrico foi cancelado ou falhou.",
+  "recordedBalance": "Registado",
+  "upcoming": "Próximas"
 }

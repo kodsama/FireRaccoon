@@ -1151,25 +1151,46 @@ final canManageFireflyConnectionProvider = Provider<bool>((ref) {
   );
 });
 
-final effectiveAccountsProvider = Provider<List<Account>>((ref) {
+/// Accounts the filtered person has a stake in, at the balance the bank holds.
+///
+/// A jointly held account still contains all of its money, so that is what the
+/// accounts, transactions and projection views report. Only the person's share
+/// of it counts towards their net worth, which is what
+/// [shareWeightedAccountsProvider] is for.
+final ownedAccountsProvider = Provider<List<Account>>((ref) {
   final accounts = ref.watch(accountsProvider).asData?.value ?? const [];
   final config = ref.watch(peopleProvider).config;
   final activePersonId = ref.watch(activePersonFilterProvider);
 
-  if (activePersonId == null) {
-    return accounts;
-  }
+  if (activePersonId == null) return accounts;
 
-  final result = <Account>[];
-  for (final account in accounts) {
-    final ratio = config.getOwnershipRatio(account.id, activePersonId);
-    if (ratio > 0.0) {
-      result.add(
-        account.copyWith(currentBalance: account.currentBalance * ratio),
-      );
-    }
-  }
-  return result;
+  return [
+    for (final account in accounts)
+      if (config.getOwnershipRatio(account.id, activePersonId) > 0.0) account,
+  ];
+});
+
+/// The same accounts with each balance cut to the person's share of it.
+///
+/// Only for net worth and debt, where the question is how much of it is theirs.
+/// Anywhere a balance is presented as the account's own, use
+/// [ownedAccountsProvider]: showing half of a joint account as its balance
+/// makes the account look like it holds money it does not.
+final shareWeightedAccountsProvider = Provider<List<Account>>((ref) {
+  final config = ref.watch(peopleProvider).config;
+  final activePersonId = ref.watch(activePersonFilterProvider);
+  final owned = ref.watch(ownedAccountsProvider);
+
+  if (activePersonId == null) return owned;
+
+  return [
+    for (final account in owned)
+      account.copyWith(
+        currentBalance:
+            account.currentBalance *
+            config.getOwnershipRatio(account.id, activePersonId),
+      ),
+  ];
 });
 
 final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {

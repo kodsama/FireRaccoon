@@ -38,7 +38,7 @@ class AccountsScreen extends ConsumerWidget {
     final showInactive = AccountsRoute.showInactiveFrom(routeState);
     final searchQuery = RouteQuery.searchFrom(routeState.uri);
     final accountsAsync = ref.watch(accountsProvider);
-    final effectiveAccounts = ref.watch(effectiveAccountsProvider);
+    final effectiveAccounts = ref.watch(ownedAccountsProvider);
     final customClassifications = ref.watch(accountClassificationProvider);
 
     return Scaffold(
@@ -159,6 +159,7 @@ class AccountsScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    const _BalanceDateChip(),
                     const ViewModeSwitcher(),
                   ],
                 ),
@@ -587,6 +588,91 @@ class _AccountSearchBoxState extends ConsumerState<_AccountSearchBox> {
             borderSide: BorderSide(color: colors.accent.acc, width: 1.5),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Picks the date every account row reports its balance for.
+///
+/// Defaults to the end of the current month, which is the only figure the column
+/// could show before it was selectable, so the view opens exactly as it did.
+class _BalanceDateChip extends ConsumerWidget {
+  const _BalanceDateChip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.colors;
+    final l10n = context.l10n;
+    final format = ref.watch(localeFormattingProvider);
+    final picked = ref.watch(accountBalanceDateProvider);
+    final showing = ref.watch(resolvedAccountBalanceDateProvider);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: picked == null
+            ? colors.surface
+            : colors.accent.acc.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: picked == null
+              ? colors.border
+              : colors.accent.acc.withValues(alpha: 0.35),
+        ),
+      ),
+      child: Row(
+        children: [
+          Tooltip(
+            message: l10n.tooltipBalanceDatePick,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () async {
+                final now = DateTime.now();
+                final chosen = await showDatePicker(
+                  context: context,
+                  initialDate: showing,
+                  firstDate: DateTime(now.year - 10),
+                  lastDate: DateTime(now.year + 10, 12, 31),
+                );
+                if (chosen == null) return;
+                ref.read(accountBalanceDateProvider.notifier).select(chosen);
+              },
+              child: Row(
+                children: [
+                  Icon(LucideIcons.calendar, size: 14, color: colors.text3),
+                  const SizedBox(width: 8),
+                  Text(
+                    format.formatMediumDate(showing),
+                    style: TextStyle(
+                      color: colors.text,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (picked != null) ...[
+            const SizedBox(width: 6),
+            Tooltip(
+              message: l10n.tooltipBalanceDateReset,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () =>
+                    ref.read(accountBalanceDateProvider.notifier).reset(),
+                child: Padding(
+                  padding: const EdgeInsets.all(2),
+                  child: Icon(
+                    LucideIcons.x,
+                    size: 14,
+                    color: colors.accent.acc,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

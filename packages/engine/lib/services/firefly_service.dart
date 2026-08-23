@@ -65,6 +65,8 @@ abstract class FireflyService {
     String accountId, {
     required int page,
     required int limit,
+    DateTime? start,
+    DateTime? end,
   });
   Future<List<Budget>> getBudgets({DateTime? start, DateTime? end});
   Future<List<Transaction>> getBudgetTransactions(
