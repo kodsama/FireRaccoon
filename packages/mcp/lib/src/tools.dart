@@ -101,6 +101,12 @@ Map<String, Object?> _accountJson(Account account) => {
   'currency_symbol': account.currencySymbol,
   'currency_code': account.currencyCode,
   'active': account.active,
+  // find_account matches on these and update_account sets them, so leaving
+  // them out meant an identifier could be written and matched but never read
+  // back, and the only way to tell whether one was set at all was the
+  // has_account_number flag on a search result.
+  'account_number': account.accountNumber,
+  'iban': account.iban,
 };
 
 /// One leg of a split group, in the shape the write tools accept back.
