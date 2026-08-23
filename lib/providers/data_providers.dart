@@ -7,15 +7,40 @@ import 'auth_provider.dart';
 
 final _log = AppLogger.scoped('providers.data');
 
-FireflyService _requireService(Ref ref, String providerName) {
+/// The service, or a provider left loading while credentials are still coming.
+///
+/// Reading the keychain can fail until its password is typed, and until that
+/// read answers there is nothing to tell a server that was never configured
+/// apart from one whose token has not arrived yet. Reporting the second as the
+/// first told people to connect a server they had already connected. Hydration
+/// re-runs this provider with the real answer, so waiting costs only the wait.
+// Deliberately not `async`: the failures below have to throw synchronously,
+// the way a caller reading this service straight off the provider always did.
+// Returning them as a future error instead leaves the provider in a loading
+// state that carries an error and never resolves.
+Future<FireflyService> requireFireflyService(Ref ref, String providerName) {
   final service = ref.watch(apiServiceProvider);
-  if (service == null) {
-    _log.warning('$providerName requested while Firefly is disconnected');
+  if (service != null) return Future.value(service);
+
+  final auth = ref.watch(authProvider);
+  if (!auth.isHydrated) {
+    // Nothing ever completes this. Hydration rebuilds the provider, which
+    // starts a fresh body with a real answer, and staying loading until then is
+    // the honest state.
+    _log.finer('$providerName waiting for the credential read to answer');
+    return Completer<FireflyService>().future;
+  }
+  if (auth.storageUnavailable) {
+    _log.warning('$providerName blocked: credential storage would not answer');
     throw Exception(
-      'Not connected to Firefly III. Open Settings and connect your server.',
+      'Could not read your saved credentials. Unlock your keychain, then '
+      'refresh.',
     );
   }
-  return service;
+  _log.warning('$providerName requested while Firefly is disconnected');
+  throw Exception(
+    'Not connected to Firefly III. Open Settings and connect your server.',
+  );
 }
 
 // Build-time tuning knobs (pass via --dart-define when needed).
@@ -54,13 +79,13 @@ final apiServiceProvider = Provider<FireflyService?>((ref) {
 });
 
 final primaryCurrencyProvider = FutureProvider<FireflyCurrency>((ref) async {
-  final service = _requireService(ref, 'primaryCurrencyProvider');
+  final service = await requireFireflyService(ref, 'primaryCurrencyProvider');
   _log.fine('Loading primary currency');
   return service.getPrimaryCurrency();
 });
 
 final currentUserProvider = FutureProvider<FireflyUser>((ref) async {
-  final service = _requireService(ref, 'currentUserProvider');
+  final service = await requireFireflyService(ref, 'currentUserProvider');
   _log.fine('Loading current user');
   return service.getCurrentUser();
 });
@@ -68,13 +93,17 @@ final currentUserProvider = FutureProvider<FireflyUser>((ref) async {
 class AccountsNotifier extends AsyncNotifier<List<Account>> {
   @override
   Future<List<Account>> build() async {
-    final service = _requireService(ref, 'accountsProvider');
+    final service = await requireFireflyService(ref, 'accountsProvider');
     _log.fine('Loading accounts');
     return service.getAccounts();
   }
 
   Future<void> refresh() async {
-    final service = _requireService(ref, 'accountsProvider');
+    // Only ever asked for by someone looking at the list, so there is nothing
+    // worth waiting on here: if the credentials are not in yet, the build that
+    // follows hydration does this work anyway.
+    final service = ref.read(apiServiceProvider);
+    if (service == null) return;
     // Do not clear to AsyncLoading: keep the previous list visible while the
     // round-trip runs so sidebar balances do not flash empty on refresh.
     state = await AsyncValue.guard(() => service.getAccounts());
@@ -118,13 +147,16 @@ final accountsProvider = AsyncNotifierProvider<AccountsNotifier, List<Account>>(
 /// from [accountsProvider] so account screens keep listing asset/liability
 /// accounts only.
 final counterpartyAccountsProvider = FutureProvider<List<Account>>((ref) async {
-  final service = _requireService(ref, 'counterpartyAccountsProvider');
+  final service = await requireFireflyService(
+    ref,
+    'counterpartyAccountsProvider',
+  );
   _log.fine('Loading counterparty accounts');
   return service.getAccounts(types: const ['expense', 'revenue']);
 });
 
 final payeesProvider = FutureProvider<List<Account>>((ref) async {
-  final service = _requireService(ref, 'payeesProvider');
+  final service = await requireFireflyService(ref, 'payeesProvider');
   _log.fine('Loading payees (expense accounts)');
   return service.getAccounts(types: const ['expense']);
 });
@@ -136,7 +168,7 @@ enum TransactionGroupType { date, account, payee, type, category }
 class TransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   @override
   Future<List<Transaction>> build() async {
-    final service = _requireService(ref, 'transactionsProvider');
+    final service = await requireFireflyService(ref, 'transactionsProvider');
     _log.fine('Loading transactions');
     final transactions = await service.getTransactions(
       onFirstPage: (firstPage) {
@@ -206,7 +238,10 @@ final rangedTransactionsProvider = FutureProvider.autoDispose
       final graceTimer = Timer(const Duration(minutes: 3), link.close);
       ref.onDispose(graceTimer.cancel);
 
-      final service = _requireService(ref, 'rangedTransactionsProvider');
+      final service = await requireFireflyService(
+        ref,
+        'rangedTransactionsProvider',
+      );
       _log.fine('Loading ranged transactions (${key.start} .. ${key.end})');
       final transactions = await service.getTransactions(
         start: key.start,
@@ -218,7 +253,10 @@ final rangedTransactionsProvider = FutureProvider.autoDispose
 
 final accountTransactionsProvider =
     FutureProvider.family<List<Transaction>, String>((ref, accountName) async {
-      final service = _requireService(ref, 'accountTransactionsProvider');
+      final service = await requireFireflyService(
+        ref,
+        'accountTransactionsProvider',
+      );
       _log.fine('Loading transactions for account name="$accountName"');
       final accounts = await ref.watch(accountsProvider.future);
       final account = accounts.where((a) => a.name == accountName).firstOrNull;
@@ -256,49 +294,52 @@ class AccountBalanceDateKey {
 /// ledger already expects rather than a forecast of it.
 final accountBalanceAtDateProvider =
     FutureProvider.family<double, AccountBalanceDateKey>((ref, key) async {
-      final service = _requireService(ref, 'accountBalanceAtDateProvider');
+      final service = await requireFireflyService(
+        ref,
+        'accountBalanceAtDateProvider',
+      );
       _log.fine('Loading balance for account=${key.accountId} at ${key.date}');
       return service.getAccountBalanceAtDate(key.accountId, key.date);
     });
 
 final budgetsProvider = FutureProvider<List<Budget>>((ref) async {
-  final service = _requireService(ref, 'budgetsProvider');
+  final service = await requireFireflyService(ref, 'budgetsProvider');
   _log.fine('Loading budgets');
   return service.getBudgets();
 });
 
 final categoriesProvider = FutureProvider<List<Category>>((ref) async {
-  final service = _requireService(ref, 'categoriesProvider');
+  final service = await requireFireflyService(ref, 'categoriesProvider');
   _log.fine('Loading categories');
   return service.getCategories();
 });
 
 final tagsProvider = FutureProvider<List<Tag>>((ref) async {
-  final service = _requireService(ref, 'tagsProvider');
+  final service = await requireFireflyService(ref, 'tagsProvider');
   _log.fine('Loading tags');
   return service.getTags();
 });
 
 final billsProvider = FutureProvider<List<Bill>>((ref) async {
-  final service = _requireService(ref, 'billsProvider');
+  final service = await requireFireflyService(ref, 'billsProvider');
   _log.fine('Loading bills');
   return service.getBills();
 });
 
 final recurrencesProvider = FutureProvider<List<Recurrence>>((ref) async {
-  final service = _requireService(ref, 'recurrencesProvider');
+  final service = await requireFireflyService(ref, 'recurrencesProvider');
   _log.fine('Loading recurrences');
   return service.getRecurrences();
 });
 
 final currenciesProvider = FutureProvider<List<FireflyCurrency>>((ref) async {
-  final service = _requireService(ref, 'currenciesProvider');
+  final service = await requireFireflyService(ref, 'currenciesProvider');
   _log.fine('Loading currencies');
   return service.getCurrencies();
 });
 
 final piggyBanksProvider = FutureProvider<List<PiggyBank>>((ref) async {
-  final service = _requireService(ref, 'piggyBanksProvider');
+  final service = await requireFireflyService(ref, 'piggyBanksProvider');
   _log.fine('Loading piggy banks');
   return service.getPiggyBanks();
 });

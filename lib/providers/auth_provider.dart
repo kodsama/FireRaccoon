@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -20,12 +23,21 @@ class AuthSettings {
   /// False until persisted credentials (or env fallbacks) have been read once.
   final bool isHydrated;
 
+  /// True when the credential read failed, as against answering and holding
+  /// nothing.
+  ///
+  /// A locked keychain and a keychain with no credentials in it both left this
+  /// object empty, so a machine whose keychain had not been unlocked yet was
+  /// told to open Settings and connect a server it had already connected to.
+  final bool storageUnavailable;
+
   AuthSettings({
     this.serverUrl = '',
     this.apiToken = '',
     this.authMode = AuthMode.token,
     this.allowInsecure = false,
     this.isHydrated = false,
+    this.storageUnavailable = false,
   });
 
   bool get isValid => serverUrl.isNotEmpty && apiToken.isNotEmpty;
@@ -40,13 +52,29 @@ class AuthSettings {
         other.apiToken == apiToken &&
         other.authMode == authMode &&
         other.allowInsecure == allowInsecure &&
-        other.isHydrated == isHydrated;
+        other.isHydrated == isHydrated &&
+        other.storageUnavailable == storageUnavailable;
   }
 
   @override
-  int get hashCode =>
-      Object.hash(serverUrl, apiToken, authMode, allowInsecure, isHydrated);
+  int get hashCode => Object.hash(
+    serverUrl,
+    apiToken,
+    authMode,
+    allowInsecure,
+    isHydrated,
+    storageUnavailable,
+  );
 }
+
+/// How long the credential read is given to answer at all.
+///
+/// A keychain prompt can sit unanswered for as long as nobody types into it,
+/// and a read that never returns is neither a success nor a failure. Without a
+/// deadline the app waits on it forever, with a spinner and nothing to say.
+/// Answering late is covered by the connection poll, which reads again.
+@visibleForTesting
+const Duration kCredentialReadTimeout = Duration(seconds: 5);
 
 /// Loads debug-only fallback credentials (see [loadDebugEnvCredentials]).
 typedef DebugEnvLoader = Future<Map<String, String>> Function();
@@ -56,70 +84,147 @@ class AuthNotifier extends Notifier<AuthSettings> {
     FlutterSecureStorage? storage,
     http.Client? httpClient,
     DebugEnvLoader? debugEnvLoader,
-  }) : _storage = storage ?? appSecureStorage,
+    Duration readTimeout = kCredentialReadTimeout,
+    // An initializing formal would name this parameter privately, and a private
+    // name cannot be passed from the tests that set it.
+    // ignore: prefer_initializing_formals
+  }) : _readTimeout = readTimeout,
+       _storage = storage ?? appSecureStorage,
        _httpClient = httpClient ?? http.Client(),
        _debugEnvLoader = debugEnvLoader ?? loadDebugEnvCredentials;
 
   final FlutterSecureStorage _storage;
   final http.Client _httpClient;
   final DebugEnvLoader _debugEnvLoader;
+  final Duration _readTimeout;
   final _log = AppLogger.scoped('providers.auth');
+
+  /// Deadlines currently running, so they die with the notifier rather than
+  /// outliving it.
+  final Set<Timer> _deadlines = {};
 
   @override
   AuthSettings build() {
+    ref.onDispose(() {
+      for (final deadline in _deadlines) {
+        deadline.cancel();
+      }
+      _deadlines.clear();
+    });
     _loadFromStorage();
     _log.finer('Auth notifier initialized; loading persisted settings');
     return AuthSettings();
   }
 
+  /// Runs [read] with a deadline, answering null if it does not finish in time
+  /// or fails.
+  ///
+  /// A keychain prompt nobody types into never returns, and neither does the
+  /// read waiting on it. `Future.timeout` would do this, but the timer it hides
+  /// cannot be cancelled, so it outlives the notifier that started it.
+  Future<T?> _withDeadline<T>(Future<T> Function() read, String what) {
+    final settled = Completer<T?>();
+    void finish(T? value) {
+      if (!settled.isCompleted) settled.complete(value);
+    }
+
+    final deadline = Timer(_readTimeout, () {
+      _log.warning('$what did not answer within $_readTimeout');
+      finish(null);
+    });
+    _deadlines.add(deadline);
+
+    read().then(
+      finish,
+      onError: (Object error, StackTrace stackTrace) {
+        _log.warning('$what would not answer', error, stackTrace);
+        finish(null);
+      },
+    );
+
+    return settled.future.whenComplete(() {
+      deadline.cancel();
+      _deadlines.remove(deadline);
+    });
+  }
+
   /// Credentials live exclusively in platform secure storage (Keychain on
   /// desktop, encrypted browser storage on web), entered via Settings.
+  ///
+  /// A keychain that has not been unlocked fails the read rather than answering
+  /// that it holds nothing, and the two used to be indistinguishable here. The
+  /// failure settled as "no credentials", so every screen said to go and connect
+  /// a server that was already connected, and nothing read the keychain again
+  /// once its password had been typed. A read that does not answer now says so
+  /// instead of passing for an empty one, and the connection poll reads again.
   Future<void> _loadFromStorage() async {
-    var url = '';
-    var token = '';
-    var mode = 'token';
-    var insecure = 'false';
+    final stored = await _readStoredCredentials();
+    if (!ref.mounted) return;
 
-    try {
-      url = await _storage.read(key: 'serverUrl') ?? '';
-      token = await _storage.read(key: 'apiToken') ?? '';
-      mode = await _storage.read(key: 'authMode') ?? 'token';
-      insecure = await _storage.read(key: 'allowInsecure') ?? 'false';
-    } on Object catch (error, stackTrace) {
-      // Secure storage can be unavailable in development (e.g. a macOS
-      // Keychain entitlement problem). Don't fail hydration — fall through to
-      // the debug .env fallback below.
-      _log.warning(
-        'Secure storage unavailable; trying debug .env fallback',
-        error,
-        stackTrace,
-      );
+    var next =
+        stored ?? AuthSettings(isHydrated: true, storageUnavailable: true);
+    if (!next.isValid) {
+      next = await _fillFromEnv(next);
+      if (!ref.mounted) return;
     }
 
-    if (url.isEmpty || token.isEmpty) {
-      final env = await _debugEnvLoader();
-      if (env.isNotEmpty) {
-        if (url.isEmpty) url = env['FIREFLY_URL'] ?? '';
-        if (token.isEmpty) token = env['FIREFLY_TOKEN'] ?? '';
-        final envInsecure = env['FIREFLY_ALLOW_INSECURE'];
-        if (envInsecure != null) insecure = envInsecure;
-        _log.info('Applied debug .env credential fallback');
-      }
-    }
+    if (next != state) state = next;
+    _log.info(
+      'Auth settings hydrated '
+      '(valid=${next.isValid}, storageUnavailable=${next.storageUnavailable})',
+    );
+  }
 
-    final next = AuthSettings(
+  /// The stored credentials, or null if the keychain did not answer.
+  ///
+  /// A locked keychain, a denied prompt and a missing entitlement all fail the
+  /// read, and a prompt left untouched never returns at all. None of the three
+  /// means "there are no credentials".
+  Future<AuthSettings?> _readStoredCredentials() =>
+      _withDeadline(_readAllCredentials, 'Secure storage');
+
+  Future<AuthSettings> _readAllCredentials() async {
+    final url = await _storage.read(key: 'serverUrl') ?? '';
+    final token = await _storage.read(key: 'apiToken') ?? '';
+    final mode = await _storage.read(key: 'authMode') ?? 'token';
+    final insecure = await _storage.read(key: 'allowInsecure') ?? 'false';
+    return AuthSettings(
       serverUrl: url,
       apiToken: token,
       authMode: mode == 'oauth2' ? AuthMode.oauth2 : AuthMode.token,
       allowInsecure: insecure == 'true',
       isHydrated: true,
     );
-    if (!ref.mounted) return;
-    if (next != state) {
-      state = next;
-    }
-    _log.info('Auth settings hydrated');
   }
+
+  /// Fills whatever [partial] is missing from the debug `.env` fallback.
+  ///
+  /// Deadlined like the keychain read: this one reads a file, and hydration that
+  /// waits on any unbounded call is hydration that can never finish.
+  Future<AuthSettings> _fillFromEnv(AuthSettings partial) async {
+    final env = await _withDeadline(_debugEnvLoader, 'Debug .env fallback');
+    if (env == null || env.isEmpty) return partial;
+
+    final envInsecure = env['FIREFLY_ALLOW_INSECURE'];
+    _log.info('Applied debug .env credential fallback');
+    return AuthSettings(
+      serverUrl: partial.serverUrl.isEmpty
+          ? env['FIREFLY_URL'] ?? ''
+          : partial.serverUrl,
+      apiToken: partial.apiToken.isEmpty
+          ? env['FIREFLY_TOKEN'] ?? ''
+          : partial.apiToken,
+      authMode: partial.authMode,
+      allowInsecure: envInsecure != null
+          ? envInsecure == 'true'
+          : partial.allowInsecure,
+      isHydrated: true,
+      storageUnavailable: partial.storageUnavailable,
+    );
+  }
+
+  /// Reads the credentials again, for when the keychain has since been unlocked.
+  Future<void> retryCredentialRead() => _loadFromStorage();
 
   Future<void> saveSettings(String url, String token, bool insecure) async {
     await applyImportedCredentials(
