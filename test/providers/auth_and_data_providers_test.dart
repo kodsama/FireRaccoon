@@ -143,7 +143,11 @@ void main() {
   group('AuthNotifier', () {
     test('testConnection returns true on 200', () async {
       final client = MockClient(
-        (_) async => http.Response('{"version":"6"}', 200),
+        (_) async => http.Response(
+          '{"data":{"version":"6.6.6"}}',
+          200,
+          headers: {'content-type': 'application/json'},
+        ),
       );
       final container = ProviderContainer(
         overrides: [
@@ -162,6 +166,64 @@ void main() {
           .read(authProvider.notifier)
           .testConnection('https://firefly.test', 'token', false);
       expect(ok, isTrue);
+    });
+
+    test('testConnection refuses a 200 that is a sign-in page', () async {
+      // A URL aimed at a UI host, or at single sign-on, redirects to a login
+      // page and that page answers 200. Checking only the status code called a
+      // wrong address a working one, and every later request then failed
+      // parsing HTML this test had already blessed.
+      final client = MockClient(
+        (_) async => http.Response(
+          '<!DOCTYPE html>\n<html lang="en"><head><title>Sign in',
+          200,
+          headers: {'content-type': 'text/html; charset=utf-8'},
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(
+              httpClient: client,
+              storage: testStorage(),
+              debugEnvLoader: _noEnv,
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final ok = await container
+          .read(authProvider.notifier)
+          .testConnection('https://firefly.test', 'token', false);
+      expect(ok, isFalse);
+    });
+
+    test('testConnection refuses JSON that is not Firefly', () async {
+      final client = MockClient(
+        (_) async => http.Response(
+          '{"error":"not found"}',
+          200,
+          headers: {'content-type': 'application/json'},
+        ),
+      );
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(
+              httpClient: client,
+              storage: testStorage(),
+              debugEnvLoader: _noEnv,
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final ok = await container
+          .read(authProvider.notifier)
+          .testConnection('https://firefly.test', 'token', false);
+      expect(ok, isFalse);
     });
 
     test('testConnection returns false on network error', () async {
@@ -213,7 +275,11 @@ void main() {
       final client = MockClient((_) async {
         attempts++;
         if (attempts == 1) throw Exception('connection reset');
-        return http.Response('{"version":"6"}', 200);
+        return http.Response(
+          '{"data":{"version":"6.6.6"}}',
+          200,
+          headers: {'content-type': 'application/json'},
+        );
       });
       final container = ProviderContainer(
         overrides: [
