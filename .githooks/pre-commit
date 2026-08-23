@@ -38,7 +38,11 @@ section "4/5  tests"
 ( cd packages/mcp && dart test --coverage=coverage ) || fail "mcp tests failed"
 ( cd packages/app_backend && dart test --coverage=coverage ) \
   || fail "app_backend tests failed"
-flutter test --coverage || fail "flutter tests failed"
+# Password handling derives a key per call, 100k PBKDF2 rounds of pure Dart at
+# close to two seconds each. A test doing several, instrumented for coverage and
+# competing with the other isolates, crosses the 30s default and fails on load
+# rather than on what it asserts.
+flutter test --coverage --timeout 3x || fail "flutter tests failed"
 
 section "5/5  coverage gate"
 chmod +x tool/check_coverage.sh

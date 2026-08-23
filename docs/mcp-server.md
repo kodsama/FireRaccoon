@@ -309,6 +309,17 @@ credit card is not one of these: `store_reconciliation` builds that payback from
 the purchases it settles, which is what keeps the group title and the per-leg
 links identical to what the app writes.
 
+### Removing a value, not just changing it
+
+An update leaves out a field it was not given, which is what makes a partial
+update partial. That meant an empty value and an absent one looked identical on
+the wire, so a note or a category could be set and never taken away.
+
+Passing an empty string, or an empty array for `tags`, now removes what is
+there: `notes`, `category_name`, `category_id`, `budget_name`, `budget_id`,
+`bill_id`, `piggy_bank_id` and `tags`. Omitting the field still leaves it
+exactly as it was.
+
 ### Reconciliation survives an edit
 
 `update_transaction` keeps whatever `reconciled` the transaction already had

@@ -508,6 +508,71 @@ void main() {
       expect(transactions.single.description, 'Groceries');
     });
 
+    test('a window open at one end still names the other', () async {
+      // An account's transactions endpoint answers a range carrying only one
+      // bound with nothing at all, so asking for everything before a date came
+      // back empty rather than answering the question.
+      final queries = <String>[];
+      final client = MockClient((request) async {
+        queries.add(request.url.query);
+        return jsonHttpResponse(
+          transactionsPageBody(items: [transactionItem()]),
+        );
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await service.getTransactions(end: DateTime(2026, 8, 22));
+      expect(queries.last, contains('start='));
+      expect(queries.last, contains('end=2026-08-21'));
+
+      await service.getTransactions(start: DateTime(2026, 1, 1));
+      expect(queries.last, contains('start=2026-01-01'));
+      expect(queries.last, contains('end='));
+    });
+
+    test('an account window open at one end names the other too', () async {
+      // This is the endpoint the silence came from.
+      final queries = <String>[];
+      final client = MockClient((request) async {
+        queries.add(request.url.query);
+        return jsonHttpResponse(
+          transactionsPageBody(items: [transactionItem()]),
+        );
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await service.getAccountTransactions('5', end: DateTime(2026, 8, 22));
+      expect(queries.last, contains('start='));
+      expect(queries.last, contains('end=2026-08-21'));
+    });
+
+    test('asking for no window asks for no window', () async {
+      final queries = <String>[];
+      final client = MockClient((request) async {
+        queries.add(request.url.query);
+        return jsonHttpResponse(
+          transactionsPageBody(items: [transactionItem()]),
+        );
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await service.getTransactionsPage(page: 1, limit: 25);
+      expect(queries.last, isNot(contains('start=')));
+      expect(queries.last, isNot(contains('end=')));
+    });
+
     test('getTransactionsPage fetches single page with start date', () async {
       final client = MockClient((request) async {
         expect(request.url.path, '/api/v1/transactions');

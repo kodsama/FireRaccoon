@@ -678,6 +678,63 @@ void main() {
       expect(leg['reconciled'], isFalse);
     });
 
+    test('an empty note removes the note', () async {
+      // toSplitJson leaves an empty value out, so emptying a field and not
+      // mentioning it looked identical on the wire and Firefly kept what it
+      // had. A note could be set and never taken away.
+      final bodies = <String>[];
+      await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(id: '1', notes: 'bank text: ICA'),
+          },
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '1', 'notes': ''});
+
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['notes'], '');
+    });
+
+    test('an omitted note is left exactly as it was', () async {
+      final bodies = <String>[];
+      await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(id: '1', notes: 'bank text: ICA'),
+          },
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '1', 'description': 'Groceries'});
+
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['notes'], 'bank text: ICA');
+    });
+
+    test('an empty tag list removes the tags', () async {
+      final bodies = <String>[];
+      await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(id: '1', tags: ['groceries', 'shared']),
+          },
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '1', 'tags': <String>[]});
+
+      final leg =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).first
+              as Map;
+      expect(leg['tags'], isEmpty);
+    });
+
     test('duplicate_transaction fails when the source is gone', () async {
       await expectLater(
         _tool(
@@ -2113,6 +2170,21 @@ void main() {
       );
       expect(calls, isEmpty);
     });
+  });
+
+  test('an account reports the identifiers it can be found by', () async {
+    // find_account matches on these and update_account sets them, so leaving
+    // them out of the response meant an identifier could be written and
+    // matched but never read back, and the only way to tell whether one was
+    // set at all was a boolean on a search result.
+    final result = await _tool(
+      'get_account',
+      client: fireflyMockClient(),
+    ).run({'account_id': '5'});
+
+    final account = result['account'] as Map<String, Object?>;
+    expect(account.containsKey('account_number'), isTrue);
+    expect(account.containsKey('iban'), isTrue);
   });
 
   group('match_statement', () {

@@ -63,7 +63,11 @@ jobs:
         run: dart test --coverage=coverage
 
       - name: Test Flutter app with coverage
-        run: flutter test --coverage
+        # Password handling derives a key per call, 100k PBKDF2 rounds of pure
+        # Dart at close to two seconds each. A test doing several, instrumented
+        # for coverage and competing with the other isolates, crosses the 30s
+        # default and fails on load rather than on what it asserts.
+        run: flutter test --coverage --timeout 3x
 
       - name: Coverage gate
         run: |
