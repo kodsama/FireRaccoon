@@ -2115,6 +2115,21 @@ void main() {
     });
   });
 
+  test('an account reports the identifiers it can be found by', () async {
+    // find_account matches on these and update_account sets them, so leaving
+    // them out of the response meant an identifier could be written and
+    // matched but never read back, and the only way to tell whether one was
+    // set at all was a boolean on a search result.
+    final result = await _tool(
+      'get_account',
+      client: fireflyMockClient(),
+    ).run({'account_id': '5'});
+
+    final account = result['account'] as Map<String, Object?>;
+    expect(account.containsKey('account_number'), isTrue);
+    expect(account.containsKey('iban'), isTrue);
+  });
+
   group('match_statement', () {
     Map<String, Object?> statementArgs() => {
       'account_id': '5',
