@@ -381,9 +381,9 @@ StatementPlan matchStatementRows({
         // A conversion between two pockets of the same wallet is booked in the
         // source currency, with the amount that landed on the other side in
         // foreign_amount. Skipping it left the statement's own row with no leg
-        // to pair against, so a Revolut export reported every exchange as
-        // missing and writing them would have double-counted what is already
-        // there.
+        // to pair against, so an export from a multi-currency wallet reported
+        // every exchange as missing and writing them would have double-counted
+        // what is already there.
         final foreign = split.foreignAmount;
         if (foreign == null || split.foreignCurrencyCode != currencyCode) {
           foreignCurrencySplits++;
