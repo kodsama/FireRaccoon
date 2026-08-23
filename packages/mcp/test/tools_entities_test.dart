@@ -2125,6 +2125,66 @@ void main() {
       ],
     };
 
+    test('reaches back far enough to see what the tolerance allows', () async {
+      // The matcher pairs a row up to five days from its recorded counterpart,
+      // but the fetch only reached forward from the statement's first row. A
+      // transaction the bank dated the day before came back as missing, and
+      // writing it would have duplicated what was already there.
+      final calls = <Uri>[];
+      await _tool(
+        'match_statement',
+        client: fireflyMockClient(record: calls),
+      ).run(statementArgs());
+
+      final fetch = calls.firstWhere(
+        (u) => u.path.contains('/accounts/5/transactions'),
+      );
+      expect(fetch.queryParameters['start'], '2025-12-27');
+      expect(fetch.queryParameters['end'], '2026-02-05');
+    });
+
+    test('takes a whole account, not a thousand rows of it', () async {
+      // A single Revolut currency pocket held 3,978 rows over eight years, and
+      // the old ceiling of 1000 meant the export that most needed checking was
+      // the one that could not be checked at all.
+      final rows = [
+        for (var i = 0; i < 4000; i++)
+          {
+            'row_id': 'r$i',
+            'date': '2026-01-15',
+            'amount': '-${(10 + i % 900)}.00',
+          },
+      ];
+      final result = await _tool(
+        'match_statement',
+        client: fireflyMockClient(),
+      ).run({...statementArgs(), 'rows': rows});
+
+      expect(result['ok'], isTrue);
+      expect(
+        (result['matched'] as List).length +
+            (result['missing'] as List).length +
+            (result['near_matches'] as List).length,
+        4000,
+      );
+    });
+
+    test('a statement past the ceiling says how to split it', () async {
+      final rows = [
+        for (var i = 0; i < 10001; i++)
+          {'row_id': 'r$i', 'date': '2026-01-15', 'amount': '-1.00'},
+      ];
+      final result = await _tool(
+        'match_statement',
+        client: fireflyMockClient(),
+      ).run({...statementArgs(), 'rows': rows});
+
+      expect(
+        result['error'],
+        allOf(contains('10000'), contains('balances already agree')),
+      );
+    });
+
     test('matches a row against what is recorded', () async {
       final result = await _tool(
         'match_statement',
@@ -2314,7 +2374,8 @@ void main() {
       );
     });
 
-    test('more than a thousand rows is refused', () async {
+    test('a thousand rows is well within what it will take', () async {
+      // The ceiling used to sit here, below what one real account produces.
       final result = await _tool('match_statement', client: fireflyMockClient())
           .run({
             ...base(),
@@ -2324,7 +2385,8 @@ void main() {
             ],
           });
 
-      expect(result['error'], contains('1000'));
+      expect(result['ok'], isTrue);
+      expect(result.containsKey('error'), isFalse);
     });
 
     test('a corpus that settles nothing asks rather than assuming', () async {
