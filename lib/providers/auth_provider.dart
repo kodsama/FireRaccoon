@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -275,6 +276,23 @@ class AuthNotifier extends Notifier<AuthSettings> {
     }
   }
 
+  /// True when the body is Firefly's `about` payload and not a page.
+  ///
+  /// `/api/v1/about` answers `{"data": {"version": ...}}`. A UI host or a single
+  /// sign-on front door answers the same path with a login page, which is what
+  /// made a wrong URL pass this test.
+  bool _answeredAsFirefly(http.Response response) {
+    final contentType = response.headers['content-type'] ?? '';
+    if (!contentType.contains('json')) return false;
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(response.body);
+    } on FormatException {
+      return false;
+    }
+    return decoded is Map && decoded['data'] is Map;
+  }
+
   Future<bool> testConnection(String url, String token, bool insecure) async {
     final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
     if (!insecure && baseUrl.startsWith('http://')) {
@@ -296,7 +314,16 @@ class AuthNotifier extends Notifier<AuthSettings> {
               },
             )
             .timeout(const Duration(seconds: 10));
-        if (response.statusCode == 200) return true;
+        if (response.statusCode == 200) {
+          if (_answeredAsFirefly(response)) return true;
+          // A sign-in page is a perfectly successful HTTP response, so a status
+          // code on its own called a wrong address a working one. Every later
+          // request then failed on HTML that this test had already blessed.
+          _log.warning(
+            'Connection test got HTTP 200 that was not the Firefly API',
+          );
+          return false;
+        }
         _log.warning('Connection test returned HTTP ${response.statusCode}');
         if (response.statusCode < 500) return false;
       } on Object catch (error, stackTrace) {

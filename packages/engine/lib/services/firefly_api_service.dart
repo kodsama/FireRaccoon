@@ -118,8 +118,14 @@ class FireflyApiService implements FireflyService {
   }
 
   /// Stands in for an unbounded end of a window.
-  static final DateTime _beforeAnyLedger = DateTime(1900);
-  static final DateTime _beyondAnyLedger = DateTime(2200);
+  ///
+  /// Firefly validates both ends against 32-bit time and refuses anything
+  /// outside it: "The start must be a date after 1970-01-02" and "The end must
+  /// be a date before 2038-01-17". A sentinel past either edge turned every
+  /// unbounded read into a 422, so these sit just inside them. Naming an end
+  /// only helps if the end is one the server will accept.
+  static final DateTime _beforeAnyLedger = DateTime(1970, 1, 3);
+  static final DateTime _beyondAnyLedger = DateTime(2038, 1, 16);
 
   /// Drops what the widening in [_rangeQuery] pulled in, so a caller reading a
   /// one-day window sees that day and not its neighbour.
@@ -191,6 +197,30 @@ class FireflyApiService implements FireflyService {
     return detail == null
         ? '${response.statusCode}'
         : '${response.statusCode} ${_preview(detail)}';
+  }
+
+  /// Refuses a response that is a web page rather than an answer from the API.
+  ///
+  /// A server URL aimed at a UI host, or at a single sign-on front door, answers
+  /// every path with a page: often a redirect to a login screen, and a 200 at
+  /// the end of it. Decoding that as JSON fails on the very first character, so
+  /// what reached the person was a complaint about malformed data when the real
+  /// problem was the address they typed.
+  void _refuseWebPage(http.Response response, Uri uri) {
+    final contentType = response.headers['content-type'] ?? '';
+    final body = response.body.trimLeft();
+    final isPage =
+        contentType.contains('text/html') ||
+        body.startsWith('<!DOCTYPE') ||
+        body.startsWith('<!doctype') ||
+        body.startsWith('<html');
+    if (!isPage) return;
+    throw FireflyApiException(
+      '${uri.origin} answered with a web page, not the Firefly III API. Check '
+      'the server URL: a user interface address, or one behind a sign-in page, '
+      'answers every path with HTML.',
+      statusCode: response.statusCode,
+    );
   }
 
   String? _validationDetail(String body) {
@@ -294,6 +324,7 @@ class FireflyApiService implements FireflyService {
           _log.fine(message);
           _log.finer('[#$requestId] response body=$responsePreview');
         }
+        _refuseWebPage(response, uri);
         return response;
       } on Object catch (error, stackTrace) {
         lastError = error;
@@ -303,6 +334,10 @@ class FireflyApiService implements FireflyService {
           error,
           stackTrace,
         );
+        // A URL that serves a page answers the same way however often we ask.
+        if (error is FireflyApiException) {
+          Error.throwWithStackTrace(error, stackTrace);
+        }
         if (attempt < attempts) {
           final delayMs = _computeRetryDelayMs(attempt);
           _log.warning(
