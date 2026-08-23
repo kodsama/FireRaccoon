@@ -4936,6 +4936,12 @@ abstract class AppLocalizations {
   /// **'Account money goes to.'**
   String get tooltipFieldDestinationAccount;
 
+  /// No description provided for @tooltipSwapTransferAccounts.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap the two accounts.'**
+  String get tooltipSwapTransferAccounts;
+
   /// No description provided for @tooltipFieldDate.
   ///
   /// In en, this message translates to:
