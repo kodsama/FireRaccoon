@@ -2702,6 +2702,9 @@ class AppLocalizationsPt extends AppLocalizations {
       'Conta para onde vai o dinheiro.';
 
   @override
+  String get tooltipSwapTransferAccounts => 'Trocar as duas contas.';
+
+  @override
   String get tooltipFieldDate => 'Data e hora da transação.';
 
   @override
