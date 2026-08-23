@@ -237,6 +237,19 @@ void main() {
     );
 
     final rows = [row('future', ahead), row('posted', past)];
+    final service = FakeFireflyService(
+      accounts: sampleAccounts,
+      accountTransactionPages: {
+        '1': {
+          1: TransactionPageResult(
+            transactions: rows,
+            currentPage: 1,
+            totalPages: 1,
+            total: rows.length,
+          ),
+        },
+      },
+    );
     await tester.pumpWidget(
       await buildScreenTestApp(
         child: const AccountsScreen(),
@@ -245,19 +258,7 @@ void main() {
         // about 270px, where a transaction row overflows by 28px on its own,
         // which predates this and is not what the test is about.
         viewMode: ViewMode.compact,
-        fireflyService: FakeFireflyService(
-          accounts: sampleAccounts,
-          accountTransactionPages: {
-            '1': {
-              1: TransactionPageResult(
-                transactions: rows,
-                currentPage: 1,
-                totalPages: 1,
-                total: rows.length,
-              ),
-            },
-          },
-        ),
+        fireflyService: service,
       ),
     );
     await tester.pumpAndSettle();
@@ -266,6 +267,15 @@ void main() {
     expect(find.text('Row posted'), findsWidgets);
     expect(find.text('Upcoming'), findsWidgets);
     expect(find.text('Row future'), findsNothing);
+
+    // Firefly answers a one-sided range with nothing at all, so both windows
+    // have to name both ends. A fake that reads a missing bound as unbounded
+    // cannot tell, which is how this shipped once already.
+    expect(service.accountPageWindows, hasLength(2));
+    for (final window in service.accountPageWindows) {
+      expect(window.start, isNotNull);
+      expect(window.end, isNotNull);
+    }
   });
 
   testWidgets('AccountsScreen hides inactive accounts by default', (
