@@ -992,6 +992,57 @@ void main() {
       expect(limits, isEmpty);
     });
 
+    test('an unbounded window asks for dates Firefly accepts', () async {
+      // Firefly validates both ends against 32-bit time and answers 422
+      // otherwise: "The start must be a date after 1970-01-02", "The end must
+      // be a date before 2038-01-17". Naming both ends of an open window only
+      // helps if the ends are ones the server will take, and a 422 here reads
+      // as an account holding no transactions at all.
+      late Uri asked;
+      final client = MockClient((request) async {
+        asked = request.url;
+        return jsonHttpResponse({
+          'data': <Map<String, dynamic>>[],
+          'meta': {
+            'pagination': {'total_pages': 1, 'current_page': 1},
+          },
+        });
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      // Open at the start: the sentinel stands in for "everything before".
+      await service.getAccountTransactionsPage(
+        '5',
+        page: 1,
+        limit: 20,
+        end: DateTime(2026, 8, 24),
+      );
+      expect(
+        DateTime.parse(
+          asked.queryParameters['start']!,
+        ).isAfter(DateTime(1970, 1, 2)),
+        isTrue,
+      );
+
+      // Open at the end: the sentinel stands in for "everything after".
+      await service.getAccountTransactionsPage(
+        '5',
+        page: 1,
+        limit: 20,
+        start: DateTime(2026, 8, 24),
+      );
+      expect(
+        DateTime.parse(
+          asked.queryParameters['end']!,
+        ).isBefore(DateTime(2038, 1, 17)),
+        isTrue,
+      );
+    });
+
     test('getBudgetLimits wraps failures', () async {
       final client = MockClient((_) async => throw Exception('socket'));
       final service = FireflyApiService(

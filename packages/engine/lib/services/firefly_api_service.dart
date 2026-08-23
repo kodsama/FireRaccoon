@@ -118,8 +118,14 @@ class FireflyApiService implements FireflyService {
   }
 
   /// Stands in for an unbounded end of a window.
-  static final DateTime _beforeAnyLedger = DateTime(1900);
-  static final DateTime _beyondAnyLedger = DateTime(2200);
+  ///
+  /// Firefly validates both ends against 32-bit time and refuses anything
+  /// outside it: "The start must be a date after 1970-01-02" and "The end must
+  /// be a date before 2038-01-17". A sentinel past either edge turned every
+  /// unbounded read into a 422, so these sit just inside them. Naming an end
+  /// only helps if the end is one the server will accept.
+  static final DateTime _beforeAnyLedger = DateTime(1970, 1, 3);
+  static final DateTime _beyondAnyLedger = DateTime(2038, 1, 16);
 
   /// Drops what the widening in [_rangeQuery] pulled in, so a caller reading a
   /// one-day window sees that day and not its neighbour.
