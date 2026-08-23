@@ -1486,6 +1486,7 @@
   "tooltipFieldDescription": "O que aconteceu nesta transação.",
   "tooltipFieldSourceAccount": "Conta de onde sai o dinheiro.",
   "tooltipFieldDestinationAccount": "Conta para onde vai o dinheiro.",
+  "tooltipSwapTransferAccounts": "Trocar as duas contas.",
   "tooltipFieldDate": "Data e hora da transação.",
   "tooltipFieldAmount": "Montante principal na moeda selecionada.",
   "tooltipFieldCurrency": "Moeda principal desta linha.",

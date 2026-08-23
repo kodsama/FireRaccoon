@@ -1563,6 +1563,7 @@
   "tooltipFieldDescription": "What happened in this transaction.",
   "tooltipFieldSourceAccount": "Account money comes from.",
   "tooltipFieldDestinationAccount": "Account money goes to.",
+  "tooltipSwapTransferAccounts": "Swap the two accounts.",
   "tooltipFieldDate": "Date and time of the transaction.",
   "tooltipFieldAmount": "Main amount in the selected currency.",
   "tooltipFieldCurrency": "Primary currency of this split.",

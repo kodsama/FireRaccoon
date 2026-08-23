@@ -2640,6 +2640,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipFieldDestinationAccount => 'お金の送り先口座。';
 
   @override
+  String get tooltipSwapTransferAccounts => '2つの口座を入れ替えます。';
+
+  @override
   String get tooltipFieldDate => '取引の日付と時刻。';
 
   @override

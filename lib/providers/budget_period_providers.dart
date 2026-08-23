@@ -21,12 +21,10 @@ final budgetPeriodMetricsProvider =
       ref,
       key,
     ) async {
-      final service = ref.watch(apiServiceProvider);
-      if (service == null) {
-        throw Exception(
-          'Not connected to Firefly III. Open Settings and connect your server.',
-        );
-      }
+      final service = await requireFireflyService(
+        ref,
+        'budgetPeriodMetricsProvider',
+      );
       final range = budgetFiltersFromKey(key).dateRange;
 
       // Firefly scopes each budget's `spent` to the requested range, so one
