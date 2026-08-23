@@ -686,82 +686,112 @@ class _TransactionEntityCompactRowState
         ),
         header: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: Column(
-            children: [
-              Row(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // The row's fixed children need close to 390 logical pixels, and
+              // an expanded account card in the grid gives the panel about 270,
+              // where it overflowed by more than a hundred. Below the threshold
+              // the amount moves to the second line, which has slack. Hiding
+              // the edit cluster instead took the duplicate action away from
+              // the subscriptions view, which is narrower than it looks.
+              final amountFitsInline = constraints.maxWidth >= 390;
+              return Column(
                 children: [
-                  _TransactionTypeIcon(
-                    isIncome: isIncome,
-                    size: 24,
-                    iconSize: 12,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      t.displayTitle(),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                  Row(
+                    children: [
+                      _TransactionTypeIcon(
+                        isIncome: isIncome,
+                        size: 24,
+                        iconSize: 12,
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          t.displayTitle(),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (t.isSplitGroup) ...[
+                        const SizedBox(width: 6),
+                        SplitCountBadge(count: t.splits.length),
+                      ],
+                      if (amountFitsInline) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          format.formatSignedMoney(
+                            isIncome ? displayAmount : -displayAmount,
+                            t.currencySymbol,
+                          ),
+                          style: TextStyle(
+                            fontFamily: 'Roboto Slab',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                            color: isIncome ? colors.success : colors.text,
+                          ),
+                        ),
+                      ],
+                      const SizedBox(width: 4),
+                      EntityHeaderActions(
+                        iconSize: 16,
+                        onEdit: _openEdit,
+                        onDuplicate: _duplicate,
+                        onDelete: _delete,
+                      ),
+                      const SizedBox(width: 4),
+                      // Selection only via this control — row tap keeps expand/collapse
+                      // so browsing does not accidentally exclude reconciled journals.
+                      _TransactionReconciledToggle(
+                        transaction: t,
+                        filterAccount: widget.filterAccount,
+                        onPatched: widget.onTransactionPatched,
+                        balanceCheckSelection: widget.balanceCheckSelection,
+                      ),
+                      const SizedBox(width: 4),
+                      ExpandChevron(
+                        expanded: t.isSplitGroup ? _splitsExpanded : _expanded,
+                        size: 16,
+                      ),
+                    ],
                   ),
-                  if (t.isSplitGroup) ...[
-                    const SizedBox(width: 6),
-                    SplitCountBadge(count: t.splits.length),
-                  ],
-                  const SizedBox(width: 6),
-                  Text(
-                    format.formatSignedMoney(
-                      isIncome ? displayAmount : -displayAmount,
-                      t.currencySymbol,
-                    ),
-                    style: TextStyle(
-                      fontFamily: 'Roboto Slab',
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: isIncome ? colors.success : colors.text,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  EntityHeaderActions(
-                    iconSize: 16,
-                    onEdit: _openEdit,
-                    onDuplicate: _duplicate,
-                    onDelete: _delete,
-                  ),
-                  const SizedBox(width: 4),
-                  // Selection only via this control — row tap keeps expand/collapse
-                  // so browsing does not accidentally exclude reconciled journals.
-                  _TransactionReconciledToggle(
-                    transaction: t,
-                    filterAccount: widget.filterAccount,
-                    onPatched: widget.onTransactionPatched,
-                    balanceCheckSelection: widget.balanceCheckSelection,
-                  ),
-                  const SizedBox(width: 4),
-                  ExpandChevron(
-                    expanded: t.isSplitGroup ? _splitsExpanded : _expanded,
-                    size: 16,
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      const SizedBox(width: 36),
+                      Expanded(
+                        child: Text(
+                          l10n.transactionDateCategory(
+                            t.displayCategorySummary(l10n),
+                            format.formatMediumDate(t.date),
+                          ),
+                          style: TextStyle(color: colors.text3, fontSize: 11),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      // The amount steps down here when the first line has no
+                      // room for it. Truncating money would be worse than
+                      // moving it.
+                      if (!amountFitsInline)
+                        Text(
+                          format.formatSignedMoney(
+                            isIncome ? displayAmount : -displayAmount,
+                            t.currencySymbol,
+                          ),
+                          style: TextStyle(
+                            fontFamily: 'Roboto Slab',
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: isIncome ? colors.success : colors.text,
+                          ),
+                        ),
+                    ],
                   ),
                 ],
-              ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  const SizedBox(width: 36),
-                  Expanded(
-                    child: Text(
-                      l10n.transactionDateCategory(
-                        t.displayCategorySummary(l10n),
-                        format.formatMediumDate(t.date),
-                      ),
-                      style: TextStyle(color: colors.text3, fontSize: 11),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),

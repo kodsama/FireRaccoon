@@ -247,6 +247,18 @@ than for the tool to overwrite. A near match whose journal is a split group
 carries `blocked_reason: split_group`: correcting that leg would move a journal
 whose other legs the statement says nothing about.
 
+The fetch reaches five days past both ends of the window, because that is the
+widest gap the near pass will pair across. Reaching forward only meant a
+transaction the ledger dated the day before the statement's first row was never
+fetched, so it came back as missing and writing it would have duplicated what
+was already there. Legs outside the period stay matchable and are counted under
+`excluded.fetched_outside_period`.
+
+One call takes up to 10,000 rows. Past that, split the statement at dates where
+the two balances already agree, so no pair is cut in half: cutting at an
+arbitrary date severs a transaction the two sides date on opposite sides of the
+line, and it then reads as missing on one side and unmatched on the other.
+
 Tolerances are fixed constants, not arguments, and every response echoes them
 under `window` so a caller can read the rule that produced its verdicts.
 
@@ -296,6 +308,45 @@ once and only the amount, description and category vary. Reconciling a
 credit card is not one of these: `store_reconciliation` builds that payback from
 the purchases it settles, which is what keeps the group title and the per-leg
 links identical to what the app writes.
+
+### Removing a value, not just changing it
+
+An update leaves out a field it was not given, which is what makes a partial
+update partial. That meant an empty value and an absent one looked identical on
+the wire, so a note or a category could be set and never taken away.
+
+Passing an empty string, or an empty array for `tags`, now removes what is
+there: `notes`, `category_name`, `category_id`, `budget_name`, `budget_id`,
+`bill_id`, `piggy_bank_id` and `tags`. Omitting the field still leaves it
+exactly as it was.
+
+### Reconciliation survives an edit
+
+`update_transaction` keeps whatever `reconciled` the transaction already had
+when the call does not mention it. Leaving it out used to send false, so any
+edit silently discarded a reconciliation and a refresh was the first anyone
+heard of it.
+
+Firefly will not move the money on a reconciled transaction, and the payload
+drops those fields rather than arguing, so a correction reported success and
+changed nothing. Changing `amount`, `foreign_amount`, `currency_code` or either
+account on a reconciled transaction is now refused; pass `reconciled: false` in
+the same call to release it and make the change together.
+
+A copy is still never reconciled, whatever the original was.
+
+### Writing across two currencies
+
+A transfer between accounts holding different currencies needs both figures, and
+Firefly refuses the write with a 422 on `foreign_amount` when only one is given.
+Pass `foreign_amount`, and `foreign_currency_code` when it is not the receiving
+account's own.
+
+`duplicate_transaction` carries both sides of the original. It refuses an
+`amount` override on a transaction that has a foreign amount unless
+`foreign_amount` comes with it: the rate cannot be read off the local figure,
+carrying the old one over would pair this month's amount with last month's rate,
+and scaling it would invent a rate and record it as fact.
 
 ## Managing keys
 

@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-08-23
+
+### Added
+
+- The accounts view reads a balance at any date you pick, refreshes on a button,
+  and keeps the rows the ledger already holds for days that have not happened
+  yet in their own collapsed block
+- A forecast balance can be read for any day, not only the dates a projection
+  marks
+- The projection offers only open accounts, and accepts one typed in
+- An account reports the account number and the IBAN. `find_account` matches on
+  both and `update_account` writes them, so an identifier could be set and
+  matched but never read back
+- An empty string, or an empty list for `tags`, now removes a value over MCP.
+  `notes`, category, budget, bill, piggy bank and tags could be set and never
+  taken away: an update omits what it was not given, which made an empty value
+  indistinguishable from an absent one
+
+### Fixed
+
+- A transaction reconciled in the app came back unreconciled on the next read.
+  An unrelated edit dropped the flag it had not been asked to change
+- An account shared with someone showed the share of its balance where it should
+  have shown the balance. Only net worth and debt count a share
+- `duplicate_transaction` produced a payload Firefly refused for every
+  cross-currency transfer, because the foreign amount was never carried. A
+  changed amount with no new rate is now refused rather than written wrong
+- `match_statement` stopped reading at 1000 rows, reporting everything past the
+  cap as missing. Its fetch is also padded at both ends by the near-date
+  tolerance, so a row written a day either side of the statement still pairs
+- A statement row converted into the account's currency never paired with the
+  leg that recorded it
+- An account's transactions endpoint answers a range carrying only one bound
+  with nothing at all, so "everything before this date" came back empty rather
+  than answering the question
+- Two transaction lists wrote to themselves after disposal, which surfaced only
+  as an unrelated test failing in a full run
+- A transaction row narrower than about 390 logical pixels pushed its actions
+  out of view, leaving nothing to edit it by. The amount moves to a second line
+  instead, and the actions stay at every width
+- An upcoming month could not be told apart from the month it repeats
+- The keychain is asked once a launch rather than once a secret
+- A release publishes the targets that built instead of none of them
+
+### Changed
+
+- The test gate allows three times the default per-test timeout. Password
+  handling derives a key per call, 100k PBKDF2 rounds of pure Dart at close to
+  two seconds each, and a test doing several of those under coverage
+  instrumentation failed on machine load rather than on what it asserts
+
 ## [0.1.8] - 2026-08-21
 
 ### Added

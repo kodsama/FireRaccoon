@@ -64,6 +64,49 @@ void main() {
       expect(json['budget_name'], 'New Budget');
     });
 
+    test('a cleared field is sent as an empty value, not left out', () {
+      // An empty value is left out, so omitting a field and emptying one were
+      // the same request and Firefly kept what it had. Naming the intent is
+      // the only way to take a note or a category away.
+      final transaction = Transaction(
+        id: '1',
+        type: 'withdrawal',
+        date: DateTime(2026, 7, 11),
+        amount: 5,
+        description: 'Coffee',
+        sourceName: 'Checking',
+        destinationName: 'Cafe',
+        categoryName: '',
+        currencySymbol: '€',
+        currencyCode: 'EUR',
+        clearedFields: const {'notes', 'category_name', 'tags'},
+      );
+
+      final json = transaction.toSplitJson();
+      expect(json['notes'], '');
+      expect(json['category_name'], '');
+      expect(json['tags'], isEmpty);
+    });
+
+    test('a field left unmentioned stays out of the payload', () {
+      final transaction = Transaction(
+        id: '1',
+        type: 'withdrawal',
+        date: DateTime(2026, 7, 11),
+        amount: 5,
+        description: 'Coffee',
+        sourceName: 'Checking',
+        destinationName: 'Cafe',
+        categoryName: '',
+        currencySymbol: '€',
+        currencyCode: 'EUR',
+      );
+
+      final json = transaction.toSplitJson();
+      expect(json.containsKey('notes'), isFalse);
+      expect(json.containsKey('category_name'), isFalse);
+    });
+
     test(
       'toSplitJson includes foreign currency, piggy bank, and interest date',
       () {

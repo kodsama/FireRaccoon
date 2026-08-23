@@ -78,6 +78,41 @@ void main() {
     return state;
   }
 
+  test(
+    'a container disposed mid-hydration is left alone, not written to',
+    () async {
+      // Reading the history file spans several async gaps. Whoever asked for the
+      // notifier can be gone by the end of any of them, and touching state then
+      // throws "Ref used after dispose" out of a future nobody is awaiting, which
+      // surfaces as an unrelated test failing under load.
+      await historyFile().writeAsString(
+        jsonEncode({
+          'cursor': 0,
+          'entries': [
+            {
+              'id': 'e1',
+              'label': 'Created a transaction',
+              'kind': 'createTransaction',
+              'createdAt': DateTime.now().toUtc().toIso8601String(),
+              'payload': <String, Object?>{},
+            },
+          ],
+        }),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+      );
+      // Start hydration, then pull the container out from under it.
+      container.read(undoHistoryProvider);
+      container.dispose();
+
+      // Long enough for every gap in the read to complete.
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+    },
+  );
+
   test('normalizeUndoHistoryLimit clamps to bounds', () {
     expect(normalizeUndoHistoryLimit(1), kUndoHistoryMinLimit);
     expect(normalizeUndoHistoryLimit(999999), kUndoHistoryMaxLimit);

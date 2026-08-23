@@ -98,20 +98,28 @@ class FireflyApiService implements FireflyService {
   /// day wider rather than refused. [_trimToWindow] puts the extra day back, so
   /// a statement covering one date reconciles like any other.
   String _rangeQuery({DateTime? start, DateTime? end}) {
-    final parts = <String>[];
+    if (start == null && end == null) return '';
+    // An account's transactions endpoint answers a range carrying only one
+    // bound with nothing at all, so "everything before this date" came back
+    // empty rather than answering the question. The collection endpoint is
+    // happy either way, so both ends are named for both: it costs nothing
+    // there and is the difference between an answer and silence here.
     final startDay = start == null
-        ? null
+        ? _beforeAnyLedger
         : DateTime(start.year, start.month, start.day);
-    if (startDay != null) parts.add('start=${_formatApiDate(startDay)}');
-    if (end != null) {
-      var inclusiveEnd = end.subtract(const Duration(days: 1));
-      if (startDay != null && !inclusiveEnd.isAfter(startDay)) {
-        inclusiveEnd = startDay.add(const Duration(days: 1));
-      }
-      parts.add('end=${_formatApiDate(inclusiveEnd)}');
+    var inclusiveEnd = end == null
+        ? _beyondAnyLedger
+        : end.subtract(const Duration(days: 1));
+    if (!inclusiveEnd.isAfter(startDay)) {
+      inclusiveEnd = startDay.add(const Duration(days: 1));
     }
-    return parts.join('&');
+    return 'start=${_formatApiDate(startDay)}'
+        '&end=${_formatApiDate(inclusiveEnd)}';
   }
+
+  /// Stands in for an unbounded end of a window.
+  static final DateTime _beforeAnyLedger = DateTime(1900);
+  static final DateTime _beyondAnyLedger = DateTime(2200);
 
   /// Drops what the widening in [_rangeQuery] pulled in, so a caller reading a
   /// one-day window sees that day and not its neighbour.
@@ -653,15 +661,23 @@ class FireflyApiService implements FireflyService {
     String accountId, {
     required int page,
     required int limit,
+    DateTime? start,
+    DateTime? end,
   }) async {
+    final range = _rangeQuery(start: start, end: end);
+    final path = range.isEmpty
+        ? '/api/v1/accounts/$accountId/transactions'
+        : '/api/v1/accounts/$accountId/transactions?$range';
     return _runLogged(
       'getAccountTransactionsPage',
-      () => _fetchTransactionPage(
-        '/api/v1/accounts/$accountId/transactions',
-        page: page,
-        limit: limit,
-      ),
-      context: {'accountId': accountId, 'page': page, 'limit': limit},
+      () => _fetchTransactionPage(path, page: page, limit: limit),
+      context: {
+        'accountId': accountId,
+        'page': page,
+        'limit': limit,
+        'start': start,
+        'end': end,
+      },
     );
   }
 

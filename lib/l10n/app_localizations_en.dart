@@ -2781,7 +2781,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get tooltipAccountEndOfMonthBalance =>
-      'Projected balance at the end of this month, including scheduled transactions, recurrences, and bills.';
+      'Projected balance at the selected date, including scheduled transactions, recurrences, and bills.';
+
+  @override
+  String get tooltipBalanceDatePick => 'Show balances at another date';
+
+  @override
+  String get tooltipBalanceDateReset => 'Back to the end of this month';
+
+  @override
+  String get tooltipBalanceBeyondForecast =>
+      'The forecast does not reach this far ahead, so this is the last projected figure.';
+
+  @override
+  String get tooltipRecordedBalance =>
+      'Balance the ledger holds through this date, including transactions already dated ahead.';
 
   @override
   String get tooltipBudgetName => 'Name for this spending budget.';
@@ -3532,4 +3546,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsExportText => 'FireRacoon settings backup';
+
+  @override
+  String get recordedBalance => 'Recorded';
+
+  @override
+  String get upcoming => 'Upcoming';
 }

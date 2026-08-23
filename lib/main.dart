@@ -15,6 +15,7 @@ import 'providers/server_session_provider.dart';
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
 import 'services/mcp_service.dart';
+import 'store/secure_storage.dart';
 import 'theme/app_theme.dart';
 
 Future<void> main() async {
@@ -22,6 +23,10 @@ Future<void> main() async {
   _configureLogging();
   final prefs = await SharedPreferences.getInstance();
   final deployment = await loadDeploymentConfig();
+  // One keychain trip before anything hydrates. Each provider reads its own
+  // secrets, and on macOS an unprimed read is a separate keychain access and so
+  // a separate password prompt.
+  await appSecureStorage.prime();
 
   runApp(
     ProviderScope(

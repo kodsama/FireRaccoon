@@ -19,6 +19,7 @@ import 'package:fireracoon/models/app_user_models.dart';
 import 'package:fireracoon/models/people_models.dart';
 import 'package:fireracoon/providers/auth_provider.dart';
 import 'package:fireracoon/providers/data_providers.dart';
+import 'package:fireracoon/providers/dashboard_stats_providers.dart';
 import 'package:fireracoon/providers/people_providers.dart';
 import 'package:fireracoon/providers/server_session_provider.dart';
 import 'package:fireracoon/providers/theme_provider.dart';
@@ -363,11 +364,29 @@ void main() {
 
         await container.read(accountsProvider.future);
         await container.read(transactionsProvider.future);
+        // A quarter share of a joint account is what counts towards this
+        // person's net worth, and the account still holds all of it.
         expect(
-          container.read(effectiveAccountsProvider).single.currentBalance,
+          container.read(shareWeightedAccountsProvider).single.currentBalance,
           25,
         );
+        expect(
+          container.read(ownedAccountsProvider).single.currentBalance,
+          100,
+        );
         expect(container.read(filteredTransactionsProvider).single.id, 'tx-1');
+
+        // The account card reads its headline figure off the projection, so a
+        // projection built from share-weighted balances was what put a quarter
+        // of a joint account where its balance belongs.
+        final prognosis = container
+            .read(accountPrognosisProvider)
+            .forAccount(account.id);
+        expect(prognosis, isNotNull);
+        expect(prognosis!.currentBalance, 100);
+
+        // Net worth is the one place the share is the answer.
+        expect(container.read(netWorthBreakdownProvider).netWorth, 25);
       },
     );
 

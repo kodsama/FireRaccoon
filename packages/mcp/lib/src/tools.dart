@@ -101,6 +101,12 @@ Map<String, Object?> _accountJson(Account account) => {
   'currency_symbol': account.currencySymbol,
   'currency_code': account.currencyCode,
   'active': account.active,
+  // find_account matches on these and update_account sets them, so leaving
+  // them out meant an identifier could be written and matched but never read
+  // back, and the only way to tell whether one was set at all was the
+  // has_account_number flag on a search result.
+  'account_number': account.accountNumber,
+  'iban': account.iban,
 };
 
 /// One leg of a split group, in the shape the write tools accept back.
@@ -288,6 +294,25 @@ Map<String, Object?> _paginateClientSide(
 /// So an account or a currency is given once for the whole group and only the
 /// amount, description and category vary per leg, which is how a loan payment
 /// or a card bill is actually written.
+/// Statement rows one `match_statement` call will take.
+///
+/// The old ceiling of 1000 was below what a real account produces: a single
+/// currency pocket of a multi-currency wallet can hold several thousand rows
+/// across years of history, so the one export that most needed checking was the
+/// one that could not be. The matcher is quadratic in rows times legs but bails
+/// on an amount comparison, and 8,000 against 8,000 finished in well under a
+/// second, so the binding constraint is the size of the response rather than the
+/// time to compute it.
+const int kStatementMaxRows = 10000;
+
+/// True for the empty string and the empty list, which is how a caller asks for
+/// a field to be removed rather than left alone.
+bool _isEmptyValue(Object? value) {
+  if (value is String) return value.trim().isEmpty;
+  if (value is List) return value.isEmpty;
+  return false;
+}
+
 Transaction _splitFromArgs(
   Map<String, Object?> leg,
   Map<String, Object?> args, {
@@ -325,6 +350,12 @@ Transaction _splitFromArgs(
     budgetId: pick('budget_id'),
     billId: pick('bill_id'),
     notes: pick('notes'),
+    foreignAmount:
+        (leg['foreign_amount'] as num?)?.toDouble() ??
+        (args['foreign_amount'] as num?)?.toDouble(),
+    foreignCurrencyCode: pick('foreign_currency_code'),
+    reconciled:
+        (leg['reconciled'] as bool?) ?? (args['reconciled'] as bool?) ?? false,
     tags: leg.containsKey('tags')
         ? _strList(leg['tags'])
         : (args.containsKey('tags') ? _strList(args['tags']) : const []),
@@ -335,6 +366,7 @@ Transaction _transactionFromArgs(
   Map<String, Object?> args, {
   Transaction? base,
   String id = '0',
+  bool carryReconciled = false,
 }) {
   final type = (args['type'] as String?) ?? base?.type;
   if (type == null ||
@@ -387,7 +419,11 @@ Transaction _transactionFromArgs(
       // A copy is not reconciled: nothing has been checked against a statement
       // yet, whatever was true of the original.
       for (final split in base!.resolvedSplits())
-        split.copyWith(id: '0', date: date, reconciled: false),
+        split.copyWith(
+          id: '0',
+          date: date,
+          reconciled: carryReconciled && split.reconciled,
+        ),
   ];
 
   final leadingLeg = splits.isEmpty ? null : splits.first;
@@ -398,6 +434,83 @@ Transaction _transactionFromArgs(
   if (amount == null || amount <= 0) {
     throw ArgumentError('amount must be greater than zero');
   }
+
+  final statedForeign = (args['foreign_amount'] as num?)?.toDouble();
+  if (statedForeign != null && statedForeign <= 0) {
+    throw ArgumentError('foreign_amount must be greater than zero');
+  }
+  // Carrying the original's foreign amount alongside a new local one would
+  // pair this month's figure with last month's rate. Nobody can derive the
+  // rate from the local amount alone, so the caller states it or nothing is
+  // written: scaling it would invent an exchange rate and record it as fact.
+  if (leadingLeg == null &&
+      statedForeign == null &&
+      args.containsKey('amount') &&
+      base?.foreignAmount != null &&
+      amount != base!.amount) {
+    final was = [
+      base.foreignAmount!.toStringAsFixed(2),
+      ?base.foreignCurrencyCode,
+    ].join(' ');
+    throw ArgumentError(
+      'amount overrides a transaction carrying a foreign amount of $was; '
+      'pass foreign_amount too, since the rate cannot be derived',
+    );
+  }
+  // An update that never mentions the flag must not clear it. Leaving it out
+  // sent the model default of false, so every edit silently threw away the
+  // reconciliation the person had asserted, and a refresh was the first they
+  // heard of it.
+  // An empty string, or an empty tag list, is how a caller says "remove this".
+  // Left to the ordinary path it was indistinguishable from not mentioning the
+  // field at all, so a note could be set but never taken away.
+  const clearable = {
+    'notes': 'notes',
+    'category_name': 'category_name',
+    'category_id': 'category_id',
+    'budget_name': 'budget_name',
+    'budget_id': 'budget_id',
+    'bill_id': 'bill_id',
+    'piggy_bank_id': 'piggy_bank_id',
+    'tags': 'tags',
+  };
+  final cleared = <String>{
+    for (final entry in clearable.entries)
+      if (args.containsKey(entry.key) && _isEmptyValue(args[entry.key]))
+        entry.value,
+  };
+
+  final reconciled =
+      (args['reconciled'] as bool?) ??
+      (carryReconciled ? base?.reconciled ?? false : false);
+
+  // Firefly will not move the money on a reconciled transaction, and
+  // toSplitJson drops those fields rather than arguing, so the change would
+  // report success and do nothing at all.
+  if (reconciled && carryReconciled) {
+    final touched = const [
+      'amount',
+      'foreign_amount',
+      'currency_code',
+      'source_id',
+      'source_name',
+      'destination_id',
+      'destination_name',
+    ].where(args.containsKey).toList();
+    if (touched.isNotEmpty) {
+      throw ArgumentError(
+        'this transaction is reconciled, so ${touched.join(', ')} cannot '
+        'change; pass reconciled:false in the same call to release it first',
+      );
+    }
+  }
+
+  final foreignAmount =
+      leadingLeg?.foreignAmount ?? statedForeign ?? base?.foreignAmount;
+  final foreignCurrencyCode =
+      leadingLeg?.foreignCurrencyCode ??
+      (args['foreign_currency_code'] as String?) ??
+      base?.foreignCurrencyCode;
   final description =
       leadingLeg?.description ??
       (args['description'] as String?) ??
@@ -457,6 +570,10 @@ Transaction _transactionFromArgs(
         (args['budget_id'] as String?) ??
         base?.budgetId,
     notes: leadingLeg?.notes ?? (args['notes'] as String?) ?? base?.notes,
+    foreignAmount: foreignAmount,
+    foreignCurrencyCode: foreignCurrencyCode,
+    reconciled: leadingLeg?.reconciled ?? reconciled,
+    clearedFields: cleared,
     tags: leadingLeg != null
         ? leadingLeg.tags
         : (args.containsKey('tags')
@@ -523,6 +640,24 @@ Map<String, Object?> _transactionFieldSchema() => {
   'amount': {'type': 'number', 'exclusiveMinimum': 0},
   'description': {'type': 'string'},
   'currency_code': {'type': 'string'},
+  'foreign_amount': {
+    'type': 'number',
+    'exclusiveMinimum': 0,
+    'description':
+        'What the other side received, when the two accounts hold different '
+        'currencies. Firefly requires it on such a transfer and refuses the '
+        'write without it.',
+  },
+  'foreign_currency_code': {
+    'type': 'string',
+    'description': 'Currency of foreign_amount. Defaults to the other side.',
+  },
+  'reconciled': {
+    'type': 'boolean',
+    'description':
+        'Whether the transaction is reconciled. An update keeps the current '
+        'value when this is omitted. A copy is never reconciled.',
+  },
   'source_id': {'type': 'string'},
   'source_name': {'type': 'string'},
   'destination_id': {'type': 'string'},
@@ -1226,7 +1361,7 @@ List<McpTool> buildTools({
           'rows': {
             'type': 'array',
             'minItems': 1,
-            'maxItems': 1000,
+            'maxItems': kStatementMaxRows,
             'items': {
               'type': 'object',
               'required': ['row_id', 'date', 'amount'],
@@ -1267,8 +1402,12 @@ List<McpTool> buildTools({
         if (rawRows is! List || rawRows.isEmpty) {
           return _badInput('rows must list at least one statement row');
         }
-        if (rawRows.length > 1000) {
-          return _badInput('rows must not exceed 1000 entries');
+        if (rawRows.length > kStatementMaxRows) {
+          return _badInput(
+            'rows must not exceed $kStatementMaxRows entries; '
+            'split the statement into windows at dates where the balances '
+            'already agree, so no pair is cut in half',
+          );
         }
         final parsedRows = <RawStatementRow>[];
         for (final entry in rawRows) {
@@ -1330,10 +1469,17 @@ List<McpTool> buildTools({
           return _badInput('no asset or liability account with id $accountId');
         }
 
+        // Padded by the widest tolerance the matcher will pair across, at both
+        // ends. Padding only the end meant a transaction the ledger dates the
+        // day before the statement's first row was never fetched, so it came
+        // back as missing and writing it would have duplicated what was
+        // already there. Legs outside the period stay matchable and are
+        // reported under excluded.fetched_outside_period.
+        const reach = Duration(days: kStatementNearDateToleranceDays);
         final recorded = await api.getAccountTransactions(
           accountId,
-          start: start,
-          end: inclusiveEnd.add(const Duration(days: 1)),
+          start: start.subtract(reach),
+          end: inclusiveEnd.add(reach + const Duration(days: 1)),
         );
 
         final plan = matchStatementRows(
@@ -2031,7 +2177,12 @@ List<McpTool> buildTools({
         final existing = await api.getTransaction(id);
         final Transaction updated;
         try {
-          updated = _transactionFromArgs(args, base: existing, id: id);
+          updated = _transactionFromArgs(
+            args,
+            base: existing,
+            id: id,
+            carryReconciled: true,
+          );
         } on ArgumentError catch (e) {
           return _badInput('${e.message}');
         }

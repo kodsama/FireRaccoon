@@ -11,6 +11,7 @@ import '../providers/dashboard_stats_providers.dart';
 import '../providers/undo_history_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/locale_formatting.dart';
+import '../widgets/autocomplete_text_field.dart';
 import '../l10n/l10n_extensions.dart';
 import '../widgets/entity_list_layout.dart';
 import '../widgets/prognosis_band_chart.dart';
@@ -77,13 +78,21 @@ class _PrognosisViewState extends ConsumerState<PrognosisView>
     super.dispose();
   }
 
+  /// Accounts worth forecasting: open, and with a forecast to show.
+  ///
+  /// A closed account has nothing ahead of it, so offering one is offering a
+  /// projection of nothing.
   List<Account> _visibleAccounts(
     List<Account> accounts,
     AccountPrognosisResult prognosis,
   ) {
     return accounts
-        .where((account) => prognosis.forAccount(account.id) != null)
-        .toList();
+        .where(
+          (account) =>
+              account.active && prognosis.forAccount(account.id) != null,
+        )
+        .toList()
+      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
   }
 
   @override
@@ -368,32 +377,11 @@ class _ChartPanel extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: DropdownButtonFormField<String?>(
-                    initialValue: selectedAccountId,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: l10n.prognosisSelectAccount,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    items: visibleAccounts
-                        .map(
-                          (account) => DropdownMenuItem(
-                            value: account.id,
-                            child: Text(
-                              account.name,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: onAccountChanged,
+                  child: _AccountPicker(
+                    accounts: visibleAccounts,
+                    selectedAccountId: selectedAccountId,
+                    label: l10n.prognosisSelectAccount,
+                    onAccountChanged: onAccountChanged,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -1008,6 +996,87 @@ class _BalanceRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Account chooser that can be typed into, as the pickers elsewhere can.
+///
+/// A dropdown is fine for a handful of entries and unusable for a ledger with
+/// dozens, which is why every other picker in the app filters as you type.
+class _AccountPicker extends StatefulWidget {
+  const _AccountPicker({
+    required this.accounts,
+    required this.selectedAccountId,
+    required this.label,
+    required this.onAccountChanged,
+  });
+
+  final List<Account> accounts;
+  final String? selectedAccountId;
+  final String label;
+  final ValueChanged<String?> onAccountChanged;
+
+  @override
+  State<_AccountPicker> createState() => _AccountPickerState();
+}
+
+class _AccountPickerState extends State<_AccountPicker> {
+  final _controller = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.text = _selectedName ?? '';
+  }
+
+  @override
+  void didUpdateWidget(_AccountPicker old) {
+    super.didUpdateWidget(old);
+    // Follow a selection made elsewhere, such as tapping an account card, but
+    // never overwrite what someone is part-way through typing.
+    if (widget.selectedAccountId != old.selectedAccountId) {
+      _controller.text = _selectedName ?? '';
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  String? get _selectedName => widget.accounts
+      .where((account) => account.id == widget.selectedAccountId)
+      .firstOrNull
+      ?.name;
+
+  void _select(String name) {
+    final match = widget.accounts
+        .where((account) => account.name == name)
+        .firstOrNull;
+    if (match == null) return;
+    widget.onAccountChanged(match.id);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AutocompleteTextField(
+      controller: _controller,
+      suggestions: widget.accounts.map((account) => account.name).toList(),
+      decoration: InputDecoration(
+        labelText: widget.label,
+        isDense: true,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      onSelected: _select,
+      // Typing a full name straight through counts as choosing it; anything
+      // else leaves the current selection alone rather than clearing the chart.
+      onSubmitted: _select,
     );
   }
 }

@@ -45,6 +45,28 @@ Future<ProviderContainer> _readyContainer(FakeFireflyService fake) async {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('a container disposed mid-fetch is left alone, not written to', () async {
+    // The generation counter lives on the notifier, which outlives disposal, so
+    // it still matched and the state write threw out of a future nobody awaits.
+    // That failed the page load for no visible reason and landed an uncaught
+    // error on whatever happened to be running.
+    final fake = FakeFireflyService(
+      accounts: sampleAccounts,
+      transactions: [_tx('1', DateTime(2026, 8, 1))],
+    );
+    fake.responseDelay = const Duration(milliseconds: 120);
+    final container = await _readyContainer(fake);
+
+    container.read(paginatedTransactionsProvider(null));
+    // Long enough for the fetch to be in flight, short enough that it has not
+    // returned.
+    await Future<void>.delayed(const Duration(milliseconds: 30));
+    container.dispose();
+
+    // Long enough for every gap in the fetch to complete.
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+  });
+
   test('PaginatedTransactionsState hasMore and copyWith', () {
     const state = PaginatedTransactionsState(totalPages: 3, loadedPages: {1});
     expect(state.hasMore, isTrue);

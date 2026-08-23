@@ -1,3 +1,5 @@
+import '../services/recurrence_scheduler.dart';
+
 enum PrognosisEventSource { scheduledTransaction, recurrence, bill }
 
 enum ScheduledFlowSource { transaction, recurrence, bill }
@@ -191,6 +193,49 @@ class AccountPrognosis {
 
   PrognosisBalanceSnapshot milestone(PrognosisMilestone key) =>
       milestones[key] ?? endOfMonth;
+
+  /// Forecast for the end of [date].
+  ///
+  /// The timeline carries a point per day, so any date inside it answers
+  /// exactly; the fixed milestones are only five samples of the same series.
+  /// Before the timeline starts there is nothing forecast yet, so the current
+  /// balance stands; after it ends the last point does, since the forecast
+  /// simply does not reach further.
+  PrognosisBalanceSnapshot snapshotOn(DateTime date) {
+    if (timeline.isEmpty) {
+      return PrognosisBalanceSnapshot(
+        expected: currentBalance,
+        pessimistic: currentBalance,
+        optimistic: currentBalance,
+      );
+    }
+    final target = prognosisStartOfDay(date);
+    PrognosisBalancePoint? match;
+    for (final point in timeline) {
+      if (prognosisStartOfDay(point.date).isAfter(target)) break;
+      match = point;
+    }
+    if (match == null) {
+      return PrognosisBalanceSnapshot(
+        expected: currentBalance,
+        pessimistic: currentBalance,
+        optimistic: currentBalance,
+      );
+    }
+    return PrognosisBalanceSnapshot(
+      expected: match.expected,
+      pessimistic: match.pessimistic,
+      optimistic: match.optimistic,
+    );
+  }
+
+  /// True when [date] is past the end of the forecast, so [snapshotOn] is
+  /// answering with its last point rather than a figure for that day.
+  bool reachesBeyondForecast(DateTime date) =>
+      timeline.isNotEmpty &&
+      prognosisStartOfDay(
+        date,
+      ).isAfter(prognosisStartOfDay(timeline.last.date));
 
   bool get hasNegativeRisk => firstNegativeDate != null;
 

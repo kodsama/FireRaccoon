@@ -375,11 +375,21 @@ StatementPlan matchStatementRows({
     final splits = group.resolvedSplits();
     for (var index = 0; index < splits.length; index++) {
       final split = splits[index];
-      final signed = signedAmountForSplitById(split, accountId);
+      var signed = signedAmountForSplitById(split, accountId);
       if (signed == 0) continue;
       if (split.currencyCode != currencyCode) {
-        foreignCurrencySplits++;
-        continue;
+        // A conversion between two pockets of the same wallet is booked in the
+        // source currency, with the amount that landed on the other side in
+        // foreign_amount. Skipping it left the statement's own row with no leg
+        // to pair against, so an export from a multi-currency wallet reported
+        // every exchange as missing and writing them would have double-counted
+        // what is already there.
+        final foreign = split.foreignAmount;
+        if (foreign == null || split.foreignCurrencyCode != currencyCode) {
+          foreignCurrencySplits++;
+          continue;
+        }
+        signed = signed.isNegative ? -foreign.abs() : foreign.abs();
       }
       legs.add(
         LedgerLeg(
