@@ -24,6 +24,7 @@ class FireflyConnectionNotifier extends Notifier<FireflyConnectionStatus> {
   int _checkGeneration = 0;
   int _consecutiveSuccesses = 0;
   Duration _pollInterval = kFireflyConnectionPollInterval;
+  bool _rereadingCredentials = false;
 
   @override
   FireflyConnectionStatus build() {
@@ -76,6 +77,25 @@ class FireflyConnectionNotifier extends Notifier<FireflyConnectionStatus> {
     if (!auth.isHydrated) {
       state = FireflyConnectionStatus.checking;
       _log.finer('Probe skipped because auth is not hydrated yet');
+      return;
+    }
+
+    if (auth.storageUnavailable) {
+      // The keychain would not answer at startup. It may well answer now, once
+      // its password has been typed, and this poll is the only thing that would
+      // ever look again: without it the app stays disconnected until a relaunch.
+      state = FireflyConnectionStatus.checking;
+      if (!_rereadingCredentials) {
+        _rereadingCredentials = true;
+        _log.info('Credentials were unreadable; reading them again');
+        Future.microtask(() async {
+          try {
+            await ref.read(authProvider.notifier).retryCredentialRead();
+          } finally {
+            _rereadingCredentials = false;
+          }
+        });
+      }
       return;
     }
 

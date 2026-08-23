@@ -55,6 +55,34 @@ class _ThrowingStoragePlatform extends TestFlutterSecureStoragePlatform {
   }) async => throw Exception('keychain unavailable (-34018)');
 }
 
+/// Secure storage that answers, counting how often it was asked.
+class _FlakyStoragePlatform extends TestFlutterSecureStoragePlatform {
+  _FlakyStoragePlatform(super.storage);
+
+  int reads = 0;
+
+  @override
+  Future<String?> read({
+    required String key,
+    required Map<String, String> options,
+  }) async {
+    reads++;
+    return super.read(key: key, options: options);
+  }
+}
+
+/// Secure storage whose read never completes, the way a keychain prompt that
+/// nobody types into never returns.
+class _HangingStoragePlatform extends TestFlutterSecureStoragePlatform {
+  _HangingStoragePlatform() : super({});
+
+  @override
+  Future<String?> read({
+    required String key,
+    required Map<String, String> options,
+  }) => Completer<String?>().future;
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -272,6 +300,78 @@ void main() {
       }
     });
 
+    /// Pumps until hydration settles, or gives up so a failure reads as a
+    /// wrong value rather than a hang.
+    Future<AuthSettings> hydrated(ProviderContainer container) async {
+      // A real interval, not Duration.zero: a read deadline only elapses if
+      // the clock actually moves.
+      for (var i = 0; i < 400; i++) {
+        if (container.read(authProvider).isHydrated) break;
+        await Future<void>.delayed(const Duration(milliseconds: 5));
+      }
+      return container.read(authProvider);
+    }
+
+    test('a keychain that fails the read is unavailable, not empty', () async {
+      FlutterSecureStoragePlatform.instance = _ThrowingStoragePlatform();
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(storage: testStorage(), debugEnvLoader: _noEnv),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final settings = await hydrated(container);
+      // Hydration has to finish either way, or every screen loads forever with
+      // nothing to say why.
+      expect(settings.isHydrated, isTrue);
+      expect(settings.isValid, isFalse);
+      // The distinction the UI needs: unreadable, not unconfigured.
+      expect(settings.storageUnavailable, isTrue);
+    });
+
+    test('a keychain that holds nothing is not called unavailable', () async {
+      FlutterSecureStoragePlatform.instance = _FlakyStoragePlatform({});
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(storage: testStorage(), debugEnvLoader: _noEnv),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final settings = await hydrated(container);
+      expect(settings.isHydrated, isTrue);
+      // Nothing stored is what a first run looks like, and "open Settings" is
+      // the right thing to say about it.
+      expect(settings.storageUnavailable, isFalse);
+    });
+
+    test('a read that never answers still finishes hydration', () async {
+      // A keychain prompt nobody types into never returns. Waiting on it
+      // forever leaves every screen loading with nothing to say why.
+      FlutterSecureStoragePlatform.instance = _HangingStoragePlatform();
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(
+              storage: testStorage(),
+              debugEnvLoader: _noEnv,
+              readTimeout: const Duration(milliseconds: 50),
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final settings = await hydrated(container);
+      expect(settings.isHydrated, isTrue);
+      expect(settings.storageUnavailable, isTrue);
+    });
+
     test('saveSettings and clearSettings update state', () async {
       final container = ProviderContainer(
         overrides: [
@@ -470,6 +570,52 @@ void main() {
 
       final accounts = await container.read(accountsProvider.future);
       expect(accounts.single.name, 'Checking');
+    });
+
+    test('a load waits for the credential read rather than erroring', () async {
+      // A keychain read can be outstanding for as long as it takes to type a
+      // password. Reporting "connect your server" during that wait told people
+      // to reconnect a server they had already connected.
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => StaticAuthNotifier(AuthSettings(), hydrated: false),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final sub = container.listen(accountsProvider, (_, _) {});
+      addTearDown(sub.close);
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      expect(container.read(accountsProvider).isLoading, isTrue);
+      expect(container.read(accountsProvider).hasError, isFalse);
+    });
+
+    test('an unreadable keychain is named as the reason', () async {
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => StaticAuthNotifier(AuthSettings(storageUnavailable: true)),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final sub = container.listen(accountsProvider, (_, _) {});
+      addTearDown(sub.close);
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      final value = container.read(accountsProvider);
+      expect(value.hasError, isTrue);
+      // "Open Settings and connect your server" is the wrong instruction when
+      // the server is configured and the keychain simply would not answer.
+      expect(value.error.toString(), contains('keychain'));
     });
 
     test(
