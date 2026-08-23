@@ -2695,6 +2695,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tooltipFieldDestinationAccount => 'Konto pengarna går till.';
 
   @override
+  String get tooltipSwapTransferAccounts => 'Byt plats på de två kontona.';
+
+  @override
   String get tooltipFieldDate => 'Datum och tid för transaktionen.';
 
   @override

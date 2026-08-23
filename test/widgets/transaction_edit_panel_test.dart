@@ -3,6 +3,7 @@ import 'package:fireracoon/widgets/transaction_edit_panel.dart';
 import 'package:fireracoon_engine/fireracoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
@@ -104,6 +105,93 @@ void main() {
 
     expect(find.text('Partner salary DKK -> DKK'), findsOneWidget);
     expect(find.text('Mortgage amortization'), findsNothing);
+  });
+
+  testWidgets('a transfer can exchange its two accounts', (tester) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final transfer = Transaction(
+      id: 'swap-1',
+      type: 'transfer',
+      date: DateTime(2026, 7, 1),
+      amount: 500,
+      description: 'Moving money',
+      sourceName: 'Wallet',
+      destinationName: 'Savings',
+      categoryName: '',
+      currencySymbol: 'kr',
+      currencyCode: 'SEK',
+    );
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: transfer,
+              onCancel: () {},
+              onSave: (_) async {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await pumpScreen(tester);
+
+    TextField fieldWith(String value) => tester
+        .widgetList<TextField>(find.byType(TextField))
+        .firstWhere((field) => field.controller?.text == value);
+
+    // Both ends are present to begin with, each in its own field.
+    expect(fieldWith('Wallet'), isNotNull);
+    expect(fieldWith('Savings'), isNotNull);
+    final sourceController = fieldWith('Wallet').controller!;
+    final destinationController = fieldWith('Savings').controller!;
+
+    await tester.tap(find.byIcon(LucideIcons.arrowUpDown));
+    await pumpScreen(tester);
+
+    // The same two controllers, holding each other's value.
+    expect(sourceController.text, 'Savings');
+    expect(destinationController.text, 'Wallet');
+  });
+
+  testWidgets('a withdrawal offers no account exchange', (tester) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final withdrawal = Transaction(
+      id: 'no-swap',
+      type: 'withdrawal',
+      date: DateTime(2026, 7, 1),
+      amount: 45,
+      description: 'Groceries',
+      sourceName: 'Checking',
+      destinationName: 'Coop',
+      categoryName: 'Food',
+      currencySymbol: 'kr',
+      currencyCode: 'SEK',
+    );
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: withdrawal,
+              onCancel: () {},
+              onSave: (_) async {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await pumpScreen(tester);
+
+    // Exchanging the ends of a withdrawal would make it a deposit, which is a
+    // different transaction rather than the same one reversed.
+    expect(find.byIcon(LucideIcons.arrowUpDown), findsNothing);
   });
 
   testWidgets('withdrawal leads with Payee and keeps currency optional', (

@@ -140,6 +140,18 @@ class _SplitDraft {
 }
 
 class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
+  /// Exchanges the two ends of a transfer.
+  ///
+  /// Entering one the wrong way round is easy, and correcting it meant clearing
+  /// and retyping both names through the autocomplete.
+  void _swapTransferAccounts(_SplitDraft split) {
+    final wasSource = split.sourceController.text;
+    setState(() {
+      split.sourceController.text = split.destinationController.text;
+      split.destinationController.text = wasSource;
+    });
+  }
+
   late String _type;
   late DateTime _date;
   late List<_SplitDraft> _splits;
@@ -861,6 +873,27 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
           )
         : sourceField;
 
+    // Only a transfer has two ends worth exchanging. Swapping a withdrawal
+    // would turn money spent into money earned, which is a different
+    // transaction rather than the same one the other way round.
+    final swapAccountsButton = _type != 'transfer'
+        ? null
+        : Tooltip(
+            message: l10n.tooltipSwapTransferAccounts,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(8),
+              onTap: () => _swapTransferAccounts(split),
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Icon(
+                  LucideIcons.arrowUpDown,
+                  size: 14,
+                  color: context.colors.text3,
+                ),
+              ),
+            ),
+          );
+
     final categoryField = _withTooltip(
       l10n.tooltipFieldCategory,
       AutocompleteTextField(
@@ -1075,7 +1108,13 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
                   Expanded(flex: 2, child: amountField),
                 ],
               ),
-              _gapBox(compact: compact),
+              if (swapAccountsButton == null)
+                _gapBox(compact: compact)
+              else
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: swapAccountsButton,
+                ),
               sourceFieldWithCreate,
               _gapBox(compact: compact),
               Row(
@@ -1100,7 +1139,13 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
               destinationField,
               _gapBox(compact: compact),
               amountField,
-              _gapBox(compact: compact),
+              if (swapAccountsButton == null)
+                _gapBox(compact: compact)
+              else
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: swapAccountsButton,
+                ),
               sourceFieldWithCreate,
               _gapBox(compact: compact),
               categoryField,

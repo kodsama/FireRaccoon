@@ -1486,6 +1486,7 @@
   "tooltipFieldDescription": "この取引で何が起きたか。",
   "tooltipFieldSourceAccount": "お金の送り元口座。",
   "tooltipFieldDestinationAccount": "お金の送り先口座。",
+  "tooltipSwapTransferAccounts": "2つの口座を入れ替えます。",
   "tooltipFieldDate": "取引の日付と時刻。",
   "tooltipFieldAmount": "選択した通貨での主な金額。",
   "tooltipFieldCurrency": "この分割の主通貨。",
