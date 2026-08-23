@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-08-23
+
+### Added
+
+- A transfer can exchange its two accounts from a button between them. Entering
+  one the wrong way round meant clearing both fields and retyping them through
+  the autocomplete. Only a transfer offers it: exchanging the ends of a
+  withdrawal would turn money spent into money earned
+
+### Fixed
+
+- A server URL aimed at a user interface host, or at a single sign-on front
+  door, was reported as a working connection. The check looked only at the
+  status code, and a login page answers 200, so a wrong address passed and every
+  request after it failed on HTML with "FormatException: Unexpected character
+  (at character 1)". The connection test now requires Firefly's own `about`
+  payload, and a response that is a page is refused where it arrives, naming the
+  address to check
+- Reads that left one end of a date window open asked for dates Firefly refuses.
+  It validates both ends against 32-bit time, the start after 1970-01-02 and the
+  end before 2038-01-17, and the placeholders sat at 1900 and 2200 with the
+  account panel reaching fifty years ahead. The refusal is not treated as an
+  error on that path but as an empty page, so an account with a full history and
+  months of write-ahead recurrences could read as one holding nothing
+- A keychain that could not be read was reported as a server that had never been
+  configured, so the app asked for credentials it already had and never looked
+  at the keychain again until a relaunch. An unreadable read now says so, the
+  read cannot hang forever, screens wait for it rather than erroring through it,
+  and the connection poll reads again so unlocking recovers on its own
+
 ## [0.1.9] - 2026-08-23
 
 ### Added
