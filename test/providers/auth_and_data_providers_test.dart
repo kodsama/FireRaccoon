@@ -438,6 +438,35 @@ void main() {
       expect(settings.storageUnavailable, isTrue);
     });
 
+    test('the token is registered with the logger once it is known', () async {
+      // AppLogger.configure runs at startup with nothing, because the token only
+      // exists once the keychain answers. Until it is registered, redaction has
+      // nothing to match but the word Bearer and any line carrying the token
+      // prints it.
+      AppLogger.configure(sink: (_) {}, secrets: const []);
+      addTearDown(AppLogger.resetForTest);
+
+      final storage = testStorage();
+      await storage.write(key: 'serverUrl', value: 'https://firefly.test');
+      await storage.write(key: 'apiToken', value: 'tok-from-keychain');
+
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(storage: storage, debugEnvLoader: _noEnv),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final settings = await hydrated(container);
+      expect(settings.apiToken, 'tok-from-keychain');
+      expect(
+        AppLogger.redact('GET /api/v1/about token=tok-from-keychain'),
+        isNot(contains('tok-from-keychain')),
+      );
+    });
+
     test('saveSettings and clearSettings update state', () async {
       final container = ProviderContainer(
         overrides: [
