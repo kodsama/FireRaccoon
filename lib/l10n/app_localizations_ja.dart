@@ -2646,6 +2646,22 @@ class AppLocalizationsJa extends AppLocalizations {
   String get disconnectConfirmTitle => 'Firefly III の接続を解除';
 
   @override
+  String get connectionFailedNotFirefly =>
+      'そのアドレスは応答しましたが、Firefly III の API ではありません。サーバー URL を確認してください。画面用のアドレスやサインインページは、どのパスでもウェブページを返します。';
+
+  @override
+  String get connectionFailedUnauthorized =>
+      'サーバーは応答し、トークンを拒否しました。個人アクセストークンを確認してください。';
+
+  @override
+  String get connectionFailedUnreachable =>
+      'そのサーバーに接続できませんでした。アドレスと稼働状況を確認してください。';
+
+  @override
+  String get connectionFailedInsecure =>
+      'これは平文の http:// アドレスです。意図している場合は「HTTP 接続を許可」を有効にしてください。';
+
+  @override
   String get disconnectConfirmMessage =>
       'このデバイスのキーチェーンからサーバー URL と個人アクセストークンを削除します。再接続するには再度入力する必要があります。';
 
