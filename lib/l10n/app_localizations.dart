@@ -4948,6 +4948,30 @@ abstract class AppLocalizations {
   /// **'Disconnect Firefly III'**
   String get disconnectConfirmTitle;
 
+  /// No description provided for @connectionFailedNotFirefly.
+  ///
+  /// In en, this message translates to:
+  /// **'That address answered, but not with the Firefly III API. Check the server URL: a user interface address, or one behind a sign-in page, answers every path with a web page.'**
+  String get connectionFailedNotFirefly;
+
+  /// No description provided for @connectionFailedUnauthorized.
+  ///
+  /// In en, this message translates to:
+  /// **'The server answered and refused the token. Check the personal access token.'**
+  String get connectionFailedUnauthorized;
+
+  /// No description provided for @connectionFailedUnreachable.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not reach that server. Check the address and that it is running.'**
+  String get connectionFailedUnreachable;
+
+  /// No description provided for @connectionFailedInsecure.
+  ///
+  /// In en, this message translates to:
+  /// **'That is a plain http:// address. Turn on Allow HTTP connections if you mean it.'**
+  String get connectionFailedInsecure;
+
   /// No description provided for @disconnectConfirmMessage.
   ///
   /// In en, this message translates to:
