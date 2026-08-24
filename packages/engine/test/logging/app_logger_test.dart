@@ -93,5 +93,48 @@ void main() {
       expect(first, isEmpty);
       expect(second, hasLength(1));
     });
+
+    test('compactJson redacts the payload it encodes', () {
+      // Encoding is the whole point of calling this, so a caller that forgets
+      // to redact afterwards prints the payload verbatim.
+      AppLogger.configure(sink: (_) {}, secrets: const ['tok-abc']);
+      addTearDown(AppLogger.resetForTest);
+
+      final line = AppLogger.compactJson({
+        'apiToken': 'tok-abc',
+        'account': 'Wallet',
+      });
+
+      expect(line, isNot(contains('tok-abc')));
+      expect(line, contains('***'));
+      expect(line, contains('Wallet'));
+    });
+
+    test('a secret learned after configure is still redacted', () {
+      // The token arrives when the keychain answers, long after configure ran,
+      // so a list fixed at startup can never contain it.
+      AppLogger.configure(sink: (_) {}, secrets: const []);
+      addTearDown(AppLogger.resetForTest);
+
+      expect(AppLogger.redact('token=late-secret'), contains('late-secret'));
+
+      AppLogger.addSecret('late-secret');
+      expect(
+        AppLogger.redact('token=late-secret'),
+        isNot(contains('late-secret')),
+      );
+    });
+
+    test('addSecret ignores nothing worth redacting', () {
+      AppLogger.configure(sink: (_) {}, secrets: const []);
+      addTearDown(AppLogger.resetForTest);
+
+      AppLogger.addSecret(null);
+      AppLogger.addSecret('');
+      AppLogger.addSecret('   ');
+
+      // An empty secret would otherwise match everywhere and redact the lot.
+      expect(AppLogger.redact('nothing to hide'), 'nothing to hide');
+    });
   });
 }

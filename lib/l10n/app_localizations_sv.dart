@@ -2698,6 +2698,13 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tooltipSwapTransferAccounts => 'Byt plats på de två kontona.';
 
   @override
+  String get disconnectConfirmTitle => 'Koppla från Firefly III';
+
+  @override
+  String get disconnectConfirmMessage =>
+      'Detta tar bort serveradressen och den personliga åtkomsttoken från enhetens nyckelring. Du måste ange dem igen för att ansluta på nytt.';
+
+  @override
   String get tooltipFieldDate => 'Datum och tid för transaktionen.';
 
   @override

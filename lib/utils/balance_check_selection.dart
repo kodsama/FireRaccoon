@@ -53,9 +53,13 @@ class BalanceCheckSelection {
     return SelectionState.none;
   }
 
-  bool canToggle(Transaction transaction) {
-    return !transaction.isPartiallyReconciled;
-  }
+  /// A part-reconciled group can be toggled like any other.
+  ///
+  /// It used to be refused, and nothing else would finish it either: it landed
+  /// in neither list [balanceCheckReconcileChanges] builds, so there was no way
+  /// to reconcile the rest of it or to undo the part already done. Refusing the
+  /// only control that could have fixed it left it stuck for good.
+  bool canToggle(Transaction transaction) => true;
 
   BalanceCheckVisual visualFor(Transaction transaction) {
     final selected = isSelected(transaction);
@@ -89,6 +93,10 @@ void syncBalanceCheckSelection(
   // Intentionally a no-op with the included/excluded model.
 }
 
+/// Rows a month header's select-all acts on.
+///
+/// Only the ones not already counted: reconciled and part-reconciled rows stay
+/// in unless opted out one at a time, so a header toggle must not sweep them.
 bool _isBalanceCheckOptInToggleable(Transaction transaction) {
   return !transaction.isReconciled && !transaction.isPartiallyReconciled;
 }
@@ -161,8 +169,9 @@ void toggleBalanceCheckTransaction(
   required Set<String> includedIds,
   required Set<String> excludedIds,
 }) {
-  if (transaction.isPartiallyReconciled) return;
-  if (transaction.isReconciled) {
+  // Part reconciled counts as selected, like fully reconciled, so toggling it
+  // means opting out. Returning early here was what made such a group inert.
+  if (transaction.isReconciled || transaction.isPartiallyReconciled) {
     if (excludedIds.contains(transaction.id)) {
       excludedIds.remove(transaction.id);
     } else {
@@ -219,11 +228,13 @@ BalanceCheckReconcileChanges balanceCheckReconcileChanges({
   final toUnreconcile = <Transaction>[];
   for (final transaction in transactions) {
     final selected = selectedIds.contains(transaction.id);
-    if (selected &&
-        !transaction.isReconciled &&
-        !transaction.isPartiallyReconciled) {
+    // A part-reconciled group belongs in whichever list finishes the job:
+    // selected means reconcile the legs that are not, unselected means undo the
+    // ones that are. It used to fall into neither and could not be completed.
+    if (selected && !transaction.isReconciled) {
       toReconcile.add(transaction);
-    } else if (!selected && transaction.isReconciled) {
+    } else if (!selected &&
+        (transaction.isReconciled || transaction.isPartiallyReconciled)) {
       toUnreconcile.add(transaction);
     }
   }

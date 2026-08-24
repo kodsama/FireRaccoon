@@ -104,6 +104,19 @@ class AuthNotifier extends Notifier<AuthSettings> {
   /// outliving it.
   final Set<Timer> _deadlines = {};
 
+  /// Registers the token with the logger on the way through.
+  ///
+  /// A token only exists once the keychain answers or someone signs in, which is
+  /// long after [AppLogger.configure] ran, so it cannot be registered at
+  /// startup. Until it is, redaction has nothing to match but the word Bearer,
+  /// and any line carrying the token prints it. Hooking the setter rather than
+  /// each assignment means a new way of setting one is covered by default.
+  @override
+  set state(AuthSettings value) {
+    AppLogger.addSecret(value.apiToken);
+    super.state = value;
+  }
+
   @override
   AuthSettings build() {
     ref.onDispose(() {

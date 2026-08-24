@@ -2643,6 +2643,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipSwapTransferAccounts => '2つの口座を入れ替えます。';
 
   @override
+  String get disconnectConfirmTitle => 'Firefly III の接続を解除';
+
+  @override
+  String get disconnectConfirmMessage =>
+      'このデバイスのキーチェーンからサーバー URL と個人アクセストークンを削除します。再接続するには再度入力する必要があります。';
+
+  @override
   String get tooltipFieldDate => '取引の日付と時刻。';
 
   @override

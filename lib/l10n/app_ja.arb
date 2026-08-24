@@ -1487,6 +1487,8 @@
   "tooltipFieldSourceAccount": "お金の送り元口座。",
   "tooltipFieldDestinationAccount": "お金の送り先口座。",
   "tooltipSwapTransferAccounts": "2つの口座を入れ替えます。",
+  "disconnectConfirmTitle": "Firefly III の接続を解除",
+  "disconnectConfirmMessage": "このデバイスのキーチェーンからサーバー URL と個人アクセストークンを削除します。再接続するには再度入力する必要があります。",
   "tooltipFieldDate": "取引の日付と時刻。",
   "tooltipFieldAmount": "選択した通貨での主な金額。",
   "tooltipFieldCurrency": "この分割の主通貨。",

@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/password_cost.dart';
 import 'package:fireracoon/models/people_models.dart';
 import 'package:fireracoon/models/settings_bundle.dart';
 import 'package:fireracoon/utils/password_policy.dart';
@@ -65,7 +67,7 @@ void main() {
   test(
     'public JSON never contains plaintext token or password hashes',
     () async {
-      final hashed = hashPassword(passphrase);
+      final hashed = await hashTestPassword(passphrase);
       final bundle = sampleBundle(hashed: hashed);
       final sealed = await bundle.encodeSealed(passphrase);
       final json = jsonDecode(sealed) as Map<String, dynamic>;
@@ -88,7 +90,7 @@ void main() {
   test(
     'round-trip unlock restores token, hashes, and password-login',
     () async {
-      final hashed = hashPassword(passphrase);
+      final hashed = await hashTestPassword(passphrase);
       final sealed = await sampleBundle(
         hashed: hashed,
       ).encodeSealed(passphrase);
@@ -106,7 +108,7 @@ void main() {
       expect(restored.people.people[1].hasPassword, isTrue);
       expect(restored.people.requirePasswordLogin, isTrue);
       expect(
-        verifyPassword(
+        await verifyPassword(
           passphrase,
           hash: restored.people.people.first.passwordHash!,
           salt: restored.people.people.first.salt!,
@@ -117,7 +119,7 @@ void main() {
   );
 
   test('wrong passphrase fails unlock', () async {
-    final hashed = hashPassword(passphrase);
+    final hashed = await hashTestPassword(passphrase);
     final sealed = await sampleBundle(hashed: hashed).encodeSealed(passphrase);
     await expectLater(
       () => SettingsBundle.decode(sealed, passphrase: 'Wrong-Horse9!'),
@@ -236,7 +238,7 @@ void main() {
   });
 
   test('encodeSealed requires passphrase when secrets are present', () async {
-    final hashed = hashPassword(passphrase);
+    final hashed = await hashTestPassword(passphrase);
     final bundle = sampleBundle(hashed: hashed);
     await expectLater(() => bundle.encodeSealed(null), throwsArgumentError);
     await expectLater(() => bundle.encodeSealed(''), throwsArgumentError);
@@ -291,7 +293,7 @@ void main() {
   });
 
   test('secrets without firefly URL keep token offline', () async {
-    final hashed = hashPassword(passphrase);
+    final hashed = await hashTestPassword(passphrase);
     final sealed = await sampleBundle(hashed: hashed).encodeSealed(passphrase);
     final json = jsonDecode(sealed) as Map<String, dynamic>;
     json.remove('firefly');
