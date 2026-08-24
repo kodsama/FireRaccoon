@@ -116,13 +116,20 @@ String encodePasswordHash(int iterations, String digestBase64) =>
 /// The derivation is a hot loop that takes seconds at this count, so running it
 /// where the UI lives freezes the window for its whole duration. Every caller
 /// already awaits.
-Future<PasswordHash> hashPassword(String password, {String? saltBase64}) async {
+/// [iterations] exists for tests, which would otherwise pay production cost for
+/// every password they set. The count is recorded in the hash, so one made here
+/// verifies at the count that made it and the reader never needs to know.
+Future<PasswordHash> hashPassword(
+  String password, {
+  String? saltBase64,
+  int iterations = kPbkdf2Iterations,
+}) async {
   final salt = saltBase64 != null
       ? base64Decode(saltBase64)
       : _randomBytes(_kSaltLength);
-  final derived = await _deriveOffIsolate(password, salt, kPbkdf2Iterations);
+  final derived = await _deriveOffIsolate(password, salt, iterations);
   return PasswordHash(
-    hash: encodePasswordHash(kPbkdf2Iterations, base64Encode(derived)),
+    hash: encodePasswordHash(iterations, base64Encode(derived)),
     salt: base64Encode(salt),
   );
 }

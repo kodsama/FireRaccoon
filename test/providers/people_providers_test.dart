@@ -8,6 +8,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/password_cost.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -24,7 +26,6 @@ import 'package:fireracoon/providers/people_providers.dart';
 import 'package:fireracoon/providers/server_session_provider.dart';
 import 'package:fireracoon/providers/theme_provider.dart';
 import 'package:fireracoon/store/remote_server_client.dart';
-import 'package:fireracoon/utils/password_policy.dart';
 
 import '../helpers/fake_biometric_auth.dart';
 import '../helpers/fixed_accounts_notifier.dart';
@@ -530,7 +531,7 @@ void main() {
     });
 
     test('migrates legacy app users from secure storage', () async {
-      final hashed = await hashPassword('Correct-Horse9!');
+      final hashed = await hashTestPassword('Correct-Horse9!');
       final legacy = AppUsersStorage(
         users: [
           AppUser(
@@ -573,7 +574,7 @@ void main() {
     });
 
     test('merges remote profiles while keeping local auth fields', () async {
-      final hashed = await hashPassword('Correct-Horse9!');
+      final hashed = await hashTestPassword('Correct-Horse9!');
       final local = AccountOwnershipConfig(
         people: [
           Person(
@@ -689,8 +690,8 @@ void main() {
         addTearDown(container.dispose);
         await waitHydrated(container);
 
-        final ana = await hashPassword('Import-Horse9!');
-        final bo = await hashPassword('Second-Horse9!');
+        final ana = await hashTestPassword('Import-Horse9!');
+        final bo = await hashTestPassword('Second-Horse9!');
         await container
             .read(peopleProvider.notifier)
             .importSettings(
@@ -794,7 +795,7 @@ void main() {
         addTearDown(container.dispose);
         await waitHydrated(container);
 
-        final ana = await hashPassword('Import-Horse9!');
+        final ana = await hashTestPassword('Import-Horse9!');
         await container
             .read(peopleProvider.notifier)
             .importSettings(
@@ -1560,7 +1561,7 @@ void main() {
             .read(peopleProvider.notifier)
             .syncFromServerStore(loggedInPersonId: 'admin_1');
 
-        final ana = await hashPassword('Import-Horse9!');
+        final ana = await hashTestPassword('Import-Horse9!');
         await container
             .read(peopleProvider.notifier)
             .importSettings(
