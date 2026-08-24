@@ -2698,6 +2698,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tooltipSwapTransferAccounts => 'Swap the two accounts.';
 
   @override
+  String get disconnectConfirmTitle => 'Disconnect Firefly III';
+
+  @override
+  String get disconnectConfirmMessage =>
+      'This deletes the server URL and the personal access token from this device\'s keychain. You will have to enter them again to reconnect.';
+
+  @override
   String get tooltipFieldDate => 'Date and time of the transaction.';
 
   @override
