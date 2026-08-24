@@ -2644,6 +2644,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get disconnectConfirmTitle => '断开 Firefly III 连接';
 
   @override
+  String get connectionFailedNotFirefly =>
+      '该地址有响应，但不是 Firefly III API。请检查服务器地址：界面地址或登录页面会对所有路径返回网页。';
+
+  @override
+  String get connectionFailedUnauthorized => '服务器有响应但拒绝了令牌。请检查个人访问令牌。';
+
+  @override
+  String get connectionFailedUnreachable => '无法连接该服务器。请检查地址以及它是否在运行。';
+
+  @override
+  String get connectionFailedInsecure =>
+      '这是明文 http:// 地址。如果确实需要，请开启“允许 HTTP 连接”。';
+
+  @override
   String get disconnectConfirmMessage =>
       '这将从本设备的钥匙串中删除服务器地址和个人访问令牌。重新连接时需要再次输入。';
 
