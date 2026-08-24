@@ -1487,6 +1487,8 @@
   "tooltipFieldSourceAccount": "Konto pengarna kommer från.",
   "tooltipFieldDestinationAccount": "Konto pengarna går till.",
   "tooltipSwapTransferAccounts": "Byt plats på de två kontona.",
+  "disconnectConfirmTitle": "Koppla från Firefly III",
+  "disconnectConfirmMessage": "Detta tar bort serveradressen och den personliga åtkomsttoken från enhetens nyckelring. Du måste ange dem igen för att ansluta på nytt.",
   "tooltipFieldDate": "Datum och tid för transaktionen.",
   "tooltipFieldAmount": "Huvudbelopp i vald valuta.",
   "tooltipFieldCurrency": "Primär valuta för den här raden.",

@@ -64,7 +64,10 @@ void main() {
       dataDirPath: tmp.path,
       password: 'correct-horse-battery',
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: kTestPbkdf2Iterations,
+    );
     await repo.load();
 
     expect(repo.state.setupRequired, isTrue);
@@ -129,7 +132,10 @@ void main() {
       dataDirPath: tmp.path,
       password: 'correct-horse-battery',
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: kTestPbkdf2Iterations,
+    );
     await repo.load();
     await repo.setup(
       adminName: 'Alex',
@@ -187,7 +193,10 @@ void main() {
       dataDirPath: tmp.path,
       password: 'correct-horse-battery',
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: kTestPbkdf2Iterations,
+    );
     await repo.load();
     await repo.setup(
       adminName: 'Alex',
@@ -217,7 +226,10 @@ void main() {
       dataDirPath: tmp.path,
       password: 'correct-horse-battery',
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: kTestPbkdf2Iterations,
+    );
     await repo.load();
     await repo.setup(
       adminName: 'Alex',
@@ -267,7 +279,7 @@ void main() {
   });
 
   test('starts locked then unlocks via API', () async {
-    final server = await AppServer.open(
+    final server = await openTestServer(
       ServerConfig(
         mode: FireracoonMode.server,
         dataDir: tmp.path,
@@ -302,7 +314,7 @@ void main() {
   });
 
   test('create requires confirm; unlock uses existing DATA_DIR', () async {
-    final server = await AppServer.open(
+    final server = await openTestServer(
       ServerConfig(
         mode: FireracoonMode.server,
         dataDir: tmp.path,
@@ -335,7 +347,7 @@ void main() {
     expect(created.statusCode, 200);
 
     // Simulate restart: new process, same DATA_DIR, no env password.
-    final restarted = await AppServer.open(
+    final restarted = await openTestServer(
       ServerConfig(
         mode: FireracoonMode.server,
         dataDir: tmp.path,
@@ -359,7 +371,7 @@ void main() {
   });
 
   test('DATA_PASSWORD creates store on empty DATA_DIR', () async {
-    final server = await AppServer.open(
+    final server = await openTestServer(
       ServerConfig(
         mode: FireracoonMode.server,
         dataDir: tmp.path,
@@ -371,7 +383,7 @@ void main() {
     expect(server.isStoreLocked, isFalse);
     expect(SealedStore.exists(tmp.path), isTrue);
 
-    final restarted = await AppServer.open(
+    final restarted = await openTestServer(
       ServerConfig(
         mode: FireracoonMode.server,
         dataDir: tmp.path,
@@ -425,7 +437,10 @@ void main() {
       dataDirPath: tmp.path,
       password: 'correct-horse-battery',
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: kTestPbkdf2Iterations,
+    );
     await repo.load();
     await repo.setup(
       adminName: 'Alex',
@@ -435,7 +450,7 @@ void main() {
     );
     final admin = await repo.login(name: 'Alex', password: 'Password1!');
 
-    final server = await AppServer.open(
+    final server = await openTestServer(
       ServerConfig(
         mode: FireracoonMode.server,
         dataDir: tmp.path,
@@ -475,7 +490,10 @@ void main() {
         dataDirPath: tmp.path,
         password: 'correct-horse-battery',
       );
-      final repo = StateRepository(sealed);
+      final repo = StateRepository(
+        sealed,
+        passwordIterations: kTestPbkdf2Iterations,
+      );
       await repo.load();
       await repo.setup(
         adminName: 'Alex',
@@ -486,7 +504,7 @@ void main() {
       final admin = await repo.login(name: 'Alex', password: 'Password1!');
       final person = repo.personForSession(admin.token)!['id'] as String;
 
-      final server = await AppServer.open(
+      final server = await openTestServer(
         ServerConfig(
           mode: FireracoonMode.server,
           dataDir: tmp.path,
@@ -519,7 +537,10 @@ void main() {
       dataDirPath: tmp.path,
       password: 'correct-horse-battery',
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: kTestPbkdf2Iterations,
+    );
     await repo.load();
     await repo.setup(
       adminName: 'Alex',
@@ -533,7 +554,7 @@ void main() {
       label: 'Claude',
     );
 
-    final server = await AppServer.open(
+    final server = await openTestServer(
       ServerConfig(
         mode: FireracoonMode.server,
         dataDir: tmp.path,
@@ -613,7 +634,10 @@ void main() {
       dataDirPath: tmp.path,
       password: 'correct-horse-battery',
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: kTestPbkdf2Iterations,
+    );
     await repo.load();
     await repo.setup(
       adminName: 'Alex',
@@ -627,7 +651,7 @@ void main() {
       label: 'Claude',
     );
 
-    final server = await AppServer.open(
+    final server = await openTestServer(
       ServerConfig(
         mode: FireracoonMode.server,
         dataDir: tmp.path,
@@ -682,7 +706,10 @@ void main() {
       dataDirPath: tmp.path,
       password: 'correct-horse-battery',
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: kTestPbkdf2Iterations,
+    );
     await repo.load();
     await repo.setup(
       adminName: 'Alex',
@@ -692,7 +719,7 @@ void main() {
     );
     final login = await repo.login(name: 'Alex', password: 'Password1!');
 
-    final server = await AppServer.open(
+    final server = await openTestServer(
       ServerConfig(
         mode: FireracoonMode.server,
         dataDir: tmp.path,
@@ -722,5 +749,38 @@ void main() {
       'ff-token-secret',
     );
     expect(body['peopleAuth'], isA<Map<String, dynamic>>());
+  });
+
+  test('a header asking for a nonsense count is refused', () async {
+    // The header sits next to the ciphertext, so this is not a defence against
+    // someone editing it: they already hold the file. What it catches is a count
+    // that is nonsense, quietly deriving a weak key and opening as if fine.
+    final dir = await Directory.systemTemp.createTemp('fireracoon-floor');
+    addTearDown(() async {
+      if (dir.existsSync()) await dir.delete(recursive: true);
+    });
+
+    await SealedStore.open(
+      dataDirPath: dir.path,
+      password: 'Store-Password1!',
+      iterations: kTestPbkdf2Iterations,
+    );
+
+    final headerFile = File(path.join(dir.path, 'store.header'));
+    final header =
+        jsonDecode(await headerFile.readAsString()) as Map<String, dynamic>;
+    header['iterations'] = 1;
+    await headerFile.writeAsString(jsonEncode(header));
+
+    await expectLater(
+      SealedStore.open(dataDirPath: dir.path, password: 'Store-Password1!'),
+      throwsA(
+        isA<StateError>().having(
+          (e) => e.message,
+          'message',
+          contains('below the'),
+        ),
+      ),
+    );
   });
 }

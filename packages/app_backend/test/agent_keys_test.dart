@@ -37,7 +37,10 @@ void main() {
       dataDirPath: tmp.path,
       password: _password,
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: kTestPbkdf2Iterations,
+    );
     await repo.load();
     await repo.setup(
       adminName: 'Alex',
@@ -48,7 +51,7 @@ void main() {
     return repo;
   }
 
-  Future<AppServer> server() => AppServer.open(
+  Future<AppServer> server() => openTestServer(
     ServerConfig(
       mode: FireracoonMode.server,
       dataDir: tmp.path,

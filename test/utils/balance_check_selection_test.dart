@@ -147,7 +147,9 @@ void main() {
       );
       expect(selection.isSelected(partial), isTrue);
       expect(selection.stateFor(partial), SelectionState.partial);
-      expect(selection.canToggle(partial), isFalse);
+      // Toggling used to be refused, which left the group with no way to be
+      // finished or undone by anything.
+      expect(selection.canToggle(partial), isTrue);
 
       final excluded = BalanceCheckSelection(
         includedIds: {},
@@ -155,6 +157,53 @@ void main() {
         onToggle: (_) {},
       );
       expect(excluded.isSelected(partial), isFalse);
+    });
+
+    test('a part-reconciled group can be finished', () {
+      final partial = _partialGroup();
+
+      final changes = balanceCheckReconcileChanges(
+        transactions: [partial],
+        // Selected, because a part-reconciled row counts as included until
+        // somebody opts it out.
+        selectedIds: {'partial'},
+      );
+
+      expect(changes.toReconcile.single.id, 'partial');
+      expect(changes.toUnreconcile, isEmpty);
+      expect(changes.hasWork, isTrue);
+    });
+
+    test('a part-reconciled group can be undone', () {
+      final partial = _partialGroup();
+
+      final changes = balanceCheckReconcileChanges(
+        transactions: [partial],
+        selectedIds: const <String>{},
+      );
+
+      expect(changes.toUnreconcile.single.id, 'partial');
+      expect(changes.toReconcile, isEmpty);
+    });
+
+    test('toggling a part-reconciled group opts it out and back in', () {
+      final partial = _partialGroup();
+      final included = <String>{};
+      final excluded = <String>{};
+
+      toggleBalanceCheckTransaction(
+        partial,
+        includedIds: included,
+        excludedIds: excluded,
+      );
+      expect(excluded, {'partial'});
+
+      toggleBalanceCheckTransaction(
+        partial,
+        includedIds: included,
+        excludedIds: excluded,
+      );
+      expect(excluded, isEmpty);
     });
 
     test('deprecated selection helpers remain no-ops', () {
@@ -248,38 +297,6 @@ void main() {
         ).stateFor(open),
         SelectionState.none,
       );
-    });
-
-    test('toggle ignores partially reconciled journals', () {
-      final partial = Transaction(
-        id: 'partial',
-        type: 'withdrawal',
-        date: DateTime(2026, 6, 1),
-        amount: 30,
-        description: 'Split',
-        sourceName: 'Checking',
-        destinationName: 'Store',
-        categoryName: '',
-        currencySymbol: '€',
-        currencyCode: 'EUR',
-        splits: [
-          _tx(
-            id: 'partial',
-            date: DateTime(2026, 6, 1),
-            reconciled: true,
-          ).copyWith(amount: 10),
-          _tx(id: 'partial', date: DateTime(2026, 6, 1)).copyWith(amount: 20),
-        ],
-      );
-      final included = <String>{};
-      final excluded = <String>{};
-      toggleBalanceCheckTransaction(
-        partial,
-        includedIds: included,
-        excludedIds: excluded,
-      );
-      expect(included, isEmpty);
-      expect(excluded, isEmpty);
     });
 
     test('reconciled-only selection yields zero with a future repayment', () {
@@ -442,39 +459,6 @@ void main() {
       expect(changes.hasWork, isTrue);
     });
 
-    test('partially reconciled journals are never queued to reconcile', () {
-      final partial = Transaction(
-        id: 'partial',
-        type: 'withdrawal',
-        date: DateTime(2026, 6, 1),
-        amount: 30,
-        description: 'Split',
-        sourceName: 'Checking',
-        destinationName: 'Store',
-        categoryName: '',
-        currencySymbol: '€',
-        currencyCode: 'EUR',
-        splits: [
-          _tx(
-            id: 'partial',
-            date: DateTime(2026, 6, 1),
-            reconciled: true,
-          ).copyWith(amount: 10),
-          _tx(id: 'partial', date: DateTime(2026, 6, 1)).copyWith(amount: 20),
-        ],
-      );
-      expect(partial.isPartiallyReconciled, isTrue);
-
-      final changes = balanceCheckReconcileChanges(
-        transactions: [partial],
-        selectedIds: {'partial'},
-      );
-
-      expect(changes.toReconcile, isEmpty);
-      expect(changes.toUnreconcile, isEmpty);
-      expect(changes.hasWork, isFalse);
-    });
-
     test('reconcile and unreconcile can both be pending', () {
       final transactions = [
         _tx(id: 'open', date: DateTime(2026, 6, 1)),
@@ -492,4 +476,29 @@ void main() {
       expect(changes.hasWork, isTrue);
     });
   });
+}
+
+/// A group with one reconciled leg and one not, which is the state that used to
+/// be impossible to leave.
+Transaction _partialGroup() {
+  return Transaction(
+    id: 'partial',
+    type: 'withdrawal',
+    date: DateTime(2026, 6, 1),
+    amount: 30,
+    description: 'Split',
+    sourceName: 'Checking',
+    destinationName: 'Store',
+    categoryName: '',
+    currencySymbol: '\u20ac',
+    currencyCode: 'EUR',
+    splits: [
+      _tx(
+        id: 'partial',
+        date: DateTime(2026, 6, 1),
+        reconciled: true,
+      ).copyWith(amount: 10),
+      _tx(id: 'partial', date: DateTime(2026, 6, 1)).copyWith(amount: 20),
+    ],
+  );
 }

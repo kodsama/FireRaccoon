@@ -2641,6 +2641,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipSwapTransferAccounts => '交换两个账户。';
 
   @override
+  String get disconnectConfirmTitle => '断开 Firefly III 连接';
+
+  @override
+  String get disconnectConfirmMessage =>
+      '这将从本设备的钥匙串中删除服务器地址和个人访问令牌。重新连接时需要再次输入。';
+
+  @override
   String get tooltipFieldDate => '交易日期和时间。';
 
   @override

@@ -28,6 +28,49 @@ void main() {
       (jsonDecode(keychain[kConsolidatedSecretsKey]!) as Map).cast();
 
   group('ConsolidatedSecureStorage', () {
+    test('refuses to write over an item it could not read', () async {
+      // Every write rewrites the whole item. Starting from "nothing" because the
+      // item would not parse persists a store holding one key, and the other
+      // secrets are gone with no way back.
+      keychain[kConsolidatedSecretsKey] = '{"apiToken":"tok",TRUNCATED';
+
+      await expectLater(
+        storage.write(key: 'globalViewMode', value: 'compact'),
+        throwsA(isA<StateError>()),
+      );
+
+      // The damaged item is left exactly as it was, for a human to look at.
+      expect(keychain[kConsolidatedSecretsKey], '{"apiToken":"tok",TRUNCATED');
+    });
+
+    test('a read still treats an unparseable item as no secrets', () async {
+      // Reads must not throw: the login flow copes with having nothing and can
+      // be signed into again, where throwing would leave no way in at all.
+      keychain[kConsolidatedSecretsKey] = 'not json at all';
+
+      expect(await storage.read(key: 'apiToken'), isNull);
+    });
+
+    test('concurrent writes all survive', () async {
+      // Read, add one key, write the whole item back. Two of those at once each
+      // start from their own copy, and the loser's key never reaches the item.
+      await Future.wait([
+        storage.write(key: 'apiToken', value: 'tok'),
+        storage.write(key: 'serverUrl', value: 'https://firefly.test'),
+        storage.write(key: 'authMode', value: 'token'),
+        storage.write(key: 'allowInsecure', value: 'false'),
+        storage.write(key: 'globalViewMode', value: 'compact'),
+      ]);
+
+      expect(blob(), {
+        'apiToken': 'tok',
+        'serverUrl': 'https://firefly.test',
+        'authMode': 'token',
+        'allowInsecure': 'false',
+        'globalViewMode': 'compact',
+      });
+    });
+
     test('keeps every secret in one keychain item', () async {
       // The whole point: macOS evaluates access control per item, so a secret
       // per item is a password prompt per secret at startup.

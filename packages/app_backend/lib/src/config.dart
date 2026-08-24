@@ -29,6 +29,7 @@ class ServerConfig {
     this.bootstrapFireflyUrl,
     this.bootstrapFireflyToken,
     this.sessionSecret,
+    this.allowedOrigins = const <String>[],
   });
 
   final FireracoonMode mode;
@@ -42,6 +43,14 @@ class ServerConfig {
   final String? bootstrapFireflyUrl;
   final String? bootstrapFireflyToken;
   final String? sessionSecret;
+
+  /// Origins allowed to call this API from a browser on another host.
+  ///
+  /// Empty by default, which is the common case: this process serves the web UI
+  /// itself, so the UI is same-origin and needs no cross-origin permission at
+  /// all. Set CORS_ALLOWED_ORIGINS when something else has to reach the API, for
+  /// instance a Flutter web build running on its own dev port.
+  final List<String> allowedOrigins;
 
   /// Reads config from process environment and optional CLI overrides.
   factory ServerConfig.fromEnvironment({
@@ -83,6 +92,11 @@ class ServerConfig {
       bootstrapFireflyUrl: _nonEmpty(env['FIREFLY_URL']),
       bootstrapFireflyToken: _nonEmpty(env['FIREFLY_TOKEN']),
       sessionSecret: _nonEmpty(env['APP_SESSION_SECRET']),
+      allowedOrigins: (env['CORS_ALLOWED_ORIGINS'] ?? '')
+          .split(',')
+          .map((origin) => origin.trim())
+          .where((origin) => origin.isNotEmpty)
+          .toList(growable: false),
     );
   }
 

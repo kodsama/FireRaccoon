@@ -34,14 +34,15 @@ dart analyze packages/engine packages/mcp packages/app_backend \
 flutter analyze || fail "flutter analyze reported issues"
 
 section "4/5  tests"
-( cd packages/engine && dart test --coverage=coverage ) || fail "engine tests failed"
-( cd packages/mcp && dart test --coverage=coverage ) || fail "mcp tests failed"
-( cd packages/app_backend && dart test --coverage=coverage ) \
+# Password handling derives a key per call, 600k PBKDF2 rounds. A test doing
+# several, instrumented for coverage and competing with the other isolates,
+# crosses the 30s default and fails on load rather than on what it asserts.
+( cd packages/engine && dart test --coverage=coverage --timeout 3x ) \
+  || fail "engine tests failed"
+( cd packages/mcp && dart test --coverage=coverage --timeout 3x ) \
+  || fail "mcp tests failed"
+( cd packages/app_backend && dart test --coverage=coverage --timeout 3x ) \
   || fail "app_backend tests failed"
-# Password handling derives a key per call, 100k PBKDF2 rounds of pure Dart at
-# close to two seconds each. A test doing several, instrumented for coverage and
-# competing with the other isolates, crosses the 30s default and fails on load
-# rather than on what it asserts.
 flutter test --coverage --timeout 3x || fail "flutter tests failed"
 
 section "5/5  coverage gate"

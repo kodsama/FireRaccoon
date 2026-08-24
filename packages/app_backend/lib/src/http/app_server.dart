@@ -9,6 +9,8 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_static/shelf_static.dart';
 
 import '../config.dart';
+import 'attempt_limiter.dart';
+import '../crypto/passwords.dart';
 import '../crypto/sealed_store.dart';
 import '../store/state_repository.dart';
 
@@ -21,12 +23,40 @@ const _minDataPasswordLength = 10;
 /// When [DATA_PASSWORD] is unset, the process starts **locked** and the UI
 /// collects the password via [POST /api/store/unlock] (create or unlock).
 class AppServer {
-  AppServer({required this.config, this._repository, http.Client? httpClient})
-    : _http = httpClient ?? http.Client();
+  AppServer({
+    required this.config,
+    this._repository,
+    http.Client? httpClient,
+    DateTime Function()? clock,
+    this.passwordIterations = kPbkdf2Iterations,
+    this.storeIterations = kStorePbkdf2Iterations,
+  }) : _http = httpClient ?? http.Client(),
+       _clock = clock ?? DateTime.now;
+
+  /// Derivation costs, lowered by tests so a suite does not pay production
+  /// price for every store it opens and every password it sets.
+  final int passwordIterations;
+  final int storeIterations;
 
   final ServerConfig config;
   StateRepository? _repository;
   final http.Client _http;
+
+  /// Injectable so a test can spend a lockout without waiting one out.
+  final DateTime Function() _clock;
+
+  /// Failed sign-ins, and failed attempts at the data password. Separate
+  /// allowances: locking one out must not lock the other.
+  final AttemptLimiter _loginAttempts = AttemptLimiter(
+    maxAttempts: 5,
+    lockout: const Duration(minutes: 15),
+    window: const Duration(minutes: 15),
+  );
+  final AttemptLimiter _unlockAttempts = AttemptLimiter(
+    maxAttempts: 5,
+    lockout: const Duration(minutes: 15),
+    window: const Duration(minutes: 15),
+  );
 
   StateRepository get repository {
     final repo = _repository;
@@ -45,8 +75,16 @@ class AppServer {
   ///
   /// Env [DATA_PASSWORD] is treated as confirmed: empty [DATA_DIR] creates a
   /// new sealed store on boot (Docker first start).
-  static Future<AppServer> open(ServerConfig config) async {
-    final server = AppServer(config: config);
+  static Future<AppServer> open(
+    ServerConfig config, {
+    int passwordIterations = kPbkdf2Iterations,
+    int storeIterations = kStorePbkdf2Iterations,
+  }) async {
+    final server = AppServer(
+      config: config,
+      passwordIterations: passwordIterations,
+      storeIterations: storeIterations,
+    );
     final password = config.dataPassword;
     if (password != null && password.isNotEmpty) {
       await server.unlockStore(password: password, confirmPassword: password);
@@ -75,8 +113,12 @@ class AppServer {
     final sealed = await SealedStore.open(
       dataDirPath: config.dataDir,
       password: password,
+      iterations: storeIterations,
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: passwordIterations,
+    );
     await repo.load();
     await repo.applyBootstrap(
       fireflyUrl: config.bootstrapFireflyUrl,
@@ -168,23 +210,44 @@ class AppServer {
     };
   };
 
+  /// Answers a browser's cross-origin question, for the origins configured.
+  ///
+  /// This used to answer every origin with a wildcard. Nothing could be read
+  /// with it, because a wildcard forbids credentials and the session cookie is
+  /// SameSite=Lax, so a page on another site could reach nothing it was not
+  /// already entitled to. It was still an authenticated API telling the whole
+  /// web it was open, and the only thing that needs cross-origin permission here
+  /// is a web build running on its own port, which can be named.
   Middleware get _cors => (inner) {
     return (request) async {
+      final origin = request.headers['origin'];
+      final headers = _corsHeadersFor(origin);
       if (request.method == 'OPTIONS') {
-        return Response.ok('', headers: _corsHeaders);
+        return Response.ok('', headers: headers);
       }
       final response = await inner(request);
-      return response.change(headers: {...response.headers, ..._corsHeaders});
+      return response.change(headers: {...response.headers, ...headers});
     };
   };
 
-  static const _corsHeaders = {
-    'access-control-allow-origin': '*',
-    'access-control-allow-headers':
-        'authorization, content-type, x-fireracoon-session',
-    'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-    'access-control-expose-headers': 'set-cookie',
-  };
+  /// Nothing at all unless [origin] was configured: no header is the answer
+  /// that means "not allowed", and a same-origin caller never asks.
+  Map<String, String> _corsHeadersFor(String? origin) {
+    if (origin == null || !config.allowedOrigins.contains(origin)) {
+      return const <String, String>{};
+    }
+    return {
+      'access-control-allow-origin': origin,
+      // Named rather than wildcarded, so a browser is willing to send the
+      // session cookie, which is what an allowed origin needs to be useful.
+      'access-control-allow-credentials': 'true',
+      'vary': 'origin',
+      'access-control-allow-headers':
+          'authorization, content-type, x-fireracoon-session',
+      'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+      'access-control-expose-headers': 'set-cookie',
+    };
+  }
 
   Map<String, Object?> get _storeStatus => {
     'storeLocked': isStoreLocked,
@@ -202,27 +265,43 @@ class AppServer {
     }, status: 503);
   }
 
+  /// The session or agent key this request carries, or null if none resolves.
+  ///
+  /// Every source is checked the same way. The header and the cookie used to be
+  /// returned exactly as presented while only a bearer was resolved, so whether
+  /// a caller received a validated token or an arbitrary string depended on
+  /// which header it happened to arrive in. Nothing was reachable with a forged
+  /// one, because each handler resolves again before it acts, but a helper whose
+  /// answer means two different things is waiting for the handler that forgets.
   String? _session(Request request) {
     final repo = _repository;
     if (repo == null) return null;
-    final header = request.headers[_sessionHeader];
-    if (header != null && header.isNotEmpty) return header;
-    final auth = request.headers['authorization'];
-    if (auth != null && auth.toLowerCase().startsWith('bearer ')) {
-      final token = auth.substring(7).trim();
-      if (token.isNotEmpty && repo.personForSession(token) != null) {
-        return token;
-      }
-    }
-    final cookie = request.headers['cookie'];
-    if (cookie == null) return null;
-    for (final part in cookie.split(';')) {
-      final trimmed = part.trim();
-      if (trimmed.startsWith('$_sessionCookie=')) {
-        return trimmed.substring(_sessionCookie.length + 1);
+    for (final candidate in _sessionCandidates(request)) {
+      if (candidate.isNotEmpty && repo.personForSession(candidate) != null) {
+        return candidate;
       }
     }
     return null;
+  }
+
+  /// Where a session can arrive, in the order they are trusted.
+  Iterable<String> _sessionCandidates(Request request) {
+    final candidates = <String>[];
+    final header = request.headers[_sessionHeader];
+    if (header != null) candidates.add(header.trim());
+
+    final auth = request.headers['authorization'];
+    if (auth != null && auth.toLowerCase().startsWith('bearer ')) {
+      candidates.add(auth.substring(7).trim());
+    }
+
+    for (final part in (request.headers['cookie'] ?? '').split(';')) {
+      final trimmed = part.trim();
+      if (trimmed.startsWith('$_sessionCookie=')) {
+        candidates.add(trimmed.substring(_sessionCookie.length + 1).trim());
+      }
+    }
+    return candidates;
   }
 
   Response _json(
@@ -253,17 +332,43 @@ class AppServer {
     if (!isStoreLocked) {
       return _json({'ok': true, 'alreadyUnlocked': true, ..._storeStatus});
     }
+    // The data password opens every secret in the store, so it is the one worth
+    // guessing. There is no name to key on: the caller is the identity.
+    final identity = _attemptIdentity(request, 'store');
+    final wait = _unlockAttempts.retryAfter(identity, now: _clock());
+    if (wait != null) return _tooManyAttempts(wait);
     try {
       final body =
           jsonDecode(await request.readAsString()) as Map<String, dynamic>;
       final password = body['password'] as String? ?? '';
       final confirm = body['confirmPassword'] as String?;
       await unlockStore(password: password, confirmPassword: confirm);
+      _unlockAttempts.recordSuccess(identity);
       return _json({'ok': true, ..._storeStatus});
     } on ArgumentError catch (e) {
+      _unlockAttempts.recordFailure(identity, now: _clock());
       return _json({'ok': false, 'error': e.message}, status: 400);
     } on StateError catch (e) {
+      _unlockAttempts.recordFailure(identity, now: _clock());
       return _json({'ok': false, 'error': e.message}, status: 401);
+    }
+  }
+
+  /// True when [password] is the one the store was sealed with.
+  ///
+  /// Checked by opening the store rather than by keeping the password in memory
+  /// after unlock: the header's own MAC is the answer, and nothing has to hold a
+  /// secret it does not need. Costs one derivation, on a call made once.
+  Future<bool> _opensTheStore(String password) async {
+    if (password.isEmpty) return false;
+    if (!SealedStore.exists(config.dataDir)) return false;
+    try {
+      await SealedStore.open(dataDirPath: config.dataDir, password: password);
+      return true;
+    } on StateError {
+      return false;
+    } on ArgumentError {
+      return false;
     }
   }
 
@@ -279,6 +384,25 @@ class AppServer {
     try {
       final body =
           jsonDecode(await request.readAsString()) as Map<String, dynamic>;
+
+      // Setup cannot require a session: there is nobody to authenticate until
+      // it succeeds. That made first boot a race, and whoever won it became
+      // admin and inherited the bootstrapped Firefly token. With DATA_PASSWORD
+      // in the environment the store unlocks itself, so the race opened the
+      // moment the process started. Knowing the data password settles it: the
+      // operator has it and an unattended port does not.
+      final identity = _attemptIdentity(request, 'setup');
+      final wait = _unlockAttempts.retryAfter(identity, now: _clock());
+      if (wait != null) return _tooManyAttempts(wait);
+      if (!await _opensTheStore(body['dataPassword'] as String? ?? '')) {
+        _unlockAttempts.recordFailure(identity, now: _clock());
+        return _json({
+          'ok': false,
+          'error': 'The data password is required to complete setup.',
+        }, status: 403);
+      }
+      _unlockAttempts.recordSuccess(identity);
+
       final person = await repository.setup(
         adminName: body['adminName'] as String? ?? '',
         adminPassword: body['adminPassword'] as String? ?? '',
@@ -304,16 +428,48 @@ class AppServer {
     }
   }
 
+  /// Who a failed attempt is counted against.
+  ///
+  /// The name and the caller together: keying on the name alone lets anyone lock
+  /// a person out of their own account, and keying on the caller alone lets one
+  /// attacker spread guesses across every name for free.
+  String _attemptIdentity(Request request, String name) {
+    final peer =
+        (request.context['shelf.io.connection_info'] as HttpConnectionInfo?)
+            ?.remoteAddress
+            .address ??
+        'unknown';
+    return '$peer|${name.trim().toLowerCase()}';
+  }
+
+  Response _tooManyAttempts(Duration wait) {
+    return _json(
+      {
+        'ok': false,
+        'error': 'Too many attempts. Try again in ${wait.inSeconds} seconds.',
+      },
+      status: 429,
+      headers: {'retry-after': '${wait.inSeconds}'},
+    );
+  }
+
   Future<Response> _login(Request request) async {
     final locked = _lockedResponse();
     if (locked != null) return locked;
+    final body = jsonDecode(await request.readAsString());
+    if (body is! Map<String, dynamic>) {
+      return _json({'ok': false, 'error': 'Expected JSON object'}, status: 400);
+    }
+    final name = body['name'] as String? ?? '';
+    final identity = _attemptIdentity(request, name);
+    final wait = _loginAttempts.retryAfter(identity, now: _clock());
+    if (wait != null) return _tooManyAttempts(wait);
     try {
-      final body =
-          jsonDecode(await request.readAsString()) as Map<String, dynamic>;
       final login = await repository.login(
-        name: body['name'] as String? ?? '',
+        name: name,
         password: body['password'] as String? ?? '',
       );
+      _loginAttempts.recordSuccess(identity);
       return _json(
         {'ok': true, 'person': login.person, 'sessionToken': login.token},
         headers: {
@@ -322,6 +478,7 @@ class AppServer {
         },
       );
     } on StateError catch (e) {
+      _loginAttempts.recordFailure(identity, now: _clock());
       return _json({'ok': false, 'error': e.message}, status: 401);
     }
   }
@@ -789,12 +946,23 @@ class AppServer {
       }, status: 503);
     }
 
+    // Only Firefly's API, and only below it. The token this attaches is the
+    // installation's own, so an unrestricted path would let anyone who can sign
+    // in here reach any address on the Firefly host carrying it, and a `..`
+    // would climb out of the API entirely.
+    final normalized = p.posix.normalize('/${path.replaceAll('\\', '/')}');
+    if (!normalized.startsWith('/api/')) {
+      return _json({
+        'ok': false,
+        'error': 'Only Firefly III API paths can be proxied',
+      }, status: 404);
+    }
+
     final base = conn.url.endsWith('/')
         ? conn.url.substring(0, conn.url.length - 1)
         : conn.url;
-    final suffix = path.startsWith('/') ? path : (path.isEmpty ? '' : '/$path');
     final query = request.url.query.isEmpty ? '' : '?${request.url.query}';
-    final target = Uri.parse('$base$suffix$query');
+    final target = Uri.parse('$base$normalized$query');
 
     final headers = <String, String>{
       'authorization': 'Bearer ${conn.token}',
@@ -816,7 +984,11 @@ class AppServer {
     final responseBytes = await upstream.stream.toBytes();
     final responseHeaders = Map<String, String>.from(upstream.headers)
       ..remove('transfer-encoding')
-      ..remove('content-encoding');
+      ..remove('content-encoding')
+      // Firefly's cookies belong to Firefly. Passed on, they land scoped to this
+      // origin, where they mean nothing and can only collide with the session
+      // cookie this server sets.
+      ..remove('set-cookie');
     return Response(
       upstream.statusCode,
       body: responseBytes,

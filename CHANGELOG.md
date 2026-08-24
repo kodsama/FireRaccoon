@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-08-24
+
+A security and data-safety release, from an audit of the secret store, the
+server-mode API and the cryptography around passwords and backups.
+
+### Fixed
+
+- Disconnect deleted the server URL and the personal access token from the
+  keychain the moment it was tapped. Nothing else holds a copy of the token, so
+  one stray tap ended the connection for good. It asks first now, the same way
+  every other irreversible action here asks
+- Every secret lives in one keychain item, and a write rewrites the whole item,
+  so two writes at once each started from their own copy and the later one
+  discarded the other's key. Five concurrent writes left one key and lost four.
+  A write also treated an item it could not read as an item holding nothing, so
+  one unparseable byte took every secret with it. Mutations now share one copy,
+  and a write that cannot read what it is replacing fails rather than guessing
+- Nothing limited attempts at a sign-in or at the data password. Five failures
+  inside fifteen minutes now earn a refusal, counted per caller and name
+  together. A sign-in also answered faster for a name nobody had than for a real
+  one, which told a caller which accounts exist
+- Password hashing ran at a sixth of the iteration count OWASP gives for
+  PBKDF2-HMAC-SHA256, and could not be raised: a stored hash did not record what
+  produced it, so moving the constant would have turned every existing password
+  into a wrong one. A hash carries its own count now, verification uses it, and
+  the count is six times what it was. The derivation no longer runs on the
+  isolate that draws the window
+- The logger was given no secrets to redact, and could not have been given the
+  API token, which exists only once the keychain answers. It is registered now as
+  soon as there is one. The helper that encodes a payload for logging returned it
+  unredacted
+- The Firefly proxy forwarded any path it was handed with the installation's own
+  token attached, so anyone who could sign in could reach any address on the
+  Firefly host carrying it. It is restricted to the API, and Firefly's own
+  cookies are no longer passed on
+- The server-mode API answered every origin on the web with a wildcard. Origins
+  are named in `CORS_ALLOWED_ORIGINS` now, and the default is none, which is
+  what a server that hosts its own web UI needs
+- Whoever reached a fresh install first became its admin and inherited the
+  bootstrapped Firefly token. Setup asks for the data password, which the
+  operator has and an unattended port does not
+- A split transaction with some legs reconciled and some not could not be moved:
+  not finished, not undone, and not even selected. It behaves like any other row
+- A settings backup was unsealed at whatever the current iteration count was
+  rather than the one recorded in the file, so raising that count would have made
+  every existing backup unopenable and looked like a forgotten passphrase
+- The encrypted store believed any iteration count in its own header, including
+  zero or one, and derived a weak key from it rather than refusing
+- A session arriving in a header or a cookie was returned unchecked while a
+  bearer was resolved, so the same helper answered two different questions
+
+### Changed
+
+- `flutter_secure_storage` moves to 11. Data written by version 10 is unaffected
+- Test suites no longer pay production key-derivation cost. The backend suite
+  went from nine and a half minutes to ten seconds
+
 ## [0.1.10] - 2026-08-23
 
 ### Added

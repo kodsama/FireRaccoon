@@ -6,7 +6,10 @@ import 'app_state.dart';
 
 /// Loads and persists [AppState] through [SealedStore].
 class StateRepository {
-  StateRepository(this._store);
+  StateRepository(this._store, {this.passwordIterations = kPbkdf2Iterations});
+
+  /// Cost of hashing a password here. Tests lower it; nothing else should.
+  final int passwordIterations;
 
   static const statePath = 'state';
 
@@ -71,7 +74,10 @@ class StateRepository {
     }
 
     final id = newId();
-    final password = await hashPassword(adminPassword);
+    final password = await hashPassword(
+      adminPassword,
+      iterations: passwordIterations,
+    );
     final person = <String, dynamic>{
       'id': id,
       'name': adminName.trim(),
@@ -165,7 +171,10 @@ class StateRepository {
         if (plaintext.length < 10) {
           throw ArgumentError('Password must be at least 10 characters');
         }
-        final hashed = await hashPassword(plaintext);
+        final hashed = await hashPassword(
+          plaintext,
+          iterations: passwordIterations,
+        );
         passwordHash = hashed.hash;
         passwordSalt = hashed.salt;
       } else {
@@ -260,6 +269,14 @@ class StateRepository {
         salt.isNotEmpty;
   }
 
+  /// Stand-ins so a login for a name nobody has still pays for a derivation.
+  ///
+  /// Any well-formed salt and hash will do: the comparison is meant to fail, and
+  /// what matters is that it costs the same as a real one.
+  static const String _absentPersonSalt = 'AAAAAAAAAAAAAAAAAAAAAA==';
+  static const String _absentPersonHash =
+      'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=';
+
   Future<({String token, Map<String, dynamic> person})> login({
     required String name,
     required String password,
@@ -269,18 +286,22 @@ class StateRepository {
           (p?['name'] as String?)?.toLowerCase() == name.trim().toLowerCase(),
       orElse: () => null,
     );
-    if (person == null) {
-      throw StateError('Invalid credentials');
-    }
-    final id = person['id'] as String;
-    final auth = _state.authByPersonId[id] as Map<String, dynamic>?;
+    // A name nobody has answered before the derivation ran, and a real one
+    // answered a second later, which told a caller which names exist. The
+    // derivation happens either way now, against a throwaway hash when there is
+    // nothing to check, so the two take the same time.
+    final id = person?['id'] as String?;
+    final auth = id == null
+        ? null
+        : _state.authByPersonId[id] as Map<String, dynamic>?;
     final hash = auth?['passwordHash'] as String?;
     final salt = auth?['passwordSalt'] as String?;
-    if (hash == null || salt == null) {
-      throw StateError('Invalid credentials');
-    }
-    final ok = await verifyPassword(password: password, hash: hash, salt: salt);
-    if (!ok) {
+    final ok = await verifyPassword(
+      password: password,
+      hash: hash ?? _absentPersonHash,
+      salt: salt ?? _absentPersonSalt,
+    );
+    if (person == null || hash == null || salt == null || !ok) {
       throw StateError('Invalid credentials');
     }
 

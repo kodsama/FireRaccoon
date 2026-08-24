@@ -54,7 +54,12 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         authProvider.overrideWith(
-          () => AuthNotifier(storage: const FlutterSecureStorage()),
+          () => AuthNotifier(
+            storage: const FlutterSecureStorage(),
+            // Otherwise hydration reads .env from the working directory and the
+            // developer's own Firefly credentials leak into the assertions.
+            debugEnvLoader: () async => const {},
+          ),
         ),
       ],
     );
