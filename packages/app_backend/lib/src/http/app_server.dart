@@ -9,6 +9,7 @@ import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_static/shelf_static.dart';
 
 import '../config.dart';
+import 'attempt_limiter.dart';
 import '../crypto/sealed_store.dart';
 import '../store/state_repository.dart';
 
@@ -21,12 +22,33 @@ const _minDataPasswordLength = 10;
 /// When [DATA_PASSWORD] is unset, the process starts **locked** and the UI
 /// collects the password via [POST /api/store/unlock] (create or unlock).
 class AppServer {
-  AppServer({required this.config, this._repository, http.Client? httpClient})
-    : _http = httpClient ?? http.Client();
+  AppServer({
+    required this.config,
+    this._repository,
+    http.Client? httpClient,
+    DateTime Function()? clock,
+  }) : _http = httpClient ?? http.Client(),
+       _clock = clock ?? DateTime.now;
 
   final ServerConfig config;
   StateRepository? _repository;
   final http.Client _http;
+
+  /// Injectable so a test can spend a lockout without waiting one out.
+  final DateTime Function() _clock;
+
+  /// Failed sign-ins, and failed attempts at the data password. Separate
+  /// allowances: locking one out must not lock the other.
+  final AttemptLimiter _loginAttempts = AttemptLimiter(
+    maxAttempts: 5,
+    lockout: const Duration(minutes: 15),
+    window: const Duration(minutes: 15),
+  );
+  final AttemptLimiter _unlockAttempts = AttemptLimiter(
+    maxAttempts: 5,
+    lockout: const Duration(minutes: 15),
+    window: const Duration(minutes: 15),
+  );
 
   StateRepository get repository {
     final repo = _repository;
@@ -253,16 +275,24 @@ class AppServer {
     if (!isStoreLocked) {
       return _json({'ok': true, 'alreadyUnlocked': true, ..._storeStatus});
     }
+    // The data password opens every secret in the store, so it is the one worth
+    // guessing. There is no name to key on: the caller is the identity.
+    final identity = _attemptIdentity(request, 'store');
+    final wait = _unlockAttempts.retryAfter(identity, now: _clock());
+    if (wait != null) return _tooManyAttempts(wait);
     try {
       final body =
           jsonDecode(await request.readAsString()) as Map<String, dynamic>;
       final password = body['password'] as String? ?? '';
       final confirm = body['confirmPassword'] as String?;
       await unlockStore(password: password, confirmPassword: confirm);
+      _unlockAttempts.recordSuccess(identity);
       return _json({'ok': true, ..._storeStatus});
     } on ArgumentError catch (e) {
+      _unlockAttempts.recordFailure(identity, now: _clock());
       return _json({'ok': false, 'error': e.message}, status: 400);
     } on StateError catch (e) {
+      _unlockAttempts.recordFailure(identity, now: _clock());
       return _json({'ok': false, 'error': e.message}, status: 401);
     }
   }
@@ -304,16 +334,48 @@ class AppServer {
     }
   }
 
+  /// Who a failed attempt is counted against.
+  ///
+  /// The name and the caller together: keying on the name alone lets anyone lock
+  /// a person out of their own account, and keying on the caller alone lets one
+  /// attacker spread guesses across every name for free.
+  String _attemptIdentity(Request request, String name) {
+    final peer =
+        (request.context['shelf.io.connection_info'] as HttpConnectionInfo?)
+            ?.remoteAddress
+            .address ??
+        'unknown';
+    return '$peer|${name.trim().toLowerCase()}';
+  }
+
+  Response _tooManyAttempts(Duration wait) {
+    return _json(
+      {
+        'ok': false,
+        'error': 'Too many attempts. Try again in ${wait.inSeconds} seconds.',
+      },
+      status: 429,
+      headers: {'retry-after': '${wait.inSeconds}'},
+    );
+  }
+
   Future<Response> _login(Request request) async {
     final locked = _lockedResponse();
     if (locked != null) return locked;
+    final body = jsonDecode(await request.readAsString());
+    if (body is! Map<String, dynamic>) {
+      return _json({'ok': false, 'error': 'Expected JSON object'}, status: 400);
+    }
+    final name = body['name'] as String? ?? '';
+    final identity = _attemptIdentity(request, name);
+    final wait = _loginAttempts.retryAfter(identity, now: _clock());
+    if (wait != null) return _tooManyAttempts(wait);
     try {
-      final body =
-          jsonDecode(await request.readAsString()) as Map<String, dynamic>;
       final login = await repository.login(
-        name: body['name'] as String? ?? '',
+        name: name,
         password: body['password'] as String? ?? '',
       );
+      _loginAttempts.recordSuccess(identity);
       return _json(
         {'ok': true, 'person': login.person, 'sessionToken': login.token},
         headers: {
@@ -322,6 +384,7 @@ class AppServer {
         },
       );
     } on StateError catch (e) {
+      _loginAttempts.recordFailure(identity, now: _clock());
       return _json({'ok': false, 'error': e.message}, status: 401);
     }
   }
