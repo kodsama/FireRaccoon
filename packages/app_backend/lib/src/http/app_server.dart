@@ -872,12 +872,23 @@ class AppServer {
       }, status: 503);
     }
 
+    // Only Firefly's API, and only below it. The token this attaches is the
+    // installation's own, so an unrestricted path would let anyone who can sign
+    // in here reach any address on the Firefly host carrying it, and a `..`
+    // would climb out of the API entirely.
+    final normalized = p.posix.normalize('/${path.replaceAll('\\', '/')}');
+    if (!normalized.startsWith('/api/')) {
+      return _json({
+        'ok': false,
+        'error': 'Only Firefly III API paths can be proxied',
+      }, status: 404);
+    }
+
     final base = conn.url.endsWith('/')
         ? conn.url.substring(0, conn.url.length - 1)
         : conn.url;
-    final suffix = path.startsWith('/') ? path : (path.isEmpty ? '' : '/$path');
     final query = request.url.query.isEmpty ? '' : '?${request.url.query}';
-    final target = Uri.parse('$base$suffix$query');
+    final target = Uri.parse('$base$normalized$query');
 
     final headers = <String, String>{
       'authorization': 'Bearer ${conn.token}',
@@ -899,7 +910,11 @@ class AppServer {
     final responseBytes = await upstream.stream.toBytes();
     final responseHeaders = Map<String, String>.from(upstream.headers)
       ..remove('transfer-encoding')
-      ..remove('content-encoding');
+      ..remove('content-encoding')
+      // Firefly's cookies belong to Firefly. Passed on, they land scoped to this
+      // origin, where they mean nothing and can only collide with the session
+      // cookie this server sets.
+      ..remove('set-cookie');
     return Response(
       upstream.statusCode,
       body: responseBytes,
