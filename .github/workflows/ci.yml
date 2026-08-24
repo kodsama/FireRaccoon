@@ -52,21 +52,21 @@ jobs:
 
       - name: Test engine package
         working-directory: packages/engine
-        run: dart test --coverage=coverage
+        run: dart test --coverage=coverage --timeout 3x
 
       - name: Test MCP package
         working-directory: packages/mcp
-        run: dart test --coverage=coverage
+        run: dart test --coverage=coverage --timeout 3x
 
       - name: Test app backend package
         working-directory: packages/app_backend
-        run: dart test --coverage=coverage
+        run: dart test --coverage=coverage --timeout 3x
 
       - name: Test Flutter app with coverage
-        # Password handling derives a key per call, 100k PBKDF2 rounds of pure
-        # Dart at close to two seconds each. A test doing several, instrumented
-        # for coverage and competing with the other isolates, crosses the 30s
-        # default and fails on load rather than on what it asserts.
+        # Password handling derives a key per call, 600k PBKDF2 rounds. A test
+        # doing several, instrumented for coverage and competing with the other
+        # isolates, crosses the 30s default and fails on load rather than on
+        # what it asserts.
         run: flutter test --coverage --timeout 3x
 
       - name: Coverage gate
