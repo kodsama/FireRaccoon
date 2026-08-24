@@ -750,4 +750,37 @@ void main() {
     );
     expect(body['peopleAuth'], isA<Map<String, dynamic>>());
   });
+
+  test('a header asking for a nonsense count is refused', () async {
+    // The header sits next to the ciphertext, so this is not a defence against
+    // someone editing it: they already hold the file. What it catches is a count
+    // that is nonsense, quietly deriving a weak key and opening as if fine.
+    final dir = await Directory.systemTemp.createTemp('fireracoon-floor');
+    addTearDown(() async {
+      if (dir.existsSync()) await dir.delete(recursive: true);
+    });
+
+    await SealedStore.open(
+      dataDirPath: dir.path,
+      password: 'Store-Password1!',
+      iterations: kTestPbkdf2Iterations,
+    );
+
+    final headerFile = File(path.join(dir.path, 'store.header'));
+    final header =
+        jsonDecode(await headerFile.readAsString()) as Map<String, dynamic>;
+    header['iterations'] = 1;
+    await headerFile.writeAsString(jsonEncode(header));
+
+    await expectLater(
+      SealedStore.open(dataDirPath: dir.path, password: 'Store-Password1!'),
+      throwsA(
+        isA<StateError>().having(
+          (e) => e.message,
+          'message',
+          contains('below the'),
+        ),
+      ),
+    );
+  });
 }
