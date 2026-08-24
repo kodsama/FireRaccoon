@@ -1487,6 +1487,8 @@
   "tooltipFieldSourceAccount": "Conta de onde sai o dinheiro.",
   "tooltipFieldDestinationAccount": "Conta para onde vai o dinheiro.",
   "tooltipSwapTransferAccounts": "Trocar as duas contas.",
+  "disconnectConfirmTitle": "Desconectar o Firefly III",
+  "disconnectConfirmMessage": "Isto apaga o URL do servidor e o token de acesso pessoal do porta-chaves deste dispositivo. Terá de os introduzir novamente para reconectar.",
   "tooltipFieldDate": "Data e hora da transação.",
   "tooltipFieldAmount": "Montante principal na moeda selecionada.",
   "tooltipFieldCurrency": "Moeda principal desta linha.",
