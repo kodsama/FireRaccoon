@@ -82,4 +82,41 @@ void main() {
       throwsFormatException,
     );
   });
+
+  test('an envelope is unsealed at the count it was sealed with', () async {
+    // Sealing writes the count it used. Deriving with a different one fails as a
+    // wrong passphrase, so reading the constant instead of the envelope would
+    // make every backup already written permanently unopenable the moment the
+    // constant moved.
+    final sealed = await SettingsSecretsCrypto.seal(
+      plaintext: const {'apiToken': 'ff-token-secret'},
+      passphrase: 'Correct-Horse9!',
+    );
+    // The envelope carries its own count, which is the whole reason the next
+    // test can tell that unseal reads it rather than the constant.
+    expect(sealed['iterations'], SettingsSecretsCrypto.pbkdf2Iterations);
+
+    final opened = await SettingsSecretsCrypto.unseal(
+      envelope: sealed,
+      passphrase: 'Correct-Horse9!',
+    );
+    expect(opened['apiToken'], 'ff-token-secret');
+  });
+
+  test('an envelope with a different count is not silently misread', () async {
+    // Claiming a count the blob was not sealed with must fail as a wrong
+    // passphrase rather than appear to work.
+    final sealed = await SettingsSecretsCrypto.seal(
+      plaintext: const {'apiToken': 'ff-token-secret'},
+      passphrase: 'Correct-Horse9!',
+    );
+
+    await expectLater(
+      SettingsSecretsCrypto.unseal(
+        envelope: {...sealed, 'iterations': 1234},
+        passphrase: 'Correct-Horse9!',
+      ),
+      throwsA(isA<SettingsSecretsUnlockException>()),
+    );
+  });
 }
