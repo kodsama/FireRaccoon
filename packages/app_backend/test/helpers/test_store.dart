@@ -1,4 +1,4 @@
-import 'package:fireracoon_app_backend/src/crypto/sealed_store.dart';
+import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
 
 /// PBKDF2 cost for tests.
 ///
@@ -8,6 +8,19 @@ import 'package:fireracoon_app_backend/src/crypto/sealed_store.dart';
 /// on unlock, so a store sealed here reopens without the reader knowing this
 /// number.
 const int kTestPbkdf2Iterations = 1000;
+
+/// A server whose derivations cost what a test can afford.
+///
+/// Production hashes a password at 600k rounds and opens a store at 210k. A
+/// suite that pays either for every case spends minutes deriving keys and
+/// starts failing on the clock rather than on anything it asserts. Both counts
+/// are recorded in what they produce, so a store sealed here reopens and a
+/// password set here verifies without the reader knowing this number.
+Future<AppServer> openTestServer(ServerConfig config) => AppServer.open(
+  config,
+  passwordIterations: kTestPbkdf2Iterations,
+  storeIterations: kTestPbkdf2Iterations,
+);
 
 Future<SealedStore> openTestStore({
   required String dataDirPath,
