@@ -838,8 +838,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         l10n.disconnect,
                         style: TextStyle(color: colors.danger),
                       ),
-                      onTap: () =>
-                          ref.read(authProvider.notifier).clearSettings(),
+                      // Deleting the token and URL from the keychain cannot be
+                      // undone, and there is no copy anywhere else. Ask, the
+                      // way every other irreversible action here asks.
+                      onTap: () async {
+                        final confirmed = await showConfirmationDialog(
+                          context: context,
+                          title: l10n.disconnectConfirmTitle,
+                          message: l10n.disconnectConfirmMessage,
+                          confirmLabel: l10n.disconnect,
+                        );
+                        if (confirmed != true) return;
+                        await ref.read(authProvider.notifier).clearSettings();
+                      },
                     ),
                   ),
                 ],

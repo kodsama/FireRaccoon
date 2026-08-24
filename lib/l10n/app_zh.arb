@@ -1487,6 +1487,8 @@
   "tooltipFieldSourceAccount": "资金来源账户。",
   "tooltipFieldDestinationAccount": "资金去向账户。",
   "tooltipSwapTransferAccounts": "交换两个账户。",
+  "disconnectConfirmTitle": "断开 Firefly III 连接",
+  "disconnectConfirmMessage": "这将从本设备的钥匙串中删除服务器地址和个人访问令牌。重新连接时需要再次输入。",
   "tooltipFieldDate": "交易日期和时间。",
   "tooltipFieldAmount": "所选货币下的主金额。",
   "tooltipFieldCurrency": "该分录的主货币。",
