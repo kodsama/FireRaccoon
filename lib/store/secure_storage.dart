@@ -70,6 +70,7 @@ class ConsolidatedSecureStorage extends FlutterSecureStorage {
   @visibleForTesting
   void invalidateCache() {
     _secrets = null;
+    _loadingForMutation = null;
     _primed = false;
   }
 
@@ -106,6 +107,48 @@ class ConsolidatedSecureStorage extends FlutterSecureStorage {
     final cached = _secrets;
     if (_primed && cached != null) return cached;
     return _read();
+  }
+
+  /// In flight while the first mutation is still reading the item.
+  ///
+  /// Finding the map missing and then reading it is two steps, and concurrent
+  /// mutations all pass the first before any finishes the second, so each would
+  /// build its own map and sharing would buy nothing. They join one read.
+  Future<Map<String, String>>? _loadingForMutation;
+
+  /// The one map every mutation adds its key to.
+  ///
+  /// A write rewrites the whole item, so the copy it starts from decides what
+  /// survives. Two writes each holding their own copy cannot both live: the one
+  /// that persists last writes a blob that never saw the other's key. Sharing a
+  /// single map means every persist serialises whatever has been added so far,
+  /// so a write adds a key instead of replacing the store. A lock would do it
+  /// too, and would deadlock the process for good the first time a keychain call
+  /// failed to answer.
+  ///
+  /// A read that answered nothing because the item would not decode must not be
+  /// mistaken for a store holding nothing: persisting that is how one unreadable
+  /// byte takes every other secret with it. Failing one write beats losing all
+  /// of them.
+  Future<Map<String, String>> _loadForMutation() {
+    final cached = _secrets;
+    if (cached != null) return Future.value(cached);
+    return _loadingForMutation ??= _readForMutation()
+        .then((map) => _secrets = map)
+        .whenComplete(() => _loadingForMutation = null);
+  }
+
+  Future<Map<String, String>> _readForMutation() async {
+    final raw = await super.read(key: kConsolidatedSecretsKey);
+    if (raw == null) return <String, String>{};
+    final decoded = _tryDecode(raw);
+    if (decoded == null) {
+      throw StateError(
+        'The FireRacoon secrets item exists but could not be read. Refusing to '
+        'overwrite it, because that would discard every secret it holds.',
+      );
+    }
+    return decoded;
   }
 
   /// One keychain call, the same cost as a read was before consolidation.
@@ -154,14 +197,22 @@ class ConsolidatedSecureStorage extends FlutterSecureStorage {
   /// A half-written or hand-edited item must not stop the app starting: the
   /// login flow already handles having nothing, and it can be signed back in.
   /// Throwing here would leave no way in at all.
-  Map<String, String> _decode(String raw) {
+  Map<String, String> _decode(String raw) =>
+      _tryDecode(raw) ?? <String, String>{};
+
+  /// The item's contents, or null when it will not parse.
+  ///
+  /// Reads still treat that as no secrets, per [_decode]: the login flow copes
+  /// with having nothing and can be signed into again, where throwing would
+  /// leave no way in at all. Mutations need the difference, so they get it here.
+  Map<String, String>? _tryDecode(String raw) {
     final Object? decoded;
     try {
       decoded = jsonDecode(raw);
     } on FormatException {
-      return <String, String>{};
+      return null;
     }
-    if (decoded is! Map) return <String, String>{};
+    if (decoded is! Map) return null;
     return <String, String>{
       for (final entry in decoded.entries)
         if (entry.value is String) '${entry.key}': entry.value as String,
@@ -226,11 +277,10 @@ class ConsolidatedSecureStorage extends FlutterSecureStorage {
     WindowsOptions? wOptions,
   }) async {
     if (value == null) return delete(key: key);
-    final secrets = await _load();
+    final secrets = await _loadForMutation();
     if (secrets[key] == value) return;
     secrets[key] = value;
     await _persist(secrets);
-    if (_primed) _secrets = secrets;
   }
 
   @override
@@ -243,10 +293,9 @@ class ConsolidatedSecureStorage extends FlutterSecureStorage {
     AppleOptions? mOptions,
     WindowsOptions? wOptions,
   }) async {
-    final secrets = await _load();
+    final secrets = await _loadForMutation();
     if (secrets.remove(key) == null) return;
     await _persist(secrets);
-    if (_primed) _secrets = secrets;
   }
 
   @override
