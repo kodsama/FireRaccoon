@@ -2714,6 +2714,22 @@ class AppLocalizationsFr extends AppLocalizations {
   String get disconnectConfirmTitle => 'Déconnecter Firefly III';
 
   @override
+  String get connectionFailedNotFirefly =>
+      'Cette adresse a répondu, mais pas avec l\'API Firefly III. Vérifiez l\'URL du serveur : une adresse d\'interface, ou une page de connexion, répond à tous les chemins par une page web.';
+
+  @override
+  String get connectionFailedUnauthorized =>
+      'Le serveur a répondu et a refusé le jeton. Vérifiez le jeton d’accès personnel.';
+
+  @override
+  String get connectionFailedUnreachable =>
+      'Impossible de joindre ce serveur. Vérifiez l\'adresse et qu\'il fonctionne.';
+
+  @override
+  String get connectionFailedInsecure =>
+      'C\'est une adresse http:// non sécurisée. Activez Autoriser les connexions HTTP si c\'est voulu.';
+
+  @override
   String get disconnectConfirmMessage =>
       'Cela supprime l\'URL du serveur et le jeton d\'accès personnel du porte-clés de cet appareil. Vous devrez les saisir à nouveau pour vous reconnecter.';
 
