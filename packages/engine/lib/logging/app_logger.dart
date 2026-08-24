@@ -91,11 +91,26 @@ final class AppLogger {
     };
   }
 
+  /// Adds a value to redact from every line from here on.
+  ///
+  /// [configure] takes the secrets known at startup, and the ones that matter
+  /// are not known then: the API token arrives when the keychain answers, and a
+  /// session token when someone signs in. Without this the list stayed empty and
+  /// [redact] had nothing to match but the word Bearer.
+  static void addSecret(String? value) {
+    final secret = value?.trim() ?? '';
+    if (secret.isEmpty) return;
+    _secretValues.add(secret);
+  }
+
   /// Utility helper for logging payload snippets without huge lines.
+  ///
+  /// Redacted, because the encoded form is the whole point of calling this and
+  /// a caller that forgets to redact afterwards prints the payload verbatim.
   static String compactJson(Object? value) {
     if (value == null) return 'null';
     try {
-      return jsonEncode(value);
+      return redact(jsonEncode(value));
     } on Object {
       return redact('$value');
     }
