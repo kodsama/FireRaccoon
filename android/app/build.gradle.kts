@@ -8,8 +8,9 @@ android {
     namespace = "com.fireracoon"
     // Plugins such as flutter_keyboard_visibility still declare compileSdk 31;
     // AGP refuses to resolve androidx libraries that require 34+ unless the
-    // app itself compiles against a matching SDK.
-    compileSdk = 36
+    // app itself compiles against a matching SDK. flutter_secure_storage 11
+    // raised its own floor to 37.
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
