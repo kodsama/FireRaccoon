@@ -6,14 +6,27 @@ import 'dart:typed_data';
 import 'package:cryptography/cryptography.dart';
 import 'package:path/path.dart' as p;
 
-/// AES-256-GCM sealed filesystem under [dataDir], unlocked by a password.
-///
-/// Layout:
-/// - `store.header` — salt + wrapped DEK (not the password)
-/// - arbitrary relative paths written as ciphertext via [write] / [read]
 /// Production cost of turning DATA_PASSWORD into the key-encrypting key.
 const int kStorePbkdf2Iterations = 210000;
 
+/// Lowest count [SealedStore] will derive a key at.
+///
+/// Set below every legitimate count, including the low ones tests seal with, so
+/// this rejects nonsense rather than policing strength. It is no defence against
+/// someone editing the header: to do that they already hold the ciphertext, and
+/// they would write this number instead of one. What it catches is a count that
+/// cannot have been meant, zero, negative, or truncated to a digit or two,
+/// quietly deriving a weak key and opening the store as though nothing were
+/// wrong.
+const int kMinStorePbkdf2Iterations = 100;
+
+/// AES-256-GCM sealed filesystem under [SealedStore.dataDir], unlocked by a
+/// password.
+///
+/// Layout:
+/// - `store.header` — salt + wrapped DEK (not the password)
+/// - arbitrary relative paths written as ciphertext via [SealedStore.write] and
+///   [SealedStore.read]
 class SealedStore {
   SealedStore._(this._dataDir, this._dataKey);
 
@@ -121,6 +134,14 @@ class SealedStore {
     // locked every existing store out permanently.
     final iterations =
         (header['iterations'] as num?)?.toInt() ?? kStorePbkdf2Iterations;
+    // A count that cannot have been meant is refused rather than used. See
+    // [kMinStorePbkdf2Iterations] for what that does and does not protect.
+    if (iterations < kMinStorePbkdf2Iterations) {
+      throw StateError(
+        'Store header asks for $iterations PBKDF2 iterations, below the '
+        '$kMinStorePbkdf2Iterations floor. Refusing to derive a weak key.',
+      );
+    }
     final kek = await _deriveKek(password, salt, iterations);
     final aes = AesGcm.with256bits();
     try {
