@@ -126,6 +126,7 @@ void main() {
         final setup = await client.setup(
           adminName: 'Admin',
           adminPassword: 'Password1!',
+          dataPassword: 'Store-Password1!',
           fireflyUrl: 'http://ff',
           fireflyToken: 'tok',
         );
@@ -443,6 +444,7 @@ void main() {
       await notifier.setup(
         adminName: 'A',
         adminPassword: 'Password1!',
+        dataPassword: 'Store-Password1!',
         fireflyUrl: 'http://ff',
         fireflyToken: 't',
       );
@@ -472,6 +474,7 @@ void main() {
         () => n.setup(
           adminName: 'a',
           adminPassword: 'Password1!',
+          dataPassword: 'Store-Password1!',
           fireflyUrl: 'u',
           fireflyToken: 't',
         ),
