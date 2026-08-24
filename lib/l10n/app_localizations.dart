@@ -4942,6 +4942,18 @@ abstract class AppLocalizations {
   /// **'Swap the two accounts.'**
   String get tooltipSwapTransferAccounts;
 
+  /// No description provided for @disconnectConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Disconnect Firefly III'**
+  String get disconnectConfirmTitle;
+
+  /// No description provided for @disconnectConfirmMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'This deletes the server URL and the personal access token from this device\'s keychain. You will have to enter them again to reconnect.'**
+  String get disconnectConfirmMessage;
+
   /// No description provided for @tooltipFieldDate.
   ///
   /// In en, this message translates to:

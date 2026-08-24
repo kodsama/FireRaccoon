@@ -279,8 +279,44 @@ void main() {
     expect(disconnect, findsOneWidget);
     await tester.tap(disconnect, warnIfMissed: false);
     await tester.pumpAndSettle();
+
+    await confirmDialogWithChallenge(tester);
     await tester.pumpAndSettle();
 
     expect(find.text('Not connected'), findsOneWidget);
+  });
+
+  testWidgets('Disconnect asks before deleting the credentials', (
+    tester,
+  ) async {
+    // Deleting the token and URL from the keychain cannot be undone and there
+    // is no copy anywhere else, so a stray tap must not do it.
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const SettingsScreen(),
+        authSettings: AuthSettings(
+          serverUrl: 'https://firefly.test',
+          apiToken: 'token',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.scrollUntilVisible(
+      find.text('Disconnect'),
+      500,
+      scrollable: find.byType(Scrollable),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Disconnect'), warnIfMissed: false);
+    await tester.pumpAndSettle();
+
+    // Still connected, and the dialog is what is asking.
+    expect(find.text('Not connected'), findsNothing);
+    expect(find.byType(EditableText), findsWidgets);
   });
 }
