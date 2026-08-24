@@ -114,7 +114,7 @@ void main() {
         type: 'transfer',
         amount: 200,
         source: 'Platinum',
-        destination: 'Revolut',
+        destination: 'Checking',
       );
       expect(isCreditCardPurchase(out, 'Platinum'), isTrue);
     });

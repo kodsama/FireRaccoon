@@ -110,9 +110,10 @@ class FireflyConnectionNotifier extends Notifier<FireflyConnectionStatus> {
     }
 
     Future.microtask(() async {
-      final ok = await ref
+      final result = await ref
           .read(authProvider.notifier)
           .testConnection(auth.serverUrl, auth.apiToken, auth.allowInsecure);
+      final ok = result.ok;
       if (generation != _checkGeneration) return;
 
       state = ok
