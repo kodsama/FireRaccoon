@@ -64,7 +64,13 @@ class SettingsSecretsCrypto {
       );
     }
     final salt = base64Decode(envelope['salt'] as String);
-    final key = await _deriveKey(passphrase, salt);
+    // Read from the envelope, never from the constant. Sealing writes the count
+    // it used, and deriving with a different one fails as a wrong passphrase, so
+    // raising the constant would have made every backup already written
+    // permanently unopenable. The sealed store learned this the same way.
+    final iterations =
+        (envelope['iterations'] as num?)?.toInt() ?? pbkdf2Iterations;
+    final key = await _deriveKey(passphrase, salt, iterations);
     final aes = AesGcm.with256bits();
     try {
       final clear = await aes.decrypt(
@@ -88,10 +94,14 @@ class SettingsSecretsCrypto {
     }
   }
 
-  static Future<SecretKey> _deriveKey(String passphrase, List<int> salt) {
+  static Future<SecretKey> _deriveKey(
+    String passphrase,
+    List<int> salt, [
+    int iterations = pbkdf2Iterations,
+  ]) {
     final pbkdf2 = Pbkdf2(
       macAlgorithm: Hmac.sha256(),
-      iterations: pbkdf2Iterations,
+      iterations: iterations,
       bits: 256,
     );
     return pbkdf2.deriveKey(
