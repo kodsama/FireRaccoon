@@ -210,23 +210,44 @@ class AppServer {
     };
   };
 
+  /// Answers a browser's cross-origin question, for the origins configured.
+  ///
+  /// This used to answer every origin with a wildcard. Nothing could be read
+  /// with it, because a wildcard forbids credentials and the session cookie is
+  /// SameSite=Lax, so a page on another site could reach nothing it was not
+  /// already entitled to. It was still an authenticated API telling the whole
+  /// web it was open, and the only thing that needs cross-origin permission here
+  /// is a web build running on its own port, which can be named.
   Middleware get _cors => (inner) {
     return (request) async {
+      final origin = request.headers['origin'];
+      final headers = _corsHeadersFor(origin);
       if (request.method == 'OPTIONS') {
-        return Response.ok('', headers: _corsHeaders);
+        return Response.ok('', headers: headers);
       }
       final response = await inner(request);
-      return response.change(headers: {...response.headers, ..._corsHeaders});
+      return response.change(headers: {...response.headers, ...headers});
     };
   };
 
-  static const _corsHeaders = {
-    'access-control-allow-origin': '*',
-    'access-control-allow-headers':
-        'authorization, content-type, x-fireracoon-session',
-    'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-    'access-control-expose-headers': 'set-cookie',
-  };
+  /// Nothing at all unless [origin] was configured: no header is the answer
+  /// that means "not allowed", and a same-origin caller never asks.
+  Map<String, String> _corsHeadersFor(String? origin) {
+    if (origin == null || !config.allowedOrigins.contains(origin)) {
+      return const <String, String>{};
+    }
+    return {
+      'access-control-allow-origin': origin,
+      // Named rather than wildcarded, so a browser is willing to send the
+      // session cookie, which is what an allowed origin needs to be useful.
+      'access-control-allow-credentials': 'true',
+      'vary': 'origin',
+      'access-control-allow-headers':
+          'authorization, content-type, x-fireracoon-session',
+      'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+      'access-control-expose-headers': 'set-cookie',
+    };
+  }
 
   Map<String, Object?> get _storeStatus => {
     'storeLocked': isStoreLocked,
