@@ -530,7 +530,7 @@ void main() {
     });
 
     test('migrates legacy app users from secure storage', () async {
-      final hashed = hashPassword('Correct-Horse9!');
+      final hashed = await hashPassword('Correct-Horse9!');
       final legacy = AppUsersStorage(
         users: [
           AppUser(
@@ -573,7 +573,7 @@ void main() {
     });
 
     test('merges remote profiles while keeping local auth fields', () async {
-      final hashed = hashPassword('Correct-Horse9!');
+      final hashed = await hashPassword('Correct-Horse9!');
       final local = AccountOwnershipConfig(
         people: [
           Person(
@@ -689,8 +689,8 @@ void main() {
         addTearDown(container.dispose);
         await waitHydrated(container);
 
-        final ana = hashPassword('Import-Horse9!');
-        final bo = hashPassword('Second-Horse9!');
+        final ana = await hashPassword('Import-Horse9!');
+        final bo = await hashPassword('Second-Horse9!');
         await container
             .read(peopleProvider.notifier)
             .importSettings(
@@ -794,7 +794,7 @@ void main() {
         addTearDown(container.dispose);
         await waitHydrated(container);
 
-        final ana = hashPassword('Import-Horse9!');
+        final ana = await hashPassword('Import-Horse9!');
         await container
             .read(peopleProvider.notifier)
             .importSettings(
@@ -1560,7 +1560,7 @@ void main() {
             .read(peopleProvider.notifier)
             .syncFromServerStore(loggedInPersonId: 'admin_1');
 
-        final ana = hashPassword('Import-Horse9!');
+        final ana = await hashPassword('Import-Horse9!');
         await container
             .read(peopleProvider.notifier)
             .importSettings(

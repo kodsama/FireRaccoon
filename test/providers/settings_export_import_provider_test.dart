@@ -778,7 +778,7 @@ void main() {
       );
       await waitHydrated(container);
 
-      final hashed = hashPassword('Correct-Horse9!');
+      final hashed = await hashPassword('Correct-Horse9!');
       await container
           .read(settingsExportImportProvider)
           .applyBundle(

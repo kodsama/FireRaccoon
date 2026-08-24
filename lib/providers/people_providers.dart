@@ -609,7 +609,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
       if (!validatePasswordPolicy(password).isValid) {
         throw ArgumentError('Password does not meet the policy requirements.');
       }
-      final hashed = hashPassword(password);
+      final hashed = await hashPassword(password);
       hash = hashed.hash;
       salt = hashed.salt;
     }
@@ -762,7 +762,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
       }
     }
     if (match == null || !match.hasPassword) return null;
-    if (!verifyPassword(
+    if (!await verifyPassword(
       password,
       hash: match.passwordHash!,
       salt: match.salt!,
@@ -856,7 +856,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
     // Server-hydrated people keep password material on the server; local
     // placeholders cannot verify the old password.
     if (!_isServerMode || person.salt != 'server') {
-      if (!verifyPassword(
+      if (!await verifyPassword(
         oldPassword,
         hash: person.passwordHash!,
         salt: person.salt!,
@@ -878,7 +878,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
     if (!validatePasswordPolicy(newPassword).isValid) {
       throw ArgumentError('Password does not meet the policy requirements.');
     }
-    final hashed = hashPassword(newPassword);
+    final hashed = await hashPassword(newPassword);
     if (_isServerMode) {
       _pendingServerPasswords[personId] = newPassword;
     }
@@ -897,7 +897,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
       (p) => p.id == personId,
       orElse: () => throw ArgumentError('Person not found.'),
     );
-    final hashed = hashPassword(password);
+    final hashed = await hashPassword(password);
     if (_isServerMode) {
       _pendingServerPasswords[personId] = password;
     }
