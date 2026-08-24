@@ -354,6 +354,24 @@ class AppServer {
     }
   }
 
+  /// True when [password] is the one the store was sealed with.
+  ///
+  /// Checked by opening the store rather than by keeping the password in memory
+  /// after unlock: the header's own MAC is the answer, and nothing has to hold a
+  /// secret it does not need. Costs one derivation, on a call made once.
+  Future<bool> _opensTheStore(String password) async {
+    if (password.isEmpty) return false;
+    if (!SealedStore.exists(config.dataDir)) return false;
+    try {
+      await SealedStore.open(dataDirPath: config.dataDir, password: password);
+      return true;
+    } on StateError {
+      return false;
+    } on ArgumentError {
+      return false;
+    }
+  }
+
   Future<Response> _setup(Request request) async {
     final locked = _lockedResponse();
     if (locked != null) return locked;
@@ -366,6 +384,25 @@ class AppServer {
     try {
       final body =
           jsonDecode(await request.readAsString()) as Map<String, dynamic>;
+
+      // Setup cannot require a session: there is nobody to authenticate until
+      // it succeeds. That made first boot a race, and whoever won it became
+      // admin and inherited the bootstrapped Firefly token. With DATA_PASSWORD
+      // in the environment the store unlocks itself, so the race opened the
+      // moment the process started. Knowing the data password settles it: the
+      // operator has it and an unattended port does not.
+      final identity = _attemptIdentity(request, 'setup');
+      final wait = _unlockAttempts.retryAfter(identity, now: _clock());
+      if (wait != null) return _tooManyAttempts(wait);
+      if (!await _opensTheStore(body['dataPassword'] as String? ?? '')) {
+        _unlockAttempts.recordFailure(identity, now: _clock());
+        return _json({
+          'ok': false,
+          'error': 'The data password is required to complete setup.',
+        }, status: 403);
+      }
+      _unlockAttempts.recordSuccess(identity);
+
       final person = await repository.setup(
         adminName: body['adminName'] as String? ?? '',
         adminPassword: body['adminPassword'] as String? ?? '',

@@ -17,6 +17,7 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
   final _adminPassword = TextEditingController();
   final _fireflyUrl = TextEditingController();
   final _fireflyToken = TextEditingController();
+  final _dataPassword = TextEditingController();
   bool _allowInsecure = false;
   bool _obscure = true;
   bool _submitting = false;
@@ -26,6 +27,7 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
   void dispose() {
     _adminName.dispose();
     _adminPassword.dispose();
+    _dataPassword.dispose();
     _fireflyUrl.dispose();
     _fireflyToken.dispose();
     super.dispose();
@@ -42,6 +44,7 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
           .setup(
             adminName: _adminName.text.trim(),
             adminPassword: _adminPassword.text,
+            dataPassword: _dataPassword.text,
             fireflyUrl: _fireflyUrl.text.trim(),
             fireflyToken: _fireflyToken.text.trim(),
             allowInsecure: _allowInsecure,
@@ -99,6 +102,19 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                           _obscure ? Icons.visibility : Icons.visibility_off,
                         ),
                       ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _dataPassword,
+                    obscureText: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Data password',
+                      helperText:
+                          'The DATA_PASSWORD this server encrypts its store '
+                          'with. Nobody can sign in yet, so this is what proves '
+                          'the setup is yours.',
+                      helperMaxLines: 3,
                     ),
                   ),
                   const SizedBox(height: 12),

@@ -170,6 +170,7 @@ class ServerSessionNotifier extends AsyncNotifier<ServerSession?> {
     required String adminPassword,
     required String fireflyUrl,
     required String fireflyToken,
+    required String dataPassword,
     bool allowInsecure = false,
   }) async {
     final client = _client;
@@ -179,6 +180,7 @@ class ServerSessionNotifier extends AsyncNotifier<ServerSession?> {
     final body = await client.setup(
       adminName: adminName,
       adminPassword: adminPassword,
+      dataPassword: dataPassword,
       fireflyUrl: fireflyUrl,
       fireflyToken: fireflyToken,
       allowInsecure: allowInsecure,
