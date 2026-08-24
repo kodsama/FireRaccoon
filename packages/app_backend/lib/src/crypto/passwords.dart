@@ -44,13 +44,20 @@ class PasswordHash {
   final String salt;
 }
 
-Future<PasswordHash> hashPassword(String password) async {
+/// [iterations] exists for tests, which would otherwise pay production cost for
+/// every password they set. The count is recorded in the hash, so one made here
+/// verifies at the count that made it.
+Future<PasswordHash> hashPassword(
+  String password, {
+  int iterations = kPbkdf2Iterations,
+}) async {
+  final random = Random.secure();
   final saltBytes = Uint8List.fromList(
-    List<int>.generate(_kSaltLength, (_) => Random.secure().nextInt(256)),
+    List<int>.generate(_kSaltLength, (_) => random.nextInt(256)),
   );
-  final hashBytes = await _pbkdf2(password, saltBytes, kPbkdf2Iterations);
+  final hashBytes = await _pbkdf2(password, saltBytes, iterations);
   return PasswordHash(
-    hash: encodePasswordHash(kPbkdf2Iterations, base64Encode(hashBytes)),
+    hash: encodePasswordHash(iterations, base64Encode(hashBytes)),
     salt: base64Encode(saltBytes),
   );
 }

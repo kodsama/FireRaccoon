@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/password_cost.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:fireracoon/utils/password_policy.dart';
@@ -58,7 +60,7 @@ void main() {
 
   group('hashPassword / verifyPassword', () {
     test('verifies the correct password', () async {
-      final hashed = await hashPassword('Correct-Horse9!');
+      final hashed = await hashTestPassword('Correct-Horse9!');
       expect(
         await verifyPassword(
           'Correct-Horse9!',
@@ -70,7 +72,7 @@ void main() {
     });
 
     test('rejects an incorrect password', () async {
-      final hashed = await hashPassword('Correct-Horse9!');
+      final hashed = await hashTestPassword('Correct-Horse9!');
       expect(
         await verifyPassword(
           'Wrong-Horse9!',
@@ -82,23 +84,23 @@ void main() {
     });
 
     test('never stores the plaintext password', () async {
-      final hashed = await hashPassword('Correct-Horse9!');
+      final hashed = await hashTestPassword('Correct-Horse9!');
       expect(hashed.hash, isNot(contains('Correct-Horse9!')));
     });
 
     test(
       'produces different salts (and hashes) for the same password',
       () async {
-        final first = await hashPassword('Correct-Horse9!');
-        final second = await hashPassword('Correct-Horse9!');
+        final first = await hashTestPassword('Correct-Horse9!');
+        final second = await hashTestPassword('Correct-Horse9!');
         expect(first.salt, isNot(equals(second.salt)));
         expect(first.hash, isNot(equals(second.hash)));
       },
     );
 
     test('reproduces the same hash given the same salt', () async {
-      final first = await hashPassword('Correct-Horse9!');
-      final second = await hashPassword(
+      final first = await hashTestPassword('Correct-Horse9!');
+      final second = await hashTestPassword(
         'Correct-Horse9!',
         saltBase64: first.salt,
       );

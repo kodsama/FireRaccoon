@@ -10,6 +10,7 @@ import 'package:shelf_static/shelf_static.dart';
 
 import '../config.dart';
 import 'attempt_limiter.dart';
+import '../crypto/passwords.dart';
 import '../crypto/sealed_store.dart';
 import '../store/state_repository.dart';
 
@@ -27,8 +28,15 @@ class AppServer {
     this._repository,
     http.Client? httpClient,
     DateTime Function()? clock,
+    this.passwordIterations = kPbkdf2Iterations,
+    this.storeIterations = kStorePbkdf2Iterations,
   }) : _http = httpClient ?? http.Client(),
        _clock = clock ?? DateTime.now;
+
+  /// Derivation costs, lowered by tests so a suite does not pay production
+  /// price for every store it opens and every password it sets.
+  final int passwordIterations;
+  final int storeIterations;
 
   final ServerConfig config;
   StateRepository? _repository;
@@ -67,8 +75,16 @@ class AppServer {
   ///
   /// Env [DATA_PASSWORD] is treated as confirmed: empty [DATA_DIR] creates a
   /// new sealed store on boot (Docker first start).
-  static Future<AppServer> open(ServerConfig config) async {
-    final server = AppServer(config: config);
+  static Future<AppServer> open(
+    ServerConfig config, {
+    int passwordIterations = kPbkdf2Iterations,
+    int storeIterations = kStorePbkdf2Iterations,
+  }) async {
+    final server = AppServer(
+      config: config,
+      passwordIterations: passwordIterations,
+      storeIterations: storeIterations,
+    );
     final password = config.dataPassword;
     if (password != null && password.isNotEmpty) {
       await server.unlockStore(password: password, confirmPassword: password);
@@ -97,8 +113,12 @@ class AppServer {
     final sealed = await SealedStore.open(
       dataDirPath: config.dataDir,
       password: password,
+      iterations: storeIterations,
     );
-    final repo = StateRepository(sealed);
+    final repo = StateRepository(
+      sealed,
+      passwordIterations: passwordIterations,
+    );
     await repo.load();
     await repo.applyBootstrap(
       fireflyUrl: config.bootstrapFireflyUrl,

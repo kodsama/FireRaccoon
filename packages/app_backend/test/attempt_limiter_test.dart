@@ -6,6 +6,8 @@ import 'package:fireracoon_app_backend/src/http/attempt_limiter.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
+import 'helpers/test_store.dart';
+
 void main() {
   group('AttemptLimiter', () {
     final start = DateTime.utc(2026, 8, 24, 12);
@@ -96,7 +98,7 @@ void main() {
     });
 
     Future<AppServer> ready() async {
-      final app = await AppServer.open(
+      final app = await openTestServer(
         ServerConfig(
           mode: FireracoonMode.server,
           dataDir: tmp.path,

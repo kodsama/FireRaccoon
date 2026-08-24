@@ -24,7 +24,6 @@ import 'package:fireracoon/providers/write_ahead_provider.dart';
 import 'package:fireracoon/store/remote_server_client.dart';
 import 'package:fireracoon/theme/app_colors.dart';
 import 'package:fireracoon/theme/theme_palette.dart';
-import 'package:fireracoon/utils/password_policy.dart';
 import 'package:fireracoon_engine/utils/dashboard_period.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -33,6 +32,8 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import '../helpers/password_cost.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:image/image.dart' as img;
@@ -75,6 +76,15 @@ void main() {
     return ProviderContainer(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
+        // Without a stub loader the real one reads .env from the working
+        // directory, so what this suite asserts depends on whichever Firefly
+        // credentials the developer happens to have on disk.
+        authProvider.overrideWith(
+          () => AuthNotifier(
+            storage: const FlutterSecureStorage(),
+            debugEnvLoader: () async => const {},
+          ),
+        ),
         peopleProvider.overrideWith(
           () => PeopleNotifier(
             storage: const FlutterSecureStorage(),
@@ -476,7 +486,10 @@ void main() {
             ),
           ),
           authProvider.overrideWith(
-            () => AuthNotifier(storage: const FlutterSecureStorage()),
+            () => AuthNotifier(
+              storage: const FlutterSecureStorage(),
+              debugEnvLoader: () async => const {},
+            ),
           ),
           serverSessionProvider.overrideWith(
             () => ServerSessionNotifier(
@@ -778,7 +791,7 @@ void main() {
       );
       await waitHydrated(container);
 
-      final hashed = await hashPassword('Correct-Horse9!');
+      final hashed = await hashTestPassword('Correct-Horse9!');
       await container
           .read(settingsExportImportProvider)
           .applyBundle(

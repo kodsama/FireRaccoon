@@ -6,7 +6,10 @@ import 'app_state.dart';
 
 /// Loads and persists [AppState] through [SealedStore].
 class StateRepository {
-  StateRepository(this._store);
+  StateRepository(this._store, {this.passwordIterations = kPbkdf2Iterations});
+
+  /// Cost of hashing a password here. Tests lower it; nothing else should.
+  final int passwordIterations;
 
   static const statePath = 'state';
 
@@ -71,7 +74,10 @@ class StateRepository {
     }
 
     final id = newId();
-    final password = await hashPassword(adminPassword);
+    final password = await hashPassword(
+      adminPassword,
+      iterations: passwordIterations,
+    );
     final person = <String, dynamic>{
       'id': id,
       'name': adminName.trim(),
@@ -165,7 +171,10 @@ class StateRepository {
         if (plaintext.length < 10) {
           throw ArgumentError('Password must be at least 10 characters');
         }
-        final hashed = await hashPassword(plaintext);
+        final hashed = await hashPassword(
+          plaintext,
+          iterations: passwordIterations,
+        );
         passwordHash = hashed.hash;
         passwordSalt = hashed.salt;
       } else {

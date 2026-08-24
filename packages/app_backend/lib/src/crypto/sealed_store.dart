@@ -11,13 +11,14 @@ import 'package:path/path.dart' as p;
 /// Layout:
 /// - `store.header` — salt + wrapped DEK (not the password)
 /// - arbitrary relative paths written as ciphertext via [write] / [read]
+/// Production cost of turning DATA_PASSWORD into the key-encrypting key.
+const int kStorePbkdf2Iterations = 210000;
+
 class SealedStore {
   SealedStore._(this._dataDir, this._dataKey);
 
   static const _headerName = 'store.header';
 
-  /// Production cost of turning DATA_PASSWORD into the key-encrypting key.
-  static const _pbkdf2Iterations = 210000;
   static const _saltLength = 16;
   static const _dekLength = 32;
 
@@ -42,7 +43,7 @@ class SealedStore {
   static Future<SealedStore> open({
     required String dataDirPath,
     required String password,
-    int iterations = _pbkdf2Iterations,
+    int iterations = kStorePbkdf2Iterations,
   }) async {
     if (password.isEmpty) {
       throw ArgumentError('password must not be empty');
@@ -119,7 +120,7 @@ class SealedStore {
     // and is reported as a wrong password, so changing the default would have
     // locked every existing store out permanently.
     final iterations =
-        (header['iterations'] as num?)?.toInt() ?? _pbkdf2Iterations;
+        (header['iterations'] as num?)?.toInt() ?? kStorePbkdf2Iterations;
     final kek = await _deriveKek(password, salt, iterations);
     final aes = AesGcm.with256bits();
     try {
