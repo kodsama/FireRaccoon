@@ -244,27 +244,43 @@ class AppServer {
     }, status: 503);
   }
 
+  /// The session or agent key this request carries, or null if none resolves.
+  ///
+  /// Every source is checked the same way. The header and the cookie used to be
+  /// returned exactly as presented while only a bearer was resolved, so whether
+  /// a caller received a validated token or an arbitrary string depended on
+  /// which header it happened to arrive in. Nothing was reachable with a forged
+  /// one, because each handler resolves again before it acts, but a helper whose
+  /// answer means two different things is waiting for the handler that forgets.
   String? _session(Request request) {
     final repo = _repository;
     if (repo == null) return null;
-    final header = request.headers[_sessionHeader];
-    if (header != null && header.isNotEmpty) return header;
-    final auth = request.headers['authorization'];
-    if (auth != null && auth.toLowerCase().startsWith('bearer ')) {
-      final token = auth.substring(7).trim();
-      if (token.isNotEmpty && repo.personForSession(token) != null) {
-        return token;
-      }
-    }
-    final cookie = request.headers['cookie'];
-    if (cookie == null) return null;
-    for (final part in cookie.split(';')) {
-      final trimmed = part.trim();
-      if (trimmed.startsWith('$_sessionCookie=')) {
-        return trimmed.substring(_sessionCookie.length + 1);
+    for (final candidate in _sessionCandidates(request)) {
+      if (candidate.isNotEmpty && repo.personForSession(candidate) != null) {
+        return candidate;
       }
     }
     return null;
+  }
+
+  /// Where a session can arrive, in the order they are trusted.
+  Iterable<String> _sessionCandidates(Request request) {
+    final candidates = <String>[];
+    final header = request.headers[_sessionHeader];
+    if (header != null) candidates.add(header.trim());
+
+    final auth = request.headers['authorization'];
+    if (auth != null && auth.toLowerCase().startsWith('bearer ')) {
+      candidates.add(auth.substring(7).trim());
+    }
+
+    for (final part in (request.headers['cookie'] ?? '').split(';')) {
+      final trimmed = part.trim();
+      if (trimmed.startsWith('$_sessionCookie=')) {
+        candidates.add(trimmed.substring(_sessionCookie.length + 1).trim());
+      }
+    }
+    return candidates;
   }
 
   Response _json(

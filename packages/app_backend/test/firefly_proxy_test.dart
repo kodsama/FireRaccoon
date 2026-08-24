@@ -132,4 +132,38 @@ void main() {
     expect(response.statusCode, 401);
     expect(asked, isEmpty);
   });
+
+  test('every place a session can arrive is checked the same way', () async {
+    // The header and the cookie were returned exactly as presented while only a
+    // bearer was resolved, so what this helper meant depended on which header
+    // the token arrived in.
+    final (app: app, session: session, asked: asked) = await ready();
+
+    Future<int> statusWith(Map<String, String> headers) async {
+      final response = await app.handler(
+        Request(
+          'GET',
+          Uri.parse('http://localhost/api/firefly/api/v1/accounts'),
+          headers: headers,
+        ),
+      );
+      return response.statusCode;
+    }
+
+    // A real session works from all three.
+    expect(await statusWith({'x-fireracoon-session': session}), 200);
+    expect(await statusWith({'authorization': 'Bearer $session'}), 200);
+    expect(await statusWith({'cookie': 'fireracoon_session=$session'}), 200);
+
+    // An invented one works from none of them.
+    expect(await statusWith({'x-fireracoon-session': 'not-a-session'}), 401);
+    expect(await statusWith({'authorization': 'Bearer not-a-session'}), 401);
+    expect(
+      await statusWith({'cookie': 'fireracoon_session=not-a-session'}),
+      401,
+    );
+
+    // Only the six that carried a real session reached upstream.
+    expect(asked, hasLength(3));
+  });
 }
