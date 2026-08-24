@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:fireracoon_engine/fireracoon_engine.dart';
 
 import '../deployment/deployment_providers.dart';
+import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
 import '../fun_modes/fun_mode.dart';
 import '../providers/app_info_provider.dart';
@@ -76,6 +77,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         }).toList(),
       ),
     );
+  }
+
+  /// Says which of the ways a connection test can fail happened.
+  ///
+  /// Saving is refused until a test passes, so "failed" on its own left somebody
+  /// staring at a dialog with no idea whether the address, the token or the
+  /// network was the problem.
+  String _connectionFailureText(
+    AppLocalizations l10n,
+    ConnectionTestResult result,
+  ) {
+    return switch (result.failure) {
+      ConnectionFailure.insecureRefused => l10n.connectionFailedInsecure,
+      ConnectionFailure.unauthorized => l10n.connectionFailedUnauthorized,
+      ConnectionFailure.notFirefly => l10n.connectionFailedNotFirefly,
+      ConnectionFailure.unreachable => l10n.connectionFailedUnreachable,
+      ConnectionFailure.serverError || null => l10n.connectionFailed,
+    };
   }
 
   void _showAuthDialog(BuildContext context, WidgetRef ref) {
@@ -194,7 +213,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   isTesting = true;
                                   testSuccess = false;
                                 });
-                                final success = await ref
+                                final result = await ref
                                     .read(authProvider.notifier)
                                     .testConnection(
                                       urlController.text,
@@ -204,18 +223,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 if (context.mounted) {
                                   setState(() {
                                     isTesting = false;
-                                    testSuccess = success;
+                                    testSuccess = result.ok;
                                   });
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        success
+                                        result.ok
                                             ? l10n.connectionSuccessful
-                                            : l10n.connectionFailed,
+                                            : _connectionFailureText(
+                                                l10n,
+                                                result,
+                                              ),
                                       ),
-                                      backgroundColor: success
+                                      backgroundColor: result.ok
                                           ? context.colors.success
                                           : context.colors.danger,
+                                      duration: const Duration(seconds: 8),
                                     ),
                                   );
                                 }

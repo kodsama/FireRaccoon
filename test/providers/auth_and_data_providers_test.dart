@@ -165,7 +165,7 @@ void main() {
       final ok = await container
           .read(authProvider.notifier)
           .testConnection('https://firefly.test', 'token', false);
-      expect(ok, isTrue);
+      expect(ok.ok, isTrue);
     });
 
     test('testConnection refuses a 200 that is a sign-in page', () async {
@@ -196,7 +196,7 @@ void main() {
       final ok = await container
           .read(authProvider.notifier)
           .testConnection('https://firefly.test', 'token', false);
-      expect(ok, isFalse);
+      expect(ok.ok, isFalse);
     });
 
     test('testConnection refuses JSON that is not Firefly', () async {
@@ -223,7 +223,7 @@ void main() {
       final ok = await container
           .read(authProvider.notifier)
           .testConnection('https://firefly.test', 'token', false);
-      expect(ok, isFalse);
+      expect(ok.ok, isFalse);
     });
 
     test('testConnection returns false on network error', () async {
@@ -244,7 +244,7 @@ void main() {
       final ok = await container
           .read(authProvider.notifier)
           .testConnection('https://firefly.test', 'token', false);
-      expect(ok, isFalse);
+      expect(ok.ok, isFalse);
     });
 
     test('testConnection returns false on non-200 response', () async {
@@ -267,7 +267,7 @@ void main() {
       final ok = await container
           .read(authProvider.notifier)
           .testConnection('https://firefly.test', 'token', false);
-      expect(ok, isFalse);
+      expect(ok.ok, isFalse);
     });
 
     test('testConnection retries once after a transient failure', () async {
@@ -297,7 +297,7 @@ void main() {
       final ok = await container
           .read(authProvider.notifier)
           .testConnection('https://firefly.test', 'token', false);
-      expect(ok, isTrue);
+      expect(ok.ok, isTrue);
       expect(attempts, 2);
     });
 
@@ -323,7 +323,7 @@ void main() {
       final ok = await container
           .read(authProvider.notifier)
           .testConnection('https://firefly.test', 'token', false);
-      expect(ok, isFalse);
+      expect(ok.ok, isFalse);
       expect(attempts, 1);
     });
 
@@ -349,21 +349,70 @@ void main() {
       final ok = await container
           .read(authProvider.notifier)
           .testConnection('https://firefly.test', 'token', false);
-      expect(ok, isFalse);
+      expect(ok.ok, isFalse);
       expect(attempts, 2);
     });
 
-    test('testConnection blocks insecure HTTP when not allowed', () async {
+    test('testConnection tells the failures apart', () async {
+      // Saving is refused until a test passes, so "failed" on its own left
+      // somebody guessing whether the address, the token or the network was
+      // wrong.
+      Future<ConnectionTestResult> attempt(http.Response response) async {
+        final container = ProviderContainer(
+          overrides: [
+            authProvider.overrideWith(
+              () => AuthNotifier(
+                httpClient: MockClient((_) async => response),
+                storage: testStorage(),
+                debugEnvLoader: _noEnv,
+              ),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        return container
+            .read(authProvider.notifier)
+            .testConnection('https://firefly.test', 'token', false);
+      }
+
+      final page = await attempt(
+        http.Response(
+          '<!DOCTYPE html><html><head><title>Sign in',
+          200,
+          headers: const {'content-type': 'text/html; charset=utf-8'},
+        ),
+      );
+      expect(page.failure, ConnectionFailure.notFirefly);
+
+      final refused = await attempt(
+        http.Response(
+          '{"message":"Unauthenticated."}',
+          401,
+          headers: const {'content-type': 'application/json'},
+        ),
+      );
+      expect(refused.failure, ConnectionFailure.unauthorized);
+      expect(refused.statusCode, 401);
+
+      final gone = await attempt(http.Response('nope', 404));
+      expect(gone.failure, ConnectionFailure.notFirefly);
+    });
+
+    test('testConnection reports a refused insecure address', () async {
+      // It used to throw, from a button handler that did not catch, so the one
+      // failure the person could fix immediately was the one that crashed.
       final notifier = AuthNotifier(
         storage: testStorage(),
         debugEnvLoader: _noEnv,
       );
-      try {
-        await notifier.testConnection('http://firefly.test', 'token', false);
-        fail('expected exception');
-      } on Exception catch (e) {
-        expect(e.toString(), contains('Insecure HTTP'));
-      }
+      final result = await notifier.testConnection(
+        'http://firefly.test',
+        'token',
+        false,
+      );
+
+      expect(result.ok, isFalse);
+      expect(result.failure, ConnectionFailure.insecureRefused);
     });
 
     /// Pumps until hydration settles, or gives up so a failure reads as a

@@ -2701,6 +2701,22 @@ class AppLocalizationsSv extends AppLocalizations {
   String get disconnectConfirmTitle => 'Koppla från Firefly III';
 
   @override
+  String get connectionFailedNotFirefly =>
+      'Adressen svarade, men inte med Firefly III:s API. Kontrollera serveradressen: en gränssnittsadress, eller en bakom en inloggningssida, svarar på varje sökväg med en webbsida.';
+
+  @override
+  String get connectionFailedUnauthorized =>
+      'Servern svarade och avvisade token. Kontrollera den personliga åtkomsttoken.';
+
+  @override
+  String get connectionFailedUnreachable =>
+      'Kunde inte nå servern. Kontrollera adressen och att den körs.';
+
+  @override
+  String get connectionFailedInsecure =>
+      'Det är en oskyddad http://-adress. Slå på Tillåt HTTP-anslutningar om det är meningen.';
+
+  @override
   String get disconnectConfirmMessage =>
       'Detta tar bort serveradressen och den personliga åtkomsttoken från enhetens nyckelring. Du måste ange dem igen för att ansluta på nytt.';
 
