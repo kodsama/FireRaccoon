@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
@@ -165,5 +166,52 @@ void main() {
 
     // Only the six that carried a real session reached upstream.
     expect(asked, hasLength(3));
+  });
+
+  test('setup needs the data password, not just first arrival', () async {
+    // Setup cannot require a session: there is nobody to authenticate until it
+    // succeeds. That made first boot a race, and the winner became admin and
+    // inherited the bootstrapped Firefly token.
+    final tmp2 = await Directory.systemTemp.createTemp('fireracoon-setup');
+    addTearDown(() async {
+      if (tmp2.existsSync()) await tmp2.delete(recursive: true);
+    });
+
+    final app = await openTestServer(
+      ServerConfig(
+        mode: FireracoonMode.server,
+        dataDir: tmp2.path,
+        dataPassword: 'Store-Password1!',
+        port: 0,
+        webRoot: tmp2.path,
+      ),
+    );
+
+    Future<Response> attemptSetup(String dataPassword) async {
+      return await app.handler(
+        Request(
+          'POST',
+          Uri.parse('http://localhost/api/setup'),
+          body: jsonEncode({
+            'adminName': 'Whoever',
+            'adminPassword': 'Password1!',
+            'dataPassword': dataPassword,
+            'fireflyUrl': 'https://firefly.example',
+            'fireflyToken': 'ff-token-secret',
+          }),
+          headers: const {'content-type': 'application/json'},
+        ),
+      );
+    }
+
+    // Arriving first is not enough.
+    expect((await attemptSetup('')).statusCode, 403);
+    expect((await attemptSetup('Not-The-Password1!')).statusCode, 403);
+    expect(app.repository.state.people, isEmpty);
+
+    // The operator knows it.
+    final ok = await attemptSetup('Store-Password1!');
+    expect(ok.statusCode, 200);
+    expect(app.repository.state.people, hasLength(1));
   });
 }

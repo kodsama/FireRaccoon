@@ -53,11 +53,16 @@ class RemoteServerClient {
     return _decode(response);
   }
 
+  /// [dataPassword] proves the caller is the operator.
+  ///
+  /// Setup runs before anyone can sign in, so the server has nothing else to go
+  /// on, and without it whoever reached the port first became admin.
   Future<Map<String, dynamic>> setup({
     required String adminName,
     required String adminPassword,
     required String fireflyUrl,
     required String fireflyToken,
+    required String dataPassword,
     bool allowInsecure = false,
   }) async {
     final response = await _http.post(
@@ -66,6 +71,7 @@ class RemoteServerClient {
       body: jsonEncode({
         'adminName': adminName,
         'adminPassword': adminPassword,
+        'dataPassword': dataPassword,
         'fireflyUrl': fireflyUrl,
         'fireflyToken': fireflyToken,
         'allowInsecure': allowInsecure,
