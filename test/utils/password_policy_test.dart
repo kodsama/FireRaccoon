@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -5,7 +7,7 @@ import 'package:fireracoon/utils/password_policy.dart';
 
 void main() {
   group('validatePasswordPolicy', () {
-    test('rejects a password missing every requirement', () {
+    test('rejects a password missing every requirement', () async {
       final result = validatePasswordPolicy('short');
       expect(result.isValid, isFalse);
       expect(result.hasMinLength, isFalse);
@@ -14,7 +16,7 @@ void main() {
       expect(result.hasSpecial, isFalse);
     });
 
-    test('rejects a password missing only a special character', () {
+    test('rejects a password missing only a special character', () async {
       final result = validatePasswordPolicy('LongEnough123');
       expect(result.hasMinLength, isTrue);
       expect(result.hasUpper, isTrue);
@@ -24,65 +26,82 @@ void main() {
       expect(result.isValid, isFalse);
     });
 
-    test('accepts a password meeting every requirement', () {
+    test('accepts a password meeting every requirement', () async {
       final result = validatePasswordPolicy('Correct-Horse9!');
       expect(result.isValid, isTrue);
       expect(result.missingRequirements, isEmpty);
     });
 
-    test('rejects a 9-character password (below the minimum)', () {
+    test('rejects a 9-character password (below the minimum)', () async {
       final result = validatePasswordPolicy('Short9!aa');
       expect(result.hasMinLength, isFalse);
       expect(result.isValid, isFalse);
     });
 
-    test('reports missing uppercase and digit for a URL-like password', () {
-      final result = validatePasswordPolicy('https://racoon.kodsama.com');
-      expect(result.hasMinLength, isTrue);
-      expect(result.hasLower, isTrue);
-      expect(result.hasSpecial, isTrue);
-      expect(result.hasUpper, isFalse);
-      expect(result.hasDigit, isFalse);
-      expect(result.missingRequirements, [
-        PasswordRequirement.upper,
-        PasswordRequirement.digit,
-      ]);
-      expect(result.isValid, isFalse);
-    });
+    test(
+      'reports missing uppercase and digit for a URL-like password',
+      () async {
+        final result = validatePasswordPolicy('https://racoon.kodsama.com');
+        expect(result.hasMinLength, isTrue);
+        expect(result.hasLower, isTrue);
+        expect(result.hasSpecial, isTrue);
+        expect(result.hasUpper, isFalse);
+        expect(result.hasDigit, isFalse);
+        expect(result.missingRequirements, [
+          PasswordRequirement.upper,
+          PasswordRequirement.digit,
+        ]);
+        expect(result.isValid, isFalse);
+      },
+    );
   });
 
   group('hashPassword / verifyPassword', () {
-    test('verifies the correct password', () {
-      final hashed = hashPassword('Correct-Horse9!');
+    test('verifies the correct password', () async {
+      final hashed = await hashPassword('Correct-Horse9!');
       expect(
-        verifyPassword('Correct-Horse9!', hash: hashed.hash, salt: hashed.salt),
+        await verifyPassword(
+          'Correct-Horse9!',
+          hash: hashed.hash,
+          salt: hashed.salt,
+        ),
         isTrue,
       );
     });
 
-    test('rejects an incorrect password', () {
-      final hashed = hashPassword('Correct-Horse9!');
+    test('rejects an incorrect password', () async {
+      final hashed = await hashPassword('Correct-Horse9!');
       expect(
-        verifyPassword('Wrong-Horse9!', hash: hashed.hash, salt: hashed.salt),
+        await verifyPassword(
+          'Wrong-Horse9!',
+          hash: hashed.hash,
+          salt: hashed.salt,
+        ),
         isFalse,
       );
     });
 
-    test('never stores the plaintext password', () {
-      final hashed = hashPassword('Correct-Horse9!');
+    test('never stores the plaintext password', () async {
+      final hashed = await hashPassword('Correct-Horse9!');
       expect(hashed.hash, isNot(contains('Correct-Horse9!')));
     });
 
-    test('produces different salts (and hashes) for the same password', () {
-      final first = hashPassword('Correct-Horse9!');
-      final second = hashPassword('Correct-Horse9!');
-      expect(first.salt, isNot(equals(second.salt)));
-      expect(first.hash, isNot(equals(second.hash)));
-    });
+    test(
+      'produces different salts (and hashes) for the same password',
+      () async {
+        final first = await hashPassword('Correct-Horse9!');
+        final second = await hashPassword('Correct-Horse9!');
+        expect(first.salt, isNot(equals(second.salt)));
+        expect(first.hash, isNot(equals(second.hash)));
+      },
+    );
 
-    test('reproduces the same hash given the same salt', () {
-      final first = hashPassword('Correct-Horse9!');
-      final second = hashPassword('Correct-Horse9!', saltBase64: first.salt);
+    test('reproduces the same hash given the same salt', () async {
+      final first = await hashPassword('Correct-Horse9!');
+      final second = await hashPassword(
+        'Correct-Horse9!',
+        saltBase64: first.salt,
+      );
       expect(second.hash, first.hash);
     });
   });
@@ -126,6 +145,54 @@ void main() {
       // Hits the owns=true path; result depends on network availability.
       final result = await isPasswordPwned('Correct-Horse-Uncommon-9!');
       expect(result, anyOf(isTrue, isFalse, isNull));
+    });
+  });
+
+  group('derivation cost', () {
+    test('a new hash records the count it was derived with', () async {
+      final hashed = await hashPassword('Correct-Horse9!');
+
+      final decoded = decodePasswordHash(hashed.hash);
+      expect(decoded.iterations, kPbkdf2Iterations);
+      expect(passwordHashIsStale(hashed.hash), isFalse);
+    });
+
+    test('a hash with no recorded count still verifies', () async {
+      // Hashes written before the count was stored are a bare digest. Reading
+      // them at today's count would turn every existing password into a wrong
+      // one, which is why raising the count needed this first.
+      final legacyDigest = base64Encode(
+        legacyDeriveForTest('Correct-Horse9!', 'c2FsdHNhbHRzYWx0c2Fs'),
+      );
+
+      expect(
+        await verifyPassword(
+          'Correct-Horse9!',
+          hash: legacyDigest,
+          salt: 'c2FsdHNhbHRzYWx0c2Fs',
+        ),
+        isTrue,
+      );
+      expect(
+        await verifyPassword(
+          'Wrong-Horse9!',
+          hash: legacyDigest,
+          salt: 'c2FsdHNhbHRzYWx0c2Fs',
+        ),
+        isFalse,
+      );
+    });
+
+    test('an old hash is reported as worth rewriting', () async {
+      expect(passwordHashIsStale('bare-legacy-digest'), isTrue);
+      expect(
+        passwordHashIsStale(encodePasswordHash(kLegacyPbkdf2Iterations, 'x')),
+        isTrue,
+      );
+      expect(
+        passwordHashIsStale(encodePasswordHash(kPbkdf2Iterations, 'x')),
+        isFalse,
+      );
     });
   });
 }

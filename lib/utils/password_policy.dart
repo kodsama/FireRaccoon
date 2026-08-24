@@ -3,12 +3,23 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart' show compute, visibleForTesting;
 import 'package:http/http.dart' as http;
 
-/// PBKDF2 iteration count for password hashing. High enough to slow down
-/// offline brute force of a stolen secure-storage blob, low enough to stay
-/// under ~100ms on a phone.
-const int kPbkdf2Iterations = 100000;
+/// PBKDF2 iteration count for new password hashes.
+///
+/// The number an attacker with a stolen store has to pay per guess. OWASP's
+/// figure for PBKDF2-HMAC-SHA256 is 600k, and a count is only worth raising if
+/// raising it does not lock everyone out, which is why [encodePasswordHash]
+/// stores the count it was derived with.
+const int kPbkdf2Iterations = 600000;
+
+/// What a hash with no recorded count was derived at.
+///
+/// Hashes written before the count was stored are a bare base64 digest. They
+/// still verify at the count that produced them, and get rewritten at the
+/// current one the next time the password is set.
+const int kLegacyPbkdf2Iterations = 100000;
 
 const int _kDerivedKeyLength = 32;
 const int _kSaltLength = 16;
@@ -77,30 +88,102 @@ class PasswordHash {
   const PasswordHash({required this.hash, required this.salt});
 }
 
-/// Hashes [password] with PBKDF2-HMAC-SHA256. Generates a fresh random salt
-/// unless [saltBase64] is supplied (used by [verifyPassword]).
-PasswordHash hashPassword(String password, {String? saltBase64}) {
+/// Stored form of a hash, carrying the count it was derived with.
+///
+/// `pbkdf2-sha256$<iterations>$<base64 digest>`. Storing only the digest meant
+/// the count was whatever the constant happened to be when the hash was read,
+/// so raising it would have turned every existing password into a wrong one.
+String encodePasswordHash(int iterations, String digestBase64) =>
+    'pbkdf2-sha256\$$iterations\$$digestBase64';
+
+/// The count and digest inside a stored hash.
+///
+/// A bare base64 string is the older form and reads as
+/// [kLegacyPbkdf2Iterations], which is what produced it.
+({int iterations, String digest}) decodePasswordHash(String stored) {
+  final parts = stored.split(r'$');
+  if (parts.length != 3 || parts.first != 'pbkdf2-sha256') {
+    return (iterations: kLegacyPbkdf2Iterations, digest: stored);
+  }
+  return (
+    iterations: int.tryParse(parts[1]) ?? kLegacyPbkdf2Iterations,
+    digest: parts[2],
+  );
+}
+
+/// Hashes [password] with PBKDF2-HMAC-SHA256 off the calling isolate.
+///
+/// The derivation is a hot loop that takes seconds at this count, so running it
+/// where the UI lives freezes the window for its whole duration. Every caller
+/// already awaits.
+Future<PasswordHash> hashPassword(String password, {String? saltBase64}) async {
   final salt = saltBase64 != null
       ? base64Decode(saltBase64)
       : _randomBytes(_kSaltLength);
-  final derived = _pbkdf2Hmac256(
-    password: utf8.encode(password),
-    salt: salt,
-    iterations: kPbkdf2Iterations,
-    keyLength: _kDerivedKeyLength,
+  final derived = await _deriveOffIsolate(password, salt, kPbkdf2Iterations);
+  return PasswordHash(
+    hash: encodePasswordHash(kPbkdf2Iterations, base64Encode(derived)),
+    salt: base64Encode(salt),
   );
-  return PasswordHash(hash: base64Encode(derived), salt: base64Encode(salt));
 }
 
-/// Recomputes the hash for [password] with the stored [salt] and compares it
-/// to [hash] in constant time.
-bool verifyPassword(
+/// Recomputes the hash for [password] and compares it in constant time.
+///
+/// Derived at the count recorded in [hash], not the current default, so a
+/// password set before the default moved still opens the account.
+Future<bool> verifyPassword(
   String password, {
   required String hash,
   required String salt,
-}) {
-  final candidate = hashPassword(password, saltBase64: salt);
-  return _constantTimeEquals(candidate.hash, hash);
+}) async {
+  final stored = decodePasswordHash(hash);
+  final derived = await _deriveOffIsolate(
+    password,
+    base64Decode(salt),
+    stored.iterations,
+  );
+  return _constantTimeEquals(base64Encode(derived), stored.digest);
+}
+
+/// True when [hash] was derived at fewer rounds than new hashes get.
+///
+/// Lets a successful sign-in rewrite the stored hash at the current count,
+/// which is the only way an old one ever improves.
+bool passwordHashIsStale(String hash) =>
+    decodePasswordHash(hash).iterations < kPbkdf2Iterations;
+
+Future<Uint8List> _deriveOffIsolate(
+  String password,
+  List<int> salt,
+  int iterations,
+) {
+  return compute(_derive, (
+    password: password,
+    salt: Uint8List.fromList(salt),
+    iterations: iterations,
+  ));
+}
+
+/// Derives at the count that produced hashes written before the count was
+/// stored, so a test can build one to verify against.
+@visibleForTesting
+Uint8List legacyDeriveForTest(String password, String saltBase64) {
+  return _pbkdf2Hmac256(
+    password: utf8.encode(password),
+    salt: base64Decode(saltBase64),
+    iterations: kLegacyPbkdf2Iterations,
+    keyLength: _kDerivedKeyLength,
+  );
+}
+
+/// Top-level so it can cross an isolate boundary.
+Uint8List _derive(({String password, Uint8List salt, int iterations}) request) {
+  return _pbkdf2Hmac256(
+    password: utf8.encode(request.password),
+    salt: request.salt,
+    iterations: request.iterations,
+    keyLength: _kDerivedKeyLength,
+  );
 }
 
 Uint8List _randomBytes(int length) {
