@@ -14,6 +14,7 @@ import 'package:fireracoon/widgets/people_settings_section.dart';
 import '../helpers/dialog_test_helpers.dart';
 import '../helpers/fake_biometric_auth.dart';
 import '../helpers/localized_test_app.dart';
+import '../helpers/password_cost.dart';
 import '../helpers/screen_test_app.dart';
 
 List<Override> _peopleOverrides(SharedPreferences prefs) => [
@@ -22,6 +23,7 @@ List<Override> _peopleOverrides(SharedPreferences prefs) => [
     () => PeopleNotifier(
       storage: const FlutterSecureStorage(),
       biometricAuth: FakeBiometricAuth(),
+      pbkdf2Iterations: kTestPbkdf2Iterations,
     ),
   ),
 ];
