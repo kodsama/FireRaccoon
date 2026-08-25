@@ -437,7 +437,7 @@ void main() {
 
   group('a transfer across currencies', () {
     /// The shape Firefly returns: amount in the source's currency,
-    /// foreignAmount in the destination's. 
+    /// foreignAmount in the destination's.
     Transaction crossCurrency() => Transaction(
       id: '1001',
       type: 'transfer',
