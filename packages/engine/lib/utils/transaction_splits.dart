@@ -9,6 +9,19 @@ double transactionTotalAmount(Transaction transaction) {
 }
 
 /// Signed effect of one split line on [accountName].
+/// What the receiving account actually got.
+///
+/// Firefly states `amount` in the source account's currency and `foreignAmount`
+/// in the destination's. Reading a cross-currency transfer from the receiving
+/// side with `amount` reported the sender's number against the receiver's
+/// symbol, so the figure was wrong by whatever the rate happened to be. The
+/// sign still follows `amount`, which is what says which way the money went.
+double _destinationMagnitude(Transaction split) {
+  final foreign = split.foreignAmount;
+  if (foreign != null && foreign != 0) return foreign.abs();
+  return split.amount.abs();
+}
+
 double signedAmountForSplit(Transaction split, String accountName) {
   final magnitude = split.amount.abs();
   final isPositive = split.amount >= 0;
@@ -16,7 +29,10 @@ double signedAmountForSplit(Transaction split, String accountName) {
   final isSource = split.sourceName == accountName;
 
   if (isDestination && isSource) return 0.0;
-  if (isDestination) return isPositive ? magnitude : -magnitude;
+  if (isDestination) {
+    final received = _destinationMagnitude(split);
+    return isPositive ? received : -received;
+  }
   if (isSource) return isPositive ? -magnitude : magnitude;
 
   return switch (split.type) {
@@ -40,7 +56,10 @@ double signedAmountForSplitById(Transaction split, String accountId) {
   final isSource = split.sourceId == accountId;
 
   if (isDestination && isSource) return 0.0;
-  if (isDestination) return isPositive ? magnitude : -magnitude;
+  if (isDestination) {
+    final received = _destinationMagnitude(split);
+    return isPositive ? received : -received;
+  }
   if (isSource) return isPositive ? -magnitude : magnitude;
 
   // A split that names either leg by id has already answered the question:

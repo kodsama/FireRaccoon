@@ -434,4 +434,79 @@ void main() {
       expect(signedAmountForSplit(split, 'Unknown'), 75);
     });
   });
+
+  group('a transfer across currencies', () {
+    /// The shape Firefly returns: amount in the source's currency,
+    /// foreignAmount in the destination's.
+    Transaction crossCurrency() => Transaction(
+      id: '1001',
+      type: 'transfer',
+      date: DateTime(2026, 8, 12),
+      amount: 100,
+      currencyCode: 'EUR',
+      currencySymbol: '\u20ac',
+      foreignAmount: 1090.5,
+      foreignCurrencyCode: 'SEK',
+      foreignCurrencySymbol: 'kr',
+      description: 'Rebalance',
+      sourceName: 'Sender EUR',
+      sourceId: '9100',
+      destinationName: 'Receiver SEK',
+      destinationId: '9101',
+      categoryName: '',
+    );
+
+    test('the sending account shows what it sent', () {
+      expect(signedAmountForSplit(crossCurrency(), 'Sender EUR'), -100);
+      expect(signedAmountForSplitById(crossCurrency(), '9100'), -100);
+    });
+
+    test('the receiving account shows what it received', () {
+      // Not the sender's number. This account gained 1090.5 kr, and reporting
+      // 100 against a kr symbol was wrong by the exchange rate.
+      expect(signedAmountForSplit(crossCurrency(), 'Receiver SEK'), 1090.5);
+      expect(signedAmountForSplitById(crossCurrency(), '9101'), 1090.5);
+    });
+
+    test('a same-currency transfer is unaffected', () {
+      final plain = Transaction(
+        id: '1',
+        type: 'transfer',
+        date: DateTime(2026, 8, 12),
+        amount: 500,
+        description: 'Move',
+        sourceName: 'Wallet',
+        destinationName: 'Savings',
+        categoryName: '',
+        currencySymbol: 'kr',
+        currencyCode: 'SEK',
+      );
+
+      expect(signedAmountForSplit(plain, 'Wallet'), -500);
+      expect(signedAmountForSplit(plain, 'Savings'), 500);
+    });
+
+    test('a reversed cross-currency transfer keeps its direction', () {
+      final refund = Transaction(
+        id: '2',
+        type: 'transfer',
+        date: DateTime(2026, 8, 12),
+        amount: -100,
+        currencyCode: 'EUR',
+        currencySymbol: '\u20ac',
+        foreignAmount: 1090.5,
+        foreignCurrencyCode: 'SEK',
+        foreignCurrencySymbol: 'kr',
+        description: 'Reversed',
+        sourceName: 'Sender EUR',
+        destinationName: 'Receiver SEK',
+        categoryName: '',
+      );
+
+      // A negative amount reverses which side gains, and the receiving side
+      // still speaks in its own currency.
+      expect(signedAmountForSplit(refund, 'Receiver SEK'), -1090.5);
+      expect(signedAmountForSplit(refund, 'Sender EUR'), 100);
+    });
+  });
 }

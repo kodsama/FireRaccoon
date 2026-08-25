@@ -188,9 +188,9 @@ void main() {
           date: DateTime(2026, 7, 22),
           amount: 10000.0,
           description: 'Transfer',
-          sourceId: '10299',
+          sourceId: '9101',
           sourceName: 'Wallet SEK',
-          destinationId: '10278',
+          destinationId: '9102',
           destinationName: 'Personal Current',
           categoryName: '',
           currencySymbol: 'kr',
@@ -220,9 +220,9 @@ void main() {
         date: DateTime(2026, 7, 22),
         amount: 10000.0,
         description: 'Transfer',
-        sourceId: '10299',
+        sourceId: '9101',
         sourceName: 'Wallet SEK',
-        destinationId: '10278',
+        destinationId: '9102',
         destinationName: 'Personal Current',
         categoryName: '',
         currencySymbol: 'kr',
@@ -237,8 +237,8 @@ void main() {
       expect(split['reconciled'], isFalse);
       expect(split['amount'], '10000.00');
       expect(split['currency_code'], 'SEK');
-      expect(split['source_id'], '10299');
-      expect(split['destination_id'], '10278');
+      expect(split['source_id'], '9101');
+      expect(split['destination_id'], '9102');
     });
 
     test(
@@ -250,9 +250,9 @@ void main() {
           date: DateTime(2026, 7, 22),
           amount: 10000.0,
           description: 'Transfer',
-          sourceId: '10299',
+          sourceId: '9101',
           sourceName: 'Wallet SEK',
-          destinationId: '10278',
+          destinationId: '9102',
           destinationName: 'Personal Current',
           categoryName: '',
           currencySymbol: 'kr',
@@ -267,8 +267,8 @@ void main() {
         expect(split['reconciled'], isTrue);
         expect(split['amount'], '10000.00');
         expect(split['currency_code'], 'SEK');
-        expect(split['source_id'], '10299');
-        expect(split['destination_id'], '10278');
+        expect(split['source_id'], '9101');
+        expect(split['destination_id'], '9102');
       },
     );
   });

@@ -136,4 +136,7 @@ Strings are defined in `lib/l10n/app_*.arb` and generated with `flutter gen-l10n
 
 ## HTML design prototype
 
-`fireracoon-standalone.html` is a clickable HTML reference for visual fidelity. It is not production code — see [Design specification](design-spec.md).
+The clickable HTML prototype is no longer in the tree: its sample ledger named
+real banks and accounts. Retrieve it from history if you need it,
+`git show 0.1.2:fireracoon-standalone.html > /tmp/prototype.html`, and read
+[Design specification](design-spec.md) for what it was the reference for.
