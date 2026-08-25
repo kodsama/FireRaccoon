@@ -437,35 +437,35 @@ void main() {
 
   group('a transfer across currencies', () {
     /// The shape Firefly returns: amount in the source's currency,
-    /// foreignAmount in the destination's. Real numbers from a ledger.
+    /// foreignAmount in the destination's.
     Transaction crossCurrency() => Transaction(
-      id: '97193',
+      id: '1001',
       type: 'transfer',
       date: DateTime(2026, 8, 12),
-      amount: 242.82,
+      amount: 100,
       currencyCode: 'EUR',
       currencySymbol: '\u20ac',
-      foreignAmount: 2647.21,
+      foreignAmount: 1090.5,
       foreignCurrencyCode: 'SEK',
       foreignCurrencySymbol: 'kr',
       description: 'Rebalance',
-      sourceName: 'Revolut EUR',
-      sourceId: '10300',
-      destinationName: 'Revolut SEK',
-      destinationId: '10299',
+      sourceName: 'Sender EUR',
+      sourceId: '9100',
+      destinationName: 'Receiver SEK',
+      destinationId: '9101',
       categoryName: '',
     );
 
     test('the sending account shows what it sent', () {
-      expect(signedAmountForSplit(crossCurrency(), 'Revolut EUR'), -242.82);
-      expect(signedAmountForSplitById(crossCurrency(), '10300'), -242.82);
+      expect(signedAmountForSplit(crossCurrency(), 'Sender EUR'), -100);
+      expect(signedAmountForSplitById(crossCurrency(), '9100'), -100);
     });
 
     test('the receiving account shows what it received', () {
-      // Not the sender's number. This account gained 2647.21 kr, and reporting
-      // 242.82 against a kr symbol was wrong by the exchange rate.
-      expect(signedAmountForSplit(crossCurrency(), 'Revolut SEK'), 2647.21);
-      expect(signedAmountForSplitById(crossCurrency(), '10299'), 2647.21);
+      // Not the sender's number. This account gained 1090.5 kr, and reporting
+      // 100 against a kr symbol was wrong by the exchange rate.
+      expect(signedAmountForSplit(crossCurrency(), 'Receiver SEK'), 1090.5);
+      expect(signedAmountForSplitById(crossCurrency(), '9101'), 1090.5);
     });
 
     test('a same-currency transfer is unaffected', () {
@@ -491,22 +491,22 @@ void main() {
         id: '2',
         type: 'transfer',
         date: DateTime(2026, 8, 12),
-        amount: -242.82,
+        amount: -100,
         currencyCode: 'EUR',
         currencySymbol: '\u20ac',
-        foreignAmount: 2647.21,
+        foreignAmount: 1090.5,
         foreignCurrencyCode: 'SEK',
         foreignCurrencySymbol: 'kr',
         description: 'Reversed',
-        sourceName: 'Revolut EUR',
-        destinationName: 'Revolut SEK',
+        sourceName: 'Sender EUR',
+        destinationName: 'Receiver SEK',
         categoryName: '',
       );
 
       // A negative amount reverses which side gains, and the receiving side
       // still speaks in its own currency.
-      expect(signedAmountForSplit(refund, 'Revolut SEK'), -2647.21);
-      expect(signedAmountForSplit(refund, 'Revolut EUR'), 242.82);
+      expect(signedAmountForSplit(refund, 'Receiver SEK'), -1090.5);
+      expect(signedAmountForSplit(refund, 'Sender EUR'), 100);
     });
   });
 }

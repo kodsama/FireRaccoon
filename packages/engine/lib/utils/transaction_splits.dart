@@ -14,9 +14,8 @@ double transactionTotalAmount(Transaction transaction) {
 /// Firefly states `amount` in the source account's currency and `foreignAmount`
 /// in the destination's. Reading a cross-currency transfer from the receiving
 /// side with `amount` reported the sender's number against the receiver's
-/// symbol: 242.82 EUR leaving one account arrived as "242.82 kr" in an account
-/// that gained 2,647.21. The sign still follows `amount`, which is what says
-/// which way the money went.
+/// symbol, so the figure was wrong by whatever the rate happened to be. The
+/// sign still follows `amount`, which is what says which way the money went.
 double _destinationMagnitude(Transaction split) {
   final foreign = split.foreignAmount;
   if (foreign != null && foreign != 0) return foreign.abs();
