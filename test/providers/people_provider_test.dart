@@ -11,8 +11,10 @@ import 'package:fireracoon/providers/locale_provider.dart';
 import 'package:fireracoon/providers/people_providers.dart';
 import 'package:fireracoon/providers/theme_provider.dart';
 import 'package:fireracoon/services/biometric_auth.dart';
+import 'package:fireracoon/utils/password_policy.dart';
 
 import '../helpers/fake_biometric_auth.dart';
+import '../helpers/password_cost.dart';
 
 const String _kStrongPassword = 'Correct-Horse9!';
 const int _kColor = 0xFF3B82F6;
@@ -82,6 +84,7 @@ void main() {
           () => PeopleNotifier(
             storage: const FlutterSecureStorage(),
             biometricAuth: biometrics ?? biometricAuth,
+            pbkdf2Iterations: kTestPbkdf2Iterations,
           ),
         ),
       ],
@@ -417,6 +420,7 @@ void main() {
             () => PeopleNotifier(
               storage: const FlutterSecureStorage(),
               biometricAuth: biometricAuth,
+              pbkdf2Iterations: kTestPbkdf2Iterations,
             ),
           ),
         ],
@@ -850,5 +854,14 @@ void main() {
       expect(unlocked, isNull);
       expect(container.read(peopleProvider).requiresLoginGate, isTrue);
     });
+  });
+
+  test('the default derivation cost is the production one', () {
+    // Every container in this file asks for the cheap count so the suite does
+    // not spend minutes deriving keys. A default that picked that up would hash
+    // real passwords at a thousandth of the intended work, and nothing about
+    // the app would look wrong.
+    expect(PeopleNotifier().pbkdf2Iterations, kPbkdf2Iterations);
+    expect(kTestPbkdf2Iterations, lessThan(kPbkdf2Iterations));
   });
 }
