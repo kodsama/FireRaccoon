@@ -80,6 +80,40 @@ const Duration kCredentialReadTimeout = Duration(seconds: 5);
 /// Loads debug-only fallback credentials (see [loadDebugEnvCredentials]).
 typedef DebugEnvLoader = Future<Map<String, String>> Function();
 
+/// Why a connection test did not succeed.
+///
+/// A bare false told somebody typing a server address that something was wrong
+/// and nothing about what, which is the least useful moment to be vague: the
+/// address, the token and the network all fail the same way from outside.
+enum ConnectionFailure {
+  /// A plain http:// address without the insecure switch on.
+  insecureRefused,
+
+  /// Nothing answered, or not in time.
+  unreachable,
+
+  /// It answered, and refused the token.
+  unauthorized,
+
+  /// It answered with something that is not the Firefly III API, which is what
+  /// a user interface address or a sign-in page does.
+  notFirefly,
+
+  /// It answered with a server error.
+  serverError,
+}
+
+/// The outcome of [AuthNotifier.testConnection].
+class ConnectionTestResult {
+  const ConnectionTestResult.ok() : failure = null, statusCode = null;
+  const ConnectionTestResult.failed(this.failure, {this.statusCode});
+
+  final ConnectionFailure? failure;
+  final int? statusCode;
+
+  bool get ok => failure == null;
+}
+
 class AuthNotifier extends Notifier<AuthSettings> {
   AuthNotifier({
     FlutterSecureStorage? storage,
@@ -306,10 +340,16 @@ class AuthNotifier extends Notifier<AuthSettings> {
     return decoded is Map && decoded['data'] is Map;
   }
 
-  Future<bool> testConnection(String url, String token, bool insecure) async {
+  Future<ConnectionTestResult> testConnection(
+    String url,
+    String token,
+    bool insecure,
+  ) async {
     final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
     if (!insecure && baseUrl.startsWith('http://')) {
-      throw Exception('Insecure HTTP connections are disabled.');
+      return const ConnectionTestResult.failed(
+        ConnectionFailure.insecureRefused,
+      );
     }
     final requestBaseUrl = resolveBackendUrlForHttp(baseUrl);
 
@@ -328,17 +368,33 @@ class AuthNotifier extends Notifier<AuthSettings> {
             )
             .timeout(const Duration(seconds: 10));
         if (response.statusCode == 200) {
-          if (_answeredAsFirefly(response)) return true;
+          if (_answeredAsFirefly(response)) {
+            return const ConnectionTestResult.ok();
+          }
           // A sign-in page is a perfectly successful HTTP response, so a status
           // code on its own called a wrong address a working one. Every later
           // request then failed on HTML that this test had already blessed.
           _log.warning(
             'Connection test got HTTP 200 that was not the Firefly API',
           );
-          return false;
+          return const ConnectionTestResult.failed(
+            ConnectionFailure.notFirefly,
+            statusCode: 200,
+          );
         }
         _log.warning('Connection test returned HTTP ${response.statusCode}');
-        if (response.statusCode < 500) return false;
+        if (response.statusCode == 401 || response.statusCode == 403) {
+          return ConnectionTestResult.failed(
+            ConnectionFailure.unauthorized,
+            statusCode: response.statusCode,
+          );
+        }
+        if (response.statusCode < 500) {
+          return ConnectionTestResult.failed(
+            ConnectionFailure.notFirefly,
+            statusCode: response.statusCode,
+          );
+        }
       } on Object catch (error, stackTrace) {
         _log.warning(
           'Connection test failed (attempt $attempt/2): $error',
@@ -350,7 +406,7 @@ class AuthNotifier extends Notifier<AuthSettings> {
         await Future<void>.delayed(const Duration(milliseconds: 500));
       }
     }
-    return false;
+    return const ConnectionTestResult.failed(ConnectionFailure.unreachable);
   }
 
   Future<void> authenticateOAuth(

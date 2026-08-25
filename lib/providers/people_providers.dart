@@ -160,12 +160,23 @@ class PeopleState {
 }
 
 class PeopleNotifier extends Notifier<PeopleState> {
-  PeopleNotifier({FlutterSecureStorage? storage, BiometricAuth? biometricAuth})
-    : _storage = storage ?? appSecureStorage,
-      _biometricAuth = biometricAuth ?? LocalBiometricAuth();
+  PeopleNotifier({
+    FlutterSecureStorage? storage,
+    BiometricAuth? biometricAuth,
+    this.pbkdf2Iterations = kPbkdf2Iterations,
+  }) : _storage = storage ?? appSecureStorage,
+       _biometricAuth = biometricAuth ?? LocalBiometricAuth();
 
   final FlutterSecureStorage _storage;
   final BiometricAuth _biometricAuth;
+
+  /// Cost of every password this notifier sets.
+  ///
+  /// A test that sets one pays it three times over between adding a person,
+  /// changing the password and logging back in, and at production cost that is
+  /// slow enough to end on the clock rather than on what it asserts. The count
+  /// is recorded in the hash, so verification finds it without being told.
+  final int pbkdf2Iterations;
   final _log = AppLogger.scoped('providers.people');
   late SharedPreferences _prefs;
 
@@ -609,7 +620,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
       if (!validatePasswordPolicy(password).isValid) {
         throw ArgumentError('Password does not meet the policy requirements.');
       }
-      final hashed = await hashPassword(password);
+      final hashed = await hashPassword(password, iterations: pbkdf2Iterations);
       hash = hashed.hash;
       salt = hashed.salt;
     }
@@ -878,7 +889,10 @@ class PeopleNotifier extends Notifier<PeopleState> {
     if (!validatePasswordPolicy(newPassword).isValid) {
       throw ArgumentError('Password does not meet the policy requirements.');
     }
-    final hashed = await hashPassword(newPassword);
+    final hashed = await hashPassword(
+      newPassword,
+      iterations: pbkdf2Iterations,
+    );
     if (_isServerMode) {
       _pendingServerPasswords[personId] = newPassword;
     }
@@ -897,7 +911,7 @@ class PeopleNotifier extends Notifier<PeopleState> {
       (p) => p.id == personId,
       orElse: () => throw ArgumentError('Person not found.'),
     );
-    final hashed = await hashPassword(password);
+    final hashed = await hashPassword(password, iterations: pbkdf2Iterations);
     if (_isServerMode) {
       _pendingServerPasswords[personId] = password;
     }

@@ -2708,6 +2708,22 @@ class AppLocalizationsPt extends AppLocalizations {
   String get disconnectConfirmTitle => 'Desconectar o Firefly III';
 
   @override
+  String get connectionFailedNotFirefly =>
+      'Esse endereço respondeu, mas não com a API do Firefly III. Verifique o URL do servidor: um endereço de interface, ou um atrás de uma página de início de sessão, responde a todos os caminhos com uma página web.';
+
+  @override
+  String get connectionFailedUnauthorized =>
+      'O servidor respondeu e recusou o token. Verifique o token de acesso pessoal.';
+
+  @override
+  String get connectionFailedUnreachable =>
+      'Não foi possível alcançar esse servidor. Verifique o endereço e se está a funcionar.';
+
+  @override
+  String get connectionFailedInsecure =>
+      'Esse é um endereço http:// simples. Ative Permitir ligações HTTP se for intencional.';
+
+  @override
   String get disconnectConfirmMessage =>
       'Isto apaga o URL do servidor e o token de acesso pessoal do porta-chaves deste dispositivo. Terá de os introduzir novamente para reconectar.';
 

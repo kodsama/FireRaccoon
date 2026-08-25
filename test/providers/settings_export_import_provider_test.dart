@@ -89,6 +89,7 @@ void main() {
           () => PeopleNotifier(
             storage: const FlutterSecureStorage(),
             biometricAuth: FakeBiometricAuth(),
+            pbkdf2Iterations: kTestPbkdf2Iterations,
           ),
         ),
       ],
@@ -501,6 +502,7 @@ void main() {
             () => PeopleNotifier(
               storage: const FlutterSecureStorage(),
               biometricAuth: FakeBiometricAuth(),
+              pbkdf2Iterations: kTestPbkdf2Iterations,
             ),
           ),
         ],
