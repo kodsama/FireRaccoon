@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.12] - 2026-08-25
+
+### Added
+
+- A Refresh button on the accounts view and on the dashboard. It had only ever
+  been on the transactions screen, and the providers keep their data for the
+  whole session, so an edit made in Firefly itself could not be picked up
+  anywhere else short of relaunching. Pull-to-refresh does wrap every page, but
+  it wants an overscroll from the top of a scrollable, which a trackpad makes
+  close to undiscoverable
+
+### Fixed
+
+- A connection test that failed said only that it failed, which is the least
+  useful thing to say while somebody is typing an address: a wrong URL, a
+  rejected token and an unreachable host all look the same from outside. It
+  names which of five it was. A refused insecure address is one of those
+  reasons now rather than an exception thrown out of a button handler that does
+  not catch it, so the one failure a person can fix on the spot no longer
+  breaks the dialog
+- A transfer between accounts in different currencies showed the amount that
+  left the source where it should have shown the amount that arrived. Firefly
+  states `amount` in the source account's currency and `foreign_amount` in the
+  destination's, and every signing path read `amount` for both ends, so an
+  account read from the receiving side reported the sending side's figure
+  against its own symbol, wrong by whatever the rate happened to be
+- Test fixtures carried account names, account ids, a journal id and amounts
+  copied out of the ledger they were found in, one of them with a comment
+  saying so. They use neutral values now, and the commits that introduced them
+  were rewritten on `dev`, which leaves every tag and `main` untouched
+- 0.1.11 gave the suites a seam to avoid production key-derivation cost, but it
+  only reached code calling `hashPassword` directly. `PeopleNotifier` hashes
+  inside itself, so every test that set a password still derived at 600k
+  rounds, three times over in a test that adds a person, changes the password
+  and logs back in. It read as flakiness, then timed a test out and blamed a
+  disposed `Ref` the teardown had caused. The notifier takes the count now and
+  the suite went from fourteen and a half minutes with a failure to eleven and
+  a third green
+
+### Removed
+
+- The two HTML design prototypes. They had shipped a sample account list naming
+  real banks since the first public release, and nothing in the build read them.
+  `docs/design-spec.md` and `docs/architecture.md` say how to take them back out
+  of the 0.1.2 tag, where the names do remain: purging those would mean
+  rewriting every commit from the initial release forward and breaking every
+  tag, to undo an exposure that is already public
+
 ## [0.1.11] - 2026-08-24
 
 A security and data-safety release, from an audit of the secret store, the
