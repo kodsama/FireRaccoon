@@ -1,20 +1,30 @@
 # Design specification
 
-Visual and interaction reference for FireRacoon. The Flutter app implements this spec; the HTML prototypes are the pixel source of truth.
+Visual and interaction reference for FireRacoon. The Flutter app implements this spec.
 
-**Interactive prototype:** open [`fireracoon-standalone.html`](../fireracoon-standalone.html) in a browser to explore every screen, theme, and accent.
+**Interactive prototype:** not in the tree any more, because its sample ledger
+named real banks and accounts. To click through it, take it out of history:
+
+```sh
+git show 0.1.2:fireracoon-standalone.html > /tmp/fireracoon-prototype.html
+open /tmp/fireracoon-prototype.html
+```
 
 ---
 
 ## About the design files
 
-The HTML files are a **design reference** — a working, clickable prototype showing the intended look, layout, and behaviour. They are **not production code to copy**. The Flutter app recreates these designs with idiomatic widgets, a theming system, and the Firefly III API client.
+The HTML files were a **design reference**: a working, clickable prototype showing the intended look, layout, and behaviour, never production code to copy. The Flutter app recreates those designs with idiomatic widgets, a theming system, and the Firefly III API client.
 
-- `FireRacoon.dc.html` — the source prototype (all screens + logic).
-- `fireracoon-standalone.html` — the same app bundled into one self-contained file;
-  open it in any browser to click through every screen, toggle dark/light, and try each
-  accent colour. **Use this as your visual source of truth.**
-- `assets/` — the brand fonts (Comfortaa, Roboto Slab) and the app mark.
+Both were removed from the tree at 0.1.12. The sample ledger they shipped with
+carried real bank and account names, and nothing in the build read them. They
+are still in history at the tag above:
+
+- `FireRacoon.dc.html`, the source prototype (all screens plus logic).
+- `fireracoon-standalone.html`, the same app bundled into one self-contained
+  file, which was the visual source of truth.
+- `assets/`, the brand fonts (Comfortaa, Roboto Slab) and the app mark, which
+  are still in the tree.
 
 ## Fidelity
 
