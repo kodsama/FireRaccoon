@@ -7,7 +7,6 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart'
 
 import '../l10n/l10n_extensions.dart';
 import '../models/transaction.dart';
-import '../utils/locale_formatting.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
 import 'transaction_entity_card.dart';
@@ -91,7 +90,7 @@ class _TransactionsExpandedPanelState
   Widget _plannedRow(BuildContext context, PlannedOccurrence planned) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final format = LocaleFormatting(Localizations.localeOf(context));
+    final format = context.format;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 6),
       child: Row(
@@ -199,7 +198,7 @@ class _TransactionsExpandedPanelState
 
   /// The future block: one collapsed heading carrying its own total.
   Widget _futureBlock(BuildContext context, List<Transaction> rows) {
-    final format = LocaleFormatting(Localizations.localeOf(context));
+    final format = context.format;
     final l10n = context.l10n;
     final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final sum = rows.fold<double>(
