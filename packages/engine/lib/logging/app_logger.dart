@@ -1,7 +1,43 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:logging/logging.dart';
+
+/// One retained line, kept so it can be read back inside the app.
+///
+/// Holds the pieces separately rather than one string so a reader can filter by
+/// level without parsing its own output back.
+final class LoggedRecord {
+  const LoggedRecord({
+    required this.time,
+    required this.level,
+    required this.loggerName,
+    required this.message,
+    this.error,
+  });
+
+  final DateTime time;
+  final Level level;
+  final String loggerName;
+
+  /// Already redacted. Nothing unredacted is ever retained.
+  final String message;
+
+  /// The error's type, never the error itself: a thrown object can close over
+  /// anything, including the token that was being sent when it threw.
+  final String? error;
+
+  /// Whether something failed, as opposed to something being worth noting.
+  bool get isFailure => level >= Level.SEVERE;
+
+  @override
+  String toString() {
+    final suffix = error == null ? '' : ' | errorType=$error';
+    return '${time.toIso8601String()} [${level.name}] $loggerName: '
+        '$message$suffix';
+  }
+}
 
 /// Centralized logger for FireRaccoon app and engine packages.
 ///
@@ -14,6 +50,13 @@ final class AppLogger {
   static Level _minLevel = Level.INFO;
   static final Set<String> _secretValues = <String>{};
   static StreamSubscription<LogRecord>? _subscription;
+
+  /// How many records are kept for [recent].
+  ///
+  /// Enough to hold the run-up to a failure rather than the failure alone: the
+  /// request that preceded it is usually what explains it.
+  static const int recentCapacity = 300;
+  static final ListQueue<LoggedRecord> _recent = ListQueue<LoggedRecord>();
 
   /// Configures root logger listeners and filtering.
   static void configure({
@@ -34,6 +77,7 @@ final class AppLogger {
       if (record.level < _minLevel) {
         return;
       }
+      _retain(record);
       final line = formatRecord(record);
       if (sink != null) {
         sink(line);
@@ -47,6 +91,40 @@ final class AppLogger {
 
   /// Creates a namespaced logger under `fireraccoon.<scope>`.
   static Logger scoped(String scope) => Logger('fireraccoon.$scope');
+
+  static void _retain(LogRecord record) {
+    _recent.addLast(
+      LoggedRecord(
+        time: record.time,
+        level: record.level,
+        loggerName: record.loggerName,
+        message: redact(record.message),
+        error: record.error == null ? null : '${record.error.runtimeType}',
+      ),
+    );
+    while (_recent.length > recentCapacity) {
+      _recent.removeFirst();
+    }
+  }
+
+  /// The records kept so far, oldest first.
+  ///
+  /// [atLeast] filters by severity, which is how a reader asks for the
+  /// problems rather than the traffic.
+  static List<LoggedRecord> recent({Level? atLeast}) {
+    if (atLeast == null) return List<LoggedRecord>.unmodifiable(_recent);
+    return List<LoggedRecord>.unmodifiable(
+      _recent.where((record) => record.level >= atLeast),
+    );
+  }
+
+  /// The retained records worth putting in front of somebody.
+  ///
+  /// Saves every caller naming a level, and the `logging` package with it.
+  static List<LoggedRecord> recentProblems() => recent(atLeast: Level.WARNING);
+
+  /// Drops what is retained. The stream is untouched.
+  static void clearRecent() => _recent.clear();
 
   /// Formats records in a single searchable line.
   static String formatRecord(LogRecord record) {
@@ -121,6 +199,7 @@ final class AppLogger {
     _subscription?.cancel();
     _subscription = null;
     _configured = false;
+    _recent.clear();
     _secretValues.clear();
     _minLevel = Level.INFO;
     Logger.root.level = Level.INFO;

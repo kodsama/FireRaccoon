@@ -137,4 +137,58 @@ void main() {
       expect(AppLogger.redact('nothing to hide'), 'nothing to hide');
     });
   });
+
+  group('retained records', () {
+    tearDown(AppLogger.resetForTest);
+
+    test('keeps what was logged, redacted, and filters by level', () {
+      AppLogger.configure(minLevel: Level.INFO, secrets: ['tok-123']);
+
+      AppLogger.scoped('api').info('called with tok-123');
+      AppLogger.scoped('api').severe('refused', StateError('nope'));
+
+      final all = AppLogger.recent();
+      expect(all, hasLength(2));
+      expect(all.first.message, contains('***'));
+      expect(all.first.message, isNot(contains('tok-123')));
+
+      final problems = AppLogger.recent(atLeast: Level.SEVERE);
+      expect(problems, hasLength(1));
+      expect(problems.single.loggerName, 'fireraccoon.api');
+      // The type, never the object: a thrown error can close over a secret.
+      expect(problems.single.error, 'StateError');
+    });
+
+    test('keeps the newest and drops the oldest past capacity', () {
+      AppLogger.configure(minLevel: Level.INFO);
+
+      for (var i = 0; i < AppLogger.recentCapacity + 10; i++) {
+        AppLogger.scoped('bulk').info('line $i');
+      }
+
+      final kept = AppLogger.recent();
+      expect(kept, hasLength(AppLogger.recentCapacity));
+      expect(kept.first.message, 'line 10');
+      expect(kept.last.message, 'line ${AppLogger.recentCapacity + 9}');
+    });
+
+    test('records below the configured level are not kept', () {
+      AppLogger.configure(minLevel: Level.WARNING);
+
+      AppLogger.scoped('api').info('routine');
+      AppLogger.scoped('api').warning('worth keeping');
+
+      expect(AppLogger.recent(), hasLength(1));
+      expect(AppLogger.recent().single.message, 'worth keeping');
+    });
+
+    test('clearRecent drops them', () {
+      AppLogger.configure(minLevel: Level.INFO);
+      AppLogger.scoped('api').info('something');
+      expect(AppLogger.recent(), isNotEmpty);
+
+      AppLogger.clearRecent();
+      expect(AppLogger.recent(), isEmpty);
+    });
+  });
 }
