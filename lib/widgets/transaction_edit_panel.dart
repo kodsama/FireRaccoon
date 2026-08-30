@@ -16,6 +16,7 @@ import '../providers/data_providers.dart';
 import '../providers/suggestion_providers.dart';
 import '../theme/app_theme.dart';
 import '../utils/autocomplete_suggestions.dart';
+import '../utils/locale_formatting.dart';
 import 'autocomplete_text_field.dart';
 import 'budget_create_dialog.dart';
 import 'category_form_dialog.dart';
@@ -405,6 +406,26 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
         _date.minute,
       );
     });
+  }
+
+  /// One date covers the whole transaction, splits included.
+  ///
+  /// It is held once and written to every split, so a split view showed it
+  /// inside the first split's own fields while it silently governed the rest.
+  /// It belongs with the group title, beside the other things that apply to
+  /// all of them.
+  Widget _buildDateField(AppLocalizations l10n, LocaleFormatting format) {
+    return _withTooltip(
+      l10n.tooltipFieldDate,
+      InkWell(
+        onTap: _pickDate,
+        borderRadius: BorderRadius.circular(4),
+        child: InputDecorator(
+          decoration: _fieldDecoration(l10n, l10n.transactionDate),
+          child: Text(format.formatMediumDate(_date)),
+        ),
+      ),
+    );
   }
 
   void _addSplit() {
@@ -999,17 +1020,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       ),
     );
 
-    final dateField = _withTooltip(
-      l10n.tooltipFieldDate,
-      InkWell(
-        onTap: _pickDate,
-        borderRadius: BorderRadius.circular(4),
-        child: InputDecorator(
-          decoration: _fieldDecoration(l10n, l10n.transactionDate),
-          child: Text(format.formatMediumDate(_date)),
-        ),
-      ),
-    );
+    final dateField = _buildDateField(l10n, format);
 
     final optionalFields = <Widget>[
       currencyField,
@@ -1171,7 +1182,10 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
                 ],
               ),
               if (compact) ...[_gapBox(compact: compact), descriptionField],
-              if (index == 0) ...[_gapBox(compact: compact), dateField],
+              if (_splits.length == 1) ...[
+                _gapBox(compact: compact),
+                dateField,
+              ],
             ],
           )
         : Column(
@@ -1194,7 +1208,10 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
               budgetField,
               _gapBox(compact: compact),
               descriptionField,
-              if (index == 0) ...[_gapBox(compact: compact), dateField],
+              if (_splits.length == 1) ...[
+                _gapBox(compact: compact),
+                dateField,
+              ],
             ],
           );
 
@@ -1414,6 +1431,8 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
                       decoration: _fieldDecoration(l10n, l10n.group),
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  _buildDateField(l10n, context.format),
                   const SizedBox(height: 10),
                   _buildSplitTotalBanner(l10n),
                 ],
