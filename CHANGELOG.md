@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-30
+
+### Changed
+
+- The name is spelled FireRaccoon. It had shipped as FireRacoon in the package
+  names, file paths, bundle identifiers, environment variables, stored
+  preference keys and the OAuth callback scheme. Nothing keeps working under the
+  old spelling, so upgrading is not a drop-in
+- Bundle identifiers are `com.fireraccoon` and `com.fireraccoon.app`. macOS, iOS
+  and Android read that as a different application, so an existing install will
+  not upgrade in place and the secure storage written under the old identifier
+  is not visible to the new one
+- The OAuth redirect is `fireraccoon://oauth-callback`. Update the redirect URI
+  on the Firefly III OAuth client before signing in again, or the callback is
+  refused
+- Three Firefly III preference keys were renamed: the people config, the account
+  classifications and the side menu layout. Values saved under the old keys are
+  no longer read and those settings start from their defaults
+- Settings backups exported by an earlier version carry the old app marker and
+  are refused on import
+- `FIRERACCOON_MODE`, `FIRERACCOON_URL`, `FIRERACCOON_API_KEY` and
+  `FIRERACCOON_PORT` replace their old names, as do the `x-fireraccoon-session`
+  header and the `fireraccoon_session` cookie. Compose files and MCP client
+  configs need the new spelling, and open browser sessions are signed out once
+- The published image is `ghcr.io/<owner>/fireraccoon`, a new package rather
+  than a new tag on the old one
+
 ## [0.1.12] - 2026-08-25
 
 ### Added
