@@ -29,6 +29,7 @@ import '../widgets/people_settings_section.dart';
 import '../widgets/settings_backup_section.dart';
 import '../widgets/side_menu_settings_section.dart';
 import '../utils/autocomplete_suggestions.dart';
+import '../utils/locale_formatting.dart';
 
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
@@ -76,6 +77,66 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ),
           );
         }).toList(),
+      ),
+    );
+  }
+
+  /// A date with a two-digit day and a month whose name differs from its
+  /// number, so a sample tells the reader apart 03/04 from 4 March.
+  static final DateTime _sampleDate = DateTime(2026, 3, 4);
+
+  String _formattingLabel(Locale? chosen, {required String sample}) {
+    final tag = chosen == null ? context.l10n.followsLanguage : '$chosen';
+    return '$tag  $sample';
+  }
+
+  /// Picks the locale numbers or dates are written in.
+  ///
+  /// Every option carries what it would produce, because "fr_CA" tells nobody
+  /// where the thousands separator lands, and the whole point of choosing this
+  /// separately from the language is that the reader has a preference about
+  /// exactly that.
+  void _showFormattingPicker(
+    BuildContext context, {
+    required String title,
+    required NotifierProvider<FormattingLocaleNotifier, Locale?> provider,
+    required String Function(LocaleFormatting format) sample,
+  }) {
+    final l10n = context.l10n;
+    final current = ref.read(provider);
+    final interface = ref.read(localeProvider).locale;
+
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => SimpleDialog(
+        title: Text(title),
+        children: [
+          for (final option in <Locale?>[null, ...kFormattingLocales])
+            SimpleDialogOption(
+              onPressed: () {
+                ref.read(provider.notifier).set(option);
+                Navigator.pop(ctx);
+              },
+              child: Row(
+                children: [
+                  if (option?.toString() == current?.toString())
+                    const Icon(Icons.check, size: 18)
+                  else
+                    const SizedBox(width: 18),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      option == null ? l10n.followsLanguage : '$option',
+                    ),
+                  ),
+                  Text(
+                    sample(LocaleFormatting(option ?? interface)),
+                    style: Theme.of(ctx).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -537,6 +598,46 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       l10n.languageDisplayName(appLocale.languageCode),
                     ),
                     onTap: () => _showLanguagePicker(context),
+                  ),
+                ),
+                const Divider(height: 1),
+                Tooltip(
+                  message: l10n.formattingDescription,
+                  child: ListTile(
+                    leading: const Icon(Icons.numbers),
+                    title: Text(l10n.numberFormat),
+                    trailing: Text(
+                      _formattingLabel(
+                        ref.watch(numberLocaleProvider),
+                        sample: context.format.formatNumber(1234.56),
+                      ),
+                    ),
+                    onTap: () => _showFormattingPicker(
+                      context,
+                      title: l10n.selectNumberFormat,
+                      provider: numberLocaleProvider,
+                      sample: (format) => format.formatNumber(1234.56),
+                    ),
+                  ),
+                ),
+                const Divider(height: 1),
+                Tooltip(
+                  message: l10n.formattingDescription,
+                  child: ListTile(
+                    leading: const Icon(Icons.event),
+                    title: Text(l10n.dateFormat),
+                    trailing: Text(
+                      _formattingLabel(
+                        ref.watch(dateLocaleProvider),
+                        sample: context.format.formatMediumDate(_sampleDate),
+                      ),
+                    ),
+                    onTap: () => _showFormattingPicker(
+                      context,
+                      title: l10n.selectDateFormat,
+                      provider: dateLocaleProvider,
+                      sample: (format) => format.formatMediumDate(_sampleDate),
+                    ),
                   ),
                 ),
                 const Divider(height: 1),

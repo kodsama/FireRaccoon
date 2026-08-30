@@ -151,7 +151,7 @@ class _BudgetPeriodFilterButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final format = LocaleFormatting(Localizations.localeOf(context));
+    final format = context.format;
     return PopupMenuButton<ExpensePeriod>(
       onSelected: (period) {
         context.goPreservingSearch(
