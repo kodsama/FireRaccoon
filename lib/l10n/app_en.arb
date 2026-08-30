@@ -1800,6 +1800,7 @@
   "missingInformation": "Missing information",
   "missingDescription": "Please enter a description.",
   "missingAmount": "Please enter an amount.",
+  "missingForeignAmount": "Please enter the foreign amount.",
   "missingAccounts": "Please select both source and destination accounts.",
   "appUsers": "People",
   "enableAppUsers": "Add people",

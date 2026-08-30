@@ -3112,6 +3112,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get missingAmount => '金額を入力してください。';
 
   @override
+  String get missingForeignAmount => 'Please enter the foreign amount.';
+
+  @override
   String get missingAccounts => '送金元口座と送金先口座の両方を選択してください。';
 
   @override

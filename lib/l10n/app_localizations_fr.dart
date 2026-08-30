@@ -3224,6 +3224,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get missingAmount => 'Veuillez saisir un montant.';
 
   @override
+  String get missingForeignAmount => 'Please enter the foreign amount.';
+
+  @override
   String get missingAccounts =>
       'Veuillez sélectionner les comptes source et destination.';
 
