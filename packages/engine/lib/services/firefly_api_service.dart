@@ -173,7 +173,16 @@ class FireflyApiService implements FireflyService {
       final elapsedMs = DateTime.now().difference(startedAt).inMilliseconds;
       _log.fine('Operation success: $operation (${elapsedMs}ms)');
       return result;
-    } on FireflyApiException {
+    } on FireflyApiException catch (error, stackTrace) {
+      // A refusal already carries what Firefly said, but it used to pass
+      // through here unlogged, so the one failure worth a record was the one
+      // the log never mentioned.
+      final elapsedMs = DateTime.now().difference(startedAt).inMilliseconds;
+      _log.severe(
+        'Operation refused: $operation (${elapsedMs}ms)$contextPart',
+        error,
+        stackTrace,
+      );
       rethrow;
     } on Object catch (error, stackTrace) {
       final elapsedMs = DateTime.now().difference(startedAt).inMilliseconds;
@@ -253,12 +262,24 @@ class FireflyApiService implements FireflyService {
     }
     if (decoded is! Map) return null;
     final message = decoded['message'] as String?;
+    // Firefly answers with the same sentence once per candidate field: an
+    // unresolved source account comes back four times over source_id,
+    // source_name, source_iban and source_number. Repeating it four times
+    // buries the one thing it says, so each distinct sentence is reported
+    // once, against the first field that carried it.
+    final seen = <String, String>{};
     final errors = decoded['errors'];
+    if (errors is Map) {
+      for (final entry in errors.entries) {
+        final value = entry.value;
+        final text = value is List && value.isNotEmpty
+            ? '${value.first}'
+            : '$value';
+        seen.putIfAbsent(text, () => '${entry.key}');
+      }
+    }
     final fields = <String>[
-      if (errors is Map)
-        for (final entry in errors.entries)
-          '${entry.key}: '
-              '${entry.value is List && (entry.value as List).isNotEmpty ? (entry.value as List).first : entry.value}',
+      for (final entry in seen.entries) '${entry.value}: ${entry.key}',
     ];
     if (fields.isEmpty) return message;
     return message == null
@@ -1104,7 +1125,10 @@ class FireflyApiService implements FireflyService {
       body: body,
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception('Failed to $method transaction: ${_status(response)}');
+      throw _refusedWrite(
+        response,
+        isUpdate ? 'update transaction' : 'create transaction',
+      );
     }
     final data = jsonDecode(response.body) as Map<String, dynamic>;
     return Transaction.fromJson(data['data'] as Map<String, dynamic>);
