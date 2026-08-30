@@ -2132,6 +2132,71 @@ void main() {
       );
     });
 
+    test('a refused transaction says it once, and is not a network error', () {
+      // Firefly repeats one sentence across every candidate field: an
+      // unresolved source account comes back over source_id, source_name,
+      // source_iban and source_number. All four went to the reader, prefixed
+      // "Network error", for a request Firefly had answered.
+      const refusal =
+          'Could not find a valid source account when searching for ID '
+          '"11553" or name "Akademikernas a-kassa".';
+      final client = MockClient(
+        (_) async => http.Response(
+          jsonEncode({
+            'message': 'The given data was invalid.',
+            'errors': {
+              'transactions.0.source_id': [refusal],
+              'transactions.0.source_name': [refusal],
+              'transactions.0.source_iban': [refusal],
+              'transactions.0.source_number': [refusal],
+            },
+          }),
+          422,
+          headers: {'content-type': 'application/json'},
+        ),
+      );
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+      final transaction = Transaction(
+        id: '88',
+        date: DateTime(2026, 1, 1),
+        amount: 99,
+        description: 'A-kassa',
+        type: 'deposit',
+        sourceName: 'Akademikernas a-kassa',
+        destinationName: 'Wallet',
+        categoryName: '',
+        currencySymbol: '€',
+        currencyCode: 'EUR',
+      );
+
+      return expectLater(
+        service.updateTransaction(transaction),
+        throwsA(
+          isA<FireflyApiException>()
+              .having((e) => e.statusCode, 'statusCode', 422)
+              .having(
+                (e) => refusal.allMatches(e.message).length,
+                'times the sentence appears',
+                1,
+              )
+              .having(
+                (e) => e.fieldErrors.keys.length,
+                'fields Firefly named',
+                4,
+              )
+              .having(
+                (e) => e.toString(),
+                'toString',
+                isNot(contains('Network error')),
+              ),
+        ),
+      );
+    });
+
     test(
       'deleteTransaction supports 204 and 200 and throws otherwise',
       () async {
