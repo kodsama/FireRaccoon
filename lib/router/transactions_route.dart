@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
@@ -54,7 +54,7 @@ class TransactionsRouteFilters {
   String localizedSummary(
     AppLocalizations l10n,
     LocaleFormatting format, {
-    bool isRacoon = false,
+    bool isRaccoon = false,
   }) {
     final parts = <String>[
       if (category != null && category!.isNotEmpty) category!,
@@ -73,7 +73,7 @@ class TransactionsRouteFilters {
       ))
         period.localizedLabel(l10n),
       if (type != TransactionTypeFilter.all)
-        type.localizedLabel(l10n, isRacoon: isRacoon),
+        type.localizedLabel(l10n, isRaccoon: isRaccoon),
       ?account,
     ];
     return parts.join(' · ');

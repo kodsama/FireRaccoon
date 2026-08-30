@@ -14,11 +14,11 @@ import '../crypto/passwords.dart';
 import '../crypto/sealed_store.dart';
 import '../store/state_repository.dart';
 
-const _sessionCookie = 'fireracoon_session';
-const _sessionHeader = 'x-fireracoon-session';
+const _sessionCookie = 'fireraccoon_session';
+const _sessionHeader = 'x-fireraccoon-session';
 const _minDataPasswordLength = 10;
 
-/// Builds and serves the FireRacoon server-mode HTTP API + static web UI.
+/// Builds and serves the FireRaccoon server-mode HTTP API + static web UI.
 ///
 /// When [DATA_PASSWORD] is unset, the process starts **locked** and the UI
 /// collects the password via [POST /api/store/unlock] (create or unlock).
@@ -243,7 +243,7 @@ class AppServer {
       'access-control-allow-credentials': 'true',
       'vary': 'origin',
       'access-control-allow-headers':
-          'authorization, content-type, x-fireracoon-session',
+          'authorization, content-type, x-fireraccoon-session',
       'access-control-allow-methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
       'access-control-expose-headers': 'set-cookie',
     };
@@ -322,7 +322,7 @@ class AppServer {
 
   Future<Response> _configJson(Request request) async {
     return _json({
-      'FIRERACOON_MODE': 'server',
+      'FIRERACCOON_MODE': 'server',
       'mode': 'server',
       ..._storeStatus,
     });

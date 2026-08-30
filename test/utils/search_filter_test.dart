@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/utils/search_filter.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/utils/search_filter.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 void main() {
   group('matchesSearchQuery', () {

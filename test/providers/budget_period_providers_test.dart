@@ -1,6 +1,6 @@
-import 'package:fireracoon/providers/budget_period_providers.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/providers/budget_period_providers.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

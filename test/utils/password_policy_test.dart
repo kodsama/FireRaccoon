@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../helpers/password_cost.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:fireracoon/utils/password_policy.dart';
+import 'package:fireraccoon/utils/password_policy.dart';
 
 void main() {
   group('validatePasswordPolicy', () {
@@ -43,7 +43,7 @@ void main() {
     test(
       'reports missing uppercase and digit for a URL-like password',
       () async {
-        final result = validatePasswordPolicy('https://racoon.kodsama.com');
+        final result = validatePasswordPolicy('https://raccoon.kodsama.com');
         expect(result.hasMinLength, isTrue);
         expect(result.hasLower, isTrue);
         expect(result.hasSpecial, isTrue);

@@ -5,8 +5,8 @@
 #   flutter_distributor package --platform linux --targets appimage,deb,rpm
 #   flutter_distributor package --platform windows --targets exe
 #
-# BINARY_NAME is fireracoon (linux/windows CMakeLists.txt). Display name is
-# FireRacoon. Linux icon/desktop metadata live under packaging/linux/.
+# BINARY_NAME is fireraccoon (linux/windows CMakeLists.txt). Display name is
+# FireRaccoon. Linux icon/desktop metadata live under packaging/linux/.
 
 output: dist/
 releases:

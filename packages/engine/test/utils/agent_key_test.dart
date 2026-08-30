@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/utils/agent_key.dart';
+import 'package:fireraccoon_engine/utils/agent_key.dart';
 import 'package:test/test.dart';
 
 const _person = AgentKeyPerson(id: 'p1', name: 'Ada', role: 'user');

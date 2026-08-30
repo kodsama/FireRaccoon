@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/widgets/selection_check_control.dart';
-import 'package:fireracoon/widgets/transaction_month_header.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/widgets/selection_check_control.dart';
+import 'package:fireraccoon/widgets/transaction_month_header.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../helpers/screen_test_app.dart';
 

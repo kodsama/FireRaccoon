@@ -1,16 +1,16 @@
 import 'dart:convert';
 
-import 'package:fireracoon/deployment/deployment_providers.dart';
-import 'package:fireracoon/store/secure_storage.dart';
-import 'package:fireracoon/deployment/fireracoon_mode.dart';
-import 'package:fireracoon/models/people_models.dart';
-import 'package:fireracoon/providers/agent_keys_provider.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/providers/people_providers.dart';
-import 'package:fireracoon/providers/server_session_provider.dart';
-import 'package:fireracoon/store/agent_key_store.dart';
-import 'package:fireracoon/store/remote_server_client.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/deployment/deployment_providers.dart';
+import 'package:fireraccoon/store/secure_storage.dart';
+import 'package:fireraccoon/deployment/fireraccoon_mode.dart';
+import 'package:fireraccoon/models/people_models.dart';
+import 'package:fireraccoon/providers/agent_keys_provider.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/providers/server_session_provider.dart';
+import 'package:fireraccoon/store/agent_key_store.dart';
+import 'package:fireraccoon/store/remote_server_client.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
@@ -815,7 +815,7 @@ void main() {
         overrides: [
           deploymentConfigProvider.overrideWithValue(
             const DeploymentConfig(
-              mode: FireracoonMode.server,
+              mode: FireraccoonMode.server,
               apiBase: 'http://example.test',
             ),
           ),
@@ -844,7 +844,7 @@ void main() {
         overrides: [
           deploymentConfigProvider.overrideWithValue(
             const DeploymentConfig(
-              mode: FireracoonMode.server,
+              mode: FireraccoonMode.server,
               apiBase: 'http://example.test',
             ),
           ),

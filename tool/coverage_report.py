@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compute FireRacoon coverage buckets from LCOV and optionally enforce mins."""
+"""Compute FireRaccoon coverage buckets from LCOV and optionally enforce mins."""
 
 from __future__ import annotations
 

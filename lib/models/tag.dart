@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/tag.dart';
+export 'package:fireraccoon_engine/models/tag.dart';

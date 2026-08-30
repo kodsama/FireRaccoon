@@ -1,18 +1,18 @@
 openapi: 3.1.0
 info:
-  title: FireRacoon API Surface
+  title: FireRaccoon API Surface
   version: 1.0.0
   description: |
-    Machine-readable contract for FireRacoon agent integrations.
+    Machine-readable contract for FireRaccoon agent integrations.
 
-    FireRacoon is a Flutter client for [Firefly III](https://www.firefly-iii.org/).
+    FireRaccoon is a Flutter client for [Firefly III](https://www.firefly-iii.org/).
     This document describes:
 
-    1. **FireRacoon backend routes** served in server mode by
+    1. **FireRaccoon backend routes** served in server mode by
        `packages/app_backend`: session login, the shared state document, agent
        key management, avatars, and the Firefly proxy.
     2. **Firefly III REST endpoints** consumed by the app and MCP tools.
-    3. **MCP tools** exposed by the built-in `fireracoon_mcp` server (JSON-RPC 2.0
+    3. **MCP tools** exposed by the built-in `fireraccoon_mcp` server (JSON-RPC 2.0
        over stdio or TCP `127.0.0.1:8787+`).
 
     Backend routes answer `503` with `code: store_locked` while the encrypted
@@ -20,7 +20,7 @@ info:
     `/api/capabilities`, `/config.json` and `/api/store/unlock`. Failures use
     `ok: false` with an `error` string; the status carries the meaning.
 
-    Agents authenticate with a FireRacoon agent key, never a Firefly III
+    Agents authenticate with a FireRaccoon agent key, never a Firefly III
     token. A key is issued per agent in Settings under MCP and inherits its
     person's role, so a viewer's key gets read-only tools. In server mode the
     backend holds the Firefly PAT and proxies calls through `/api/firefly`.
@@ -29,8 +29,8 @@ info:
     at least one agent key exist. Standalone usage:
 
     ```bash
-    FIRERACOON_URL=https://fireracoon.example FIRERACOON_API_KEY=frcn_... \
-      dart run packages/mcp/bin/fireracoon_mcp.dart
+    FIRERACCOON_URL=https://fireraccoon.example FIRERACCOON_API_KEY=frcn_... \
+      dart run packages/mcp/bin/fireraccoon_mcp.dart
     ```
 
 servers:
@@ -41,10 +41,10 @@ servers:
       fireflyUrl:
         default: http://localhost:8081
   - &backendServer
-    url: '{fireracoonUrl}'
-    description: FireRacoon backend in server mode, a different origin from Firefly
+    url: '{fireraccoonUrl}'
+    description: FireRaccoon backend in server mode, a different origin from Firefly
     variables:
-      fireracoonUrl:
+      fireraccoonUrl:
         default: http://localhost:8080
 
 security:
@@ -60,13 +60,13 @@ components:
     sessionCookie:
       type: apiKey
       in: cookie
-      name: fireracoon_session
+      name: fireraccoon_session
       description: Session token, set by POST /api/login and POST /api/setup
 
     sessionHeader:
       type: apiKey
       in: header
-      name: x-fireracoon-session
+      name: x-fireraccoon-session
       description: >
         The same session token, for clients that cannot carry cookies. Checked
         before the Authorization header and the cookie.
@@ -80,11 +80,11 @@ components:
       type: http
       scheme: bearer
       description: >
-        A FireRacoon agent key (`frcn_...`). The backend resolves it to the
+        A FireRaccoon agent key (`frcn_...`). The backend resolves it to the
         person it was issued to, so it reaches every route that person's role
         allows, except the two that refuse it on purpose: POST /api/agent-keys
         and GET /api/agent-keys/{keyId}/secret. A key also works in the session
-        cookie or the x-fireracoon-session header, which no single OpenAPI
+        cookie or the x-fireraccoon-session header, which no single OpenAPI
         scheme can express.
 
   schemas:
@@ -308,7 +308,7 @@ paths:
   /api/v1/transactions:
     get:
       operationId: listTransactions
-      summary: List transactions (FireRacoon uses last 365 days)
+      summary: List transactions (FireRaccoon uses last 365 days)
       tags: [Firefly]
       parameters:
         - name: start
@@ -446,7 +446,7 @@ paths:
       responses:
         '200':
           description: >
-            FIRERACOON_MODE and mode, both 'server', plus the same store status
+            FIRERACCOON_MODE and mode, both 'server', plus the same store status
             as /api/capabilities. The web build reads it before deciding whether
             it is talking to a backend or running locally.
 
@@ -509,7 +509,7 @@ paths:
         '200':
           description: >
             ok, the new admin as a Person, and sessionToken. Sets the
-            fireracoon_session cookie, so setup leaves the caller logged in.
+            fireraccoon_session cookie, so setup leaves the caller logged in.
         '400':
           description: Blank name, password under 10 characters, or missing Firefly url or token
         '409':
@@ -537,7 +537,7 @@ paths:
       responses:
         '200':
           description: >
-            ok, the Person, and sessionToken. Also sets the fireracoon_session
+            ok, the Person, and sessionToken. Also sets the fireraccoon_session
             cookie.
         '401':
           description: Invalid credentials, whether the name is unknown or the password is wrong
@@ -1136,16 +1136,16 @@ x-mcp:
   protocolVersion: '2025-06-18'
   transport:
     stdio:
-      command: dart run packages/mcp/bin/fireracoon_mcp.dart
+      command: dart run packages/mcp/bin/fireraccoon_mcp.dart
     tcp:
       host: 127.0.0.1
       port: 8787
       note: Desktop app binds 8787–8796 when running
   auth:
-    credential: FireRacoon agent key
+    credential: FireRaccoon agent key
     env:
-      - FIRERACOON_URL
-      - FIRERACOON_API_KEY
+      - FIRERACCOON_URL
+      - FIRERACCOON_API_KEY
     tcpParam: initialize.params.apiKey
     note: >
       Tools accept no credentials. Firefly III access is fixed when the server
@@ -1612,6 +1612,6 @@ x-mcp:
 
 tags:
   - name: Firefly
-    description: Firefly III REST API subset used by FireRacoon
+    description: Firefly III REST API subset used by FireRaccoon
   - name: Backend
-    description: FireRacoon server-mode API, served by packages/app_backend
+    description: FireRaccoon server-mode API, served by packages/app_backend

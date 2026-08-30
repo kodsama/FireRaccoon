@@ -4,17 +4,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fireracoon/l10n/app_localizations.dart';
-import 'package:fireracoon/models/account.dart';
-import 'package:fireracoon/models/budget.dart';
-import 'package:fireracoon/models/currency.dart';
-import 'package:fireracoon/models/transaction.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/locale_provider.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/screens/dashboard_screen.dart';
-import 'package:fireracoon/theme/app_colors.dart';
-import 'package:fireracoon/theme/app_theme.dart';
+import 'package:fireraccoon/l10n/app_localizations.dart';
+import 'package:fireraccoon/models/account.dart';
+import 'package:fireraccoon/models/budget.dart';
+import 'package:fireraccoon/models/currency.dart';
+import 'package:fireraccoon/models/transaction.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/locale_provider.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/screens/dashboard_screen.dart';
+import 'package:fireraccoon/theme/app_colors.dart';
+import 'package:fireraccoon/theme/app_theme.dart';
 import '../helpers/fixed_accounts_notifier.dart';
 import '../helpers/fixed_transactions_notifier.dart';
 
@@ -76,10 +76,10 @@ final _sampleBudgets = [
 ];
 
 Future<Widget> buildTestApp({
-  bool racoonMode = false,
+  bool raccoonMode = false,
   String initialLocation = '/',
 }) async {
-  SharedPreferences.setMockInitialValues({'isRacoonMode': racoonMode});
+  SharedPreferences.setMockInitialValues({'isRaccoonMode': raccoonMode});
   final prefs = await SharedPreferences.getInstance();
 
   final router = GoRouter(
@@ -182,14 +182,14 @@ void main() {
     expect(find.text('Salary'), findsOneWidget);
   });
 
-  testWidgets('DashboardScreen renders KPIs correctly in Racoon mode', (
+  testWidgets('DashboardScreen renders KPIs correctly in Raccoon mode', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(await buildTestApp(racoonMode: true));
+    await tester.pumpWidget(await buildTestApp(raccoonMode: true));
     await tester.pumpAndSettle();
 
     expect(find.text('Snatched Funds'), findsOneWidget);

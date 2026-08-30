@@ -2,8 +2,8 @@
 # AppId is permanent — never change it after the first public installer.
 app_id: 01DED291-8A09-4A0A-8420-7CB0F8246F97
 publisher_name: Kodsama
-publisher_url: https://github.com/kodsama/FireRacoon
-display_name: FireRacoon
+publisher_url: https://github.com/kodsama/FireRaccoon
+display_name: FireRaccoon
 create_desktop_icon: true
 launch_at_startup: false
 setup_icon_file: windows/runner/resources/app_icon.ico

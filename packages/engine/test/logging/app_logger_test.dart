@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
@@ -19,7 +19,7 @@ void main() {
       final record = LogRecord(
         Level.WARNING,
         'Request failed',
-        'fireracoon.api',
+        'fireraccoon.api',
         'boom',
         StackTrace.current,
       );
@@ -27,7 +27,7 @@ void main() {
       final formatted = AppLogger.formatRecord(record);
 
       expect(formatted, contains('WARNING'));
-      expect(formatted, contains('fireracoon.api'));
+      expect(formatted, contains('fireraccoon.api'));
       expect(formatted, contains('Request failed'));
       expect(formatted, isNot(contains('boom')));
     });

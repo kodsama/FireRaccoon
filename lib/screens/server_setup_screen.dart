@@ -74,7 +74,7 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                 shrinkWrap: true,
                 children: [
                   Text(
-                    'FireRacoon server setup',
+                    'FireRaccoon server setup',
                     style: theme.textTheme.headlineSmall,
                   ),
                   const SizedBox(height: 8),

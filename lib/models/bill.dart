@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/bill.dart';
+export 'package:fireraccoon_engine/models/bill.dart';

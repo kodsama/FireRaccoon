@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -26,7 +26,7 @@ class PiggyBanksScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final piggyBanksAsync = ref.watch(piggyBanksProvider);
 
     final searchQuery =
@@ -376,7 +376,7 @@ class _PiggyBankSearchBoxState extends ConsumerState<_PiggyBankSearchBox> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
 
     return SizedBox(
       width: 220,

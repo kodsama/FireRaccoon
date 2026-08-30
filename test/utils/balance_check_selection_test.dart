@@ -1,5 +1,5 @@
-import 'package:fireracoon/utils/balance_check_selection.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/utils/balance_check_selection.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Transaction _tx({

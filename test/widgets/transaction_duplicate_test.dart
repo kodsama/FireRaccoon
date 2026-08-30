@@ -1,5 +1,5 @@
-import 'package:fireracoon/widgets/transaction_entity_card.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/widgets/transaction_entity_card.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

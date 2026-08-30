@@ -92,7 +92,7 @@ flutter run -d chrome              # Web dev
 flutter run -d macos               # Desktop dev
 flutter build web --release        # Production web (static assets only)
 docker compose up --build          # Full local stack
-docker compose up -d --build --force-recreate fireracoon
+docker compose up -d --build --force-recreate fireraccoon
 # ^ Rebuild after lib/ changes. Compose serves the baked image, not ./build/web.
 ```
 

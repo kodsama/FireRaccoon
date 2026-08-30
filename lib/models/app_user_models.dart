@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-/// Roles for the FireRacoon app-user layer. Firefly III itself stays
-/// single-tenant; these roles only gate FireRacoon's own UI actions.
+/// Roles for the FireRaccoon app-user layer. Firefly III itself stays
+/// single-tenant; these roles only gate FireRaccoon's own UI actions.
 enum AppUserRole {
   admin,
   user,
@@ -75,7 +75,7 @@ class AppUserPreferences {
       Object.hash(themeModeName, funModeName, localeCode, personFilterId);
 }
 
-/// A local FireRacoon app-user account. Everyone shares the same Firefly
+/// A local FireRaccoon app-user account. Everyone shares the same Firefly
 /// III connection; this only controls who can open the app and what they
 /// may do inside it.
 class AppUser {

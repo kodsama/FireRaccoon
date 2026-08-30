@@ -1,4 +1,4 @@
-import 'package:fireracoon/widgets/backup_passphrase_dialog.dart';
+import 'package:fireraccoon/widgets/backup_passphrase_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

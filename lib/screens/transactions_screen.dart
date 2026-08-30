@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
@@ -151,7 +151,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
     required TransactionGroupType type,
     required LocaleFormatting format,
     required AppLocalizations l10n,
-    bool isRacoon = false,
+    bool isRaccoon = false,
     ReconciledFilter reconciledFilter = ReconciledFilter.all,
     Set<TransactionField> missingFields = const {},
     String? sumAccount,
@@ -161,7 +161,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
         identical(cached.allTransactions, allTransactions) &&
         cached.searchQuery == searchQuery &&
         cached.groupType == type &&
-        cached.isRacoon == isRacoon &&
+        cached.isRaccoon == isRaccoon &&
         cached.reconciledFilter == reconciledFilter &&
         _sameFieldSet(cached.missingFields, missingFields) &&
         cached.sumAccount == sumAccount &&
@@ -178,7 +178,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       groupType: type,
       format: format,
       l10n: l10n,
-      isRacoon: isRacoon,
+      isRaccoon: isRaccoon,
       reconciledFilter: reconciledFilter,
       missingFields: missingFields,
       sumAccount: sumAccount,
@@ -188,7 +188,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       activeAccountFilters: activeAccountFilters,
       searchQuery: searchQuery,
       groupType: type,
-      isRacoon: isRacoon,
+      isRaccoon: isRaccoon,
       reconciledFilter: reconciledFilter,
       missingFields: missingFields,
       sumAccount: sumAccount,
@@ -546,7 +546,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = ref.watch(localeFormattingProvider);
     final routeState = GoRouterState.of(context);
     final defaultPeriod = ref.watch(defaultDashboardPeriodProvider);
@@ -720,7 +720,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       type: groupType,
       format: format,
       l10n: l10n,
-      isRacoon: fun.isRacoon,
+      isRaccoon: fun.isRaccoon,
       reconciledFilter: routeFilters.reconciledFilter,
       missingFields: routeFilters.missingFields,
       // Sums are signed from the filtered account's perspective so incoming
@@ -783,7 +783,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
             type: groupType,
             format: format,
             l10n: l10n,
-            isRacoon: fun.isRacoon,
+            isRaccoon: fun.isRaccoon,
             reconciledFilter: ReconciledFilter.all,
             sumAccount: filterAccount,
           ).filteredTransactions;
@@ -825,7 +825,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
 
     final subtitleParts = <String>[
       if (routeFilters.hasScopedFilters)
-        routeFilters.localizedSummary(l10n, format, isRacoon: fun.isRacoon),
+        routeFilters.localizedSummary(l10n, format, isRaccoon: fun.isRaccoon),
       if (filterAccount != null) l10n.filteredBy(filterAccount),
       if (activeAccountFilters.isNotEmpty)
         l10n.filteredBy(activeAccountFilters.map((name) => name).join(', ')),
@@ -1400,7 +1400,7 @@ class _CachedTransactionListGroups {
   final Set<String> activeAccountFilters;
   final String searchQuery;
   final TransactionGroupType groupType;
-  final bool isRacoon;
+  final bool isRaccoon;
   final ReconciledFilter reconciledFilter;
   final Set<TransactionField> missingFields;
   final String? sumAccount;
@@ -1413,7 +1413,7 @@ class _CachedTransactionListGroups {
     required this.activeAccountFilters,
     required this.searchQuery,
     required this.groupType,
-    required this.isRacoon,
+    required this.isRaccoon,
     required this.reconciledFilter,
     required this.missingFields,
     required this.sumAccount,
@@ -1667,7 +1667,7 @@ class _AccountFilterButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final accountsAsync = ref.watch(accountsProvider);
 
     const allAccountsSentinel = '__all__';

@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/utils/dashboard_period.dart';
+import 'package:fireraccoon/utils/dashboard_period.dart';
 
 void main() {
   group('resolveDashboardDateRange', () {

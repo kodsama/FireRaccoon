@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/currency.dart';
+export 'package:fireraccoon_engine/models/currency.dart';

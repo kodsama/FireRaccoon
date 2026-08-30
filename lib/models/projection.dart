@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/projection.dart';
+export 'package:fireraccoon_engine/models/projection.dart';

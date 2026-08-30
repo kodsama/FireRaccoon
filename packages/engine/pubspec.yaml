@@ -1,6 +1,6 @@
-name: fireracoon_engine
+name: fireraccoon_engine
 description: >-
-  Pure Dart core for FireRacoon — Firefly III client, projection engine, and
+  Pure Dart core for FireRaccoon — Firefly III client, projection engine, and
   dashboard analytics. Shared by the Flutter app and the MCP server.
 version: 1.0.0
 publish_to: none

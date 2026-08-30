@@ -113,7 +113,7 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "7.0.1"
-  fireracoon_engine:
+  fireraccoon_engine:
     dependency: "direct main"
     description:
       path: "../engine"

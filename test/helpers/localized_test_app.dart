@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:fireracoon/l10n/app_localizations.dart';
-import 'package:fireracoon/theme/app_colors.dart';
-import 'package:fireracoon/theme/app_theme.dart';
+import 'package:fireraccoon/l10n/app_localizations.dart';
+import 'package:fireraccoon/theme/app_colors.dart';
+import 'package:fireraccoon/theme/app_theme.dart';
 
 Widget buildLocalizedTestApp({required Widget child}) {
   return MaterialApp(

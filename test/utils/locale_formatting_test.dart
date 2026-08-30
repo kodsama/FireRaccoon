@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/utils/locale_formatting.dart';
+import 'package:fireraccoon/utils/locale_formatting.dart';
 
 void main() {
   group('LocaleFormatting', () {

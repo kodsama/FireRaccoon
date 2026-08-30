@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fireracoon_mcp/fireracoon_mcp.dart';
+import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 import 'package:test/test.dart';
 import 'package:yaml/yaml.dart';
 

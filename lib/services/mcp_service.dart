@@ -3,8 +3,8 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon_mcp/fireracoon_mcp.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -19,7 +19,7 @@ typedef IsolateSpawner =
 
 /// Runs the MCP server on localhost TCP in a worker isolate.
 ///
-/// Agents authenticate with a FireRacoon agent key rather than a Firefly token:
+/// Agents authenticate with a FireRaccoon agent key rather than a Firefly token:
 /// the isolate gets a snapshot of the key digests and their people, and every
 /// connection resolves to an account whose role decides whether write tools are
 /// available. Because the snapshot is copied into the isolate, changing keys or
@@ -158,7 +158,7 @@ class McpService extends ChangeNotifier {
           active,
           people,
         ),
-        debugName: 'fireracoon-mcp-server',
+        debugName: 'fireraccoon-mcp-server',
         // A healthy isolate never finishes: the listening socket keeps its event
         // loop alive. So an exit always means it died, and without this the UI
         // would keep advertising a port nothing is bound to.

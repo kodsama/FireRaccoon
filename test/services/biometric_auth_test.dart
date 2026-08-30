@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/services/biometric_auth.dart';
+import 'package:fireraccoon/services/biometric_auth.dart';
 
 import '../helpers/fake_biometric_auth.dart';
 

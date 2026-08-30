@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:logging/logging.dart';
@@ -2709,11 +2709,11 @@ void main() {
         client: client,
       );
 
-      await service.setPreference('fireracoon_people_config', {'a': 1});
+      await service.setPreference('fireraccoon_people_config', {'a': 1});
 
       expect(contentTypes['POST /api/v1/preferences'], 'application/json');
       expect(
-        contentTypes['PUT /api/v1/preferences/fireracoon_people_config'],
+        contentTypes['PUT /api/v1/preferences/fireraccoon_people_config'],
         'application/json',
       );
     });

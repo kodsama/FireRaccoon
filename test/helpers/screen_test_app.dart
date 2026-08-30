@@ -6,16 +6,16 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fireracoon/l10n/app_localizations.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/providers/budget_period_providers.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/locale_provider.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/providers/view_mode_provider.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon/theme/app_colors.dart';
-import 'package:fireracoon/theme/app_theme.dart';
+import 'package:fireraccoon/l10n/app_localizations.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/budget_period_providers.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/locale_provider.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/providers/view_mode_provider.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon/theme/app_colors.dart';
+import 'package:fireraccoon/theme/app_theme.dart';
 import '../helpers/static_auth_notifier.dart';
 import '../helpers/fixed_accounts_notifier.dart';
 import '../helpers/fixed_transactions_notifier.dart';
@@ -29,7 +29,7 @@ Future<Widget> buildScreenTestApp({
   FireflyService? fireflyService,
   ViewMode viewMode = ViewMode.standard,
   AuthSettings? authSettings,
-  Map<String, Object> prefsValues = const {'isRacoonMode': false},
+  Map<String, Object> prefsValues = const {'isRaccoonMode': false},
   List<Override> extraOverrides = const [],
 }) async {
   SharedPreferences.setMockInitialValues({

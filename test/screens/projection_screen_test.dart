@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/providers/view_mode_provider.dart';
-import 'package:fireracoon/screens/projection_screen.dart';
+import 'package:fireraccoon/providers/view_mode_provider.dart';
+import 'package:fireraccoon/screens/projection_screen.dart';
 import '../helpers/screen_test_app.dart';
 
 void main() {

@@ -77,15 +77,15 @@
         "cosmos-stack-main": "Firefly-III"
       }
     },
-    "FireRacoon": {
-      "container_name": "FireRacoon",
-      "image": "ghcr.io/kodsama/fireracoon:latest",
+    "FireRaccoon": {
+      "container_name": "FireRaccoon",
+      "image": "ghcr.io/kodsama/fireraccoon:latest",
       "environment": [
         "TZ=Europe/Stockholm"
       ],
       "labels": {
         "cosmos-auto-update": "true",
-        "cosmos-icon": "https://raw.githubusercontent.com/kodsama/fireracoon/main/assets/fireracoon_logo.png",
+        "cosmos-icon": "https://raw.githubusercontent.com/kodsama/fireraccoon/main/assets/fireraccoon_logo.png",
         "cosmos.stack": "Firefly-III"
       },
       "ports": [],
@@ -95,10 +95,10 @@
       },
       "routes": [
         {
-          "name": "FireRacoon",
-          "description": "FireRacoon web UI",
+          "name": "FireRaccoon",
+          "description": "FireRaccoon web UI",
           "useHost": true,
-          "target": "http://FireRacoon:80",
+          "target": "http://FireRaccoon:80",
           "mode": "SERVAPP",
           "Timeout": 14400000,
           "ThrottlePerMinute": 12000,

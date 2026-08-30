@@ -6,7 +6,7 @@ import 'fun_mode_definition.dart';
 import 'fun_sticker.dart';
 import 'painters/birthday_stickers.dart';
 import 'painters/christmas_stickers.dart';
-import 'painters/racoon_stickers.dart';
+import 'painters/raccoon_stickers.dart';
 
 /// Central catalog of fun modes — add a definition here to ship a new theme.
 class FunModeRegistry {
@@ -14,19 +14,19 @@ class FunModeRegistry {
 
   static const _none = FunModeDefinition(
     mode: FunMode.none,
-    logoAsset: 'assets/fireracoon_logo.png',
+    logoAsset: 'assets/fireraccoon_logo.png',
     stickers: [],
     confettiColors: [],
     celebrateOnEnable: false,
   );
 
-  static const _racoon = FunModeDefinition(
-    mode: FunMode.racoon,
+  static const _raccoon = FunModeDefinition(
+    mode: FunMode.raccoon,
     paletteOverride: ThemePaletteType.raccoon,
-    logoAsset: 'assets/fireracoon_logo.png',
+    logoAsset: 'assets/fireraccoon_logo.png',
     stickers: [
-      FunStickerId.racoonTail,
-      FunStickerId.racoonEyes,
+      FunStickerId.raccoonTail,
+      FunStickerId.raccoonEyes,
       FunStickerId.goldCoin,
       FunStickerId.rainbow,
       FunStickerId.sparkle,
@@ -46,7 +46,7 @@ class FunModeRegistry {
   static const _christmas = FunModeDefinition(
     mode: FunMode.christmas,
     paletteOverride: ThemePaletteType.classic,
-    logoAsset: 'assets/fireracoon_logo.png',
+    logoAsset: 'assets/fireraccoon_logo.png',
     logoOverlay: FunStickerId.santaHat,
     stickers: [
       FunStickerId.santaHat,
@@ -67,7 +67,7 @@ class FunModeRegistry {
   static const _birthday = FunModeDefinition(
     mode: FunMode.birthday,
     paletteOverride: ThemePaletteType.spectrum,
-    logoAsset: 'assets/fireracoon_logo.png',
+    logoAsset: 'assets/fireraccoon_logo.png',
     logoOverlay: FunStickerId.partyHat,
     stickers: [
       FunStickerId.balloon,
@@ -88,7 +88,7 @@ class FunModeRegistry {
 
   static const Map<FunMode, FunModeDefinition> definitions = {
     FunMode.none: _none,
-    FunMode.racoon: _racoon,
+    FunMode.raccoon: _raccoon,
     FunMode.christmas: _christmas,
     FunMode.birthday: _birthday,
   };
@@ -98,7 +98,7 @@ class FunModeRegistry {
 
   static CustomPainter? painterFor(FunStickerId id) {
     final builder =
-        racoonStickerPainters[id] ??
+        raccoonStickerPainters[id] ??
         christmasStickerPainters[id] ??
         birthdayStickerPainters[id];
     return builder?.call();

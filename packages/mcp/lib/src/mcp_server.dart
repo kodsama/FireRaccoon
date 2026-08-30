@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import 'tools.dart';
 
@@ -11,7 +11,7 @@ class McpServer {
   /// Creates a server exposing [tools].
   McpServer({
     required this.tools,
-    this.name = 'fireracoon',
+    this.name = 'fireraccoon',
     this.version = '1.0.0',
     this.protocolVersion = '2025-06-18',
     this.onActivity,
@@ -67,7 +67,7 @@ class McpServer {
           'serverInfo': {'name': name, 'version': version},
           // Tools are shared across connections, so the session's own account
           // is reported here rather than through a tool call.
-          'fireracoon': {
+          'fireraccoon': {
             'account': identity?.toJson(),
             'write_access': identity?.canWrite ?? false,
           },

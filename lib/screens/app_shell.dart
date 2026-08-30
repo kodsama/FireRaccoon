@@ -199,7 +199,7 @@ class _Sidebar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = ref.watch(localeFormattingProvider);
     final String path = GoRouterState.of(context).uri.path;
     final isExpanded = inDrawer || ref.watch(sidebarExpandedProvider);
@@ -796,7 +796,7 @@ class _HeaderState extends ConsumerState<_Header> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final uri = GoRouterState.of(context).uri;
     final String location = uri.toString();
     final query = RouteQuery.searchFrom(uri) ?? '';
