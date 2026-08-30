@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-08-30
+
+### Added
+
+- Numbers and dates can be written in conventions of their own, chosen apart
+  from the language the app is in. One locale used to decide all three, so
+  reading it in English imposed American amounts and American dates on someone
+  who writes neither. Both default to following the language, so nothing moves
+  until the setting is opened, and every option shows what it would produce
+  rather than only naming itself
+
+### Fixed
+
+- The undo history was always empty on the web, so nothing could be undone or
+  redone there and the History page listed nothing. Local history was written
+  through a store whose web implementation drops every write and answers every
+  read with nothing, so it was never saved and never read back. It is kept in
+  local storage there now, and in a file everywhere that has one
+
 ## [0.2.0] - 2026-08-30
 
 ### Added
