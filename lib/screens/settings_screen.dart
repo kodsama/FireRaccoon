@@ -23,6 +23,7 @@ import '../widgets/theme_style_picker.dart';
 import '../widgets/autocomplete_text_field.dart';
 import '../widgets/small_loading_indicator.dart';
 import '../widgets/confirmation_dialog.dart';
+import '../widgets/diagnostics_section.dart';
 import '../widgets/mcp_settings_section.dart';
 import '../widgets/people_settings_section.dart';
 import '../widgets/settings_backup_section.dart';
@@ -894,6 +895,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 16),
           const Card(child: McpSettingsSection()),
         ],
+        const SizedBox(height: 24),
+        Text(
+          l10n.recentProblems,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 16),
+        const Card(child: DiagnosticsSection()),
         ...ref
             .watch(packageInfoProvider)
             .when(
