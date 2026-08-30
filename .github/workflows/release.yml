@@ -561,6 +561,26 @@ jobs:
             echo 'RELEASE_EOF'
           } >> "$GITHUB_OUTPUT"
 
+      # Flutter names its Android output and its symbol files after the Gradle
+      # module, so a release carried app-release.apk and app.ios-arm64.symbols:
+      # nothing on the page said which app they belonged to. Renamed here, at
+      # the one point every platform's artifacts are in the same place, so a
+      # new target is covered without touching its own job.
+      - name: Name the artifacts after the app
+        run: |
+          find artifacts -type f -name 'app*' -print0 |
+            while IFS= read -r -d '' path; do
+              base=$(basename "$path")
+              case "$base" in
+                app-release.apk) new='FireRaccoon-android.apk' ;;
+                app-release.aab) new='FireRaccoon-android.aab' ;;
+                app.*) new="FireRaccoon-${base#app.}" ;;
+                *) continue ;;
+              esac
+              mv "$path" "$(dirname "$path")/$new"
+              echo "$base -> $new"
+            done
+
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
