@@ -3107,6 +3107,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get missingAmount => '请输入金额。';
 
   @override
+  String get missingForeignAmount => 'Please enter the foreign amount.';
+
+  @override
   String get missingAccounts => '请同时选择来源账户和目标账户。';
 
   @override
