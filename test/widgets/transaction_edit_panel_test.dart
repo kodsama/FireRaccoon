@@ -620,4 +620,117 @@ void main() {
     expect(saved, isNotNull);
     expect(saved!.foreignAmount, isNull);
   });
+
+  testWidgets('a deposit source resolves to the revenue twin', (tester) async {
+    // Firefly keeps an expense and a revenue account under one name for the
+    // same counterparty. Matching on name alone returned whichever came first,
+    // so a deposit could be saved with the expense twin's id and Firefly
+    // refused the whole write: "Could not find a valid source account when
+    // searching for ID ... or name ...", repeated once per candidate field.
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final asset = Account(
+      id: '1',
+      name: 'Revolut EUR',
+      type: 'asset',
+      role: 'defaultAsset',
+      currentBalance: 500,
+      currencySymbol: '\u20AC',
+      currencyCode: 'EUR',
+    );
+    final expenseTwin = Account(
+      id: '11553',
+      name: 'Akademikernas a-kassa',
+      type: 'expense',
+      role: 'defaultAsset',
+      currentBalance: 0,
+      currencySymbol: '\u20AC',
+      currencyCode: 'EUR',
+    );
+    final revenueTwin = Account(
+      id: '20001',
+      name: 'Akademikernas a-kassa',
+      type: 'revenue',
+      role: 'defaultAsset',
+      currentBalance: 0,
+      currencySymbol: '\u20AC',
+      currencyCode: 'EUR',
+    );
+
+    final deposit = Transaction(
+      id: '900',
+      type: 'deposit',
+      date: DateTime(2026, 8, 30),
+      amount: 1200,
+      description: 'A-kassa',
+      sourceName: revenueTwin.name,
+      destinationName: asset.name,
+      categoryName: '',
+      currencySymbol: '\u20AC',
+      currencyCode: 'EUR',
+    );
+
+    Transaction? saved;
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        fireflyService: FakeFireflyService(
+          accounts: [asset, expenseTwin, revenueTwin],
+        ),
+        extraOverrides: [
+          accountsProvider.overrideWith(() => FixedAccountsNotifier([asset])),
+          // Expense first, so a name-only match reaches for the wrong one.
+          counterpartyAccountsProvider.overrideWith(
+            (ref) => [expenseTwin, revenueTwin],
+          ),
+        ],
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: deposit,
+              onCancel: () {},
+              onSave: (result) async => saved = result,
+            ),
+          ),
+        ),
+      ),
+    );
+    await pumpScreen(tester);
+
+    await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    expect(saved, isNotNull);
+    expect(saved!.sourceId, '20001');
+  });
+
+  testWidgets('a split shows one date, with the group fields', (tester) async {
+    // The date is held once and written to every split, so showing it inside
+    // the first split's fields read as though it belonged to that split alone
+    // while it quietly governed the rest.
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: splitTransaction(),
+              onCancel: () {},
+              onSave: (_) async {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Date'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Date')).dy,
+      lessThan(tester.getTopLeft(find.text('Split 1')).dy),
+    );
+  });
 }

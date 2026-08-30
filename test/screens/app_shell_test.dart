@@ -244,4 +244,23 @@ void main() {
     expect(find.text('Accounts Content'), findsOneWidget);
     expect(find.text('Accounts'), findsNothing);
   });
+
+  testWidgets('the header clears the status bar', (tester) async {
+    // The shell draws its own header instead of an AppBar, and a Scaffold body
+    // fills the window, so on a phone the menu, the search and the people
+    // selector sat underneath the status bar and the system took their taps.
+    tester.view.physicalSize = const Size(500, 900);
+    tester.view.devicePixelRatio = 1.0;
+    tester.view.padding = const FakeViewPadding(top: 48);
+    tester.view.viewPadding = const FakeViewPadding(top: 48);
+    addTearDown(tester.view.reset);
+
+    await tester.pumpWidget(await buildTestApp());
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getTopLeft(find.byIcon(LucideIcons.menu)).dy,
+      greaterThanOrEqualTo(48.0),
+    );
+  });
 }
