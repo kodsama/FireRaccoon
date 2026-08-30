@@ -1,4 +1,5 @@
 import 'package:fireraccoon/utils/app_feedback.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -196,5 +197,44 @@ void main() {
     await tester.pump();
 
     expect(find.byType(SelectableText), findsOneWidget);
+  });
+
+  group('reporting a failure', () {
+    setUp(AppLogger.configure);
+    tearDown(AppLogger.resetForTest);
+
+    test('a refusal is read for what Firefly said, not the wrapper', () {
+      final refused = FireflyApiException(
+        'Could not find a valid source account.',
+        operation: 'update transaction',
+        statusCode: 422,
+      );
+
+      expect(readableError(refused), 'Could not find a valid source account.');
+      expect(readableError(refused), isNot(contains('update transaction')));
+      expect(readableError(StateError('plain')), contains('plain'));
+    });
+
+    testWidgets('shows the failure and keeps a copy of it', (tester) async {
+      await _pumpHost(
+        tester,
+        onPressed: (c) => reportError(
+          c,
+          'Failed to save transaction: nope',
+          error: StateError('nope'),
+        ),
+      );
+
+      await tester.tap(find.text('go'));
+      await tester.pump();
+
+      expect(find.text('Failed to save transaction: nope'), findsOneWidget);
+
+      final kept = AppLogger.recentProblems();
+      expect(kept, hasLength(1));
+      expect(kept.single.message, 'Failed to save transaction: nope');
+      expect(kept.single.error, 'StateError');
+      expect(kept.single.isFailure, isTrue);
+    });
   });
 }

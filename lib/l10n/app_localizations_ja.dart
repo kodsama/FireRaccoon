@@ -3112,6 +3112,27 @@ class AppLocalizationsJa extends AppLocalizations {
   String get missingAmount => '金額を入力してください。';
 
   @override
+  String get recentProblems => 'Recent problems';
+
+  @override
+  String get recentProblemsDescription =>
+      'What has failed since this app started, newest last. Nothing here leaves the device until you copy it.';
+
+  @override
+  String get noRecentProblems => 'Nothing has failed since this app started.';
+
+  @override
+  String get copyProblems => 'Copy';
+
+  @override
+  String get clearProblems => 'Clear';
+
+  @override
+  String problemsCopied(int count) {
+    return 'Copied $count lines.';
+  }
+
+  @override
   String get missingForeignAmount => 'Please enter the foreign amount.';
 
   @override

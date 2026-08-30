@@ -5818,6 +5818,42 @@ abstract class AppLocalizations {
   /// **'Please enter an amount.'**
   String get missingAmount;
 
+  /// No description provided for @recentProblems.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent problems'**
+  String get recentProblems;
+
+  /// No description provided for @recentProblemsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'What has failed since this app started, newest last. Nothing here leaves the device until you copy it.'**
+  String get recentProblemsDescription;
+
+  /// No description provided for @noRecentProblems.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing has failed since this app started.'**
+  String get noRecentProblems;
+
+  /// No description provided for @copyProblems.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copyProblems;
+
+  /// No description provided for @clearProblems.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearProblems;
+
+  /// No description provided for @problemsCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied {count} lines.'**
+  String problemsCopied(int count);
+
   /// No description provided for @missingForeignAmount.
   ///
   /// In en, this message translates to:
