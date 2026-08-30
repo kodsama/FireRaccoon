@@ -228,7 +228,7 @@ class __EntityLinkingDialogState extends ConsumerState<_EntityLinkingDialog> {
               input = _buildRecurrenceInput(rec, budgetId: _selectedTargetId);
               break;
           }
-          await service.updateRecurrence(rec.id, input);
+          await service.updateRecurrence(rec.id, input, current: rec);
           recUpdatedCount++;
         }
       }

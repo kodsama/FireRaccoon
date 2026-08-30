@@ -5818,6 +5818,12 @@ abstract class AppLocalizations {
   /// **'Please enter an amount.'**
   String get missingAmount;
 
+  /// No description provided for @missingForeignAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter the foreign amount.'**
+  String get missingForeignAmount;
+
   /// No description provided for @missingAccounts.
   ///
   /// In en, this message translates to:

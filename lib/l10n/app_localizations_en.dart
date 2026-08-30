@@ -3198,6 +3198,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get missingAmount => 'Please enter an amount.';
 
   @override
+  String get missingForeignAmount => 'Please enter the foreign amount.';
+
+  @override
   String get missingAccounts =>
       'Please select both source and destination accounts.';
 
