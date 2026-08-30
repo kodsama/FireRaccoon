@@ -3198,6 +3198,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get missingAmount => 'Please enter an amount.';
 
   @override
+  String get numberFormat => 'Number format';
+
+  @override
+  String get dateFormat => 'Date format';
+
+  @override
+  String get followsLanguage => 'Follows the language';
+
+  @override
+  String get formattingDescription =>
+      'How amounts and dates are written, which is a separate choice from the language the app is in.';
+
+  @override
+  String get selectNumberFormat => 'Number format';
+
+  @override
+  String get selectDateFormat => 'Date format';
+
+  @override
   String get recentProblems => 'Recent problems';
 
   @override

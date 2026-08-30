@@ -2,6 +2,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
@@ -21,6 +22,10 @@ import 'theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _configureLogging();
+  // Dates can be written in a locale the interface is not translated into, and
+  // flutter_localizations only loads symbols for the languages it ships. Asking
+  // DateFormat for one it has never seen throws, so they are all loaded here.
+  await initializeDateFormatting();
   final prefs = await SharedPreferences.getInstance();
   final deployment = await loadDeploymentConfig();
   // One keychain trip before anything hydrates. Each provider reads its own

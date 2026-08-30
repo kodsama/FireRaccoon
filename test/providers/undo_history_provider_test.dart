@@ -950,6 +950,61 @@ void main() {
     expect(settings.mode, PrognosisViewMode.expected);
     expect(fake.updateTransactionCalls, 0);
   });
+
+  group('where local history is kept', () {
+    test('the web keeps it in preferences, which survive a reload', () async {
+      // The JSON store's web implementation answers every read with null and
+      // drops every write, so on the web the history existed only until the
+      // tab was reloaded. Preferences are backed by local storage there.
+      final prefs = await SharedPreferences.getInstance();
+      final store = PrefsUndoHistoryStore(prefs);
+
+      expect(await store.read(), isNull);
+      await store.write('{"entries":[]}');
+      expect(await store.read(), '{"entries":[]}');
+    });
+
+    test('a written history is read back by the next run', () async {
+      final prefs = await SharedPreferences.getInstance();
+
+      Future<ProviderContainer> containerOnPrefs() async {
+        final container = ProviderContainer(
+          overrides: [
+            sharedPreferencesProvider.overrideWithValue(prefs),
+            undoHistoryStoreProvider.overrideWithValue(
+              PrefsUndoHistoryStore(prefs),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        return container;
+      }
+
+      final first = await containerOnPrefs();
+      final firstSub = first.listen(undoHistoryProvider, (_, _) {});
+      addTearDown(firstSub.close);
+      await waitHydrated(first);
+      first
+          .read(undoHistoryProvider.notifier)
+          .record(
+            title: 'Theme changed',
+            details: 'light -> dark',
+            type: UndoActionType.themeMode,
+            undoPayload: const {'themeMode': 'light'},
+            redoPayload: const {'themeMode': 'dark'},
+          );
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      // A second container stands in for the next run of the app.
+      final second = await containerOnPrefs();
+      final secondSub = second.listen(undoHistoryProvider, (_, _) {});
+      addTearDown(secondSub.close);
+      final restored = await waitHydrated(second);
+
+      expect(restored.entries.map((e) => e.title), ['Theme changed']);
+      expect(restored.canUndo, isTrue);
+    });
+  });
 }
 
 Map<String, Object?> _txPayload({String id = '', double amount = 10}) => {

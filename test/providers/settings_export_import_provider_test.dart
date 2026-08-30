@@ -129,6 +129,12 @@ void main() {
         .read(localeProvider.notifier)
         .setLocale(AppLocale.fromCode('ja'));
     await container
+        .read(numberLocaleProvider.notifier)
+        .set(const Locale('fr', 'FR'));
+    await container
+        .read(dateLocaleProvider.notifier)
+        .set(const Locale('en', 'US'));
+    await container
         .read(defaultDashboardPeriodProvider.notifier)
         .setPeriod(DashboardPeriod.thisYear);
     await container.read(transactionPageSizeProvider.notifier).setPageSize(50);
@@ -159,6 +165,9 @@ void main() {
     expect(bundle.schemaVersion, kSettingsBundleSchemaVersion);
     expect(bundle.device['themeMode'], 'dark');
     expect(bundle.device['locale'], 'ja');
+    // Chosen apart from the language, so they travel apart from it too.
+    expect(bundle.device['numberLocale'], 'fr_FR');
+    expect(bundle.device['dateLocale'], 'en_US');
     expect(bundle.device['defaultDashboardPeriod'], 'thisYear');
     expect(bundle.device['transactionPageSize'], isA<int>());
     expect(bundle.device['recurrenceWriteAheadDays'], isA<int>());
@@ -283,6 +292,8 @@ void main() {
     expect(state.config.accountOwnerships.containsKey('acc_x'), isTrue);
     expect(state.requirePasswordLogin, isFalse);
     expect(container.read(localeProvider).languageCode, 'ja');
+    expect(container.read(numberLocaleProvider), isNull);
+    expect(container.read(dateLocaleProvider), isNull);
     expect(container.read(themeProvider).themeMode, ThemeMode.dark);
     expect(container.read(transactionPageSizeProvider), isA<int>());
     expect(container.read(writeAheadDaysProvider), isA<int>());
