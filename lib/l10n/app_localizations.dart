@@ -5818,6 +5818,42 @@ abstract class AppLocalizations {
   /// **'Please enter an amount.'**
   String get missingAmount;
 
+  /// No description provided for @numberFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Number format'**
+  String get numberFormat;
+
+  /// No description provided for @dateFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Date format'**
+  String get dateFormat;
+
+  /// No description provided for @followsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Follows the language'**
+  String get followsLanguage;
+
+  /// No description provided for @formattingDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'How amounts and dates are written, which is a separate choice from the language the app is in.'**
+  String get formattingDescription;
+
+  /// No description provided for @selectNumberFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Number format'**
+  String get selectNumberFormat;
+
+  /// No description provided for @selectDateFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Date format'**
+  String get selectDateFormat;
+
   /// No description provided for @recentProblems.
   ///
   /// In en, this message translates to:

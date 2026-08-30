@@ -40,6 +40,8 @@ class SettingsExportImport {
   Future<SettingsBundle> buildBundle() async {
     final theme = _ref.read(themeProvider);
     final locale = _ref.read(localeProvider);
+    final numberLocale = _ref.read(numberLocaleProvider);
+    final dateLocale = _ref.read(dateLocaleProvider);
     final peopleState = _ref.read(peopleProvider);
     final classifications = _ref.read(accountClassificationProvider);
     final sideMenu = _ref.read(sideMenuConfigProvider);
@@ -97,6 +99,10 @@ class SettingsExportImport {
         'accentType': theme.accentType.name,
         'funMode': theme.funMode.name,
         'locale': locale.languageCode,
+        // Absent means "follows the language", which is what a bundle written
+        // by a version that had no such setting also means.
+        if (numberLocale != null) 'numberLocale': formatLocaleTag(numberLocale),
+        if (dateLocale != null) 'dateLocale': formatLocaleTag(dateLocale),
         'defaultDashboardPeriod': defaultPeriod,
         'transactionPageSize': transactionPageSize,
         'recurrenceWriteAheadDays': writeAheadDays,
@@ -216,6 +222,13 @@ class SettingsExportImport {
           .read(localeProvider.notifier)
           .setLocale(AppLocale.fromCode(localeCode));
     }
+
+    await _ref
+        .read(numberLocaleProvider.notifier)
+        .set(parseLocaleTag(device['numberLocale'] as String?));
+    await _ref
+        .read(dateLocaleProvider.notifier)
+        .set(parseLocaleTag(device['dateLocale'] as String?));
 
     final periodName = device['defaultDashboardPeriod'] as String?;
     if (periodName != null) {
