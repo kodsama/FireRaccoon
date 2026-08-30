@@ -295,6 +295,25 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
     return involved.any((code) => code != split.currencyCode);
   }
 
+  /// Resolves a typed account name to the account this end can actually be.
+  ///
+  /// Firefly keeps an expense account and a revenue account under the same name
+  /// for the same counterparty, so matching on name alone can return the twin
+  /// that is not valid here: a deposit whose source resolved to the expense
+  /// side came back "Could not find a valid source account when searching for
+  /// ID ... or name ...", once per candidate field, and nothing was saved. The
+  /// list the field itself offers is searched first, since that is already
+  /// filtered to the types this end accepts.
+  Account? _resolveAccount(
+    List<Account> accounts,
+    List<Account> allAccounts,
+    String? name, {
+    required bool isSource,
+  }) {
+    return _accountByName(_accountsForField(accounts, isSource), name) ??
+        _accountByName(allAccounts, name);
+  }
+
   List<Account> _accountsForField(
     List<Account> accounts,
     bool isSource, {
@@ -449,8 +468,18 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       final counterparties =
           ref.watch(counterpartyAccountsProvider).value ?? const <Account>[];
       final allAccounts = [...accounts, ...counterparties];
-      final source = _accountByName(allAccounts, draft.sourceName);
-      final destination = _accountByName(allAccounts, draft.destinationName);
+      final source = _resolveAccount(
+        accounts,
+        allAccounts,
+        draft.sourceName,
+        isSource: true,
+      );
+      final destination = _resolveAccount(
+        accounts,
+        allAccounts,
+        draft.destinationName,
+        isSource: false,
+      );
       final categoryName = draft.categoryController.text.trim();
       final category = categories
           .where((c) => c.name.toLowerCase() == categoryName.toLowerCase())
