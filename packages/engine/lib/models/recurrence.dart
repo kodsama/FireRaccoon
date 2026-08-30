@@ -313,6 +313,17 @@ class RecurrenceRepetitionInput {
     };
   }
 
+  /// Whether this describes the schedule [other] already has.
+  ///
+  /// The id and the server-rendered description are left out: they are Firefly's
+  /// to set, and an input never carries them.
+  bool matches(RecurrenceRepetition other) {
+    return type == other.type &&
+        moment == other.moment &&
+        skip == other.skip &&
+        weekend == other.weekend;
+  }
+
   static String momentForDate(RecurrenceRepetitionType type, DateTime date) {
     return switch (type) {
       RecurrenceRepetitionType.daily => '',
@@ -361,7 +372,13 @@ class RecurrenceInput {
     required this.transactions,
   });
 
-  Map<String, dynamic> toJson({required bool isUpdate}) {
+  /// [includeRepetitions] leaves the schedule off the body when nobody edited
+  /// it, which is the only way to update a rule Firefly will not revalidate.
+  /// See `FireflyApiService.updateRecurrence` for why that matters.
+  Map<String, dynamic> toJson({
+    required bool isUpdate,
+    bool includeRepetitions = true,
+  }) {
     final body = <String, dynamic>{
       'title': title,
       'first_date': RecurrenceRepetitionInput._formatDate(firstDate),
@@ -370,15 +387,13 @@ class RecurrenceInput {
           : RecurrenceRepetitionInput._formatDate(repeatUntil!),
       'apply_rules': applyRules,
       'active': active,
-      // Firefly decides what a valid source and destination are, and how far a
-      // repetition's moment may run, from the type on the request. Leaving it
-      // off an update made it read a transfer as a withdrawal: the asset
-      // account on the receiving end came back "could not find a valid
-      // destination account", and a monthly rule falling after the 10th came
-      // back "moment may not be greater than 10". The same body with the type
-      // on it is accepted, so it goes on both.
+      // Firefly decides what a valid source and destination are from the type
+      // on the request. Leaving it off an update made it read a transfer as a
+      // withdrawal, and the asset account on the receiving end came back "could
+      // not find a valid destination account", so it goes on both.
       'type': type.apiValue,
-      'repetitions': repetitions.map((r) => r.toJson()).toList(),
+      if (includeRepetitions)
+        'repetitions': repetitions.map((r) => r.toJson()).toList(),
       'transactions': transactions
           .map((t) => t.toJson(isUpdate: isUpdate))
           .toList(),

@@ -3199,6 +3199,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String get missingAmount => 'Ange ett belopp.';
 
   @override
+  String get missingForeignAmount => 'Please enter the foreign amount.';
+
+  @override
   String get missingAccounts => 'Välj både käll- och destinationskonto.';
 
   @override
