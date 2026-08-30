@@ -1,8 +1,8 @@
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/paginated_transactions_provider.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/providers/transaction_list_refresh.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/paginated_transactions_provider.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/providers/transaction_list_refresh.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

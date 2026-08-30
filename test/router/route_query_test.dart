@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/router/route_query.dart';
+import 'package:fireraccoon/router/route_query.dart';
 
 void main() {
   group('RouteQuery search', () {

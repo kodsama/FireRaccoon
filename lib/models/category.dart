@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/category.dart';
+export 'package:fireraccoon_engine/models/category.dart';

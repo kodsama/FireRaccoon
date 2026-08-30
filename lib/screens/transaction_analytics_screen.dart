@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../providers/default_period_provider.dart';
@@ -40,7 +40,7 @@ class TransactionAnalyticsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = ref.watch(localeFormattingProvider);
     final defaultPeriod = ref.watch(defaultDashboardPeriodProvider);
     final filters = route.filtersFrom(
@@ -67,7 +67,7 @@ class TransactionAnalyticsScreen extends ConsumerWidget {
           children: [
             EntityScreenHeader(
               title: title,
-              subtitle: _filterSummary(l10n, format, filters, fun.isRacoon),
+              subtitle: _filterSummary(l10n, format, filters, fun.isRaccoon),
               createLabel: addButtonLabel,
               onCreate: onAdd == null ? null : () => onAdd!(context, ref),
               trailing: [
@@ -92,7 +92,7 @@ class TransactionAnalyticsScreen extends ConsumerWidget {
                 _TypeFilterButton(
                   route: route,
                   filters: filters,
-                  isRacoon: fun.isRacoon,
+                  isRaccoon: fun.isRaccoon,
                 ),
                 _CategoryFilterButton(
                   route: route,
@@ -179,7 +179,7 @@ class TransactionAnalyticsScreen extends ConsumerWidget {
                       l10n: l10n,
                       typeLabel: filters.type.localizedLabel(
                         l10n,
-                        isRacoon: fun.isRacoon,
+                        isRaccoon: fun.isRaccoon,
                       ),
                       chartColors: chartColors,
                     ),
@@ -238,11 +238,11 @@ class TransactionAnalyticsScreen extends ConsumerWidget {
     AppLocalizations l10n,
     LocaleFormatting format,
     ExpenseRouteFilters filters,
-    bool isRacoon,
+    bool isRaccoon,
   ) {
     final parts = <String>[
       filters.localizedPeriodLabel(l10n, format),
-      filters.type.localizedLabel(l10n, isRacoon: isRacoon),
+      filters.type.localizedLabel(l10n, isRaccoon: isRaccoon),
       if (filters.category != null)
         displayLabelOrUnknown(filters.category, l10n),
       if (filters.account != null) filters.account!,
@@ -575,12 +575,12 @@ class _PeriodFilterButton extends StatelessWidget {
 class _TypeFilterButton extends StatelessWidget {
   final TransactionAnalyticsRoute route;
   final ExpenseRouteFilters filters;
-  final bool isRacoon;
+  final bool isRaccoon;
 
   const _TypeFilterButton({
     required this.route,
     required this.filters,
-    required this.isRacoon,
+    required this.isRaccoon,
   });
 
   @override
@@ -608,13 +608,13 @@ class _TypeFilterButton extends StatelessWidget {
           .map(
             (type) => PopupMenuItem(
               value: type,
-              child: Text(type.localizedLabel(l10n, isRacoon: isRacoon)),
+              child: Text(type.localizedLabel(l10n, isRaccoon: isRaccoon)),
             ),
           )
           .toList(),
       child: _FilterButton(
         icon: LucideIcons.arrowLeftRight,
-        label: filters.type.localizedLabel(l10n, isRacoon: isRacoon),
+        label: filters.type.localizedLabel(l10n, isRaccoon: isRaccoon),
         tooltip: l10n.allTypes,
       ),
     );

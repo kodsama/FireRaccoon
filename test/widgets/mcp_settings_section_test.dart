@@ -1,14 +1,14 @@
 import 'dart:convert';
 
-import 'package:fireracoon/models/people_models.dart';
-import 'package:fireracoon/providers/agent_keys_provider.dart';
-import 'package:fireracoon/providers/mcp_provider.dart';
-import 'package:fireracoon/providers/people_providers.dart';
-import 'package:fireracoon/services/mcp_service.dart';
-import 'package:fireracoon/theme/app_theme.dart';
-import 'package:fireracoon/utils/app_feedback.dart';
-import 'package:fireracoon/widgets/mcp_settings_section.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/models/people_models.dart';
+import 'package:fireraccoon/providers/agent_keys_provider.dart';
+import 'package:fireraccoon/providers/mcp_provider.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/services/mcp_service.dart';
+import 'package:fireraccoon/theme/app_theme.dart';
+import 'package:fireraccoon/utils/app_feedback.dart';
+import 'package:fireraccoon/widgets/mcp_settings_section.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

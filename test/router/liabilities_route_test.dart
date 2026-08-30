@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/router/liabilities_route.dart';
+import 'package:fireraccoon/router/liabilities_route.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {

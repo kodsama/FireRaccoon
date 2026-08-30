@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../l10n/app_localizations.dart';
 import '../providers/data_providers.dart';
@@ -87,7 +87,7 @@ TransactionListGroups buildTransactionListGroups({
   required TransactionGroupType groupType,
   required LocaleFormatting format,
   required AppLocalizations l10n,
-  bool isRacoon = false,
+  bool isRaccoon = false,
   ReconciledFilter reconciledFilter = ReconciledFilter.all,
   Set<TransactionField> missingFields = const {},
   DateTime? referenceDate,
@@ -122,7 +122,7 @@ TransactionListGroups buildTransactionListGroups({
       groupType: groupType,
       format: format,
       l10n: l10n,
-      isRacoon: isRacoon,
+      isRaccoon: isRaccoon,
     );
     final signedAmount = signedListAmount(transaction, accountName: sumAccount);
     final existing = map[key];
@@ -210,7 +210,7 @@ String _groupKeyFor(
   required TransactionGroupType groupType,
   required LocaleFormatting format,
   required AppLocalizations l10n,
-  required bool isRacoon,
+  required bool isRaccoon,
 }) {
   final key = switch (groupType) {
     TransactionGroupType.date => format.formatMonthYear(transaction.date),
@@ -225,7 +225,7 @@ String _groupKeyFor(
     TransactionGroupType.type => localizedTransactionType(
       transaction.type,
       l10n,
-      isRacoon: isRacoon,
+      isRaccoon: isRaccoon,
     ),
     TransactionGroupType.category => displayLabelOrUnknown(
       transaction.categoryName,

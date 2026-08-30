@@ -20,7 +20,7 @@ RUN flutter pub get --no-example
 COPY --chown=ubuntu:ubuntu . .
 USER ubuntu
 RUN git config --global --add safe.directory /sdks/flutter
-RUN flutter build web --release --no-pub --dart-define=FIRERACOON_MODE=server
+RUN flutter build web --release --no-pub --dart-define=FIRERACCOON_MODE=server
 
 RUN find build/web -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.wasm' -o -name '*.json' -o -name '*.css' -o -name '*.html' \) -exec gzip -k -9 {} +
 
@@ -35,26 +35,26 @@ COPY packages/app_backend/pubspec.yaml packages/app_backend/pubspec.lock ./
 RUN dart pub get
 COPY packages/engine/ /engine/
 COPY packages/app_backend/ ./
-RUN dart pub get && dart compile exe bin/fireracoon_server.dart -o /app/fireracoon_server
+RUN dart pub get && dart compile exe bin/fireraccoon_server.dart -o /app/fireraccoon_server
 
 # Runtime: Dart server + static web UI for the target arch.
 FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates libsqlite3-0 \
     && rm -rf /var/lib/apt/lists/* \
-    && useradd -r -u 10001 -m fireracoon
+    && useradd -r -u 10001 -m fireraccoon
 
-COPY --from=server-build /app/fireracoon_server /usr/local/bin/fireracoon_server
+COPY --from=server-build /app/fireraccoon_server /usr/local/bin/fireraccoon_server
 COPY --from=web-build /app/build/web /app/web
 
-RUN mkdir -p /data && chown -R fireracoon:fireracoon /data /app/web
+RUN mkdir -p /data && chown -R fireraccoon:fireraccoon /data /app/web
 
-USER fireracoon
-ENV FIRERACOON_MODE=server \
+USER fireraccoon
+ENV FIRERACCOON_MODE=server \
     DATA_DIR=/data \
     WEB_ROOT=/app/web \
     PORT=8080
 
 VOLUME ["/data"]
 EXPOSE 8080
-CMD ["fireracoon_server"]
+CMD ["fireraccoon_server"]

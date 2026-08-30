@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/models/currency.dart';
-import 'package:fireracoon/models/firefly_user.dart';
+import 'package:fireraccoon/models/currency.dart';
+import 'package:fireraccoon/models/firefly_user.dart';
 
 void main() {
   group('FireflyCurrency', () {

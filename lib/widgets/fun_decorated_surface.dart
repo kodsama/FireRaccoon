@@ -265,7 +265,7 @@ class FunLogo extends ConsumerWidget {
 }
 
 /// Back-compat alias — prefer [FunDecoratedSurface].
-typedef RacoonDecoratedSurface = FunDecoratedSurface;
+typedef RaccoonDecoratedSurface = FunDecoratedSurface;
 
 bool get _isFlutterTest =>
     WidgetsBinding.instance.runtimeType.toString().contains('TestWidgets');

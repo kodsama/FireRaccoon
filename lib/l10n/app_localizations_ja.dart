@@ -9,7 +9,7 @@ class AppLocalizationsJa extends AppLocalizations {
   AppLocalizationsJa([String locale = 'ja']) : super(locale);
 
   @override
-  String get appTitle => 'FireRacoon';
+  String get appTitle => 'FireRaccoon';
 
   @override
   String get appTagline => '予算を守る、いちばん賢い仲間。';
@@ -18,7 +18,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appNameFire => 'Fire';
 
   @override
-  String get appNameRacoon => 'Racoon';
+  String get appNameRaccoon => 'Raccoon';
 
   @override
   String get navDashboard => 'ダッシュボード';
@@ -159,7 +159,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get appearance => '外観';
 
   @override
-  String get racoonMode => 'アライグマモード';
+  String get raccoonMode => 'アライグマモード';
 
   @override
   String get themeStyle => 'テーマスタイル';
@@ -361,198 +361,198 @@ class AppLocalizationsJa extends AppLocalizations {
   String get burnt => '消費';
 
   @override
-  String get navDashboardRacoon => 'アジト';
+  String get navDashboardRaccoon => 'アジト';
 
   @override
-  String get navDashboardShortRacoon => 'アジト';
+  String get navDashboardShortRaccoon => 'アジト';
 
   @override
-  String get navAccountsRacoon => '隠し場所';
+  String get navAccountsRaccoon => '隠し場所';
 
   @override
-  String get navTransactionsRacoon => '作戦ログ';
+  String get navTransactionsRaccoon => '作戦ログ';
 
   @override
-  String get navBudgetsRacoon => '宝物計画';
+  String get navBudgetsRaccoon => '宝物計画';
 
   @override
-  String get navSubscriptionsRacoon => '定期レイド';
+  String get navSubscriptionsRaccoon => '定期レイド';
 
   @override
-  String get navPiggyBanksRacoon => 'ミニ隠し場所';
+  String get navPiggyBanksRaccoon => 'ミニ隠し場所';
 
   @override
-  String get navExpensesRacoon => '消費レポート';
+  String get navExpensesRaccoon => '消費レポート';
 
   @override
-  String get navProjectionRacoon => '水晶の宝物庫';
+  String get navProjectionRaccoon => '水晶の宝物庫';
 
   @override
-  String get navPrognosisRacoon => '月末の戦利品';
+  String get navPrognosisRaccoon => '月末の戦利品';
 
   @override
-  String get navSettingsRacoon => 'アジトのルール';
+  String get navSettingsRaccoon => 'アジトのルール';
 
   @override
-  String get netWorthRacoon => '総宝物';
+  String get netWorthRaccoon => '総宝物';
 
   @override
-  String get searchRacoon => '嗅ぎ回る…';
+  String get searchRaccoon => '嗅ぎ回る…';
 
   @override
-  String get accountsTitleRacoon => '隠し場所';
+  String get accountsTitleRaccoon => '隠し場所';
 
   @override
-  String get transactionsTitleRacoon => '作戦ログ';
+  String get transactionsTitleRaccoon => '作戦ログ';
 
   @override
-  String get budgetsTitleRacoon => '宝物計画';
+  String get budgetsTitleRaccoon => '宝物計画';
 
   @override
-  String get expensesTitleRacoon => '消費レポート';
+  String get expensesTitleRaccoon => '消費レポート';
 
   @override
-  String get projectionTitleRacoon => '水晶の宝物庫';
+  String get projectionTitleRaccoon => '水晶の宝物庫';
 
   @override
-  String get settingsTitleRacoon => 'アジトのルール';
+  String get settingsTitleRaccoon => 'アジトのルール';
 
   @override
-  String get tabInsightsRacoon => '戦利品情報';
+  String get tabInsightsRaccoon => '戦利品情報';
 
   @override
-  String get tabAccountsRacoon => '隠し場所';
+  String get tabAccountsRaccoon => '隠し場所';
 
   @override
-  String get tabFocusRacoon => '作戦本部';
+  String get tabFocusRaccoon => '作戦本部';
 
   @override
-  String get totalBalanceRacoon => '全隠し場所';
+  String get totalBalanceRaccoon => '全隠し場所';
 
   @override
-  String incomeMonthRacoon(String month) {
+  String incomeMonthRaccoon(String month) {
     return 'ゲット · $month';
   }
 
   @override
-  String spendingMonthRacoon(String month) {
+  String spendingMonthRaccoon(String month) {
     return '消費 · $month';
   }
 
   @override
-  String savedMonthRacoon(String month) {
+  String savedMonthRaccoon(String month) {
     return '隠匿 · $month';
   }
 
   @override
-  String get cashFlowRacoon => '戦利品の流れ';
+  String get cashFlowRaccoon => '戦利品の流れ';
 
   @override
-  String get whereMoneyGoesRacoon => '戦利品の行き先';
+  String get whereMoneyGoesRaccoon => '戦利品の行き先';
 
   @override
-  String get recentActivityRacoon => '最近のレイド';
+  String get recentActivityRaccoon => '最近のレイド';
 
   @override
-  String get yourAccountsRacoon => 'あなたの隠し場所';
+  String get yourAccountsRaccoon => 'あなたの隠し場所';
 
   @override
-  String get budgetsAtGlanceRacoon => '宝物の概要';
+  String get budgetsAtGlanceRaccoon => '宝物の概要';
 
   @override
-  String get viewAllAccountsRacoon => 'すべての隠し場所';
+  String get viewAllAccountsRaccoon => 'すべての隠し場所';
 
   @override
-  String get assetAccountsRacoon => '宝物の隠し場所';
+  String get assetAccountsRaccoon => '宝物の隠し場所';
 
   @override
-  String get liabilityAccountsRacoon => '借金と未払い';
+  String get liabilityAccountsRaccoon => '借金と未払い';
 
   @override
-  String get stocksAndFundsAccountsRacoon => '市場の隠し場所';
+  String get stocksAndFundsAccountsRaccoon => '市場の隠し場所';
 
   @override
-  String get allAccountsRacoon => 'すべての隠し場所';
+  String get allAccountsRaccoon => 'すべての隠し場所';
 
   @override
-  String get accountsRacoon => '隠し場所';
+  String get accountsRaccoon => '隠し場所';
 
   @override
-  String get newTransactionRacoon => '作戦を計画';
+  String get newTransactionRaccoon => '作戦を計画';
 
   @override
-  String get editTransactionRacoon => '作戦を編集';
+  String get editTransactionRaccoon => '作戦を編集';
 
   @override
-  String transactionsCountRacoon(int count) {
+  String transactionsCountRaccoon(int count) {
     return '$count 件の作戦';
   }
 
   @override
-  String get oneTransactionRacoon => '1 件の作戦';
+  String get oneTransactionRaccoon => '1 件の作戦';
 
   @override
-  String get transactionTypeDepositRacoon => 'ゲット';
+  String get transactionTypeDepositRaccoon => 'ゲット';
 
   @override
-  String get transactionTypeWithdrawalRacoon => '消費';
+  String get transactionTypeWithdrawalRaccoon => '消費';
 
   @override
-  String get transactionTypeTransferRacoon => '隠し場所の移動';
+  String get transactionTypeTransferRaccoon => '隠し場所の移動';
 
   @override
-  String get expenseLabelRacoon => '消費';
+  String get expenseLabelRaccoon => '消費';
 
   @override
-  String get spentRacoon => '消費済み';
+  String get spentRaccoon => '消費済み';
 
   @override
-  String get newBudgetRacoon => '新しい宝物計画';
+  String get newBudgetRaccoon => '新しい宝物計画';
 
   @override
-  String get projectedBalanceRacoon => '未来の宝物';
+  String get projectedBalanceRaccoon => '未来の宝物';
 
   @override
-  String get piggyBankRacoon => 'ミニ隠し場所';
+  String get piggyBankRaccoon => 'ミニ隠し場所';
 
   @override
-  String get transfersRacoon => '隠し場所の移動';
+  String get transfersRaccoon => '隠し場所の移動';
 
   @override
-  String get expensesFilterRacoon => '消費';
+  String get expensesFilterRaccoon => '消費';
 
   @override
-  String get noTransactionsYetRacoon => 'まだ作戦はありません';
+  String get noTransactionsYetRaccoon => 'まだ作戦はありません';
 
   @override
-  String get lookingAheadRacoon => '先をのぞく';
+  String get lookingAheadRaccoon => '先をのぞく';
 
   @override
-  String get openProjectionRacoon => '未来をのぞく';
+  String get openProjectionRaccoon => '未来をのぞく';
 
   @override
-  String get editAccountRacoon => '隠し場所を編集';
+  String get editAccountRaccoon => '隠し場所を編集';
 
   @override
-  String get accountNameRacoon => '隠し場所の名前';
+  String get accountNameRaccoon => '隠し場所の名前';
 
   @override
-  String get filterAccountRacoon => '隠し場所で絞り込み';
+  String get filterAccountRaccoon => '隠し場所で絞り込み';
 
   @override
-  String get sourceAccountRacoon => '送り元の隠し場所';
+  String get sourceAccountRaccoon => '送り元の隠し場所';
 
   @override
-  String get destinationAccountRacoon => '送り先の隠し場所';
+  String get destinationAccountRaccoon => '送り先の隠し場所';
 
   @override
-  String get totalSpentPeriodRacoon => 'この期間の消費合計';
+  String get totalSpentPeriodRaccoon => 'この期間の消費合計';
 
   @override
-  String get totalIncomePeriodRacoon => 'この期間のゲット合計';
+  String get totalIncomePeriodRaccoon => 'この期間のゲット合計';
 
   @override
-  String get totalTransferredPeriodRacoon => 'この期間の移動合計';
+  String get totalTransferredPeriodRaccoon => 'この期間の移動合計';
 
   @override
   String get newAccount => '新しい口座';
@@ -564,13 +564,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get newExpense => '新しい支出';
 
   @override
-  String get newAccountRacoon => '新しい隠し場所';
+  String get newAccountRaccoon => '新しい隠し場所';
 
   @override
-  String get newLiabilityRacoon => '新しい借金';
+  String get newLiabilityRaccoon => '新しい借金';
 
   @override
-  String get newExpenseRacoon => '消費を計画';
+  String get newExpenseRaccoon => '消費を計画';
 
   @override
   String get income => '収入';
@@ -1033,7 +1033,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String reconciliationCreateCorrectionBody(String amount) {
-    return '残りの差額は $amount です。FireRacoon が修正取引を作成します。';
+    return '残りの差額は $amount です。FireRaccoon が修正取引を作成します。';
   }
 
   @override
@@ -1411,10 +1411,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipOpenSubscriptions => 'サブスクリプションと定期取引を開く。';
 
   @override
-  String get subscriptionsTitleRacoon => '定期レイドとスケジュール';
+  String get subscriptionsTitleRaccoon => '定期レイドとスケジュール';
 
   @override
-  String get newSubscriptionRacoon => '新しい定期レイド';
+  String get newSubscriptionRaccoon => '新しい定期レイド';
 
   @override
   String get piggyBanksTitle => '貯金箱';
@@ -1501,10 +1501,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get piggyBanksTitleRacoon => 'ミニ隠し場所';
+  String get piggyBanksTitleRaccoon => 'ミニ隠し場所';
 
   @override
-  String get newPiggyBankRacoon => '新しいミニ隠し場所';
+  String get newPiggyBankRaccoon => '新しいミニ隠し場所';
 
   @override
   String get newBudget => '新しい予算';
@@ -2159,7 +2159,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mcpAgentKeysHint =>
-      'Agents authenticate with a FireRacoon key, not your Firefly III token. Each key acts as the person who created it.';
+      'Agents authenticate with a FireRaccoon key, not your Firefly III token. Each key acts as the person who created it.';
 
   @override
   String get mcpNoAgentKeys => 'No agent keys yet';
@@ -2194,7 +2194,7 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mcpKeyIssuedBody =>
-      'Paste this into your MCP client as initialize.params.apiKey, or set FIRERACOON_API_KEY. You can reopen it later from this list.';
+      'Paste this into your MCP client as initialize.params.apiKey, or set FIRERACCOON_API_KEY. You can reopen it later from this list.';
 
   @override
   String get mcpCopyKey => 'Copy';
@@ -2419,7 +2419,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get newIncome => '新しい収入';
 
   @override
-  String get newIncomeRacoon => '新しいゲット';
+  String get newIncomeRaccoon => '新しいゲット';
 
   @override
   String get create => '作成';
@@ -2506,25 +2506,25 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRacoon => 'ゲット';
+  String get navIncomeRaccoon => 'ゲット';
 
   @override
-  String get navTransfersRacoon => '隠し場所の移動';
+  String get navTransfersRaccoon => '隠し場所の移動';
 
   @override
-  String get navLiabilitiesRacoon => '借金';
+  String get navLiabilitiesRaccoon => '借金';
 
   @override
-  String get incomeTitleRacoon => 'ゲットした資金';
+  String get incomeTitleRaccoon => 'ゲットした資金';
 
   @override
-  String get transfersTitleRacoon => '隠し場所の移動';
+  String get transfersTitleRaccoon => '隠し場所の移動';
 
   @override
-  String get newTransferActionRacoon => '新しい隠し場所の移動';
+  String get newTransferActionRaccoon => '新しい隠し場所の移動';
 
   @override
-  String get liabilitiesTitleRacoon => '借金一覧';
+  String get liabilitiesTitleRaccoon => '借金一覧';
 
   @override
   String tooltipOpenSection(String section) {
@@ -2900,7 +2900,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navHistory => '履歴';
 
   @override
-  String get navHistoryRacoon => '作戦リプレイ';
+  String get navHistoryRaccoon => '作戦リプレイ';
 
   @override
   String get tooltipOpenHistory => '元に戻す/やり直し履歴を開く。';
@@ -2969,7 +2969,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get historyExportSubject => '履歴エクスポート';
 
   @override
-  String get historyExportText => 'FireRacoon 履歴エクスポート';
+  String get historyExportText => 'FireRaccoon 履歴エクスポート';
 
   @override
   String get historySectionToday => '今日';
@@ -3110,6 +3110,9 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get missingAmount => '金額を入力してください。';
+
+  @override
+  String get missingForeignAmount => 'Please enter the foreign amount.';
 
   @override
   String get missingAccounts => '送金元口座と送金先口座の両方を選択してください。';
@@ -3308,7 +3311,7 @@ class AppLocalizationsJa extends AppLocalizations {
       'ログイン画面で Face ID、Touch ID、指紋、または端末の PIN を使います。';
 
   @override
-  String get biometricUnlockReason => 'FireRacoon のロックを解除';
+  String get biometricUnlockReason => 'FireRaccoon のロックを解除';
 
   @override
   String get biometricEnableReason => '生体認証のロック解除を有効にするには確認してください';
@@ -3480,10 +3483,10 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get settingsExportSubject => 'FireRacoon settings';
+  String get settingsExportSubject => 'FireRaccoon settings';
 
   @override
-  String get settingsExportText => 'FireRacoon settings backup';
+  String get settingsExportText => 'FireRaccoon settings backup';
 
   @override
   String get recordedBalance => '記録済み';

@@ -1,4 +1,4 @@
-name: fireracoon
+name: fireraccoon
 description: >-
   A friendly cross-platform client for Firefly III — dashboards, budgets,
   expenses, and on-device balance projections.
@@ -18,7 +18,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 0.1.12+1
+version: 0.2.0+1
 
 environment:
   sdk: '>=3.12.0 <4.0.0'
@@ -34,9 +34,9 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  fireracoon_engine:
+  fireraccoon_engine:
     path: packages/engine
-  fireracoon_mcp:
+  fireraccoon_mcp:
     path: packages/mcp
 
   # The following adds the Cupertino Icons font to your application.
@@ -94,9 +94,9 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/fireracoon_logo.jpg
-    - assets/fireracoon_logo.png
-    - assets/fireracoon_logo_super.png
+    - assets/fireraccoon_logo.jpg
+    - assets/fireraccoon_logo.png
+    - assets/fireraccoon_logo_super.png
     - assets/avatars/
 
   fonts:

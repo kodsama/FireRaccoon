@@ -1,7 +1,7 @@
 # Cosmos Cloud
 
 [Cosmos Cloud](https://cosmos-cloud.io/) is a security-first self-hosting
-platform with an app store, reverse proxy, HTTPS, and SSO. FireRacoon’s web
+platform with an app store, reverse proxy, HTTPS, and SSO. FireRaccoon’s web
 image runs there as a ServApp: import a
 [Cosmos-Compose](https://cosmos-cloud.io/docs/cosmos-compose/) file (JSON or
 YAML), or paste the JSON into **Create ServApp**.
@@ -11,16 +11,16 @@ as `cosmos-icon`). Unsupported Compose features are ignored on import. Official
 docs: [ServApps](https://cosmos-cloud.io/docs/servapps/),
 [Cosmos-Compose](https://cosmos-cloud.io/docs/cosmos-compose/).
 
-FireRacoon is a **static nginx** image (`ghcr.io/kodsama/fireracoon`). It does
+FireRaccoon is a **static nginx** image (`ghcr.io/kodsama/fireraccoon`). It does
 not store Firefly tokens; each browser user connects under **Settings → Firefly
 III connection** using Firefly’s **public** HTTPS URL (not an internal Docker
 hostname). API calls run in the browser, so Docker networks do not bypass CORS.
 
 | Scenario | Import file |
 |----------|-------------|
-| App only | [`examples/cosmos-compose.fireracoon-only.json`](examples/cosmos-compose.fireracoon-only.json) |
-| App next to existing Firefly | [`examples/cosmos-compose.fireracoon-with-firefly.json`](examples/cosmos-compose.fireracoon-with-firefly.json) |
-| App + Firefly III + MariaDB | [`examples/cosmos-compose.fireracoon-firefly-stack.json`](examples/cosmos-compose.fireracoon-firefly-stack.json) |
+| App only | [`examples/cosmos-compose.fireraccoon-only.json`](examples/cosmos-compose.fireraccoon-only.json) |
+| App next to existing Firefly | [`examples/cosmos-compose.fireraccoon-with-firefly.json`](examples/cosmos-compose.fireraccoon-with-firefly.json) |
+| App + Firefly III + MariaDB | [`examples/cosmos-compose.fireraccoon-firefly-stack.json`](examples/cosmos-compose.fireraccoon-firefly-stack.json) |
 
 In Cosmos: **ServApps → Import Docker Compose** (or Create ServApp and paste
 JSON). Set `TZ`, replace `CHANGE_ME_*` secrets on full stacks, and fix the
@@ -35,25 +35,25 @@ the container and publishes an HTTPS route.
 ```json
 {
   "services": {
-    "FireRacoon": {
-      "container_name": "FireRacoon",
-      "image": "ghcr.io/kodsama/fireracoon:latest",
+    "FireRaccoon": {
+      "container_name": "FireRaccoon",
+      "image": "ghcr.io/kodsama/fireraccoon:latest",
       "environment": [
         "TZ=Europe/Stockholm"
       ],
       "labels": {
         "cosmos-auto-update": "true",
         "cosmos-force-network-secured": "true",
-        "cosmos-icon": "https://raw.githubusercontent.com/kodsama/fireracoon/main/assets/fireracoon_logo.png"
+        "cosmos-icon": "https://raw.githubusercontent.com/kodsama/fireraccoon/main/assets/fireraccoon_logo.png"
       },
       "ports": [],
       "volumes": [],
       "routes": [
         {
-          "name": "FireRacoon",
-          "description": "FireRacoon web UI",
+          "name": "FireRaccoon",
+          "description": "FireRaccoon web UI",
           "useHost": true,
-          "target": "http://FireRacoon:80",
+          "target": "http://FireRaccoon:80",
           "mode": "SERVAPP",
           "Timeout": 14400000,
           "ThrottlePerMinute": 12000,
@@ -70,7 +70,7 @@ the container and publishes an HTTPS route.
 }
 ```
 
-After create: open the FireRacoon URL → Settings → paste your existing Firefly
+After create: open the FireRaccoon URL → Settings → paste your existing Firefly
 HTTPS URL and a personal access token.
 
 ## App next to an existing Firefly III
@@ -82,16 +82,16 @@ on your Firefly container (Cosmos → container → Networks).
 ```json
 {
   "services": {
-    "FireRacoon": {
-      "container_name": "FireRacoon",
-      "image": "ghcr.io/kodsama/fireracoon:latest",
+    "FireRaccoon": {
+      "container_name": "FireRaccoon",
+      "image": "ghcr.io/kodsama/fireraccoon:latest",
       "environment": [
         "TZ=Europe/Stockholm"
       ],
       "labels": {
         "cosmos-auto-update": "true",
         "cosmos-force-network-mode": "cosmos-Firefly-III-default",
-        "cosmos-icon": "https://raw.githubusercontent.com/kodsama/fireracoon/main/assets/fireracoon_logo.png",
+        "cosmos-icon": "https://raw.githubusercontent.com/kodsama/fireraccoon/main/assets/fireraccoon_logo.png",
         "cosmos.stack": "Firefly-III"
       },
       "ports": [],
@@ -101,10 +101,10 @@ on your Firefly container (Cosmos → container → Networks).
       },
       "routes": [
         {
-          "name": "FireRacoon",
-          "description": "FireRacoon web UI",
+          "name": "FireRaccoon",
+          "description": "FireRaccoon web UI",
           "useHost": true,
-          "target": "http://FireRacoon:80",
+          "target": "http://FireRaccoon:80",
           "mode": "SERVAPP",
           "Timeout": 14400000,
           "ThrottlePerMinute": 12000,
@@ -128,15 +128,15 @@ In Settings, still use Firefly’s **public** Cosmos URL, not
 ## App + Firefly III + MariaDB (full stack)
 
 Import
-[`examples/cosmos-compose.fireracoon-firefly-stack.json`](examples/cosmos-compose.fireracoon-firefly-stack.json)
-when you want one stack with Firefly, MariaDB, and FireRacoon.
+[`examples/cosmos-compose.fireraccoon-firefly-stack.json`](examples/cosmos-compose.fireraccoon-firefly-stack.json)
+when you want one stack with Firefly, MariaDB, and FireRaccoon.
 
 Before apply:
 
 1. Set `APP_KEY` to a random 32-character string (keep a backup).
 2. Set matching `DB_PASSWORD` / `MARIADB_PASSWORD` and a root password.
 3. After Firefly’s first-run wizard, create a token and enter Firefly’s public
-   URL in FireRacoon Settings.
+   URL in FireRaccoon Settings.
 
 Prefer the official Cosmos market **Firefly-III** app plus the “app next to
 Firefly” snippet above if you already use market installs and Whiskers
@@ -148,22 +148,22 @@ passwords; the full-stack file is for a self-contained import.
 |-------|------|
 | `image` | Baked Flutter web + nginx |
 | `ports` | Empty: Cosmos `routes` terminate HTTPS |
-| `volumes` | None on FireRacoon (static UI) |
-| `cosmos-icon` | [`assets/fireracoon_logo.png`](../assets/fireracoon_logo.png) |
+| `volumes` | None on FireRaccoon (static UI) |
+| `cosmos-icon` | [`assets/fireraccoon_logo.png`](../assets/fireraccoon_logo.png) |
 | `cosmos-force-network-secured` | Isolated Cosmos network (app only) |
 | `cosmos-force-network-mode` / `cosmos.stack` | Join an existing Firefly stack |
 | `routes` → `target` | Proxy to container port **80** (`SERVAPP`) |
 
 ## CORS
 
-If the browser blocks API calls, enable CORS on Firefly for the FireRacoon
+If the browser blocks API calls, enable CORS on Firefly for the FireRaccoon
 origin (see [Firefly connection](firefly-connection.md)) or put both under one
 hostname with an `/api` path proxy ([Deployment](deployment.md)).
 
 ## Updates
 
 With `cosmos-auto-update: "true"`, Cosmos can refresh when a new image tag is
-available. Manual: pull `ghcr.io/kodsama/fireracoon:latest` (or a release tag)
+available. Manual: pull `ghcr.io/kodsama/fireraccoon:latest` (or a release tag)
 and recreate the ServApp. Do not bind-mount host `build/web`.
 
 ## Plain Docker Compose

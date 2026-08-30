@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
-import 'fireracoon_mode.dart';
+import 'fireraccoon_mode.dart';
 
 /// Resolved deployment mode for this app process.
-final fireracoonModeProvider = Provider<FireracoonMode>((ref) {
+final fireraccoonModeProvider = Provider<FireraccoonMode>((ref) {
   return ref.watch(deploymentConfigProvider).mode;
 });
 
@@ -17,15 +17,15 @@ class DeploymentConfig {
     this.apiBase = '',
   });
 
-  final FireracoonMode mode;
+  final FireraccoonMode mode;
   final bool setupRequired;
   final String apiBase;
 
-  bool get isServer => mode == FireracoonMode.server;
+  bool get isServer => mode == FireraccoonMode.server;
 }
 
 final deploymentConfigProvider = Provider<DeploymentConfig>((ref) {
-  return const DeploymentConfig(mode: FireracoonMode.local);
+  return const DeploymentConfig(mode: FireraccoonMode.local);
 });
 
 /// Loads `/config.json` (server mode) then falls back to dart-define.
@@ -44,7 +44,7 @@ Future<DeploymentConfig> loadDeploymentConfig({
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         if (json is Map<String, dynamic>) {
-          final mode = resolveFireracoonMode(configJson: json);
+          final mode = resolveFireraccoonMode(configJson: json);
           return DeploymentConfig(
             mode: mode,
             setupRequired: json['setupRequired'] == true,
@@ -61,5 +61,5 @@ Future<DeploymentConfig> loadDeploymentConfig({
     }
   }
 
-  return DeploymentConfig(mode: resolveFireracoonMode());
+  return DeploymentConfig(mode: resolveFireraccoonMode());
 }

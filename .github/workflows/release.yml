@@ -6,7 +6,7 @@ name: Release
 # Each platform job builds release artifacts and attaches them to a single
 # GitHub Release.
 # The docker job also pushes a multi-arch (amd64+arm64) image to
-# ghcr.io/<owner>/fireracoon:<tag> (and :latest), then sets the package public.
+# ghcr.io/<owner>/fireraccoon:<tag> (and :latest), then sets the package public.
 #
 # Platforms (issue #6 order): web Docker image, Android APK/AAB, Windows
 # zip + Inno .exe + WiX .msi, macOS .dmg, iOS unsigned IPA, plus Linux
@@ -93,7 +93,7 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir -p dist/bin
-          dart compile exe packages/mcp/bin/fireracoon_mcp.dart -o dist/bin/fireracoon_mcp-linux-x64
+          dart compile exe packages/mcp/bin/fireraccoon_mcp.dart -o dist/bin/fireraccoon_mcp-linux-x64
           cp build/app/outputs/flutter-apk/app-release.apk dist/
           cp build/app/outputs/bundle/release/app-release.aab dist/
 
@@ -146,7 +146,7 @@ jobs:
             fi
             rm -rf Payload && mkdir -p Payload
             cp -R "$APP_PATH" Payload/
-            ( cd "$(dirname Payload)" && zip -qr dist/fireracoon-unsigned.ipa Payload )
+            ( cd "$(dirname Payload)" && zip -qr dist/fireraccoon-unsigned.ipa Payload )
             rm -rf Payload
           fi
 
@@ -188,17 +188,17 @@ jobs:
       - name: Create DMG
         run: |
           mkdir -p dist/bin
-          dart compile exe packages/mcp/bin/fireracoon_mcp.dart -o dist/bin/fireracoon_mcp-macos
+          dart compile exe packages/mcp/bin/fireraccoon_mcp.dart -o dist/bin/fireraccoon_mcp-macos
           mkdir -p dist
-          APP="build/macos/Build/Products/Release/FireRacoon.app"
+          APP="build/macos/Build/Products/Release/FireRaccoon.app"
           create-dmg \
-            --volname "FireRacoon" \
+            --volname "FireRaccoon" \
             --window-size 600 400 \
             --icon-size 100 \
             --app-drop-link 450 150 \
-            "dist/FireRacoon-macos.dmg" \
+            "dist/FireRaccoon-macos.dmg" \
             "$APP" \
-          || create-dmg "dist/FireRacoon-macos.dmg" "$APP"
+          || create-dmg "dist/FireRaccoon-macos.dmg" "$APP"
 
       - uses: actions/upload-artifact@v4
         with:
@@ -238,10 +238,10 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist/bin | Out-Null
-          dart compile exe packages/mcp/bin/fireracoon_mcp.dart -o dist/bin/fireracoon_mcp-windows-x64.exe
+          dart compile exe packages/mcp/bin/fireraccoon_mcp.dart -o dist/bin/fireraccoon_mcp-windows-x64.exe
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           Compress-Archive -Path build/windows/x64/runner/Release/* `
-            -DestinationPath dist/FireRacoon-windows-x64.zip -Force
+            -DestinationPath dist/FireRaccoon-windows-x64.zip -Force
 
       # Inno Setup .exe installer via flutter_distributor (windows/packaging/exe).
       - name: Build .exe installer (Inno Setup via flutter_distributor)
@@ -263,14 +263,14 @@ jobs:
           New-Item -ItemType Directory -Force -Path dist | Out-Null
           candle.exe -arch x64 packaging\windows\product.wxs -out dist\product.wixobj `
             -dSourceDir=build\windows\x64\runner\Release
-          light.exe dist\product.wixobj -out dist\FireRacoon-windows-x64.msi
+          light.exe dist\product.wixobj -out dist\FireRaccoon-windows-x64.msi
         continue-on-error: true
 
       - name: Collect installer artifacts
         shell: pwsh
         run: |
           Get-ChildItem -Recurse -Include *.exe -Path dist -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -notlike 'fireracoon_mcp*' } |
+            Where-Object { $_.Name -notlike 'fireraccoon_mcp*' } |
             ForEach-Object { Copy-Item $_.FullName dist/ -Force }
           if (Test-Path dist/inno) {
             Get-ChildItem -Recurse dist/inno -Include *.exe |
@@ -281,7 +281,7 @@ jobs:
         shell: pwsh
         run: |
           $installers = Get-ChildItem dist -Include *.exe,*.msi -Recurse -ErrorAction SilentlyContinue |
-            Where-Object { $_.Name -notlike 'fireracoon_mcp*' }
+            Where-Object { $_.Name -notlike 'fireraccoon_mcp*' }
           if (-not $installers) {
             Write-Error "No installer produced; both Inno Setup and WiX builds failed."
             exit 1
@@ -364,8 +364,8 @@ jobs:
       - name: Package Linux bundle tarball + MCP binary
         run: |
           mkdir -p dist/bin
-          dart compile exe packages/mcp/bin/fireracoon_mcp.dart -o dist/bin/fireracoon_mcp-linux-x64
-          tar -C build/linux/x64/release -czf dist/FireRacoon-linux-x64.tar.gz bundle
+          dart compile exe packages/mcp/bin/fireraccoon_mcp.dart -o dist/bin/fireraccoon_mcp-linux-x64
+          tar -C build/linux/x64/release -czf dist/FireRaccoon-linux-x64.tar.gz bundle
           find dist -mindepth 2 -type f \( -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' \) \
             -exec cp {} dist/ \; 2>/dev/null || true
           ls -la dist
@@ -408,7 +408,7 @@ jobs:
       - name: Package Web bundle
         run: |
           mkdir -p dist
-          tar -C build/web -czf dist/FireRacoon-web.tar.gz .
+          tar -C build/web -czf dist/FireRaccoon-web.tar.gz .
 
       - uses: actions/upload-artifact@v4
         with:
@@ -435,7 +435,7 @@ jobs:
         run: |
           TAG="${GITHUB_REF_NAME}"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
-          echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER}/fireracoon" >> "$GITHUB_OUTPUT"
+          echo "image=ghcr.io/${GITHUB_REPOSITORY_OWNER}/fireraccoon" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -471,7 +471,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           owner="${GITHUB_REPOSITORY_OWNER}"
-          pkg="fireracoon"
+          pkg="fireraccoon"
           for api in \
             "users/${owner}/packages/container/${pkg}" \
             "user/packages/container/${pkg}"
@@ -497,12 +497,12 @@ jobs:
             echo "tag=${{ steps.meta.outputs.tag }}"
             echo "platforms=linux/amd64,linux/arm64"
             echo "pull=${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}"
-          } > dist/FireRacoon-docker.txt
+          } > dist/FireRaccoon-docker.txt
 
       - uses: actions/upload-artifact@v4
         with:
           name: docker-artifacts
-          path: dist/FireRacoon-docker.txt
+          path: dist/FireRaccoon-docker.txt
 
   release:
     name: Publish GitHub Release

@@ -1,7 +1,7 @@
 name: CI
 
 # Lint + test gate, then multi-platform build matrix (desktop, mobile, web).
-# Mirrors the Stunda workflow structure with FireRacoon-specific setup (.env asset).
+# Mirrors the Stunda workflow structure with FireRaccoon-specific setup (.env asset).
 
 on:
   push:

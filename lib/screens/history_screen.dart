@@ -45,7 +45,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     undo.UndoHistoryState history,
   ) async {
     final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-    final fileName = 'fireracoon_history_$timestamp.json';
+    final fileName = 'fireraccoon_history_$timestamp.json';
     final path = await jsonStoreDocumentsPath(fileName);
     final contents = _historyExportPayload(history);
     await jsonStoreWrite(path, contents);
@@ -73,7 +73,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
           XFile.fromData(
             utf8.encode(export.contents),
             mimeType: 'application/json',
-            name: 'fireracoon_history_$timestamp.json',
+            name: 'fireraccoon_history_$timestamp.json',
           ),
         ],
       ),
@@ -105,7 +105,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final history = ref.watch(undo.undoHistoryProvider);
     final notifier = ref.read(undo.undoHistoryProvider.notifier);
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');

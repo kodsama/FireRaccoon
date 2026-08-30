@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/utils/name_matching.dart';
+import 'package:fireraccoon_engine/utils/name_matching.dart';
 import 'package:test/test.dart';
 
 void main() {

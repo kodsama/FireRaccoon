@@ -67,7 +67,7 @@ cmd_backup() {
   stamp="$(date +%F)"
   local archive="$out_dir/firefly-backup-$stamp.tar.gz"
   local work
-  work="$(mktemp -d "${TMPDIR:-/tmp}/fireracoon-backup.XXXXXX")"
+  work="$(mktemp -d "${TMPDIR:-/tmp}/fireraccoon-backup.XXXXXX")"
   # shellcheck disable=SC2064
   trap "rm -rf '$work'" EXIT
 
@@ -117,7 +117,7 @@ cmd_restore() {
   fi
 
   local work
-  work="$(mktemp -d "${TMPDIR:-/tmp}/fireracoon-restore.XXXXXX")"
+  work="$(mktemp -d "${TMPDIR:-/tmp}/fireraccoon-restore.XXXXXX")"
   # shellcheck disable=SC2064
   trap "rm -rf '$work'" EXIT
 

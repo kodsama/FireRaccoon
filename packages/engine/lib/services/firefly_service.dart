@@ -139,10 +139,14 @@ abstract class FireflyService {
   Future<void> deleteBill(String billId);
   Future<List<Recurrence>> getRecurrences();
   Future<Recurrence> createRecurrence(RecurrenceInput input);
+
+  /// [current] lets the implementation leave an unedited schedule off the
+  /// request, which is what keeps Firefly from revalidating it.
   Future<Recurrence> updateRecurrence(
     String recurrenceId,
-    RecurrenceInput input,
-  );
+    RecurrenceInput input, {
+    Recurrence? current,
+  });
   Future<void> deleteRecurrence(String recurrenceId);
   Future<List<PiggyBank>> getPiggyBanks();
   Future<PiggyBank> createPiggyBank(PiggyBankInput input);

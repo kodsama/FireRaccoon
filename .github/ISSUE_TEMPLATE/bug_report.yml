@@ -31,7 +31,7 @@ body:
   - type: input
     id: version
     attributes:
-      label: FireRacoon version or commit
+      label: FireRaccoon version or commit
       placeholder: 1.0.0 or abc1234
 
   - type: dropdown

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../deployment/deployment_providers.dart';
 import '../l10n/app_localizations.dart';
@@ -579,16 +579,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Column(
               children: [
                 Tooltip(
-                  message: l10n.racoonMode,
+                  message: l10n.raccoonMode,
                   child: SwitchListTile(
                     secondary: const Icon(Icons.pets),
-                    title: Text(l10n.racoonMode),
+                    title: Text(l10n.raccoonMode),
                     subtitle: Text(l10n.appTagline),
-                    value: themeSettings.isRacoonMode,
+                    value: themeSettings.isRaccoonMode,
                     onChanged: (val) {
                       final previous = themeSettings.funMode;
-                      final next = val ? FunMode.racoon : FunMode.none;
-                      themeNotifier.setRacoonMode(val);
+                      final next = val ? FunMode.raccoon : FunMode.none;
+                      themeNotifier.setRaccoonMode(val);
                       undoNotifier.record(
                         title: 'Fun mode changed',
                         details: 'Fun mode: ${previous.name} -> ${next.name}',
@@ -882,7 +882,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ],
         // Its own section, not part of the Firefly connection: these credentials
-        // are for agents talking to FireRacoon, and any signed-in person may
+        // are for agents talking to FireRaccoon, and any signed-in person may
         // issue one for themselves rather than only a connection admin.
         if (mcpDesktopSupported ||
             ref.watch(deploymentConfigProvider).isServer) ...[

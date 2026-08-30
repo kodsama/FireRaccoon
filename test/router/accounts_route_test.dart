@@ -1,4 +1,4 @@
-import 'package:fireracoon/router/accounts_route.dart';
+import 'package:fireraccoon/router/accounts_route.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

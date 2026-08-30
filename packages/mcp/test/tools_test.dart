@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon_mcp/fireracoon_mcp.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
@@ -299,7 +299,7 @@ void main() {
 
       final auth = (await tool.run({}))['auth'] as Map<String, Object?>;
 
-      expect(auth['env'], ['FIRERACOON_URL', 'FIRERACOON_API_KEY']);
+      expect(auth['env'], ['FIRERACCOON_URL', 'FIRERACCOON_API_KEY']);
       expect(auth['tcp_param'], 'initialize.params.apiKey');
       expect(auth.containsKey('per_call'), isFalse);
     });

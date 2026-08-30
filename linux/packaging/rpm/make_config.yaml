@@ -1,8 +1,8 @@
 # flutter_distributor .rpm config.
-display_name: FireRacoon
-package_name: fireracoon
+display_name: FireRaccoon
+package_name: fireraccoon
 license: GPL-3.0
-url: https://github.com/kodsama/FireRacoon
+url: https://github.com/kodsama/FireRaccoon
 icon: packaging/linux/icon_256.png
 generic_name: Personal finance
 keywords:

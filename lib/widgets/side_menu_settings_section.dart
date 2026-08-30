@@ -134,7 +134,7 @@ class SideMenuSettingsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final config = ref.watch(sideMenuConfigProvider);
     final notifier = ref.read(sideMenuConfigProvider.notifier);
 

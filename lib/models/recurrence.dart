@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/recurrence.dart';
+export 'package:fireraccoon_engine/models/recurrence.dart';

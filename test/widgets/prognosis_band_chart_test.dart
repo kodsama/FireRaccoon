@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/models/account_prognosis.dart';
-import 'package:fireracoon/theme/app_colors.dart';
-import 'package:fireracoon/theme/app_theme.dart';
-import 'package:fireracoon/widgets/prognosis_band_chart.dart';
+import 'package:fireraccoon/models/account_prognosis.dart';
+import 'package:fireraccoon/theme/app_colors.dart';
+import 'package:fireraccoon/theme/app_theme.dart';
+import 'package:fireraccoon/widgets/prognosis_band_chart.dart';
 
 void main() {
   test(

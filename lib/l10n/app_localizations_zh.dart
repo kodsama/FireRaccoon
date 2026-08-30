@@ -9,7 +9,7 @@ class AppLocalizationsZh extends AppLocalizations {
   AppLocalizationsZh([String locale = 'zh']) : super(locale);
 
   @override
-  String get appTitle => 'FireRacoon';
+  String get appTitle => 'FireRaccoon';
 
   @override
   String get appTagline => '您预算中最聪明的伙伴。';
@@ -18,7 +18,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appNameFire => 'Fire';
 
   @override
-  String get appNameRacoon => 'Racoon';
+  String get appNameRaccoon => 'Raccoon';
 
   @override
   String get navDashboard => '仪表盘';
@@ -159,7 +159,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appearance => '外观';
 
   @override
-  String get racoonMode => '浣熊模式';
+  String get raccoonMode => '浣熊模式';
 
   @override
   String get themeStyle => '主题样式';
@@ -361,198 +361,198 @@ class AppLocalizationsZh extends AppLocalizations {
   String get burnt => '燃烧';
 
   @override
-  String get navDashboardRacoon => '浣熊窝';
+  String get navDashboardRaccoon => '浣熊窝';
 
   @override
-  String get navDashboardShortRacoon => '窝';
+  String get navDashboardShortRaccoon => '窝';
 
   @override
-  String get navAccountsRacoon => '藏匿处';
+  String get navAccountsRaccoon => '藏匿处';
 
   @override
-  String get navTransactionsRacoon => '打劫记录';
+  String get navTransactionsRaccoon => '打劫记录';
 
   @override
-  String get navBudgetsRacoon => '囤积计划';
+  String get navBudgetsRaccoon => '囤积计划';
 
   @override
-  String get navSubscriptionsRacoon => '定期突袭';
+  String get navSubscriptionsRaccoon => '定期突袭';
 
   @override
-  String get navPiggyBanksRacoon => '迷你藏匿处';
+  String get navPiggyBanksRaccoon => '迷你藏匿处';
 
   @override
-  String get navExpensesRacoon => '燃烧报告';
+  String get navExpensesRaccoon => '燃烧报告';
 
   @override
-  String get navProjectionRacoon => '水晶宝藏';
+  String get navProjectionRaccoon => '水晶宝藏';
 
   @override
-  String get navPrognosisRacoon => '月末战利品';
+  String get navPrognosisRaccoon => '月末战利品';
 
   @override
-  String get navSettingsRacoon => '窝规';
+  String get navSettingsRaccoon => '窝规';
 
   @override
-  String get netWorthRacoon => '总宝藏';
+  String get netWorthRaccoon => '总宝藏';
 
   @override
-  String get searchRacoon => '嗅一嗅…';
+  String get searchRaccoon => '嗅一嗅…';
 
   @override
-  String get accountsTitleRacoon => '藏匿处';
+  String get accountsTitleRaccoon => '藏匿处';
 
   @override
-  String get transactionsTitleRacoon => '打劫记录';
+  String get transactionsTitleRaccoon => '打劫记录';
 
   @override
-  String get budgetsTitleRacoon => '囤积计划';
+  String get budgetsTitleRaccoon => '囤积计划';
 
   @override
-  String get expensesTitleRacoon => '燃烧报告';
+  String get expensesTitleRaccoon => '燃烧报告';
 
   @override
-  String get projectionTitleRacoon => '水晶宝藏';
+  String get projectionTitleRaccoon => '水晶宝藏';
 
   @override
-  String get settingsTitleRacoon => '窝规';
+  String get settingsTitleRaccoon => '窝规';
 
   @override
-  String get tabInsightsRacoon => '赃物情报';
+  String get tabInsightsRaccoon => '赃物情报';
 
   @override
-  String get tabAccountsRacoon => '藏匿处';
+  String get tabAccountsRaccoon => '藏匿处';
 
   @override
-  String get tabFocusRacoon => '打劫总部';
+  String get tabFocusRaccoon => '打劫总部';
 
   @override
-  String get totalBalanceRacoon => '满藏宝库';
+  String get totalBalanceRaccoon => '满藏宝库';
 
   @override
-  String incomeMonthRacoon(String month) {
+  String incomeMonthRaccoon(String month) {
     return '截获 · $month';
   }
 
   @override
-  String spendingMonthRacoon(String month) {
+  String spendingMonthRaccoon(String month) {
     return '燃烧 · $month';
   }
 
   @override
-  String savedMonthRacoon(String month) {
+  String savedMonthRaccoon(String month) {
     return '藏匿 · $month';
   }
 
   @override
-  String get cashFlowRacoon => '赃物流';
+  String get cashFlowRaccoon => '赃物流';
 
   @override
-  String get whereMoneyGoesRacoon => '赃物去向';
+  String get whereMoneyGoesRaccoon => '赃物去向';
 
   @override
-  String get recentActivityRacoon => '近期打劫';
+  String get recentActivityRaccoon => '近期打劫';
 
   @override
-  String get yourAccountsRacoon => '你的藏匿处';
+  String get yourAccountsRaccoon => '你的藏匿处';
 
   @override
-  String get budgetsAtGlanceRacoon => '囤积一览';
+  String get budgetsAtGlanceRaccoon => '囤积一览';
 
   @override
-  String get viewAllAccountsRacoon => '全部藏匿处';
+  String get viewAllAccountsRaccoon => '全部藏匿处';
 
   @override
-  String get assetAccountsRacoon => '宝藏藏匿处';
+  String get assetAccountsRaccoon => '宝藏藏匿处';
 
   @override
-  String get liabilityAccountsRacoon => '欠债 & IOU';
+  String get liabilityAccountsRaccoon => '欠债 & IOU';
 
   @override
-  String get stocksAndFundsAccountsRacoon => '市场藏匿处';
+  String get stocksAndFundsAccountsRaccoon => '市场藏匿处';
 
   @override
-  String get allAccountsRacoon => '全部藏匿处';
+  String get allAccountsRaccoon => '全部藏匿处';
 
   @override
-  String get accountsRacoon => '藏匿处';
+  String get accountsRaccoon => '藏匿处';
 
   @override
-  String get newTransactionRacoon => '策划打劫';
+  String get newTransactionRaccoon => '策划打劫';
 
   @override
-  String get editTransactionRacoon => '编辑打劫';
+  String get editTransactionRaccoon => '编辑打劫';
 
   @override
-  String transactionsCountRacoon(int count) {
+  String transactionsCountRaccoon(int count) {
     return '$count 次打劫';
   }
 
   @override
-  String get oneTransactionRacoon => '1 次打劫';
+  String get oneTransactionRaccoon => '1 次打劫';
 
   @override
-  String get transactionTypeDepositRacoon => '截获';
+  String get transactionTypeDepositRaccoon => '截获';
 
   @override
-  String get transactionTypeWithdrawalRacoon => '燃烧';
+  String get transactionTypeWithdrawalRaccoon => '燃烧';
 
   @override
-  String get transactionTypeTransferRacoon => '藏匿转移';
+  String get transactionTypeTransferRaccoon => '藏匿转移';
 
   @override
-  String get expenseLabelRacoon => '燃烧';
+  String get expenseLabelRaccoon => '燃烧';
 
   @override
-  String get spentRacoon => '已燃烧';
+  String get spentRaccoon => '已燃烧';
 
   @override
-  String get newBudgetRacoon => '新囤积计划';
+  String get newBudgetRaccoon => '新囤积计划';
 
   @override
-  String get projectedBalanceRacoon => '未来宝藏';
+  String get projectedBalanceRaccoon => '未来宝藏';
 
   @override
-  String get piggyBankRacoon => '迷你藏匿处';
+  String get piggyBankRaccoon => '迷你藏匿处';
 
   @override
-  String get transfersRacoon => '藏匿转移';
+  String get transfersRaccoon => '藏匿转移';
 
   @override
-  String get expensesFilterRacoon => '燃烧';
+  String get expensesFilterRaccoon => '燃烧';
 
   @override
-  String get noTransactionsYetRacoon => '还没有打劫';
+  String get noTransactionsYetRaccoon => '还没有打劫';
 
   @override
-  String get lookingAheadRacoon => '窥探未来';
+  String get lookingAheadRaccoon => '窥探未来';
 
   @override
-  String get openProjectionRacoon => '展望未来';
+  String get openProjectionRaccoon => '展望未来';
 
   @override
-  String get editAccountRacoon => '编辑藏匿处';
+  String get editAccountRaccoon => '编辑藏匿处';
 
   @override
-  String get accountNameRacoon => '藏匿处名称';
+  String get accountNameRaccoon => '藏匿处名称';
 
   @override
-  String get filterAccountRacoon => '筛选藏匿处';
+  String get filterAccountRaccoon => '筛选藏匿处';
 
   @override
-  String get sourceAccountRacoon => '来源藏匿处';
+  String get sourceAccountRaccoon => '来源藏匿处';
 
   @override
-  String get destinationAccountRacoon => '目标藏匿处';
+  String get destinationAccountRaccoon => '目标藏匿处';
 
   @override
-  String get totalSpentPeriodRacoon => '本期总燃烧';
+  String get totalSpentPeriodRaccoon => '本期总燃烧';
 
   @override
-  String get totalIncomePeriodRacoon => '本期总截获';
+  String get totalIncomePeriodRaccoon => '本期总截获';
 
   @override
-  String get totalTransferredPeriodRacoon => '本期总转移';
+  String get totalTransferredPeriodRaccoon => '本期总转移';
 
   @override
   String get newAccount => '新建账户';
@@ -564,13 +564,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get newExpense => '新建支出';
 
   @override
-  String get newAccountRacoon => '新藏匿处';
+  String get newAccountRaccoon => '新藏匿处';
 
   @override
-  String get newLiabilityRacoon => '新欠债';
+  String get newLiabilityRaccoon => '新欠债';
 
   @override
-  String get newExpenseRacoon => '策划燃烧';
+  String get newExpenseRaccoon => '策划燃烧';
 
   @override
   String get income => '收入';
@@ -1032,7 +1032,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String reconciliationCreateCorrectionBody(String amount) {
-    return '仍有 $amount 差额。FireRacoon 将创建一笔对账调整交易。';
+    return '仍有 $amount 差额。FireRaccoon 将创建一笔对账调整交易。';
   }
 
   @override
@@ -1410,10 +1410,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipOpenSubscriptions => '打开周期订阅和账单。';
 
   @override
-  String get subscriptionsTitleRacoon => '定期突袭与计划';
+  String get subscriptionsTitleRaccoon => '定期突袭与计划';
 
   @override
-  String get newSubscriptionRacoon => '新建定期突袭';
+  String get newSubscriptionRaccoon => '新建定期突袭';
 
   @override
   String get piggyBanksTitle => '存钱罐';
@@ -1500,10 +1500,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get piggyBanksTitleRacoon => '迷你藏匿处';
+  String get piggyBanksTitleRaccoon => '迷你藏匿处';
 
   @override
-  String get newPiggyBankRacoon => '新建迷你藏匿处';
+  String get newPiggyBankRaccoon => '新建迷你藏匿处';
 
   @override
   String get newBudget => '新建预算';
@@ -2158,7 +2158,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mcpAgentKeysHint =>
-      'Agents authenticate with a FireRacoon key, not your Firefly III token. Each key acts as the person who created it.';
+      'Agents authenticate with a FireRaccoon key, not your Firefly III token. Each key acts as the person who created it.';
 
   @override
   String get mcpNoAgentKeys => 'No agent keys yet';
@@ -2193,7 +2193,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mcpKeyIssuedBody =>
-      'Paste this into your MCP client as initialize.params.apiKey, or set FIRERACOON_API_KEY. You can reopen it later from this list.';
+      'Paste this into your MCP client as initialize.params.apiKey, or set FIRERACCOON_API_KEY. You can reopen it later from this list.';
 
   @override
   String get mcpCopyKey => 'Copy';
@@ -2417,7 +2417,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get newIncome => '新建收入';
 
   @override
-  String get newIncomeRacoon => '新建截获';
+  String get newIncomeRaccoon => '新建截获';
 
   @override
   String get create => '创建';
@@ -2504,25 +2504,25 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRacoon => '截获';
+  String get navIncomeRaccoon => '截获';
 
   @override
-  String get navTransfersRacoon => '藏匿转移';
+  String get navTransfersRaccoon => '藏匿转移';
 
   @override
-  String get navLiabilitiesRacoon => '欠债';
+  String get navLiabilitiesRaccoon => '欠债';
 
   @override
-  String get incomeTitleRacoon => '截获资金';
+  String get incomeTitleRaccoon => '截获资金';
 
   @override
-  String get transfersTitleRacoon => '藏匿转移';
+  String get transfersTitleRaccoon => '藏匿转移';
 
   @override
-  String get newTransferActionRacoon => '新建藏匿转移';
+  String get newTransferActionRaccoon => '新建藏匿转移';
 
   @override
-  String get liabilitiesTitleRacoon => '所欠债务';
+  String get liabilitiesTitleRaccoon => '所欠债务';
 
   @override
   String tooltipOpenSection(String section) {
@@ -2895,7 +2895,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navHistory => '历史';
 
   @override
-  String get navHistoryRacoon => '行动回放';
+  String get navHistoryRaccoon => '行动回放';
 
   @override
   String get tooltipOpenHistory => '打开撤销/重做历史。';
@@ -2964,7 +2964,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get historyExportSubject => '历史导出';
 
   @override
-  String get historyExportText => 'FireRacoon 历史导出';
+  String get historyExportText => 'FireRaccoon 历史导出';
 
   @override
   String get historySectionToday => '今天';
@@ -3107,6 +3107,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get missingAmount => '请输入金额。';
 
   @override
+  String get missingForeignAmount => 'Please enter the foreign amount.';
+
+  @override
   String get missingAccounts => '请同时选择来源账户和目标账户。';
 
   @override
@@ -3215,7 +3218,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get password => '密码';
 
   @override
-  String get loginSubtitle => '登录以继续使用 FireRacoon。';
+  String get loginSubtitle => '登录以继续使用 FireRaccoon。';
 
   @override
   String get loginMissingFields => '请输入用户名和密码。';
@@ -3302,7 +3305,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unlockWithBiometricsDescription => '在登录界面使用面容、指纹或设备 PIN。';
 
   @override
-  String get biometricUnlockReason => '解锁 FireRacoon';
+  String get biometricUnlockReason => '解锁 FireRaccoon';
 
   @override
   String get biometricEnableReason => '确认以启用生物识别解锁';
@@ -3474,10 +3477,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get settingsExportSubject => 'FireRacoon settings';
+  String get settingsExportSubject => 'FireRaccoon settings';
 
   @override
-  String get settingsExportText => 'FireRacoon settings backup';
+  String get settingsExportText => 'FireRaccoon settings backup';
 
   @override
   String get recordedBalance => '已记账';

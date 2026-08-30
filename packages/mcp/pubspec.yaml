@@ -1,6 +1,6 @@
-name: fireracoon_mcp
+name: fireraccoon_mcp
 description: >-
-  Model Context Protocol (MCP) server exposing FireRacoon's Firefly III client
+  Model Context Protocol (MCP) server exposing FireRaccoon's Firefly III client
   and projection engine as tools for LLM clients (stdio or local TCP).
 version: 1.0.0
 publish_to: none
@@ -9,7 +9,7 @@ environment:
   sdk: '>=3.12.0 <4.0.0'
 
 dependencies:
-  fireracoon_engine:
+  fireraccoon_engine:
     path: ../engine
   http: ^1.6.0
 
@@ -19,4 +19,4 @@ dev_dependencies:
   yaml: ^3.1.3
 
 executables:
-  fireracoon_mcp:
+  fireraccoon_mcp:

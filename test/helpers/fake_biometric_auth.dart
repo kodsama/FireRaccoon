@@ -1,4 +1,4 @@
-import 'package:fireracoon/services/biometric_auth.dart';
+import 'package:fireraccoon/services/biometric_auth.dart';
 
 class FakeBiometricAuth implements BiometricAuth {
   FakeBiometricAuth({this.available = true, this.authenticateResult = true});

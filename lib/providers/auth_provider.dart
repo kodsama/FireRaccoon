@@ -7,7 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../store/secure_storage.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
 import '../utils/debug_env_credentials.dart';
@@ -422,7 +422,7 @@ class AuthNotifier extends Notifier<AuthSettings> {
     _log.info('Starting OAuth authentication flow');
     final authorizationEndpoint = Uri.parse('$baseUrl/oauth/authorize');
     final tokenEndpoint = Uri.parse('$baseUrl/oauth/token');
-    final redirectUrl = Uri.parse('fireracoon://oauth-callback');
+    final redirectUrl = Uri.parse('fireraccoon://oauth-callback');
 
     final grant = oauth2.AuthorizationCodeGrant(
       clientId,
@@ -434,7 +434,7 @@ class AuthNotifier extends Notifier<AuthSettings> {
 
     final result = await FlutterWebAuth2.authenticate(
       url: authorizationUrl.toString(),
-      callbackUrlScheme: 'fireracoon',
+      callbackUrlScheme: 'fireraccoon',
     );
 
     final client = await grant.handleAuthorizationResponse(

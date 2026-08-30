@@ -1,8 +1,8 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/providers/people_providers.dart';
-import 'package:fireracoon/widgets/avatar_crop_dialog.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/widgets/avatar_crop_dialog.dart';
 import 'package:image/image.dart' as img;
 
 Uint8List _pngOfSize(int edge, {int minBytes = 0}) {

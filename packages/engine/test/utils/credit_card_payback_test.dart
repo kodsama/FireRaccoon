@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:test/test.dart';
 
 Account _account({
@@ -212,11 +212,11 @@ void main() {
       expect(first.categoryId, '730');
       expect(first.categoryName, 'Hobby');
       expect(first.tags, ['music']);
-      expect(first.notes, 'fireracoon:linked_journal:j1');
+      expect(first.notes, 'fireraccoon:linked_journal:j1');
       expect(first.reconciled, isTrue);
       expect(first.currencyCode, 'SEK');
 
-      expect(transfer.splits[1].notes, 'fireracoon:linked_journal:j2');
+      expect(transfer.splits[1].notes, 'fireraccoon:linked_journal:j2');
       expect(transfer.splits[1].amount, 120);
       expect(transfer.reconciled, isTrue);
     });
@@ -247,7 +247,7 @@ void main() {
       );
 
       expect(transfer.splits, hasLength(1));
-      expect(transfer.splits.single.notes, 'fireracoon:linked_journal:buy');
+      expect(transfer.splits.single.notes, 'fireraccoon:linked_journal:buy');
     });
 
     test('throws when no eligible purchases', () {

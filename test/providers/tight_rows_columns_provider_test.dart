@@ -2,8 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
-import 'package:fireracoon/providers/tight_rows_columns_provider.dart';
-import 'package:fireracoon/store/secure_storage.dart';
+import 'package:fireraccoon/providers/tight_rows_columns_provider.dart';
+import 'package:fireraccoon/store/secure_storage.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

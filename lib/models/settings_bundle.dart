@@ -3,7 +3,7 @@ import 'dart:convert';
 import '../utils/settings_secrets_crypto.dart';
 import 'people_models.dart';
 
-/// Schema version for FireRacoon settings backup files.
+/// Schema version for FireRaccoon settings backup files.
 ///
 /// v2 seals Firefly tokens and password hashes under a backup passphrase.
 const int kSettingsBundleSchemaVersion = 2;
@@ -118,7 +118,7 @@ class SettingsBundle {
 
   /// Public JSON only (no apiToken, no password hashes).
   Map<String, dynamic> toPublicJson() => {
-    'app': 'fireracoon',
+    'app': 'fireraccoon',
     'schemaVersion': schemaVersion,
     'exportedAt': exportedAtIso,
     'device': device,
@@ -184,8 +184,8 @@ class SettingsBundle {
     if (version < 1 || version > kSettingsBundleSchemaVersion) {
       throw FormatException('Unsupported settings bundle version: $version');
     }
-    if (json['app'] != null && json['app'] != 'fireracoon') {
-      throw FormatException('Not a FireRacoon settings file.');
+    if (json['app'] != null && json['app'] != 'fireraccoon') {
+      throw FormatException('Not a FireRaccoon settings file.');
     }
 
     final peopleRaw = json['people'];

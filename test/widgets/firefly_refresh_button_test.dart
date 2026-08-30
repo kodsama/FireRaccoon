@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon/screens/accounts_screen.dart';
-import 'package:fireracoon/screens/dashboard_screen.dart';
-import 'package:fireracoon/widgets/firefly_refresh_button.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon/screens/accounts_screen.dart';
+import 'package:fireraccoon/screens/dashboard_screen.dart';
+import 'package:fireraccoon/widgets/firefly_refresh_button.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/test_data.dart';

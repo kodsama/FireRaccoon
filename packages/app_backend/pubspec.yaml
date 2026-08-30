@@ -1,6 +1,6 @@
-name: fireracoon_app_backend
+name: fireraccoon_app_backend
 description: >-
-  FireRacoon server mode: encrypted on-disk app store, multi-user APIs, and
+  FireRaccoon server mode: encrypted on-disk app store, multi-user APIs, and
   Firefly III BFF proxy for Docker deployments.
 version: 1.0.0
 publish_to: none
@@ -11,7 +11,7 @@ environment:
 dependencies:
   crypto: ^3.0.7
   cryptography: ^2.9.0
-  fireracoon_engine:
+  fireraccoon_engine:
     path: ../engine
   http: ^1.6.0
   path: ^1.9.1
@@ -24,4 +24,4 @@ dev_dependencies:
   test: ^1.31.0
 
 executables:
-  fireracoon_server:
+  fireraccoon_server:

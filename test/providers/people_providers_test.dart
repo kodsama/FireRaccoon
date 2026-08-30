@@ -13,19 +13,19 @@ import '../helpers/password_cost.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fireracoon_engine/models/account.dart';
-import 'package:fireracoon_engine/models/transaction.dart';
-import 'package:fireracoon/deployment/deployment_providers.dart';
-import 'package:fireracoon/deployment/fireracoon_mode.dart';
-import 'package:fireracoon/models/app_user_models.dart';
-import 'package:fireracoon/models/people_models.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/dashboard_stats_providers.dart';
-import 'package:fireracoon/providers/people_providers.dart';
-import 'package:fireracoon/providers/server_session_provider.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/store/remote_server_client.dart';
+import 'package:fireraccoon_engine/models/account.dart';
+import 'package:fireraccoon_engine/models/transaction.dart';
+import 'package:fireraccoon/deployment/deployment_providers.dart';
+import 'package:fireraccoon/deployment/fireraccoon_mode.dart';
+import 'package:fireraccoon/models/app_user_models.dart';
+import 'package:fireraccoon/models/people_models.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/dashboard_stats_providers.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/providers/server_session_provider.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/store/remote_server_client.dart';
 
 import '../helpers/fake_biometric_auth.dart';
 import '../helpers/fixed_accounts_notifier.dart';
@@ -966,7 +966,7 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(resolvedPrefs),
           deploymentConfigProvider.overrideWithValue(
             const DeploymentConfig(
-              mode: FireracoonMode.server,
+              mode: FireraccoonMode.server,
               apiBase: 'http://example.test',
             ),
           ),

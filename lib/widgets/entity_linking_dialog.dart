@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../providers/data_providers.dart';
 import '../providers/paginated_transactions_provider.dart';
@@ -228,7 +228,7 @@ class __EntityLinkingDialogState extends ConsumerState<_EntityLinkingDialog> {
               input = _buildRecurrenceInput(rec, budgetId: _selectedTargetId);
               break;
           }
-          await service.updateRecurrence(rec.id, input);
+          await service.updateRecurrence(rec.id, input, current: rec);
           recUpdatedCount++;
         }
       }

@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/account_prognosis.dart';
+export 'package:fireraccoon_engine/models/account_prognosis.dart';

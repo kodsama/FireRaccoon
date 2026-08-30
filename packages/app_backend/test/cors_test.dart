@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
+import 'package:fireraccoon_app_backend/fireraccoon_app_backend.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
@@ -11,7 +11,7 @@ void main() {
   const storePassword = 'Store-Password1!';
 
   setUp(() async {
-    tmp = await Directory.systemTemp.createTemp('fireracoon-cors');
+    tmp = await Directory.systemTemp.createTemp('fireraccoon-cors');
   });
 
   tearDown(() async {
@@ -21,7 +21,7 @@ void main() {
   Future<AppServer> ready({List<String> allowedOrigins = const []}) async {
     return openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         dataPassword: storePassword,
         port: 0,

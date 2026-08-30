@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -19,6 +19,51 @@ void main() {
       expect(account.id, '5');
       expect(account.name, 'Checking');
       expect(account.currentBalance, 2500.5);
+    });
+
+    test('records whether the currency is the account\'s own', () {
+      // Firefly fills currency_code in for a counterparty that has no currency
+      // of its own, using the installation's primary currency, and only
+      // object_has_currency_setting says so. Read without it, every expense
+      // account looks denominated in the primary currency.
+      final counterparty = Account.fromJson({
+        'id': '12581',
+        'attributes': {
+          'name': 'Fabrica Do Meu Avo',
+          'type': 'expense',
+          'currency_symbol': 'kr',
+          'currency_code': 'SEK',
+          'object_has_currency_setting': false,
+        },
+      });
+      final asset = Account.fromJson({
+        'id': '10328',
+        'attributes': {
+          'name': 'Revolut EUR',
+          'type': 'asset',
+          'currency_symbol': '€',
+          'currency_code': 'EUR',
+          'object_has_currency_setting': true,
+        },
+      });
+
+      expect(counterparty.hasCurrencySetting, isFalse);
+      expect(counterparty.currencyCode, 'SEK');
+      expect(asset.hasCurrencySetting, isTrue);
+    });
+
+    test('a payload without the flag is trusted as it was before', () {
+      final account = Account.fromJson({
+        'id': '5',
+        'attributes': {
+          'name': 'Checking',
+          'type': 'asset',
+          'currency_symbol': '€',
+          'currency_code': 'EUR',
+        },
+      });
+
+      expect(account.hasCurrencySetting, isTrue);
     });
 
     test('normalizes Firefly liabilities type to liability', () {

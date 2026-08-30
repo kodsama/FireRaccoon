@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/theme/app_colors.dart';
-import 'package:fireracoon/utils/balance_check_selection.dart';
-import 'package:fireracoon/widgets/selection_check_control.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/theme/app_colors.dart';
+import 'package:fireraccoon/utils/balance_check_selection.dart';
+import 'package:fireraccoon/widgets/selection_check_control.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../helpers/screen_test_app.dart';

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon_mcp/fireracoon_mcp.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:test/test.dart';
@@ -102,7 +102,7 @@ void main() {
     BackendAuthenticator withResponse(
       http.Response response, {
       List<http.Request>? record,
-      String baseUrl = 'https://fireracoon.test',
+      String baseUrl = 'https://fireraccoon.test',
     }) => BackendAuthenticator(
       baseUrl: baseUrl,
       client: MockClient((request) async {
@@ -136,10 +136,10 @@ void main() {
     });
 
     test('trims a trailing slash off the base URL', () {
-      final auth = BackendAuthenticator(baseUrl: 'https://fireracoon.test/');
+      final auth = BackendAuthenticator(baseUrl: 'https://fireraccoon.test/');
 
-      expect(auth.baseUrl, 'https://fireracoon.test');
-      expect(auth.fireflyProxyBase, 'https://fireracoon.test/api/firefly');
+      expect(auth.baseUrl, 'https://fireraccoon.test');
+      expect(auth.fireflyProxyBase, 'https://fireraccoon.test/api/firefly');
     });
 
     test('defaults an unnamed role to viewer', () async {
@@ -200,7 +200,7 @@ void main() {
     test('refuses when the backend is unreachable', () async {
       // A backend that is down must not authenticate anyone.
       final auth = BackendAuthenticator(
-        baseUrl: 'https://fireracoon.test',
+        baseUrl: 'https://fireraccoon.test',
         client: MockClient((_) async => throw const SocketExceptionStub()),
       );
 

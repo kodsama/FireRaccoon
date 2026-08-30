@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/piggy_bank.dart';
+export 'package:fireraccoon_engine/models/piggy_bank.dart';

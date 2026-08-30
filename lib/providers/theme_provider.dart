@@ -21,7 +21,7 @@ class ThemeSettings {
     required this.funMode,
   });
 
-  bool get isRacoonMode => funMode == FunMode.racoon;
+  bool get isRaccoonMode => funMode == FunMode.raccoon;
 
   FunMode get effectiveFunMode => FunModeResolver.resolve(funMode);
 
@@ -33,7 +33,7 @@ class ThemeSettings {
     ThemePaletteType? paletteType,
     AccentColorType? accentType,
     FunMode? funMode,
-    bool? isRacoonMode,
+    bool? isRaccoonMode,
   }) {
     return ThemeSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -41,8 +41,8 @@ class ThemeSettings {
       accentType: accentType ?? this.accentType,
       funMode:
           funMode ??
-          (isRacoonMode != null
-              ? (isRacoonMode ? FunMode.racoon : FunMode.none)
+          (isRaccoonMode != null
+              ? (isRaccoonMode ? FunMode.raccoon : FunMode.none)
               : this.funMode),
     );
   }
@@ -115,7 +115,7 @@ class ThemeNotifier extends Notifier<ThemeSettings> {
         if (mode.name == stored) return mode;
       }
     }
-    if (prefs.getBool('isRacoonMode') ?? false) return FunMode.racoon;
+    if (prefs.getBool('isRaccoonMode') ?? false) return FunMode.raccoon;
     return FunMode.none;
   }
 
@@ -162,11 +162,11 @@ class ThemeNotifier extends Notifier<ThemeSettings> {
   void setFunMode(FunMode mode) {
     state = state.copyWith(funMode: mode);
     _prefs.setString('funMode', mode.name);
-    _prefs.setBool('isRacoonMode', mode == FunMode.racoon);
+    _prefs.setBool('isRaccoonMode', mode == FunMode.raccoon);
   }
 
-  void setRacoonMode(bool isRacoon) {
-    setFunMode(isRacoon ? FunMode.racoon : FunMode.none);
+  void setRaccoonMode(bool isRaccoon) {
+    setFunMode(isRaccoon ? FunMode.raccoon : FunMode.none);
   }
 }
 

@@ -1,4 +1,4 @@
-import 'package:fireracoon/utils/password_policy.dart';
+import 'package:fireraccoon/utils/password_policy.dart';
 
 /// PBKDF2 cost for tests.
 ///

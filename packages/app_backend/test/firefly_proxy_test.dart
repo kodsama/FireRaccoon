@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
+import 'package:fireraccoon_app_backend/fireraccoon_app_backend.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shelf/shelf.dart';
@@ -14,7 +14,7 @@ void main() {
   const storePassword = 'Store-Password1!';
 
   setUp(() async {
-    tmp = await Directory.systemTemp.createTemp('fireracoon-proxy');
+    tmp = await Directory.systemTemp.createTemp('fireraccoon-proxy');
   });
 
   tearDown(() async {
@@ -34,7 +34,7 @@ void main() {
     });
     final app = AppServer(
       config: ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         dataPassword: storePassword,
         port: 0,
@@ -71,7 +71,7 @@ void main() {
       Request(
         method,
         Uri.parse('http://localhost/api/firefly/$path'),
-        headers: {'x-fireracoon-session': session},
+        headers: {'x-fireraccoon-session': session},
       ),
     );
   }
@@ -152,15 +152,15 @@ void main() {
     }
 
     // A real session works from all three.
-    expect(await statusWith({'x-fireracoon-session': session}), 200);
+    expect(await statusWith({'x-fireraccoon-session': session}), 200);
     expect(await statusWith({'authorization': 'Bearer $session'}), 200);
-    expect(await statusWith({'cookie': 'fireracoon_session=$session'}), 200);
+    expect(await statusWith({'cookie': 'fireraccoon_session=$session'}), 200);
 
     // An invented one works from none of them.
-    expect(await statusWith({'x-fireracoon-session': 'not-a-session'}), 401);
+    expect(await statusWith({'x-fireraccoon-session': 'not-a-session'}), 401);
     expect(await statusWith({'authorization': 'Bearer not-a-session'}), 401);
     expect(
-      await statusWith({'cookie': 'fireracoon_session=not-a-session'}),
+      await statusWith({'cookie': 'fireraccoon_session=not-a-session'}),
       401,
     );
 
@@ -172,14 +172,14 @@ void main() {
     // Setup cannot require a session: there is nobody to authenticate until it
     // succeeds. That made first boot a race, and the winner became admin and
     // inherited the bootstrapped Firefly token.
-    final tmp2 = await Directory.systemTemp.createTemp('fireracoon-setup');
+    final tmp2 = await Directory.systemTemp.createTemp('fireraccoon-setup');
     addTearDown(() async {
       if (tmp2.existsSync()) await tmp2.delete(recursive: true);
     });
 
     final app = await openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp2.path,
         dataPassword: 'Store-Password1!',
         port: 0,

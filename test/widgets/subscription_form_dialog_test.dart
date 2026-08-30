@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/utils/create_flows.dart';
-import 'package:fireracoon/widgets/subscription_form_dialog.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/utils/create_flows.dart';
+import 'package:fireraccoon/widgets/subscription_form_dialog.dart';
 
 import '../helpers/dialog_test_helpers.dart';
 import '../helpers/screen_test_app.dart';
