@@ -1151,10 +1151,11 @@ class _RecordingFireflyService extends FakeFireflyService {
   @override
   Future<Recurrence> updateRecurrence(
     String recurrenceId,
-    RecurrenceInput input,
-  ) async {
+    RecurrenceInput input, {
+    Recurrence? current,
+  }) async {
     updateRecurrenceCalls++;
-    return super.updateRecurrence(recurrenceId, input);
+    return super.updateRecurrence(recurrenceId, input, current: current);
   }
 
   @override

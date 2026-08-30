@@ -599,8 +599,9 @@ class FakeFireflyService implements FireflyService {
   @override
   Future<Recurrence> updateRecurrence(
     String recurrenceId,
-    RecurrenceInput input,
-  ) async {
+    RecurrenceInput input, {
+    Recurrence? current,
+  }) async {
     _maybeThrow();
     final created = await createRecurrence(input);
     return Recurrence(
