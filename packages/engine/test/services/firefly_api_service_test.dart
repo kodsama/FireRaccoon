@@ -2261,6 +2261,190 @@ void main() {
       },
     );
 
+    group('a schedule Firefly will not revalidate', () {
+      // Firefly checks `repetitions.*.moment` as numeric|max:10 on update and
+      // not on store, so a monthly rule falling after the 10th can be created
+      // and then never edited, however unrelated the edit. It only validates
+      // what the request carries, so an untouched schedule stays off it.
+      Map<String, dynamic> attributesOnThe28th({String title = 'Fello'}) => {
+        'type': 'withdrawal',
+        'title': title,
+        'first_date': '2026-08-28',
+        'active': true,
+        'apply_rules': true,
+        'repetitions': [
+          {'type': 'monthly', 'moment': '28', 'skip': 0, 'weekend': 1},
+        ],
+        'transactions': [
+          {
+            'id': '55',
+            'description': 'Fello',
+            'amount': '450.00',
+            'currency_code': 'SEK',
+            'source_id': '1',
+            'destination_id': '2',
+          },
+        ],
+      };
+
+      RecurrenceInput inputOnThe(String moment, {String title = 'Fello'}) =>
+          RecurrenceInput(
+            type: RecurrenceTransactionType.withdrawal,
+            title: title,
+            firstDate: DateTime(2026, 8, 28),
+            repetitions: [
+              RecurrenceRepetitionInput(
+                type: RecurrenceRepetitionType.monthly,
+                moment: moment,
+                weekend: RecurrenceWeekendMode.createAnyway,
+              ),
+            ],
+            transactions: const [
+              RecurrenceTransactionInput(
+                id: '55',
+                description: 'Fello',
+                amount: 450,
+                currencyCode: 'SEK',
+                sourceId: '1',
+                destinationId: '2',
+              ),
+            ],
+          );
+
+      test('is left off an update that did not touch it', () async {
+        Map<String, dynamic>? sent;
+        final client = MockClient((request) async {
+          sent = jsonDecode(request.body) as Map<String, dynamic>;
+          return jsonHttpResponse({
+            'data': {'id': '111', 'attributes': attributesOnThe28th()},
+          });
+        });
+        final service = FireflyApiService(
+          serverUrl: baseUrl,
+          apiToken: token,
+          client: client,
+        );
+
+        await service.updateRecurrence(
+          '111',
+          inputOnThe('28', title: 'Fello renamed'),
+          current: Recurrence.fromJson({
+            'id': '111',
+            'attributes': attributesOnThe28th(),
+          }),
+        );
+
+        expect(sent!.containsKey('repetitions'), isFalse);
+        expect(sent!['title'], 'Fello renamed');
+      });
+
+      test('is sent when the day actually changed', () async {
+        Map<String, dynamic>? sent;
+        final client = MockClient((request) async {
+          sent = jsonDecode(request.body) as Map<String, dynamic>;
+          return jsonHttpResponse({
+            'data': {'id': '111', 'attributes': attributesOnThe28th()},
+          });
+        });
+        final service = FireflyApiService(
+          serverUrl: baseUrl,
+          apiToken: token,
+          client: client,
+        );
+
+        await service.updateRecurrence(
+          '111',
+          inputOnThe('20'),
+          current: Recurrence.fromJson({
+            'id': '111',
+            'attributes': attributesOnThe28th(),
+          }),
+        );
+
+        expect(sent!['repetitions'], hasLength(1));
+        expect((sent!['repetitions'] as List).first['moment'], '20');
+      });
+
+      test('says what to do when Firefly refuses the day', () async {
+        final client = MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'message': 'The given data was invalid.',
+              'errors': {
+                'repetitions.0.moment': [
+                  'The repetitions.0.moment may not be greater than 10.',
+                ],
+              },
+            }),
+            422,
+            headers: {'content-type': 'application/json'},
+          ),
+        );
+        final service = FireflyApiService(
+          serverUrl: baseUrl,
+          apiToken: token,
+          client: client,
+        );
+
+        await expectLater(
+          service.updateRecurrence('111', inputOnThe('28')),
+          throwsA(
+            isA<FireflyApiException>()
+                .having(
+                  (e) => e.message,
+                  'message',
+                  allOf(
+                    contains('cannot be changed through the API'),
+                    contains('Nothing was saved'),
+                    contains('may not be greater than 10'),
+                  ),
+                )
+                .having((e) => e.statusCode, 'statusCode', 422)
+                .having(
+                  (e) => e.fieldErrors['repetitions.0.moment'],
+                  'fieldErrors',
+                  contains('may not be greater than 10'),
+                ),
+          ),
+        );
+      });
+
+      test('a refusal is not reported as a network error', () async {
+        final client = MockClient(
+          (_) async => http.Response(
+            jsonEncode({
+              'message': 'The given data was invalid.',
+              'errors': {
+                'transactions.0.source_id': ['Bad source.'],
+              },
+            }),
+            422,
+            headers: {'content-type': 'application/json'},
+          ),
+        );
+        final service = FireflyApiService(
+          serverUrl: baseUrl,
+          apiToken: token,
+          client: client,
+        );
+
+        await expectLater(
+          service.updateRecurrence('111', inputOnThe('8')),
+          throwsA(
+            isA<FireflyApiException>().having(
+              (e) => e.toString(),
+              'toString',
+              allOf(
+                isNot(contains('Network error')),
+                contains('Firefly III refused the request'),
+                contains('Bad source.'),
+              ),
+            ),
+          ),
+        );
+      });
+    });
+
     test('update endpoints throw on bad status', () async {
       final client = MockClient((_) async => http.Response('fail', 500));
       final service = FireflyApiService(
