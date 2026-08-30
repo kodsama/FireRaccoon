@@ -9,8 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2026-08-30
 
+### Added
+
+- Settings lists what has failed since the app started, with a button to copy
+  it. A failed write used to say its piece once and vanish, and nothing kept a
+  copy, so the only account of why Firefly refused something was the server's
+  own log. The list holds warnings and failures, not ordinary traffic, is
+  redacted on the way in and keeps an error's type rather than the error
+  itself. It is never written to disk and never sent anywhere
+
 ### Fixed
 
+- On a phone the header was laid out underneath the status bar, so the menu,
+  the search field, the people selector and the undo controls sat where the
+  system takes the taps. The whole top row was unusable on Android
+- Choosing "All People" in the person selector did nothing. The menu reported
+  that entry the same way it reports being dismissed, so the filter stayed on
+  whoever was selected with no way back to everyone
+- A transaction could be saved against the wrong one of a payee's two accounts.
+  Firefly keeps an expense account and a revenue account under one name for the
+  same counterparty, and a typed name matched whichever came first regardless
+  of which end it was filling, so Firefly refused the write outright and
+  nothing was saved
+- A split transaction's date sat among the first split's own fields although
+  one date covers the whole transaction and is written to every split
 - A recurring transaction dated after the 10th of the month could not be
   edited, whatever the edit was. Firefly checks a repetition's day as a number
   no greater than 10 when updating and not when creating, so these were
@@ -29,9 +51,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   onto a transaction with a single currency
 - A refused write reported itself as a network error though Firefly had
   answered, and the recurring transaction form raised it through a SnackBar,
-  which draws inside the page underneath the form that caused it. The empty
-  foreign amount field also complained in the same words as an empty main
-  amount, which read as though the amount already typed was the one refused
+  which draws inside the page underneath the form that caused it. Firefly also
+  repeats one sentence across every field it might apply to, so a single
+  unresolved account arrived four times over in one line. Each distinct
+  sentence is said once now. The empty foreign amount field also complained in
+  the same words as an empty main amount, which read as though the amount
+  already typed was the one refused
 
 ### Changed
 
