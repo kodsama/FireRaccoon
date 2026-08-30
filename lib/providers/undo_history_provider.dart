@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
@@ -27,6 +28,60 @@ const kUndoHistoryDefaultLimit = 10000;
 const kUndoHistoryMaxLimit = 100000;
 const _undoHistoryLimitPrefsKey = 'undoHistoryLimit';
 const _undoHistoryFileName = 'undo_history_v1.json';
+
+/// Where the history lives on the web, which has no file to write to.
+const _undoHistoryPrefsKey = 'undoHistoryV1';
+
+/// Where local-mode history is kept between runs.
+///
+/// Two of them, because the platforms differ in what they have: a file on
+/// anything with a disk, and preferences on the web, where the JSON store
+/// answers every read with null and drops every write, so history existed only
+/// until the tab was reloaded.
+abstract class UndoHistoryStore {
+  Future<String?> read();
+  Future<void> write(String contents);
+}
+
+class FileUndoHistoryStore implements UndoHistoryStore {
+  String? _cachedPath;
+
+  Future<String> _path() async {
+    return _cachedPath ??= await jsonStoreSupportPath(_undoHistoryFileName);
+  }
+
+  @override
+  Future<String?> read() async {
+    final path = await _path();
+    if (!await jsonStoreExists(path)) return null;
+    return jsonStoreRead(path);
+  }
+
+  @override
+  Future<void> write(String contents) async {
+    await jsonStoreWrite(await _path(), contents);
+  }
+}
+
+class PrefsUndoHistoryStore implements UndoHistoryStore {
+  PrefsUndoHistoryStore(this._prefs);
+
+  final SharedPreferences _prefs;
+
+  @override
+  Future<String?> read() async => _prefs.getString(_undoHistoryPrefsKey);
+
+  @override
+  Future<void> write(String contents) =>
+      _prefs.setString(_undoHistoryPrefsKey, contents);
+}
+
+final undoHistoryStoreProvider = Provider<UndoHistoryStore>((ref) {
+  if (kIsWeb) {
+    return PrefsUndoHistoryStore(ref.watch(sharedPreferencesProvider));
+  }
+  return FileUndoHistoryStore();
+});
 
 enum UndoActionType {
   themeMode,
@@ -163,7 +218,6 @@ class UndoHistoryState {
 class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
   late SharedPreferences _prefs;
   bool _replaying = false;
-  String? _cachePath;
 
   @override
   UndoHistoryState build() {
@@ -186,14 +240,7 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
     // test that had already finished. The server path above already guards
     // every gap; this one did not guard any.
     try {
-      final path = await _historyPath();
-      if (!ref.mounted) return;
-      if (!await jsonStoreExists(path)) {
-        if (!ref.mounted) return;
-        state = state.copyWith(isHydrated: true, limit: limit);
-        return;
-      }
-      final raw = await jsonStoreRead(path);
+      final raw = await ref.read(undoHistoryStoreProvider).read();
       if (!ref.mounted) return;
       if (raw == null || raw.trim().isEmpty) {
         state = state.copyWith(isHydrated: true, limit: limit);
@@ -1015,14 +1062,6 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
     );
   }
 
-  Future<String> _historyPath() async {
-    final cached = _cachePath;
-    if (cached != null) return cached;
-    final path = await jsonStoreSupportPath(_undoHistoryFileName);
-    _cachePath = path;
-    return path;
-  }
-
   Future<void> _persist() async {
     final payload = <String, Object?>{
       'cursor': state.cursor,
@@ -1041,8 +1080,7 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
       }
       return;
     }
-    final path = await _historyPath();
-    await jsonStoreWrite(path, jsonEncode(payload));
+    await ref.read(undoHistoryStoreProvider).write(jsonEncode(payload));
   }
 }
 
