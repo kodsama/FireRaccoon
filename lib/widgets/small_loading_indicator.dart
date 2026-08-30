@@ -11,7 +11,7 @@ bool get _isFlutterTest =>
 
 /// Compact loading affordance for list tiles, dialogs, and inline slots.
 ///
-/// Uses a breathing racoon logo in Racoon Mode; otherwise a small spinner.
+/// Uses a breathing raccoon logo in Raccoon Mode; otherwise a small spinner.
 class SmallLoadingIndicator extends ConsumerWidget {
   const SmallLoadingIndicator({super.key, this.size = 16});
 
@@ -19,13 +19,13 @@ class SmallLoadingIndicator extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isRacoonMode = ref.watch(themeProvider).isRacoonMode;
+    final isRaccoonMode = ref.watch(themeProvider).isRaccoonMode;
     final colors = context.colors;
 
     return SizedBox(
       width: size,
       height: size,
-      child: isRacoonMode
+      child: isRaccoonMode
           ? _BreathingLogo(size: size)
           : Padding(
               padding: EdgeInsets.all(size * 0.125),

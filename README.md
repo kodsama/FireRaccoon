@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/fireracoon_logo.png" alt="FireRacoon logo" width="96" />
+  <img src="assets/fireraccoon_logo.png" alt="FireRaccoon logo" width="96" />
 </p>
 
-<h1 align="center">FireRacoon</h1>
+<h1 align="center">FireRaccoon</h1>
 
 <p align="center">
   <strong>The brightest bandit for your budget.</strong><br/>
@@ -33,14 +33,14 @@
 
 ---
 
-FireRacoon talks to your existing Firefly III instance over the REST API.
+FireRaccoon talks to your existing Firefly III instance over the REST API.
 Financial data stays on your Firefly server.
 
-**Local installs** (desktop, mobile, standalone web) keep FireRacoon
+**Local installs** (desktop, mobile, standalone web) keep FireRaccoon
 credentials and preferences in platform secure storage.
 
-**Docker** runs **server mode** (`FIRERACOON_MODE=server`): FireRacoon state
-lives in an encrypted volume (`fireracoon_data`). Set `DATA_PASSWORD` so
+**Docker** runs **server mode** (`FIRERACCOON_MODE=server`): FireRaccoon state
+lives in an encrypted volume (`fireraccoon_data`). Set `DATA_PASSWORD` so
 restarts unlock automatically; users only enter their account password.
 
 ## What it does
@@ -65,8 +65,8 @@ restarts unlock automatically; users only enter their account password.
 ## Quick start
 
 ```bash
-git clone https://github.com/kodsama/FireRacoon.git
-cd FireRacoon
+git clone https://github.com/kodsama/FireRaccoon.git
+cd FireRaccoon
 flutter pub get
 flutter run -d chrome
 ```
@@ -79,10 +79,10 @@ Details: [Getting started](docs/getting-started.md) and
 
 ```bash
 # App only (Firefly already running elsewhere)
-docker compose -f docs/examples/compose.fireracoon-only.yml up -d
+docker compose -f docs/examples/compose.fireraccoon-only.yml up -d
 
 # App + Firefly III + MariaDB (replace CHANGE_ME_* first)
-docker compose -f docs/examples/compose.fireracoon-firefly.yml up -d
+docker compose -f docs/examples/compose.fireraccoon-firefly.yml up -d
 
 # Local demo: build the web UI from source + Firefly (demo passwords)
 docker compose up --build
@@ -90,11 +90,11 @@ docker compose up --build
 
 Set `DATA_PASSWORD` so the container unlocks encrypted storage on every
 boot; users then only sign in with their account password. Default volume:
-`fireracoon_data` → `/data`. Bind-mount alternative: `- ./data/fireracoon:/data`.
+`fireraccoon_data` → `/data`. Bind-mount alternative: `- ./data/fireraccoon:/data`.
 
 | Service | URL |
 |---------|-----|
-| FireRacoon | http://127.0.0.1:8082 |
+| FireRaccoon | http://127.0.0.1:8082 |
 | Firefly III (full stack) | http://127.0.0.1:8081 |
 
 First visit: admin setup (Firefly URL + token). Later users sign in on `/login`.
@@ -108,9 +108,9 @@ paste into Create ServApp):
 
 | Scenario | File |
 |----------|------|
-| App only | [cosmos-compose.fireracoon-only.json](docs/examples/cosmos-compose.fireracoon-only.json) |
-| App next to existing Firefly | [cosmos-compose.fireracoon-with-firefly.json](docs/examples/cosmos-compose.fireracoon-with-firefly.json) |
-| App + Firefly III + MariaDB | [cosmos-compose.fireracoon-firefly-stack.json](docs/examples/cosmos-compose.fireracoon-firefly-stack.json) |
+| App only | [cosmos-compose.fireraccoon-only.json](docs/examples/cosmos-compose.fireraccoon-only.json) |
+| App next to existing Firefly | [cosmos-compose.fireraccoon-with-firefly.json](docs/examples/cosmos-compose.fireraccoon-with-firefly.json) |
+| App + Firefly III + MariaDB | [cosmos-compose.fireraccoon-firefly-stack.json](docs/examples/cosmos-compose.fireraccoon-firefly-stack.json) |
 
 Replace `CHANGE_ME_*` secrets on full stacks. Guide:
 [Cosmos Cloud](docs/cosmos-cloud.md).
@@ -119,7 +119,7 @@ Replace `CHANGE_ME_*` secrets on full stacks. Guide:
 
 Agents should use the MCP server rather than scraping the UI. Stdio for
 Cursor/CLI; TCP when the desktop app is running (see Settings for the bound
-port). Agents authenticate with a FireRacoon agent key issued in Settings under
+port). Agents authenticate with a FireRaccoon agent key issued in Settings under
 MCP, never with your Firefly III token. A key acts as the person who created it,
 so a viewer's key gets read-only tools; `get_capabilities` names the person the
 presented key resolved to.
@@ -132,11 +132,11 @@ Both are read-only and hand back the arithmetic behind every verdict, so writing
 to the ledger stays a separate call.
 
 ```bash
-FIRERACOON_URL=https://fireracoon.example FIRERACOON_API_KEY=frcn_... \
-  dart run packages/mcp/bin/fireracoon_mcp.dart
+FIRERACCOON_URL=https://fireraccoon.example FIRERACCOON_API_KEY=frcn_... \
+  dart run packages/mcp/bin/fireraccoon_mcp.dart
 ```
 
-Schema discovery: `dart run packages/mcp/bin/fireracoon_mcp.dart schema`.
+Schema discovery: `dart run packages/mcp/bin/fireraccoon_mcp.dart schema`.
 Sample client config: [docs/mcp-client-config.json](docs/mcp-client-config.json).
 Full tool list: [MCP server](docs/mcp-server.md) and [AGENTS.md](AGENTS.md).
 
@@ -148,8 +148,8 @@ packages/engine/     Models, Firefly client, projection / prognosis
 packages/mcp/        Model Context Protocol server (stdio / TCP)
 test/                Unit and widget tests
 docs/                Guides and ADRs
-Dockerfile           Flutter web + fireracoon_server (encrypted DATA_DIR)
-compose.yml          Local demo: FireRacoon server mode + Firefly III + MariaDB
+Dockerfile           Flutter web + fireraccoon_server (encrypted DATA_DIR)
+compose.yml          Local demo: FireRaccoon server mode + Firefly III + MariaDB
 openapi.yaml         Firefly REST subset + MCP tool mirrors
 ```
 

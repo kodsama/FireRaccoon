@@ -1,5 +1,5 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon_mcp/fireracoon_mcp.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 import 'package:test/test.dart';
 
 McpServer _server() => McpServer(
@@ -52,7 +52,7 @@ void main() {
     );
     expect(
       (result['serverInfo'] as Map<String, Object?>)['name'],
-      'fireracoon',
+      'fireraccoon',
     );
   });
 
@@ -61,12 +61,12 @@ void main() {
       _req(1, 'initialize', {'protocolVersion': '2025-06-18'}),
       identity: _admin,
     );
-    final fireracoon =
-        (response!['result'] as Map<String, Object?>)['fireracoon']
+    final fireraccoon =
+        (response!['result'] as Map<String, Object?>)['fireraccoon']
             as Map<String, Object?>;
 
-    expect(fireracoon['write_access'], isTrue);
-    final account = fireracoon['account'] as Map<String, Object?>;
+    expect(fireraccoon['write_access'], isTrue);
+    final account = fireraccoon['account'] as Map<String, Object?>;
     expect(account['person_name'], 'Ada');
     expect(account['role'], 'admin');
     expect(account['key_id'], 'k1');
@@ -76,12 +76,12 @@ void main() {
     final response = await _server().handle(
       _req(1, 'initialize', {'protocolVersion': '2025-06-18'}),
     );
-    final fireracoon =
-        (response!['result'] as Map<String, Object?>)['fireracoon']
+    final fireraccoon =
+        (response!['result'] as Map<String, Object?>)['fireraccoon']
             as Map<String, Object?>;
 
-    expect(fireracoon['account'], isNull);
-    expect(fireracoon['write_access'], isFalse);
+    expect(fireraccoon['account'], isNull);
+    expect(fireraccoon['write_access'], isFalse);
   });
 
   test('notifications return null', () async {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon/screens/subscriptions_screen.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon/screens/subscriptions_screen.dart';
 import '../helpers/dialog_test_helpers.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';

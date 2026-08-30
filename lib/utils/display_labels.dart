@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../l10n/app_localizations.dart';
 

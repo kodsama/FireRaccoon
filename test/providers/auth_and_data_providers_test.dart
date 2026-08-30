@@ -7,9 +7,9 @@ import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/static_auth_notifier.dart';
 import '../helpers/test_data.dart';

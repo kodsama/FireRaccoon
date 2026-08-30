@@ -1,19 +1,19 @@
-# Contributing to FireRacoon
+# Contributing to FireRaccoon
 
-Thank you for your interest in FireRacoon! This document explains how to get
+Thank you for your interest in FireRaccoon! This document explains how to get
 set up and submit changes.
 
 ## Before you start
 
 1. Read [Getting started](docs/getting-started.md) and [Development](docs/development.md).
-2. Search existing [issues](https://github.com/kodsama/fireracoon/issues) to avoid duplicate work.
+2. Search existing [issues](https://github.com/kodsama/fireraccoon/issues) to avoid duplicate work.
 3. For large features, open an issue first to discuss approach.
 
 ## Development setup
 
 ```bash
-git clone https://github.com/kodsama/fireracoon.git
-cd fireracoon
+git clone https://github.com/kodsama/fireraccoon.git
+cd fireraccoon
 flutter pub get
 cp .env.example .env   # optional: local Firefly credentials for desktop debug
 flutter run -d chrome

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/models/transaction.dart';
-import 'package:fireracoon/utils/transaction_filters.dart';
+import 'package:fireraccoon/models/transaction.dart';
+import 'package:fireraccoon/utils/transaction_filters.dart';
 
 Transaction _tx({
   required String type,

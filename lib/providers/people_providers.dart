@@ -9,7 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../store/secure_storage.dart';
 import 'package:image/image.dart' as img;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../fun_modes/fun_mode.dart';
 import '../deployment/deployment_providers.dart';
@@ -26,7 +26,7 @@ import 'locale_provider.dart';
 import 'server_session_provider.dart';
 import 'theme_provider.dart';
 
-const String kPeopleConfigPreferenceKey = 'fireracoon_people_config';
+const String kPeopleConfigPreferenceKey = 'fireraccoon_people_config';
 const String kPeopleAuthStorageKey = 'people_auth_v1';
 const String kPeopleSessionKey = 'people_session_id';
 const String kPeopleLastUserKey = 'people_last_user_id';
@@ -51,7 +51,7 @@ const int kAvatarMinBytes = 10 * 1024;
 const int kAvatarMaxBytes = 5 * 1024 * 1024;
 const int kAvatarStoredEdge = 256;
 
-String _avatarPrefsKey(String personId) => 'fireracoon_avatar_$personId';
+String _avatarPrefsKey(String personId) => 'fireraccoon_avatar_$personId';
 
 /// Downscales cropped avatars so web prefs and disk stay small.
 Uint8List normalizeAvatarPng(Uint8List pngBytes) {

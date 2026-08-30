@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../l10n/l10n_extensions.dart';
 import '../theme/app_theme.dart';

@@ -1,12 +1,12 @@
 services:
   # Demo stack — default passwords are for localhost only (see docs/deployment.md).
-  fireracoon:
+  fireraccoon:
     build: .
     ports:
       # Loopback only: nothing here is meant to be reachable from the LAN.
       - "127.0.0.1:8082:8080"
     environment:
-      FIRERACOON_MODE: server
+      FIRERACCOON_MODE: server
       DATA_DIR: /data
       # Unlocks (or creates) encrypted DATA_DIR on every boot so users only
       # enter their account password in the UI — not the storage password.
@@ -15,7 +15,7 @@ services:
       # FIREFLY_URL: http://firefly-app:8080
       # FIREFLY_TOKEN: ...
     volumes:
-      - fireracoon_data:/data
+      - fireraccoon_data:/data
     restart: unless-stopped
 
   firefly-app:
@@ -51,6 +51,6 @@ services:
       - firefly_db:/var/lib/mysql
 
 volumes:
-  fireracoon_data:
+  fireraccoon_data:
   firefly_upload:
   firefly_db:

@@ -1,9 +1,9 @@
 import 'dart:convert';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:http/http.dart' as http;
 
-/// Verifies the FireRacoon agent key an MCP client presents on `initialize`.
+/// Verifies the FireRaccoon agent key an MCP client presents on `initialize`.
 ///
 /// The desktop app resolves keys against its local store; server mode delegates
 /// to the backend, which owns both the keys and the Firefly PAT.
@@ -44,7 +44,7 @@ class FixedIdentityAuthenticator implements McpAuthenticator {
   Future<AgentIdentity?> authenticate(String key) async => identity;
 }
 
-/// Asks a FireRacoon backend to resolve a key, since in server mode the backend
+/// Asks a FireRaccoon backend to resolve a key, since in server mode the backend
 /// owns both the key store and the Firefly PAT.
 class BackendAuthenticator implements McpAuthenticator {
   BackendAuthenticator({required String baseUrl, http.Client? client})

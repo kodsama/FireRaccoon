@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:fireracoon_engine/models/account.dart';
+import 'package:fireraccoon_engine/models/account.dart';
 
 /// Roles for local People accounts. Firefly III stays single-tenant; these
-/// only gate FireRacoon UI actions.
+/// only gate FireRaccoon UI actions.
 enum PersonRole {
   admin,
   user,
@@ -112,7 +112,7 @@ class PersonPreferences {
       Object.hash(themeModeName, funModeName, localeCode, personFilterId);
 }
 
-/// A household member who may also sign into FireRacoon. Everyone shares the
+/// A household member who may also sign into FireRaccoon. Everyone shares the
 /// same Firefly III connection; role and optional password only gate the app.
 class Person {
   final String id;

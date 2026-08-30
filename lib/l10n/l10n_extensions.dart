@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart'
+import 'package:fireraccoon_engine/fireraccoon_engine.dart'
     hide prognosisEndOfNextMonth;
 
 import 'app_localizations.dart';
@@ -17,8 +17,8 @@ extension L10nContext on BuildContext {
   LocaleFormatting get format =>
       ProviderScope.containerOf(this).read(localeFormattingProvider);
 
-  /// Racoon Mode labels when [isRacoon] is true.
-  FunL10n funL10n(bool isRacoon) => FunL10n(l10n, isRacoon: isRacoon);
+  /// Raccoon Mode labels when [isRaccoon] is true.
+  FunL10n funL10n(bool isRaccoon) => FunL10n(l10n, isRaccoon: isRaccoon);
 }
 
 /// Human-readable, localized label for a Firefly account role
@@ -191,8 +191,8 @@ extension AutoBudgetTypeL10n on AutoBudgetType {
 }
 
 extension TransactionTypeFilterL10n on TransactionTypeFilter {
-  String localizedLabel(AppLocalizations l10n, {bool isRacoon = false}) {
-    final fun = FunL10n(l10n, isRacoon: isRacoon);
+  String localizedLabel(AppLocalizations l10n, {bool isRaccoon = false}) {
+    final fun = FunL10n(l10n, isRaccoon: isRaccoon);
     return switch (this) {
       TransactionTypeFilter.all => l10n.allTypes,
       TransactionTypeFilter.expense => fun.expensesFilter,
@@ -201,8 +201,8 @@ extension TransactionTypeFilterL10n on TransactionTypeFilter {
     };
   }
 
-  String localizedTotalLabel(AppLocalizations l10n, {bool isRacoon = false}) {
-    final fun = FunL10n(l10n, isRacoon: isRacoon);
+  String localizedTotalLabel(AppLocalizations l10n, {bool isRaccoon = false}) {
+    final fun = FunL10n(l10n, isRaccoon: isRaccoon);
     return switch (this) {
       TransactionTypeFilter.expense => fun.totalForFilter('expense'),
       TransactionTypeFilter.income => fun.totalForFilter('income'),
@@ -262,9 +262,9 @@ extension ExpenseRouteFiltersL10n on ExpenseRouteFilters {
 String localizedTransactionType(
   String type,
   AppLocalizations l10n, {
-  bool isRacoon = false,
+  bool isRaccoon = false,
 }) {
-  return FunL10n(l10n, isRacoon: isRacoon).transactionType(type);
+  return FunL10n(l10n, isRaccoon: isRaccoon).transactionType(type);
 }
 
 extension UndoActionTypeL10n on UndoActionType {

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/l10n/app_localizations_en.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/utils/locale_formatting.dart';
-import 'package:fireracoon/utils/transaction_list_grouping.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/l10n/app_localizations_en.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/utils/locale_formatting.dart';
+import 'package:fireraccoon/utils/transaction_list_grouping.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 Transaction _tx({
   required String id,

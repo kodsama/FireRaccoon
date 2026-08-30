@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:fireracoon/models/account.dart';
-import 'package:fireracoon/models/transaction.dart';
-import 'package:fireracoon/utils/dashboard_period.dart';
-import 'package:fireracoon/utils/dashboard_stats.dart';
-import 'package:fireracoon/utils/transaction_filters.dart';
+import 'package:fireraccoon/models/account.dart';
+import 'package:fireraccoon/models/transaction.dart';
+import 'package:fireraccoon/utils/dashboard_period.dart';
+import 'package:fireraccoon/utils/dashboard_stats.dart';
+import 'package:fireraccoon/utils/transaction_filters.dart';
 
 Account _account({
   required String name,

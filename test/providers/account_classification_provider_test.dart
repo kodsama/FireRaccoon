@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fireracoon_engine/models/account.dart';
-import 'package:fireracoon/providers/account_classification_provider.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
+import 'package:fireraccoon_engine/models/account.dart';
+import 'package:fireraccoon/providers/account_classification_provider.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
 
 import '../helpers/mock_firefly_service.dart';
 

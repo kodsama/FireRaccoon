@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/widgets/confirmation_dialog.dart';
+import 'package:fireraccoon/widgets/confirmation_dialog.dart';
 import '../helpers/dialog_test_helpers.dart';
 import '../helpers/localized_test_app.dart';
 

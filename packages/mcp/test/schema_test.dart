@@ -1,10 +1,10 @@
-import 'package:fireracoon_mcp/fireracoon_mcp.dart';
+import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 import 'package:test/test.dart';
 
 void main() {
   test('buildMcpSchema includes tool catalog and auth', () {
     final schema = buildMcpSchema();
-    expect(schema['tool'], 'fireracoon');
+    expect(schema['tool'], 'fireraccoon');
     expect(schema['protocolVersion'], mcpProtocolVersion);
     expect(schema['tools'], isA<List<Object?>>());
     expect((schema['tools'] as List<Object?>).length, mcpToolNames().length);
@@ -24,7 +24,7 @@ void main() {
   test('auth advertises account credentials, not Firefly ones', () {
     final auth = buildMcpSchema()['auth'] as Map<String, Object?>;
 
-    expect(auth['env'], ['FIRERACOON_URL', 'FIRERACOON_API_KEY']);
+    expect(auth['env'], ['FIRERACCOON_URL', 'FIRERACCOON_API_KEY']);
     expect(
       (auth['tcp'] as Map<String, Object?>)['param'],
       'initialize.params.apiKey',

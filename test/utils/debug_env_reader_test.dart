@@ -1,8 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/utils/debug_env_credentials.dart';
-import 'package:fireracoon/utils/debug_env_reader_io.dart';
+import 'package:fireraccoon/utils/debug_env_credentials.dart';
+import 'package:fireraccoon/utils/debug_env_reader_io.dart';
 
 void main() {
   group('parseDotEnv', () {

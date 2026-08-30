@@ -1,4 +1,4 @@
-import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
+import 'package:fireraccoon_app_backend/fireraccoon_app_backend.dart';
 
 /// PBKDF2 cost for tests.
 ///

@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 /// How a row should look while picking transactions in balance-check mode.
 enum BalanceCheckVisual {

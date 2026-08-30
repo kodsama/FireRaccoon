@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fireracoon/providers/undo_history_provider.dart';
-import 'package:fireracoon/router/history_route.dart';
-import 'package:fireracoon/screens/history_screen.dart';
+import 'package:fireraccoon/providers/undo_history_provider.dart';
+import 'package:fireraccoon/router/history_route.dart';
+import 'package:fireraccoon/screens/history_screen.dart';
 import '../helpers/screen_test_app.dart';
 
 void main() {

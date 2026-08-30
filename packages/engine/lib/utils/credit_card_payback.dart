@@ -34,7 +34,7 @@ List<Account> paymentAccountsForCreditCard(
 }
 
 String creditCardPaybackLinkNote(String journalId) =>
-    'fireracoon:linked_journal:$journalId';
+    'fireraccoon:linked_journal:$journalId';
 
 /// Builds a Platinum-style multi-split transfer that pays back [purchases].
 ///

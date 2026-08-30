@@ -3,19 +3,19 @@ import 'tools.dart';
 const mcpSchemaVersion = '1.0.0';
 const mcpProtocolVersion = '2025-06-18';
 
-/// Machine-readable MCP catalog for agent discovery (`fireracoon_mcp schema`).
+/// Machine-readable MCP catalog for agent discovery (`fireraccoon_mcp schema`).
 Map<String, Object?> buildMcpSchema({FireflyTarget? target}) {
   final tools = buildTools(
     target: target ?? const FireflyTarget.unconfigured(),
   );
   return {
-    'tool': 'fireracoon',
+    'tool': 'fireraccoon',
     'version': mcpSchemaVersion,
     'protocolVersion': mcpProtocolVersion,
     'openapi': 'openapi.yaml',
     'auth': {
-      'credential': 'FireRacoon agent key',
-      'env': ['FIRERACOON_URL', 'FIRERACOON_API_KEY'],
+      'credential': 'FireRaccoon agent key',
+      'env': ['FIRERACCOON_URL', 'FIRERACCOON_API_KEY'],
       'tcp': {
         'required': true,
         'param': 'initialize.params.apiKey',
@@ -25,7 +25,7 @@ Map<String, Object?> buildMcpSchema({FireflyTarget? target}) {
         ],
       },
       'note':
-          'Keys are issued per agent in FireRacoon Settings under MCP and '
+          'Keys are issued per agent in FireRaccoon Settings under MCP and '
           'inherit their person\'s role. Firefly III credentials are never '
           'accepted here: in server mode the backend holds the PAT and proxies '
           'through /api/firefly.',
@@ -42,7 +42,7 @@ Map<String, Object?> buildMcpSchema({FireflyTarget? target}) {
       ]..sort(),
     },
     'transport': {
-      'stdio': {'command': 'fireracoon_mcp'},
+      'stdio': {'command': 'fireraccoon_mcp'},
       'tcp': {
         'host': '127.0.0.1',
         'port': 8787,

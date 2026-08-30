@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/password_cost.dart';
-import 'package:fireracoon/models/people_models.dart';
-import 'package:fireracoon/models/settings_bundle.dart';
-import 'package:fireracoon/utils/password_policy.dart';
-import 'package:fireracoon/utils/settings_secrets_crypto.dart';
+import 'package:fireraccoon/models/people_models.dart';
+import 'package:fireraccoon/models/settings_bundle.dart';
+import 'package:fireraccoon/utils/password_policy.dart';
+import 'package:fireraccoon/utils/settings_secrets_crypto.dart';
 
 void main() {
   const passphrase = 'Correct-Horse9!';
@@ -132,7 +132,7 @@ void main() {
     () async {
       final source = '''
 {
-  "app": "fireracoon",
+  "app": "fireraccoon",
   "schemaVersion": 1,
   "exportedAt": "2026-08-04T00:00:00.000Z",
   "device": { "locale": "sv" },
@@ -197,7 +197,7 @@ void main() {
   test('rejects unsupported schema versions', () async {
     expect(
       () => SettingsBundle.decode(
-        '{"app":"fireracoon","schemaVersion":99,"people":{}}',
+        '{"app":"fireraccoon","schemaVersion":99,"people":{}}',
       ),
       throwsFormatException,
     );
@@ -211,7 +211,7 @@ void main() {
       throwsFormatException,
     );
     expect(
-      () => SettingsBundle.decode('{"app":"fireracoon","schemaVersion":2}'),
+      () => SettingsBundle.decode('{"app":"fireraccoon","schemaVersion":2}'),
       throwsFormatException,
     );
     expect(() => SettingsBundle.decode('[]'), throwsFormatException);
@@ -255,7 +255,7 @@ void main() {
     () async {
       final bundle = await SettingsBundle.decode('''
 {
-  "app": "fireracoon",
+  "app": "fireraccoon",
   "schemaVersion": 2,
   "people": {
     "people": [

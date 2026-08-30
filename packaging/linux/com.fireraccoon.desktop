@@ -1,9 +1,9 @@
 [Desktop Entry]
-Name=FireRacoon
+Name=FireRaccoon
 GenericName=Personal finance
 Comment=Firefly III client with on-device projections
-Exec=fireracoon
-Icon=fireracoon
+Exec=fireraccoon
+Icon=fireraccoon
 Terminal=false
 Type=Application
 Categories=Office;Finance;

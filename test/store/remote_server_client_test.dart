@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'package:fireracoon/store/remote_server_client.dart';
+import 'package:fireraccoon/store/remote_server_client.dart';
 
 /// One captured outbound request, so a test can assert on method, path and
 /// headers without repeating the MockClient plumbing.
@@ -73,7 +73,7 @@ void main() {
 
         expect(sent.single.method, 'GET');
         expect(sent.single.url.path, '/api/agent-keys');
-        expect(sent.single.headers['x-fireracoon-session'], 'sess-1');
+        expect(sent.single.headers['x-fireraccoon-session'], 'sess-1');
         expect(sent.single.headers['accept'], 'application/json');
         // A GET carries no body, so declaring a JSON content-type would be a lie
         // some reverse proxies reject.
@@ -88,7 +88,7 @@ void main() {
 
       await client.fetchAgentKeys();
 
-      expect(sent.single.headers.containsKey('x-fireracoon-session'), isFalse);
+      expect(sent.single.headers.containsKey('x-fireraccoon-session'), isFalse);
     });
 
     test('omits the session header when the token is empty', () async {
@@ -99,7 +99,7 @@ void main() {
 
       await client.fetchAgentKeys();
 
-      expect(sent.single.headers.containsKey('x-fireracoon-session'), isFalse);
+      expect(sent.single.headers.containsKey('x-fireraccoon-session'), isFalse);
     });
 
     test('returns empty when the response omits keys', () async {
@@ -161,7 +161,7 @@ void main() {
       expect(sent.single.method, 'POST');
       expect(sent.single.url.path, '/api/agent-keys');
       expect(sent.single.headers['content-type'], contains('application/json'));
-      expect(sent.single.headers['x-fireracoon-session'], 'sess-1');
+      expect(sent.single.headers['x-fireraccoon-session'], 'sess-1');
       expect(jsonDecode(sent.single.body), {'label': 'Claude'});
       expect(body['secret'], 'fra_abcd1234');
     });
@@ -199,7 +199,7 @@ void main() {
       expect(await client.fetchAgentKeySecret('key-1'), 'fra_abcd1234');
       expect(sent.single.method, 'GET');
       expect(sent.single.url.path, '/api/agent-keys/key-1/secret');
-      expect(sent.single.headers['x-fireracoon-session'], 'sess-1');
+      expect(sent.single.headers['x-fireraccoon-session'], 'sess-1');
     });
 
     test('returns empty string when the server sends no secret', () async {
@@ -236,7 +236,7 @@ void main() {
 
       expect(sent.single.method, 'DELETE');
       expect(sent.single.url.path, '/api/agent-keys/key-1');
-      expect(sent.single.headers['x-fireracoon-session'], 'sess-1');
+      expect(sent.single.headers['x-fireraccoon-session'], 'sess-1');
       expect(sent.single.headers['content-type'], isNull);
     });
 
@@ -320,18 +320,18 @@ void main() {
     test('a sub-path base keeps its prefix', () async {
       final client = clientFor(
         (_) => okJson({'ok': true, 'secret': 's'}),
-        baseUrl: 'http://example.test/fireracoon/',
+        baseUrl: 'http://example.test/fireraccoon/',
       );
 
       await client.fetchAgentKeySecret('key-1');
 
       expect(
         sent.single.url.toString(),
-        'http://example.test/fireracoon/api/agent-keys/key-1/secret',
+        'http://example.test/fireraccoon/api/agent-keys/key-1/secret',
       );
       expect(
         client.fireflyProxyBase,
-        'http://example.test/fireracoon/api/firefly',
+        'http://example.test/fireraccoon/api/firefly',
       );
     });
 

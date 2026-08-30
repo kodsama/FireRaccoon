@@ -62,7 +62,7 @@ class _AccountFilterDialogState extends ConsumerState<_AccountFilterDialog> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
 
     final sortedAccounts = List<Account>.from(widget.accounts)
       ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));

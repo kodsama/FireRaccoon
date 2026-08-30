@@ -1,12 +1,12 @@
 # MCP server
 
-FireRacoon includes a [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes the shared `fireracoon_engine` to LLM clients (Cursor, Claude Desktop, custom agents).
+FireRaccoon includes a [Model Context Protocol](https://modelcontextprotocol.io/) server that exposes the shared `fireraccoon_engine` to LLM clients (Cursor, Claude Desktop, custom agents).
 
-Package: `packages/mcp` · Binary: `fireracoon_mcp`
+Package: `packages/mcp` · Binary: `fireraccoon_mcp`
 
 ## Credentials
 
-Agents authenticate with a **FireRacoon agent key**, not a Firefly III token. Issue one in Settings under MCP. Its owner can read it back later, so a mislaid key does not force a reissue, and it can be revoked at any time.
+Agents authenticate with a **FireRaccoon agent key**, not a Firefly III token. Issue one in Settings under MCP. Its owner can read it back later, so a mislaid key does not force a reissue, and it can be revoked at any time.
 
 Keys live where the Firefly PAT already does: the platform keychain on desktop, the sealed `DATA_DIR` on a server. Both already hold a secret granting strictly more than any agent key, so keeping the key readable there adds no exposure that was not already present. Key material never leaves through a settings export.
 
@@ -28,20 +28,20 @@ Tools take no credential arguments at all. Where Firefly traffic goes is fixed w
 cd packages/mcp
 dart pub get
 
-export FIRERACOON_URL=https://fireracoon.example
-export FIRERACOON_API_KEY=frcn_...
+export FIRERACCOON_URL=https://fireraccoon.example
+export FIRERACCOON_API_KEY=frcn_...
 
 # Stdio transport (the default; MCP clients spawn this process)
-dart run fireracoon_mcp
+dart run fireraccoon_mcp
 
 # TCP transport on localhost:8787
-dart run fireracoon_mcp --tcp --port 8787
+dart run fireraccoon_mcp --tcp --port 8787
 
 # Export machine-readable tool catalog (agent discovery)
-dart run fireracoon_mcp schema
+dart run fireraccoon_mcp schema
 ```
 
-The standalone binary runs against a **server-mode** FireRacoon. It exchanges the key at `/api/me`, then sends every Firefly call through the BFF proxy at `/api/firefly`, so the Firefly PAT never enters the MCP process. On `--tcp`, each connection's own key becomes its Firefly bearer, leaving the backend as the authority on what that key may do.
+The standalone binary runs against a **server-mode** FireRaccoon. It exchanges the key at `/api/me`, then sends every Firefly call through the BFF proxy at `/api/firefly`, so the Firefly PAT never enters the MCP process. On `--tcp`, each connection's own key becomes its Firefly bearer, leaving the backend as the authority on what that key may do.
 
 The desktop app runs its own MCP server on TCP and does not use this binary. There, all agents share the app's saved Firefly connection and the key decides only which tools they may call.
 
@@ -49,19 +49,19 @@ See also [`openapi.yaml`](../openapi.yaml) and [`AGENTS.md`](../AGENTS.md) at th
 
 ## Cursor / Claude Desktop configuration
 
-A ready-to-copy config lives at [`docs/mcp-client-config.json`](mcp-client-config.json). Set `FIRERACOON_URL` and `FIRERACOON_API_KEY`, then merge into your client's MCP settings.
+A ready-to-copy config lives at [`docs/mcp-client-config.json`](mcp-client-config.json). Set `FIRERACCOON_URL` and `FIRERACCOON_API_KEY`, then merge into your client's MCP settings.
 
 **From the repository root** (recommended, since paths work out of the box):
 
 ```json
 {
   "mcpServers": {
-    "fireracoon": {
+    "fireraccoon": {
       "command": "dart",
-      "args": ["run", "packages/mcp/bin/fireracoon_mcp.dart"],
+      "args": ["run", "packages/mcp/bin/fireraccoon_mcp.dart"],
       "env": {
-        "FIRERACOON_URL": "https://fireracoon.example",
-        "FIRERACOON_API_KEY": "frcn_your_agent_key"
+        "FIRERACCOON_URL": "https://fireraccoon.example",
+        "FIRERACCOON_API_KEY": "frcn_your_agent_key"
       }
     }
   }
@@ -73,13 +73,13 @@ A ready-to-copy config lives at [`docs/mcp-client-config.json`](mcp-client-confi
 ```json
 {
   "mcpServers": {
-    "fireracoon": {
+    "fireraccoon": {
       "command": "dart",
-      "args": ["run", "fireracoon_mcp"],
-      "cwd": "/absolute/path/to/FireRacoon/packages/mcp",
+      "args": ["run", "fireraccoon_mcp"],
+      "cwd": "/absolute/path/to/FireRaccoon/packages/mcp",
       "env": {
-        "FIRERACOON_URL": "https://fireracoon.example",
-        "FIRERACOON_API_KEY": "frcn_your_agent_key"
+        "FIRERACCOON_URL": "https://fireraccoon.example",
+        "FIRERACCOON_API_KEY": "frcn_your_agent_key"
       }
     }
   }
@@ -104,7 +104,7 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 }
 ```
 
-`params.api_key` and `params.authentication.token` are accepted as well. Every other method is refused until a key resolves. The `initialize` result carries a `fireracoon` block naming the account the key resolved to and whether it has write access.
+`params.api_key` and `params.authentication.token` are accepted as well. Every other method is refused until a key resolves. The `initialize` result carries a `fireraccoon` block naming the account the key resolved to and whether it has write access.
 
 ## Available tools
 

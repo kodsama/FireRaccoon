@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/widgets/fun_decorated_surface.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/widgets/fun_decorated_surface.dart';
 
 void main() {
   testWidgets('shows only child when no fun mode is active', (tester) async {
@@ -26,8 +26,8 @@ void main() {
     expect(find.byType(Stack), findsNothing);
   });
 
-  testWidgets('wraps child in stack when Racoon Mode is on', (tester) async {
-    SharedPreferences.setMockInitialValues({'funMode': 'racoon'});
+  testWidgets('wraps child in stack when Raccoon Mode is on', (tester) async {
+    SharedPreferences.setMockInitialValues({'funMode': 'raccoon'});
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
@@ -47,10 +47,10 @@ void main() {
     expect(find.byType(CustomPaint), findsWidgets);
   });
 
-  testWidgets('legacy isRacoonMode pref still enables stickers', (
+  testWidgets('legacy isRaccoonMode pref still enables stickers', (
     tester,
   ) async {
-    SharedPreferences.setMockInitialValues({'isRacoonMode': true});
+    SharedPreferences.setMockInitialValues({'isRaccoonMode': true});
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(

@@ -1,11 +1,11 @@
 import 'dart:io';
 
-import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
+import 'package:fireraccoon_app_backend/fireraccoon_app_backend.dart';
 
-/// FireRacoon server-mode entrypoint for Docker and local headful server runs.
+/// FireRaccoon server-mode entrypoint for Docker and local headful server runs.
 ///
 /// Required env:
-/// - `FIRERACOON_MODE=server`
+/// - `FIRERACCOON_MODE=server`
 ///
 /// Recommended:
 /// - `DATA_PASSWORD` — creates or unlocks encrypted `DATA_DIR` on every
@@ -13,7 +13,7 @@ import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
 ///
 /// Optional:
 /// - `DATA_DIR` (default `/data`)
-/// - `PORT` / `FIRERACOON_PORT` (default `8080`)
+/// - `PORT` / `FIRERACCOON_PORT` (default `8080`)
 /// - `WEB_ROOT` (default `/app/web`)
 /// - `FIREFLY_URL` / `FIREFLY_TOKEN` bootstrap
 Future<void> main(List<String> args) async {
@@ -35,7 +35,7 @@ Future<void> main(List<String> args) async {
   final server = await AppServer.open(config);
   final httpServer = await server.serve();
   stderr.writeln(
-    'FireRacoon server listening on '
+    'FireRaccoon server listening on '
     'http://${httpServer.address.host}:${httpServer.port}',
   );
   if (server.isStoreLocked) {

@@ -1,4 +1,4 @@
-name: fireracoon
+name: fireraccoon
 description: >-
   A friendly cross-platform client for Firefly III — dashboards, budgets,
   expenses, and on-device balance projections.
@@ -34,9 +34,9 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
-  fireracoon_engine:
+  fireraccoon_engine:
     path: packages/engine
-  fireracoon_mcp:
+  fireraccoon_mcp:
     path: packages/mcp
 
   # The following adds the Cupertino Icons font to your application.
@@ -94,9 +94,9 @@ flutter:
   uses-material-design: true
 
   assets:
-    - assets/fireracoon_logo.jpg
-    - assets/fireracoon_logo.png
-    - assets/fireracoon_logo_super.png
+    - assets/fireraccoon_logo.jpg
+    - assets/fireraccoon_logo.png
+    - assets/fireraccoon_logo_super.png
     - assets/avatars/
 
   fonts:

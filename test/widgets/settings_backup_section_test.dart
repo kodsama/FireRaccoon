@@ -4,12 +4,12 @@ import 'dart:convert';
 // transitively with file_selector itself.
 // ignore: depend_on_referenced_packages
 import 'package:file_selector_platform_interface/file_selector_platform_interface.dart';
-import 'package:fireracoon/models/people_models.dart';
-import 'package:fireracoon/models/settings_bundle.dart';
-import 'package:fireracoon/providers/people_providers.dart';
-import 'package:fireracoon/providers/settings_export_import_provider.dart';
-import 'package:fireracoon/utils/app_feedback.dart';
-import 'package:fireracoon/widgets/settings_backup_section.dart';
+import 'package:fireraccoon/models/people_models.dart';
+import 'package:fireraccoon/models/settings_bundle.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/providers/settings_export_import_provider.dart';
+import 'package:fireraccoon/utils/app_feedback.dart';
+import 'package:fireraccoon/widgets/settings_backup_section.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,7 +87,7 @@ Future<String> _backupSource({List<Person> people = const []}) {
 XFile _pickedFile(String contents) => XFile.fromData(
   utf8.encode(contents),
   mimeType: 'application/json',
-  name: 'fireracoon_settings.json',
+  name: 'fireraccoon_settings.json',
 );
 
 void main() {

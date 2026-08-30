@@ -109,7 +109,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'FireRacoon'**
+  /// **'FireRaccoon'**
   String get appTitle;
 
   /// No description provided for @appTagline.
@@ -124,11 +124,11 @@ abstract class AppLocalizations {
   /// **'Fire'**
   String get appNameFire;
 
-  /// No description provided for @appNameRacoon.
+  /// No description provided for @appNameRaccoon.
   ///
   /// In en, this message translates to:
-  /// **'Racoon'**
-  String get appNameRacoon;
+  /// **'Raccoon'**
+  String get appNameRaccoon;
 
   /// No description provided for @navDashboard.
   ///
@@ -388,11 +388,11 @@ abstract class AppLocalizations {
   /// **'Appearance'**
   String get appearance;
 
-  /// No description provided for @racoonMode.
+  /// No description provided for @raccoonMode.
   ///
   /// In en, this message translates to:
-  /// **'Racoon Mode'**
-  String get racoonMode;
+  /// **'Raccoon Mode'**
+  String get raccoonMode;
 
   /// No description provided for @themeStyle.
   ///
@@ -772,377 +772,377 @@ abstract class AppLocalizations {
   /// **'Burnt'**
   String get burnt;
 
-  /// No description provided for @navDashboardRacoon.
+  /// No description provided for @navDashboardRaccoon.
   ///
   /// In en, this message translates to:
   /// **'The Den'**
-  String get navDashboardRacoon;
+  String get navDashboardRaccoon;
 
-  /// No description provided for @navDashboardShortRacoon.
+  /// No description provided for @navDashboardShortRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Den'**
-  String get navDashboardShortRacoon;
+  String get navDashboardShortRaccoon;
 
-  /// No description provided for @navAccountsRacoon.
+  /// No description provided for @navAccountsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Stashes'**
-  String get navAccountsRacoon;
+  String get navAccountsRaccoon;
 
-  /// No description provided for @navTransactionsRacoon.
+  /// No description provided for @navTransactionsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Heist Log'**
-  String get navTransactionsRacoon;
+  String get navTransactionsRaccoon;
 
-  /// No description provided for @navBudgetsRacoon.
+  /// No description provided for @navBudgetsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Hoard Plans'**
-  String get navBudgetsRacoon;
+  String get navBudgetsRaccoon;
 
-  /// No description provided for @navSubscriptionsRacoon.
+  /// No description provided for @navSubscriptionsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Recurring Raids'**
-  String get navSubscriptionsRacoon;
+  String get navSubscriptionsRaccoon;
 
-  /// No description provided for @navPiggyBanksRacoon.
+  /// No description provided for @navPiggyBanksRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Mini Stashes'**
-  String get navPiggyBanksRacoon;
+  String get navPiggyBanksRaccoon;
 
-  /// No description provided for @navExpensesRacoon.
+  /// No description provided for @navExpensesRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Burn Report'**
-  String get navExpensesRacoon;
+  String get navExpensesRaccoon;
 
-  /// No description provided for @navProjectionRacoon.
+  /// No description provided for @navProjectionRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Crystal Stash'**
-  String get navProjectionRacoon;
+  String get navProjectionRaccoon;
 
-  /// No description provided for @navPrognosisRacoon.
+  /// No description provided for @navPrognosisRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Month-end loot'**
-  String get navPrognosisRacoon;
+  String get navPrognosisRaccoon;
 
-  /// No description provided for @navSettingsRacoon.
+  /// No description provided for @navSettingsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Den Rules'**
-  String get navSettingsRacoon;
+  String get navSettingsRaccoon;
 
-  /// No description provided for @netWorthRacoon.
+  /// No description provided for @netWorthRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Total Hoard'**
-  String get netWorthRacoon;
+  String get netWorthRaccoon;
 
-  /// No description provided for @searchRacoon.
+  /// No description provided for @searchRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Sniff around…'**
-  String get searchRacoon;
+  String get searchRaccoon;
 
-  /// No description provided for @accountsTitleRacoon.
+  /// No description provided for @accountsTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Stashes'**
-  String get accountsTitleRacoon;
+  String get accountsTitleRaccoon;
 
-  /// No description provided for @transactionsTitleRacoon.
+  /// No description provided for @transactionsTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Heist Log'**
-  String get transactionsTitleRacoon;
+  String get transactionsTitleRaccoon;
 
-  /// No description provided for @budgetsTitleRacoon.
+  /// No description provided for @budgetsTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Hoard Plans'**
-  String get budgetsTitleRacoon;
+  String get budgetsTitleRaccoon;
 
-  /// No description provided for @expensesTitleRacoon.
+  /// No description provided for @expensesTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Burn Report'**
-  String get expensesTitleRacoon;
+  String get expensesTitleRaccoon;
 
-  /// No description provided for @projectionTitleRacoon.
+  /// No description provided for @projectionTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Crystal Stash'**
-  String get projectionTitleRacoon;
+  String get projectionTitleRaccoon;
 
-  /// No description provided for @settingsTitleRacoon.
+  /// No description provided for @settingsTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Den Rules'**
-  String get settingsTitleRacoon;
+  String get settingsTitleRaccoon;
 
-  /// No description provided for @tabInsightsRacoon.
+  /// No description provided for @tabInsightsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Loot Intel'**
-  String get tabInsightsRacoon;
+  String get tabInsightsRaccoon;
 
-  /// No description provided for @tabAccountsRacoon.
+  /// No description provided for @tabAccountsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Stashes'**
-  String get tabAccountsRacoon;
+  String get tabAccountsRaccoon;
 
-  /// No description provided for @tabFocusRacoon.
+  /// No description provided for @tabFocusRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Heist HQ'**
-  String get tabFocusRacoon;
+  String get tabFocusRaccoon;
 
-  /// No description provided for @totalBalanceRacoon.
+  /// No description provided for @totalBalanceRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Full Stash'**
-  String get totalBalanceRacoon;
+  String get totalBalanceRaccoon;
 
-  /// No description provided for @incomeMonthRacoon.
+  /// No description provided for @incomeMonthRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Snatched · {month}'**
-  String incomeMonthRacoon(String month);
+  String incomeMonthRaccoon(String month);
 
-  /// No description provided for @spendingMonthRacoon.
+  /// No description provided for @spendingMonthRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Burnt · {month}'**
-  String spendingMonthRacoon(String month);
+  String spendingMonthRaccoon(String month);
 
-  /// No description provided for @savedMonthRacoon.
+  /// No description provided for @savedMonthRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Stashed · {month}'**
-  String savedMonthRacoon(String month);
+  String savedMonthRaccoon(String month);
 
-  /// No description provided for @cashFlowRacoon.
+  /// No description provided for @cashFlowRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Loot Flow'**
-  String get cashFlowRacoon;
+  String get cashFlowRaccoon;
 
-  /// No description provided for @whereMoneyGoesRacoon.
+  /// No description provided for @whereMoneyGoesRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Where loot goes'**
-  String get whereMoneyGoesRacoon;
+  String get whereMoneyGoesRaccoon;
 
-  /// No description provided for @recentActivityRacoon.
+  /// No description provided for @recentActivityRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Recent Raids'**
-  String get recentActivityRacoon;
+  String get recentActivityRaccoon;
 
-  /// No description provided for @yourAccountsRacoon.
+  /// No description provided for @yourAccountsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Your Stashes'**
-  String get yourAccountsRacoon;
+  String get yourAccountsRaccoon;
 
-  /// No description provided for @budgetsAtGlanceRacoon.
+  /// No description provided for @budgetsAtGlanceRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Hoard at a glance'**
-  String get budgetsAtGlanceRacoon;
+  String get budgetsAtGlanceRaccoon;
 
-  /// No description provided for @viewAllAccountsRacoon.
+  /// No description provided for @viewAllAccountsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'All stashes'**
-  String get viewAllAccountsRacoon;
+  String get viewAllAccountsRaccoon;
 
-  /// No description provided for @assetAccountsRacoon.
+  /// No description provided for @assetAccountsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Treasure Stashes'**
-  String get assetAccountsRacoon;
+  String get assetAccountsRaccoon;
 
-  /// No description provided for @liabilityAccountsRacoon.
+  /// No description provided for @liabilityAccountsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Debts & IOUs'**
-  String get liabilityAccountsRacoon;
+  String get liabilityAccountsRaccoon;
 
-  /// No description provided for @stocksAndFundsAccountsRacoon.
+  /// No description provided for @stocksAndFundsAccountsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Market Stashes'**
-  String get stocksAndFundsAccountsRacoon;
+  String get stocksAndFundsAccountsRaccoon;
 
-  /// No description provided for @allAccountsRacoon.
+  /// No description provided for @allAccountsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'All Stashes'**
-  String get allAccountsRacoon;
+  String get allAccountsRaccoon;
 
-  /// No description provided for @accountsRacoon.
+  /// No description provided for @accountsRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Stashes'**
-  String get accountsRacoon;
+  String get accountsRaccoon;
 
-  /// No description provided for @newTransactionRacoon.
+  /// No description provided for @newTransactionRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Plan a Heist'**
-  String get newTransactionRacoon;
+  String get newTransactionRaccoon;
 
-  /// No description provided for @editTransactionRacoon.
+  /// No description provided for @editTransactionRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Edit Heist'**
-  String get editTransactionRacoon;
+  String get editTransactionRaccoon;
 
-  /// No description provided for @transactionsCountRacoon.
+  /// No description provided for @transactionsCountRaccoon.
   ///
   /// In en, this message translates to:
   /// **'{count} heists'**
-  String transactionsCountRacoon(int count);
+  String transactionsCountRaccoon(int count);
 
-  /// No description provided for @oneTransactionRacoon.
+  /// No description provided for @oneTransactionRaccoon.
   ///
   /// In en, this message translates to:
   /// **'1 heist'**
-  String get oneTransactionRacoon;
+  String get oneTransactionRaccoon;
 
-  /// No description provided for @transactionTypeDepositRacoon.
+  /// No description provided for @transactionTypeDepositRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Snatch'**
-  String get transactionTypeDepositRacoon;
+  String get transactionTypeDepositRaccoon;
 
-  /// No description provided for @transactionTypeWithdrawalRacoon.
+  /// No description provided for @transactionTypeWithdrawalRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Burn'**
-  String get transactionTypeWithdrawalRacoon;
+  String get transactionTypeWithdrawalRaccoon;
 
-  /// No description provided for @transactionTypeTransferRacoon.
+  /// No description provided for @transactionTypeTransferRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Stash Shuffle'**
-  String get transactionTypeTransferRacoon;
+  String get transactionTypeTransferRaccoon;
 
-  /// No description provided for @expenseLabelRacoon.
+  /// No description provided for @expenseLabelRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Burn'**
-  String get expenseLabelRacoon;
+  String get expenseLabelRaccoon;
 
-  /// No description provided for @spentRacoon.
+  /// No description provided for @spentRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Burnt'**
-  String get spentRacoon;
+  String get spentRaccoon;
 
-  /// No description provided for @newBudgetRacoon.
+  /// No description provided for @newBudgetRaccoon.
   ///
   /// In en, this message translates to:
   /// **'New Hoard Plan'**
-  String get newBudgetRacoon;
+  String get newBudgetRaccoon;
 
-  /// No description provided for @projectedBalanceRacoon.
+  /// No description provided for @projectedBalanceRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Future Hoard'**
-  String get projectedBalanceRacoon;
+  String get projectedBalanceRaccoon;
 
-  /// No description provided for @piggyBankRacoon.
+  /// No description provided for @piggyBankRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Mini Stash'**
-  String get piggyBankRacoon;
+  String get piggyBankRaccoon;
 
-  /// No description provided for @transfersRacoon.
+  /// No description provided for @transfersRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Stash Shuffles'**
-  String get transfersRacoon;
+  String get transfersRaccoon;
 
-  /// No description provided for @expensesFilterRacoon.
+  /// No description provided for @expensesFilterRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Burns'**
-  String get expensesFilterRacoon;
+  String get expensesFilterRaccoon;
 
-  /// No description provided for @noTransactionsYetRacoon.
+  /// No description provided for @noTransactionsYetRaccoon.
   ///
   /// In en, this message translates to:
   /// **'No heists yet'**
-  String get noTransactionsYetRacoon;
+  String get noTransactionsYetRaccoon;
 
-  /// No description provided for @lookingAheadRacoon.
+  /// No description provided for @lookingAheadRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Peeking Ahead'**
-  String get lookingAheadRacoon;
+  String get lookingAheadRaccoon;
 
-  /// No description provided for @openProjectionRacoon.
+  /// No description provided for @openProjectionRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Peek the Future'**
-  String get openProjectionRacoon;
+  String get openProjectionRaccoon;
 
-  /// No description provided for @editAccountRacoon.
+  /// No description provided for @editAccountRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Edit Stash'**
-  String get editAccountRacoon;
+  String get editAccountRaccoon;
 
-  /// No description provided for @accountNameRacoon.
+  /// No description provided for @accountNameRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Stash name'**
-  String get accountNameRacoon;
+  String get accountNameRaccoon;
 
-  /// No description provided for @filterAccountRacoon.
+  /// No description provided for @filterAccountRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Filter Stash'**
-  String get filterAccountRacoon;
+  String get filterAccountRaccoon;
 
-  /// No description provided for @sourceAccountRacoon.
+  /// No description provided for @sourceAccountRaccoon.
   ///
   /// In en, this message translates to:
   /// **'From Stash'**
-  String get sourceAccountRacoon;
+  String get sourceAccountRaccoon;
 
-  /// No description provided for @destinationAccountRacoon.
+  /// No description provided for @destinationAccountRaccoon.
   ///
   /// In en, this message translates to:
   /// **'To Stash'**
-  String get destinationAccountRacoon;
+  String get destinationAccountRaccoon;
 
-  /// No description provided for @totalSpentPeriodRacoon.
+  /// No description provided for @totalSpentPeriodRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Total burnt this period'**
-  String get totalSpentPeriodRacoon;
+  String get totalSpentPeriodRaccoon;
 
-  /// No description provided for @totalIncomePeriodRacoon.
+  /// No description provided for @totalIncomePeriodRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Total snatched this period'**
-  String get totalIncomePeriodRacoon;
+  String get totalIncomePeriodRaccoon;
 
-  /// No description provided for @totalTransferredPeriodRacoon.
+  /// No description provided for @totalTransferredPeriodRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Total shuffled this period'**
-  String get totalTransferredPeriodRacoon;
+  String get totalTransferredPeriodRaccoon;
 
   /// No description provided for @newAccount.
   ///
@@ -1162,23 +1162,23 @@ abstract class AppLocalizations {
   /// **'New Expense'**
   String get newExpense;
 
-  /// No description provided for @newAccountRacoon.
+  /// No description provided for @newAccountRaccoon.
   ///
   /// In en, this message translates to:
   /// **'New Stash'**
-  String get newAccountRacoon;
+  String get newAccountRaccoon;
 
-  /// No description provided for @newLiabilityRacoon.
+  /// No description provided for @newLiabilityRaccoon.
   ///
   /// In en, this message translates to:
   /// **'New IOU'**
-  String get newLiabilityRacoon;
+  String get newLiabilityRaccoon;
 
-  /// No description provided for @newExpenseRacoon.
+  /// No description provided for @newExpenseRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Plan a Burn'**
-  String get newExpenseRacoon;
+  String get newExpenseRaccoon;
 
   /// No description provided for @income.
   ///
@@ -2023,7 +2023,7 @@ abstract class AppLocalizations {
   /// No description provided for @reconciliationCreateCorrectionBody.
   ///
   /// In en, this message translates to:
-  /// **'There is a remaining difference of {amount}. FireRacoon will create a reconciliation transaction to correct it.'**
+  /// **'There is a remaining difference of {amount}. FireRaccoon will create a reconciliation transaction to correct it.'**
   String reconciliationCreateCorrectionBody(String amount);
 
   /// No description provided for @reconciliationStored.
@@ -2710,17 +2710,17 @@ abstract class AppLocalizations {
   /// **'Open subscriptions and recurring transactions.'**
   String get tooltipOpenSubscriptions;
 
-  /// No description provided for @subscriptionsTitleRacoon.
+  /// No description provided for @subscriptionsTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Recurring Raids & Schedules'**
-  String get subscriptionsTitleRacoon;
+  String get subscriptionsTitleRaccoon;
 
-  /// No description provided for @newSubscriptionRacoon.
+  /// No description provided for @newSubscriptionRaccoon.
   ///
   /// In en, this message translates to:
   /// **'New Recurring Raid'**
-  String get newSubscriptionRacoon;
+  String get newSubscriptionRaccoon;
 
   /// No description provided for @piggyBanksTitle.
   ///
@@ -2866,17 +2866,17 @@ abstract class AppLocalizations {
   /// **'{current} / {target}'**
   String piggyBankProgress(String current, String target);
 
-  /// No description provided for @piggyBanksTitleRacoon.
+  /// No description provided for @piggyBanksTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Mini Stashes'**
-  String get piggyBanksTitleRacoon;
+  String get piggyBanksTitleRaccoon;
 
-  /// No description provided for @newPiggyBankRacoon.
+  /// No description provided for @newPiggyBankRaccoon.
   ///
   /// In en, this message translates to:
   /// **'New Mini Stash'**
-  String get newPiggyBankRacoon;
+  String get newPiggyBankRaccoon;
 
   /// No description provided for @newBudget.
   ///
@@ -4063,7 +4063,7 @@ abstract class AppLocalizations {
   /// No description provided for @mcpAgentKeysHint.
   ///
   /// In en, this message translates to:
-  /// **'Agents authenticate with a FireRacoon key, not your Firefly III token. Each key acts as the person who created it.'**
+  /// **'Agents authenticate with a FireRaccoon key, not your Firefly III token. Each key acts as the person who created it.'**
   String get mcpAgentKeysHint;
 
   /// No description provided for @mcpNoAgentKeys.
@@ -4129,7 +4129,7 @@ abstract class AppLocalizations {
   /// No description provided for @mcpKeyIssuedBody.
   ///
   /// In en, this message translates to:
-  /// **'Paste this into your MCP client as initialize.params.apiKey, or set FIRERACOON_API_KEY. You can reopen it later from this list.'**
+  /// **'Paste this into your MCP client as initialize.params.apiKey, or set FIRERACCOON_API_KEY. You can reopen it later from this list.'**
   String get mcpKeyIssuedBody;
 
   /// No description provided for @mcpCopyKey.
@@ -4510,11 +4510,11 @@ abstract class AppLocalizations {
   /// **'New Income'**
   String get newIncome;
 
-  /// No description provided for @newIncomeRacoon.
+  /// No description provided for @newIncomeRaccoon.
   ///
   /// In en, this message translates to:
   /// **'New Snatch'**
-  String get newIncomeRacoon;
+  String get newIncomeRaccoon;
 
   /// No description provided for @create.
   ///
@@ -4672,47 +4672,47 @@ abstract class AppLocalizations {
   /// **'Failed to create liability: {error}'**
   String failedToCreateLiability(String error);
 
-  /// No description provided for @navIncomeRacoon.
+  /// No description provided for @navIncomeRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Snatched'**
-  String get navIncomeRacoon;
+  String get navIncomeRaccoon;
 
-  /// No description provided for @navTransfersRacoon.
+  /// No description provided for @navTransfersRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Stash Shuffles'**
-  String get navTransfersRacoon;
+  String get navTransfersRaccoon;
 
-  /// No description provided for @navLiabilitiesRacoon.
+  /// No description provided for @navLiabilitiesRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Debts'**
-  String get navLiabilitiesRacoon;
+  String get navLiabilitiesRaccoon;
 
-  /// No description provided for @incomeTitleRacoon.
+  /// No description provided for @incomeTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Snatched Funds'**
-  String get incomeTitleRacoon;
+  String get incomeTitleRaccoon;
 
-  /// No description provided for @transfersTitleRacoon.
+  /// No description provided for @transfersTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Stash Shuffles'**
-  String get transfersTitleRacoon;
+  String get transfersTitleRaccoon;
 
-  /// No description provided for @newTransferActionRacoon.
+  /// No description provided for @newTransferActionRaccoon.
   ///
   /// In en, this message translates to:
   /// **'New Stash Shuffle'**
-  String get newTransferActionRacoon;
+  String get newTransferActionRaccoon;
 
-  /// No description provided for @liabilitiesTitleRacoon.
+  /// No description provided for @liabilitiesTitleRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Debts Owed'**
-  String get liabilitiesTitleRacoon;
+  String get liabilitiesTitleRaccoon;
 
   /// No description provided for @tooltipOpenSection.
   ///
@@ -5416,11 +5416,11 @@ abstract class AppLocalizations {
   /// **'History'**
   String get navHistory;
 
-  /// No description provided for @navHistoryRacoon.
+  /// No description provided for @navHistoryRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Heist Replay'**
-  String get navHistoryRacoon;
+  String get navHistoryRaccoon;
 
   /// No description provided for @tooltipOpenHistory.
   ///
@@ -5545,7 +5545,7 @@ abstract class AppLocalizations {
   /// No description provided for @historyExportText.
   ///
   /// In en, this message translates to:
-  /// **'FireRacoon history export'**
+  /// **'FireRaccoon history export'**
   String get historyExportText;
 
   /// No description provided for @historySectionToday.
@@ -6025,7 +6025,7 @@ abstract class AppLocalizations {
   /// No description provided for @loginSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Sign in to continue to FireRacoon.'**
+  /// **'Sign in to continue to FireRaccoon.'**
   String get loginSubtitle;
 
   /// No description provided for @loginMissingFields.
@@ -6181,7 +6181,7 @@ abstract class AppLocalizations {
   /// No description provided for @biometricUnlockReason.
   ///
   /// In en, this message translates to:
-  /// **'Unlock FireRacoon'**
+  /// **'Unlock FireRaccoon'**
   String get biometricUnlockReason;
 
   /// No description provided for @biometricEnableReason.
@@ -6493,13 +6493,13 @@ abstract class AppLocalizations {
   /// No description provided for @settingsExportSubject.
   ///
   /// In en, this message translates to:
-  /// **'FireRacoon settings'**
+  /// **'FireRaccoon settings'**
   String get settingsExportSubject;
 
   /// No description provided for @settingsExportText.
   ///
   /// In en, this message translates to:
-  /// **'FireRacoon settings backup'**
+  /// **'FireRaccoon settings backup'**
   String get settingsExportText;
 
   /// No description provided for @recordedBalance.

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import 'auth.dart';
 import 'mcp_server.dart';
@@ -42,7 +42,7 @@ Future<void> serveStdio(
 /// Serves MCP over a localhost TCP socket.
 ///
 /// Any local process can reach the port, so a connection must present a
-/// FireRacoon agent key in `initialize` params before any other method is
+/// FireRaccoon agent key in `initialize` params before any other method is
 /// accepted. The resolved account is scoped to that connection and gates write
 /// tools for its lifetime.
 Future<ServerSocket> serveTcp({
@@ -54,7 +54,7 @@ Future<ServerSocket> serveTcp({
 }) async {
   final socket = await ServerSocket.bind(host, port);
   onLog?.call('MCP server listening on $host:${socket.port}');
-  onLog?.call('TCP auth required (FireRacoon agent key)');
+  onLog?.call('TCP auth required (FireRaccoon agent key)');
   socket.listen((client) {
     onLog?.call('client connected: ${client.remoteAddress.address}');
     // The sink reports a broken pipe here as well as at the write site; both
@@ -182,7 +182,7 @@ Future<ConnectionAdmission> admitConnection(
       _error(
         id,
         -32000,
-        'Unauthorized: unknown, revoked, or missing FireRacoon agent key. '
+        'Unauthorized: unknown, revoked, or missing FireRaccoon agent key. '
         'Issue one in Settings under MCP.',
       ),
     );

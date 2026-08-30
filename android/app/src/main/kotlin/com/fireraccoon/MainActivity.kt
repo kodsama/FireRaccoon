@@ -1,4 +1,4 @@
-package com.fireracoon
+package com.fireraccoon
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

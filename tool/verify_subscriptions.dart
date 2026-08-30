@@ -2,7 +2,7 @@
 
 import 'dart:io';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 /// Verifies subscription (bill) CRUD against a live Firefly III instance.
 ///
@@ -20,7 +20,7 @@ Future<void> main() async {
 
   final service = FireflyApiService(serverUrl: url, apiToken: token);
   final stamp = DateTime.now().millisecondsSinceEpoch;
-  final name = 'FireRacoon verify $stamp';
+  final name = 'FireRaccoon verify $stamp';
 
   print('Checking connection…');
   final user = await service.getCurrentUser();

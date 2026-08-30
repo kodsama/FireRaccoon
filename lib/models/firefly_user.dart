@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/firefly_user.dart';
+export 'package:fireraccoon_engine/models/firefly_user.dart';

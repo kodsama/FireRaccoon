@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/providers/view_mode_provider.dart';
-import 'package:fireracoon/widgets/transaction_entity_card.dart';
+import 'package:fireraccoon/providers/view_mode_provider.dart';
+import 'package:fireraccoon/widgets/transaction_entity_card.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:fireracoon/utils/display_labels.dart';
+import 'package:fireraccoon/utils/display_labels.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/test_data.dart';
 
