@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/account.dart';
+export 'package:fireraccoon_engine/models/account.dart';

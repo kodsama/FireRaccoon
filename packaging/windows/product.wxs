@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Minimal WiX v3 manifest for the FireRacoon .msi installer.
+  Minimal WiX v3 manifest for the FireRaccoon .msi installer.
 
   Compile after building the Windows Release. Invoke candle.exe with -arch x64,
   this file, -out product.wixobj and -dSourceDir pointing at
   build\windows\x64\runner\Release, then light.exe to emit
-  FireRacoon-windows-x64.msi. See .github/workflows/release.yml.
+  FireRaccoon-windows-x64.msi. See .github/workflows/release.yml.
 
   UpgradeCode and MainExecutable Guid are permanent. Never change them —
   Windows Installer uses UpgradeCode for in-place upgrades across versions.
@@ -13,7 +13,7 @@
 -->
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
   <Product Id="*"
-           Name="FireRacoon"
+           Name="FireRaccoon"
            Language="1033"
            Version="1.0.0.0"
            Manufacturer="Kodsama"
@@ -22,28 +22,28 @@
     <Package InstallerVersion="500"
              Compressed="yes"
              InstallScope="perMachine"
-             Description="FireRacoon installer" />
+             Description="FireRaccoon installer" />
 
-    <MajorUpgrade DowngradeErrorMessage="A newer version of FireRacoon is already installed." />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of FireRaccoon is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="ProgramFiles64Folder">
-        <Directory Id="INSTALLFOLDER" Name="FireRacoon" />
+        <Directory Id="INSTALLFOLDER" Name="FireRaccoon" />
       </Directory>
       <Directory Id="ProgramMenuFolder">
-        <Directory Id="ApplicationProgramsFolder" Name="FireRacoon" />
+        <Directory Id="ApplicationProgramsFolder" Name="FireRaccoon" />
       </Directory>
     </Directory>
 
     <DirectoryRef Id="INSTALLFOLDER">
       <Component Id="MainExecutable" Guid="2E725CBB-83CE-4FBE-AE6E-C6065793A60C">
-        <File Id="FireRacoonExe"
-              Source="$(var.SourceDir)\fireracoon.exe"
+        <File Id="FireRaccoonExe"
+              Source="$(var.SourceDir)\fireraccoon.exe"
               KeyPath="yes">
           <Shortcut Id="StartMenuShortcut"
                     Directory="ApplicationProgramsFolder"
-                    Name="FireRacoon"
+                    Name="FireRaccoon"
                     WorkingDirectory="INSTALLFOLDER"
                     Advertise="yes" />
         </File>
@@ -60,7 +60,7 @@
       -->
     </ComponentGroup>
 
-    <Feature Id="MainFeature" Title="FireRacoon" Level="1">
+    <Feature Id="MainFeature" Title="FireRaccoon" Level="1">
       <ComponentRef Id="MainExecutable" />
       <ComponentGroupRef Id="AppFiles" />
     </Feature>

@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../deployment/deployment_providers.dart';

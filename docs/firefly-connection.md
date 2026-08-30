@@ -1,6 +1,6 @@
 # Firefly III connection
 
-FireRacoon talks to your Firefly III instance over the **REST API v1**. All data stays on your server; the client only reads and writes through authenticated HTTP requests.
+FireRaccoon talks to your Firefly III instance over the **REST API v1**. All data stays on your server; the client only reads and writes through authenticated HTTP requests.
 
 ## Authentication methods
 
@@ -9,7 +9,7 @@ FireRacoon talks to your Firefly III instance over the **REST API v1**. All data
 1. Log in to Firefly III.
 2. Go to **Options → OAuth / Personal access tokens** (exact menu label may vary by version).
 3. Create a token with the scopes you need.
-4. Paste the token into FireRacoon **Settings → Firefly III connection**. It is stored in platform secure storage (Keychain on desktop, encrypted browser storage on web).
+4. Paste the token into FireRaccoon **Settings → Firefly III connection**. It is stored in platform secure storage (Keychain on desktop, encrypted browser storage on web).
 
 The app sends:
 
@@ -22,7 +22,7 @@ Accept: application/vnd.api+json
 
 On platforms that support `flutter_web_auth_2`, Settings offers OAuth sign-in:
 
-1. Register an OAuth client in Firefly III with redirect URI `fireracoon://oauth-callback`.
+1. Register an OAuth client in Firefly III with redirect URI `fireraccoon://oauth-callback`.
 2. Enter your instance URL and client ID in the connection dialog.
 3. Complete the browser authorization flow.
 
@@ -40,14 +40,14 @@ Tokens from OAuth are stored in secure storage the same way as personal access t
 
 ## CORS (web deployments)
 
-When FireRacoon runs in the browser, requests go from the user's origin to your Firefly III host. Browsers block cross-origin API calls unless Firefly allows them.
+When FireRaccoon runs in the browser, requests go from the user's origin to your Firefly III host. Browsers block cross-origin API calls unless Firefly allows them.
 
-**Recommended:** serve FireRacoon and Firefly III under the same domain via a reverse proxy, e.g.:
+**Recommended:** serve FireRaccoon and Firefly III under the same domain via a reverse proxy, e.g.:
 
-- `https://finance.example.com` → FireRacoon static files
+- `https://finance.example.com` → FireRaccoon static files
 - `https://finance.example.com/api` → Firefly III backend
 
-**Alternative:** enable CORS on Firefly III for your FireRacoon origin. Consult the [Firefly III documentation](https://docs.firefly-iii.org/) for your version.
+**Alternative:** enable CORS on Firefly III for your FireRaccoon origin. Consult the [Firefly III documentation](https://docs.firefly-iii.org/) for your version.
 
 Desktop and mobile apps are not subject to browser CORS.
 

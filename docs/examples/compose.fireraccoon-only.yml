@@ -1,0 +1,20 @@
+# FireRaccoon only — encrypted server mode against an existing Firefly URL.
+# Usage: docker compose -f docs/examples/compose.fireraccoon-only.yml up -d
+services:
+  fireraccoon:
+    image: ghcr.io/kodsama/fireraccoon:latest
+    # Or build from this repo instead of GHCR:
+    # build:
+    #   context: ../..
+    ports:
+      - "127.0.0.1:8082:8080"
+    environment:
+      FIRERACCOON_MODE: server
+      DATA_DIR: /data
+      DATA_PASSWORD: CHANGE_ME_DATA_PASSWORD
+    volumes:
+      - fireraccoon_data:/data
+    restart: unless-stopped
+
+volumes:
+  fireraccoon_data:

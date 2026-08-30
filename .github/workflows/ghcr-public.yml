@@ -1,6 +1,6 @@
 name: GHCR package visibility
 
-# One-shot / occasional: make ghcr.io/<owner>/fireracoon public.
+# One-shot / occasional: make ghcr.io/<owner>/fireraccoon public.
 # Release builds also attempt this after each Docker push.
 
 on:
@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   public:
-    name: Set fireracoon package public
+    name: Set fireraccoon package public
     runs-on: ubuntu-latest
     steps:
       - name: Make GHCR package public
@@ -19,7 +19,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           owner="${GITHUB_REPOSITORY_OWNER}"
-          pkg="fireracoon"
+          pkg="fireraccoon"
           for api in \
             "users/${owner}/packages/container/${pkg}" \
             "user/packages/container/${pkg}"

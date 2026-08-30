@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-FireRacoon has two on-device forecasting stacks:
+FireRaccoon has two on-device forecasting stacks:
 
 1. **`ProjectionService`** — lightweight cashflow bands used by MCP
    `run_projection` and legacy projection params.

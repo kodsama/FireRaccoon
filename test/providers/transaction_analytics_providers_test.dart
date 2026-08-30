@@ -1,7 +1,7 @@
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/transaction_analytics_providers.dart';
-import 'package:fireracoon/router/transaction_analytics_route.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/transaction_analytics_providers.dart';
+import 'package:fireraccoon/router/transaction_analytics_route.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

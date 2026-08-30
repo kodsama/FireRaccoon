@@ -2,27 +2,27 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon_mcp/fireracoon_mcp.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 
 const _usage = '''
-fireracoon_mcp: MCP server for FireRacoon
+fireraccoon_mcp: MCP server for FireRaccoon
 
   --tcp [--port N]   serve on localhost TCP (default 8787) instead of stdio
   schema             emit the JSON tool catalog and exit
 
-Credentials (a FireRacoon account, never a Firefly III token):
-  FIRERACOON_URL       base URL of the FireRacoon server
-  FIRERACOON_API_KEY   agent key issued in Settings under MCP
+Credentials (a FireRaccoon account, never a Firefly III token):
+  FIRERACCOON_URL       base URL of the FireRaccoon server
+  FIRERACCOON_API_KEY   agent key issued in Settings under MCP
 
 The key inherits its person's role: viewers get read-only tools. Firefly III
 credentials stay on the server, which proxies calls through /api/firefly.
 ''';
 
-/// Entry point for the FireRacoon MCP server.
+/// Entry point for the FireRaccoon MCP server.
 Future<void> main(List<String> args) async {
-  final url = Platform.environment['FIRERACOON_URL']?.trim() ?? '';
-  final key = Platform.environment['FIRERACOON_API_KEY']?.trim() ?? '';
+  final url = Platform.environment['FIRERACCOON_URL']?.trim() ?? '';
+  final key = Platform.environment['FIRERACCOON_API_KEY']?.trim() ?? '';
 
   if (args.contains('schema') || args.contains('--schema')) {
     stdout.writeln(
@@ -47,7 +47,7 @@ Future<void> main(List<String> args) async {
   final identity = await authenticator.authenticate(key);
   if (identity == null) {
     stderr.writeln(
-      'FIRERACOON_API_KEY was rejected by $url. Check the key is current and '
+      'FIRERACCOON_API_KEY was rejected by $url. Check the key is current and '
       'the server is reachable and unlocked.',
     );
     exitCode = 77;
@@ -80,7 +80,7 @@ Future<void> main(List<String> args) async {
       port: port,
       onLog: stderr.writeln,
     );
-    stderr.writeln('fireracoon MCP server ready (tcp). Ctrl-C to stop.');
+    stderr.writeln('fireraccoon MCP server ready (tcp). Ctrl-C to stop.');
     await Completer<void>().future;
   } else {
     await serveStdio(serverFor(key, identity), identity: identity);

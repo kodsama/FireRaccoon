@@ -146,7 +146,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final defaultPeriod = ref.watch(defaultDashboardPeriodProvider);
     final filters = DashboardRoute.filtersFrom(
       GoRouterState.of(context),
@@ -227,7 +227,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   ) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = ref.watch(localeFormattingProvider);
     final languageCode = ref.watch(localeProvider).languageCode;
     final transactionsAsync = ref.watch(transactionsProvider);
@@ -577,7 +577,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     String? searchQuery,
   ) {
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = ref.watch(localeFormattingProvider);
     final languageCode = ref.watch(localeProvider).languageCode;
     final accountsAsync = ref.watch(accountsProvider);
@@ -754,7 +754,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     String? searchQuery,
   ) {
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = ref.watch(localeFormattingProvider);
     final languageCode = ref.watch(localeProvider).languageCode;
     final accountsAsync = ref.watch(accountsProvider);

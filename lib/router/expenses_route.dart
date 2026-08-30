@@ -1,5 +1,5 @@
 import 'package:go_router/go_router.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../utils/period_defaults.dart';
 import 'transaction_analytics_route.dart';

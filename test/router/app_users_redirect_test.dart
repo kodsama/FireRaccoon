@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/models/people_models.dart';
-import 'package:fireracoon/providers/people_providers.dart';
-import 'package:fireracoon/router/app_router.dart';
+import 'package:fireraccoon/models/people_models.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/router/app_router.dart';
 
 const _fakeAdmin = Person(
   id: 'admin_1',

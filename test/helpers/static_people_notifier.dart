@@ -1,5 +1,5 @@
-import 'package:fireracoon/models/people_models.dart';
-import 'package:fireracoon/providers/people_providers.dart';
+import 'package:fireraccoon/models/people_models.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
 
 /// People notifier that skips async hydration so ownership is deterministic.
 ///

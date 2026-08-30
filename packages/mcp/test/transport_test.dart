@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon_mcp/fireracoon_mcp.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 import 'package:test/test.dart';
 
 McpServer _server() =>
@@ -175,12 +175,12 @@ void main() {
 
       final frame =
           jsonDecode(utf8.decode(captured).trim()) as Map<String, Object?>;
-      final fireracoon =
-          (frame['result'] as Map<String, Object?>)['fireracoon']
+      final fireraccoon =
+          (frame['result'] as Map<String, Object?>)['fireraccoon']
               as Map<String, Object?>;
-      expect(fireracoon['write_access'], isTrue);
+      expect(fireraccoon['write_access'], isTrue);
       expect(
-        (fireracoon['account'] as Map<String, Object?>)['person_name'],
+        (fireraccoon['account'] as Map<String, Object?>)['person_name'],
         'Ada',
       );
     });
@@ -440,7 +440,7 @@ void main() {
 
       final init = responses.firstWhere((r) => r['id'] == 1);
       expect(
-        ((init['result'] as Map<String, Object?>)['fireracoon']
+        ((init['result'] as Map<String, Object?>)['fireraccoon']
             as Map<String, Object?>)['write_access'],
         isFalse,
       );

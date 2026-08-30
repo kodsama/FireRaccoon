@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon/providers/dashboard_stats_providers.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/providers/transaction_analytics_providers.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon/providers/dashboard_stats_providers.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/providers/transaction_analytics_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/mock_firefly_service.dart';

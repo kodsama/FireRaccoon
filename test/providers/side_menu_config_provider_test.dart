@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:fireracoon/models/side_menu_config.dart';
-import 'package:fireracoon/providers/side_menu_config_provider.dart';
+import 'package:fireraccoon/models/side_menu_config.dart';
+import 'package:fireraccoon/providers/side_menu_config_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,7 +39,7 @@ void main() {
     expect(after.nodes.first.id, isNot(before.nodes.first.id));
 
     final prefs = await SharedPreferences.getInstance();
-    expect(prefs.getString('fireracoon_side_menu_config'), isNotNull);
+    expect(prefs.getString('fireraccoon_side_menu_config'), isNotNull);
   });
 
   test('loads saved config and backfills missing default items', () async {
@@ -57,7 +57,7 @@ void main() {
       ],
     );
     SharedPreferences.setMockInitialValues({
-      'fireracoon_side_menu_config': jsonEncode(minimal.toJson()),
+      'fireraccoon_side_menu_config': jsonEncode(minimal.toJson()),
     });
 
     final container = await readyContainer();
@@ -76,7 +76,7 @@ void main() {
 
   test('invalid saved JSON falls back to default', () async {
     SharedPreferences.setMockInitialValues({
-      'fireracoon_side_menu_config': '{not-json',
+      'fireraccoon_side_menu_config': '{not-json',
     });
     final container = await readyContainer();
     expect(

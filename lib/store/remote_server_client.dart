@@ -2,7 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-/// Thin HTTP client for FireRacoon server-mode APIs.
+/// Thin HTTP client for FireRaccoon server-mode APIs.
 class RemoteServerClient {
   RemoteServerClient({
     required this.baseUrl,
@@ -26,7 +26,7 @@ class RemoteServerClient {
       if (jsonBody) 'content-type': 'application/json; charset=utf-8',
       'accept': 'application/json',
       if (sessionToken != null && sessionToken!.isNotEmpty)
-        'x-fireracoon-session': sessionToken!,
+        'x-fireraccoon-session': sessionToken!,
     };
   }
 

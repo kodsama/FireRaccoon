@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/widgets/entity_screen_header.dart';
+import 'package:fireraccoon/widgets/entity_screen_header.dart';
 
 import '../helpers/screen_test_app.dart';
 

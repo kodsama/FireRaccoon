@@ -4,7 +4,7 @@ import 'recurrence_scheduler.dart';
 
 /// Marker stored in the notes of auto-materialized transactions so re-runs
 /// and other clients can recognize them.
-const kWriteAheadMarker = 'fireracoon:auto-written';
+const kWriteAheadMarker = 'fireraccoon:auto-written';
 
 /// Key used to decide whether an occurrence already exists in the window.
 String writeAheadDedupKey({

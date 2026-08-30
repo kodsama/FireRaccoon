@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/models/account.dart';
-import 'package:fireracoon/screens/liabilities_screen.dart';
+import 'package:fireraccoon/models/account.dart';
+import 'package:fireraccoon/screens/liabilities_screen.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
 

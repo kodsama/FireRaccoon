@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
-import 'package:fireracoon/providers/agent_keys_provider.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/providers/mcp_provider.dart';
-import 'package:fireracoon/services/mcp_service.dart';
-import 'package:fireracoon/providers/people_providers.dart';
+import 'package:fireraccoon/providers/agent_keys_provider.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/mcp_provider.dart';
+import 'package:fireraccoon/services/mcp_service.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
 import '../helpers/static_auth_notifier.dart';
 import '../helpers/static_people_notifier.dart';
 

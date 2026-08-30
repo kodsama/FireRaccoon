@@ -1,6 +1,6 @@
 import 'dart:math' show min;
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:http/http.dart' as http;
 
 /// One MCP tool: name, description, JSON Schema, and executor.
@@ -1099,7 +1099,7 @@ class FireflyTarget {
       : baseUrl;
 }
 
-/// Builds the FireRacoon MCP tool catalog.
+/// Builds the FireRaccoon MCP tool catalog.
 ///
 /// Tools take no credentials. [target] is fixed when the server starts, from
 /// the agent key the process authenticated with or the desktop app's saved
@@ -1176,8 +1176,8 @@ List<McpTool> buildTools({
   FireflyService service() {
     if (!target.isConfigured) {
       throw StateError(
-        'No Firefly connection: start the server with FIRERACOON_URL and '
-        'FIRERACOON_API_KEY, or run it from the FireRacoon desktop app.',
+        'No Firefly connection: start the server with FIRERACCOON_URL and '
+        'FIRERACCOON_API_KEY, or run it from the FireRaccoon desktop app.',
       );
     }
     return FireflyApiService(
@@ -1573,7 +1573,7 @@ List<McpTool> buildTools({
     McpTool(
       name: 'get_capabilities',
       description:
-          'Return FireRacoon MCP server capabilities, tool names, and version.',
+          'Return FireRaccoon MCP server capabilities, tool names, and version.',
       inputSchema: const {'type': 'object', 'properties': {}},
       run: (_) async => {
         'ok': true,
@@ -1595,11 +1595,11 @@ List<McpTool> buildTools({
                 'can_write': identity.canWrite,
               },
         'auth': {
-          'credential': 'FireRacoon agent key',
-          'env': ['FIRERACOON_URL', 'FIRERACOON_API_KEY'],
+          'credential': 'FireRaccoon agent key',
+          'env': ['FIRERACCOON_URL', 'FIRERACCOON_API_KEY'],
           'tcp_param': 'initialize.params.apiKey',
           'note':
-              'Keys are issued per agent in FireRacoon Settings and inherit '
+              'Keys are issued per agent in FireRaccoon Settings and inherit '
               'their person\'s role. Firefly III credentials are never accepted '
               'here; the server holds the PAT.',
         },

@@ -8,11 +8,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'package:fireracoon/deployment/deployment_providers.dart';
-import 'package:fireracoon/deployment/fireracoon_mode.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/providers/server_session_provider.dart';
-import 'package:fireracoon/store/remote_server_client.dart';
+import 'package:fireraccoon/deployment/deployment_providers.dart';
+import 'package:fireraccoon/deployment/fireraccoon_mode.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/server_session_provider.dart';
+import 'package:fireraccoon/store/remote_server_client.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -90,7 +90,7 @@ void main() {
               return http.Response(jsonEncode({'ok': true}), 200);
             }
             if (request.url.path.endsWith('/api/state')) {
-              expect(request.headers['x-fireracoon-session'], 'sess-2');
+              expect(request.headers['x-fireraccoon-session'], 'sess-2');
               return http.Response(
                 jsonEncode({
                   'ok': true,
@@ -228,7 +228,7 @@ void main() {
           deploymentConfigProvider.overrideWithValue(
             deployment ??
                 const DeploymentConfig(
-                  mode: FireracoonMode.server,
+                  mode: FireraccoonMode.server,
                   apiBase: 'http://example.test',
                 ),
           ),
@@ -248,7 +248,7 @@ void main() {
     test('local mode returns null without calling backend', () async {
       var built = false;
       final c = container(
-        deployment: const DeploymentConfig(mode: FireracoonMode.local),
+        deployment: const DeploymentConfig(mode: FireraccoonMode.local),
         factory: (_) {
           built = true;
           return RemoteServerClient(baseUrl: 'http://x');
@@ -290,7 +290,7 @@ void main() {
         final c = ProviderContainer(
           overrides: [
             deploymentConfigProvider.overrideWithValue(
-              const DeploymentConfig(mode: FireracoonMode.server),
+              const DeploymentConfig(mode: FireraccoonMode.server),
             ),
             authProvider.overrideWith(
               () => AuthNotifier(storage: const FlutterSecureStorage()),
@@ -461,7 +461,7 @@ void main() {
       final c = ProviderContainer(
         overrides: [
           deploymentConfigProvider.overrideWithValue(
-            const DeploymentConfig(mode: FireracoonMode.local),
+            const DeploymentConfig(mode: FireraccoonMode.local),
           ),
           serverSessionProvider.overrideWith(ServerSessionNotifier.new),
         ],
@@ -489,7 +489,7 @@ void main() {
       final config = await loadDeploymentConfig(
         client: MockClient(
           (_) async => http.Response(
-            jsonEncode({'FIRERACOON_MODE': 'server', 'setupRequired': true}),
+            jsonEncode({'FIRERACCOON_MODE': 'server', 'setupRequired': true}),
             200,
           ),
         ),
@@ -505,26 +505,26 @@ void main() {
         client: MockClient((_) async => throw Exception('offline')),
         configUri: Uri.parse('http://example.test/config.json'),
       );
-      expect(config.mode, FireracoonMode.local);
+      expect(config.mode, FireraccoonMode.local);
     });
 
     test('uses default client and closes it', () async {
       final config = await loadDeploymentConfig(
         configUri: Uri.parse('file:///tmp/config.json'),
       );
-      expect(config.mode, FireracoonMode.local);
+      expect(config.mode, FireraccoonMode.local);
     });
 
-    test('fireracoonModeProvider mirrors deployment config', () {
+    test('fireraccoonModeProvider mirrors deployment config', () {
       final c = ProviderContainer(
         overrides: [
           deploymentConfigProvider.overrideWithValue(
-            const DeploymentConfig(mode: FireracoonMode.server),
+            const DeploymentConfig(mode: FireraccoonMode.server),
           ),
         ],
       );
       addTearDown(c.dispose);
-      expect(c.read(fireracoonModeProvider), FireracoonMode.server);
+      expect(c.read(fireraccoonModeProvider), FireraccoonMode.server);
     });
   });
 }

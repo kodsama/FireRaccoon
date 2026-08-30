@@ -1,6 +1,6 @@
 {
-    "name": "FireRacoon",
-    "short_name": "FireRacoon",
+    "name": "FireRaccoon",
+    "short_name": "FireRaccoon",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#1F8A5B",

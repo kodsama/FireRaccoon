@@ -9,21 +9,21 @@ import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:fireracoon/deployment/deployment_providers.dart';
-import 'package:fireracoon/deployment/fireracoon_mode.dart';
-import 'package:fireracoon/providers/locale_provider.dart';
-import 'package:fireracoon/providers/prognosis_settings_provider.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/providers/server_session_provider.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/providers/transaction_page_size_provider.dart';
-import 'package:fireracoon/providers/undo_history_provider.dart';
-import 'package:fireracoon/fun_modes/fun_mode.dart';
-import 'package:fireracoon/store/remote_server_client.dart';
-import 'package:fireracoon/theme/app_colors.dart';
-import 'package:fireracoon/theme/theme_palette.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/deployment/deployment_providers.dart';
+import 'package:fireraccoon/deployment/fireraccoon_mode.dart';
+import 'package:fireraccoon/providers/locale_provider.dart';
+import 'package:fireraccoon/providers/prognosis_settings_provider.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/server_session_provider.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/providers/transaction_page_size_provider.dart';
+import 'package:fireraccoon/providers/undo_history_provider.dart';
+import 'package:fireraccoon/fun_modes/fun_mode.dart';
+import 'package:fireraccoon/store/remote_server_client.dart';
+import 'package:fireraccoon/theme/app_colors.dart';
+import 'package:fireraccoon/theme/theme_palette.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../helpers/mock_firefly_service.dart';
 
@@ -153,7 +153,7 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(prefs),
           deploymentConfigProvider.overrideWithValue(
             const DeploymentConfig(
-              mode: FireracoonMode.server,
+              mode: FireraccoonMode.server,
               apiBase: 'http://example.test',
             ),
           ),

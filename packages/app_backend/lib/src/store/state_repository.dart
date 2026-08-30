@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/utils/agent_key.dart' as keys;
+import 'package:fireraccoon_engine/utils/agent_key.dart' as keys;
 
 import '../crypto/passwords.dart';
 import '../crypto/sealed_store.dart';

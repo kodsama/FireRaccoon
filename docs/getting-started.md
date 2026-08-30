@@ -1,6 +1,6 @@
 # Getting started
 
-FireRacoon is a cross-platform Flutter client for [Firefly III](https://www.firefly-iii.org/). It runs on the web, desktop (macOS, Windows, Linux), and mobile (iOS, Android).
+FireRaccoon is a cross-platform Flutter client for [Firefly III](https://www.firefly-iii.org/). It runs on the web, desktop (macOS, Windows, Linux), and mobile (iOS, Android).
 
 ## Prerequisites
 
@@ -17,8 +17,8 @@ Optional for containerized setup:
 ## 1. Clone and install
 
 ```bash
-git clone https://github.com/kodsama/fireracoon.git
-cd fireracoon
+git clone https://github.com/kodsama/fireraccoon.git
+cd fireraccoon
 flutter pub get
 ```
 
@@ -49,13 +49,13 @@ flutter run -d macos
 **App only** (Firefly already elsewhere):
 
 ```bash
-docker compose -f docs/examples/compose.fireracoon-only.yml up -d
+docker compose -f docs/examples/compose.fireraccoon-only.yml up -d
 ```
 
 **App + Firefly III + MariaDB** (edit `CHANGE_ME_*` secrets first):
 
 ```bash
-docker compose -f docs/examples/compose.fireracoon-firefly.yml up -d
+docker compose -f docs/examples/compose.fireraccoon-firefly.yml up -d
 ```
 
 **Local demo from source** (root `compose.yml`, demo passwords, loopback UI):
@@ -66,12 +66,12 @@ docker compose up --build
 
 1. Open Firefly III at http://127.0.0.1:8082/firefly-local (full stack) and complete the setup wizard.
 2. Create a personal access token in Firefly III.
-3. Open FireRacoon at http://127.0.0.1:8082 and enter `http://127.0.0.1:8082/firefly-local` plus your token in Settings. Enable “allow insecure HTTP” for local `http://` URLs.
+3. Open FireRaccoon at http://127.0.0.1:8082 and enter `http://127.0.0.1:8082/firefly-local` plus your token in Settings. Enable “allow insecure HTTP” for local `http://` URLs.
 
 After changing app source with the root compose file:
 
 ```bash
-docker compose up -d --build --force-recreate fireracoon
+docker compose up -d --build --force-recreate fireraccoon
 ```
 
 Server, TLS, and [Cosmos Cloud](https://cosmos-cloud.io/) imports: [Deployment](deployment.md), [Cosmos Cloud](cosmos-cloud.md).

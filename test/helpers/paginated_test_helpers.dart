@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fireracoon/providers/paginated_transactions_provider.dart';
+import 'package:fireraccoon/providers/paginated_transactions_provider.dart';
 
 Future<PaginatedTransactionsState> waitForPaginatedLoad(
   ProviderContainer container,

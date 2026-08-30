@@ -27,7 +27,7 @@
 	<key>NSMainNibFile</key>
 	<string>MainMenu</string>
 	<key>NSFaceIDUsageDescription</key>
-	<string>FireRacoon uses Face ID to unlock your app profile.</string>
+	<string>FireRaccoon uses Face ID to unlock your app profile.</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
 	<key>NSAppTransportSecurity</key>
@@ -56,10 +56,10 @@
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>CFBundleURLName</key>
-			<string>fireracoon</string>
+			<string>fireraccoon</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>fireracoon</string>
+				<string>fireraccoon</string>
 			</array>
 		</dict>
 	</array>

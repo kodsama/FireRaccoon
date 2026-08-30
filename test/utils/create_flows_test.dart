@@ -1,6 +1,6 @@
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/utils/create_flows.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/utils/create_flows.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

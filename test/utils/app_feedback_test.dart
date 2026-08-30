@@ -1,4 +1,4 @@
-import 'package:fireracoon/utils/app_feedback.dart';
+import 'package:fireraccoon/utils/app_feedback.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

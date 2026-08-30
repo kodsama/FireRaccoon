@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -19,9 +19,9 @@ const MacOsOptions _macOptions = MacOsOptions(
 );
 
 /// The one keychain item every secret lives in.
-const String kConsolidatedSecretsKey = 'fireracoon.secrets.v1';
+const String kConsolidatedSecretsKey = 'fireraccoon.secrets.v1';
 
-/// The secure storage every FireRacoon secret goes through.
+/// The secure storage every FireRaccoon secret goes through.
 ///
 /// Keeps every secret inside one keychain item rather than one item per key.
 /// macOS evaluates a login-keychain item's access control per item, and neither
@@ -144,7 +144,7 @@ class ConsolidatedSecureStorage extends FlutterSecureStorage {
     final decoded = _tryDecode(raw);
     if (decoded == null) {
       throw StateError(
-        'The FireRacoon secrets item exists but could not be read. Refusing to '
+        'The FireRaccoon secrets item exists but could not be read. Refusing to '
         'overwrite it, because that would discard every secret it holds.',
       );
     }

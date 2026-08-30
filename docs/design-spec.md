@@ -1,13 +1,13 @@
 # Design specification
 
-Visual and interaction reference for FireRacoon. The Flutter app implements this spec.
+Visual and interaction reference for FireRaccoon. The Flutter app implements this spec.
 
 **Interactive prototype:** not in the tree any more, because its sample ledger
 named real banks and accounts. To click through it, take it out of history:
 
 ```sh
-git show 0.1.2:fireracoon-standalone.html > /tmp/fireracoon-prototype.html
-open /tmp/fireracoon-prototype.html
+git show 0.1.2:fireraccoon-standalone.html > /tmp/fireraccoon-prototype.html
+open /tmp/fireraccoon-prototype.html
 ```
 
 ---
@@ -20,8 +20,8 @@ Both were removed from the tree at 0.1.12. The sample ledger they shipped with
 carried real bank and account names, and nothing in the build read them. They
 are still in history at the tag above:
 
-- `FireRacoon.dc.html`, the source prototype (all screens plus logic).
-- `fireracoon-standalone.html`, the same app bundled into one self-contained
+- `FireRaccoon.dc.html`, the source prototype (all screens plus logic).
+- `fireraccoon-standalone.html`, the same app bundled into one self-contained
   file, which was the visual source of truth.
 - `assets/`, the brand fonts (Comfortaa, Roboto Slab) and the app mark, which
   are still in the tree.
@@ -165,7 +165,7 @@ car, zap, shopping-bag, clapperboard, music, briefcase, home, dumbbell, wifi, ci
 > the accent `deep` bg with white text.
 
 ### Sidebar (persistent)
-- Logo tile: 34px, `hi` background, app mark, radius 10. Wordmark “Fire·Racoon” (the ·
+- Logo tile: 34px, `hi` background, app mark, radius 10. Wordmark “Fire·Raccoon” (the ·
   in accent `hi`), sub “personal finance” in `sidebarMuted`.
 - Nav: 6 items, each a full-width button (padding 10×12, radius 11, gap 11). Active =
   `acc` bg + white text + 600 weight. Inactive = transparent + `sidebarMuted`. The
@@ -273,5 +273,5 @@ distinct compositions over the same data:
 
 ## Assets & brand
 - Fonts in `assets/fonts/` (Comfortaa TTF 300–700; Roboto Slab variable TTF).
-- App mark in `assets/fireracoon_logo.png`.
+- App mark in `assets/fireraccoon_logo.png`.
 - Visual system inspired by the **AlmaScience** brand reference.

@@ -1,5 +1,5 @@
-import 'package:fireracoon_engine/models/transaction.dart';
-import 'package:fireracoon_engine/utils/transaction_completeness.dart';
+import 'package:fireraccoon_engine/models/transaction.dart';
+import 'package:fireraccoon_engine/utils/transaction_completeness.dart';
 import 'package:test/test.dart';
 
 Transaction _tx({

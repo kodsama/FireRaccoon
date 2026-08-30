@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/models/transaction.dart';
-import 'package:fireracoon/widgets/transactions_expanded_panel.dart';
+import 'package:fireraccoon/models/transaction.dart';
+import 'package:fireraccoon/widgets/transactions_expanded_panel.dart';
 
 import '../helpers/screen_test_app.dart';
 

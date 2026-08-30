@@ -100,7 +100,7 @@ class SealedStore {
     final wrapped = await aes.encrypt(
       dekBytes,
       secretKey: kek,
-      aad: utf8.encode('fireracoon-dek-v1'),
+      aad: utf8.encode('fireraccoon-dek-v1'),
     );
     final header = <String, Object?>{
       'v': 1,
@@ -152,7 +152,7 @@ class SealedStore {
           mac: Mac(base64Decode(header['mac'] as String)),
         ),
         secretKey: kek,
-        aad: utf8.encode('fireracoon-dek-v1'),
+        aad: utf8.encode('fireraccoon-dek-v1'),
       );
       return SealedStore._(dataDir, SecretKey(dekBytes));
     } on SecretBoxAuthenticationError {

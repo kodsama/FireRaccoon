@@ -1,1 +1,1 @@
-export 'package:fireracoon_engine/models/budget.dart';
+export 'package:fireraccoon_engine/models/budget.dart';

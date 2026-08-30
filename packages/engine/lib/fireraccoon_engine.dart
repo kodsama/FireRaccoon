@@ -1,4 +1,4 @@
-/// Pure Dart core for FireRacoon — Firefly III client, projections, analytics.
+/// Pure Dart core for FireRaccoon — Firefly III client, projections, analytics.
 library;
 
 export 'models/account.dart';
