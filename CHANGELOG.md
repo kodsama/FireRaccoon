@@ -9,6 +9,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.2.0] - 2026-08-30
 
+### Fixed
+
+- A recurring transaction dated after the 10th of the month could not be
+  edited, whatever the edit was. Firefly checks a repetition's day as a number
+  no greater than 10 when updating and not when creating, so these were
+  creatable and then permanently read-only through the API, as were yearly
+  rules and rules on the nth weekday, whose day is not a number at all. Firefly
+  only rechecks a schedule the request carries one of, so a schedule nobody
+  edited is no longer sent. When the day itself is what changed and Firefly
+  still refuses it, the refusal now says why, that nothing was saved, and where
+  the day can be changed instead
+- A spend from an account in one currency to a payee could not be saved on an
+  installation whose primary currency is another. Firefly gives every account a
+  currency, filling one in for the payees and other counterparties that have
+  none of their own, so a euro spend on a krona installation read as a currency
+  crossing and asked for a second amount. Refusing to give one blocked the save
+  before it left the app, and giving one would have written a second currency
+  onto a transaction with a single currency
+- A refused write reported itself as a network error though Firefly had
+  answered, and the recurring transaction form raised it through a SnackBar,
+  which draws inside the page underneath the form that caused it. The empty
+  foreign amount field also complained in the same words as an empty main
+  amount, which read as though the amount already typed was the one refused
+
 ### Changed
 
 - The name is spelled FireRaccoon. It had shipped as FireRacoon in the package
