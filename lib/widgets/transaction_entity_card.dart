@@ -13,6 +13,7 @@ import '../providers/tight_rows_columns_provider.dart';
 import '../providers/transaction_list_refresh.dart';
 import '../providers/undo_history_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../utils/balance_check_selection.dart';
 import '../utils/display_labels.dart';
 import '../utils/locale_formatting.dart';
@@ -199,10 +200,16 @@ Future<void> saveTransactionEntity(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.transactionSaved)));
     }
-  } catch (e) {
+  } catch (e, stackTrace) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.failedToSaveTransaction(e.toString()))),
+      // Firefly's own words, kept where they can be read again: a SnackBar
+      // raised from a dialog draws underneath it, and a refusal that names the
+      // field it objected to is worth more than a moment on screen.
+      reportError(
+        context,
+        l10n.failedToSaveTransaction(readableError(e)),
+        error: e,
+        stackTrace: stackTrace,
       );
     }
     rethrow;

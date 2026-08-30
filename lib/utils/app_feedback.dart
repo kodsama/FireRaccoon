@@ -1,6 +1,9 @@
 import 'dart:async';
 
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
+
+final _log = AppLogger.scoped('ui');
 
 /// How long a confirmation stays before it fades on its own.
 const Duration _kInfoDuration = Duration(seconds: 3);
@@ -26,6 +29,30 @@ void showErrorToast(BuildContext context, String message) {
 /// Shows [message] as a confirmation that clears itself.
 void showInfoToast(BuildContext context, String message) {
   _show(context, message, isError: false);
+}
+
+/// Tells the person what failed, and keeps a copy of it.
+///
+/// The two belong together. A failure that is only shown is gone the moment it
+/// is dismissed, which is usually before anyone can act on it, and one that is
+/// only logged never reached the person it happened to.
+void reportError(
+  BuildContext context,
+  String message, {
+  Object? error,
+  StackTrace? stackTrace,
+}) {
+  _log.severe(message, error, stackTrace);
+  showErrorToast(context, message);
+}
+
+/// The message to put in front of somebody, for [error].
+///
+/// A refusal from Firefly already says which field it objected to, and saying
+/// it plainly beats an exception's own rendering wrapped around it.
+String readableError(Object error) {
+  if (error is FireflyApiException) return error.message;
+  return '$error';
 }
 
 void _show(BuildContext context, String message, {required bool isError}) {
