@@ -140,36 +140,44 @@ class _AppShellState extends ConsumerState<AppShell> {
           drawer: isMobile
               ? Drawer(width: 246, child: _Sidebar(inDrawer: true))
               : null,
-          body: isMobile
-              ? Column(
-                  children: [
-                    _Header(
-                      onOpenMenu: () => _scaffoldKey.currentState?.openDrawer(),
-                    ),
-                    Expanded(child: _RefreshableBody(child: widget.child)),
-                  ],
-                )
-              : Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 250),
-                      curve: Curves.easeInOut,
-                      width: isExpanded ? 246 : 80,
-                      child: const _Sidebar(),
-                    ),
-                    Expanded(
-                      child: Column(
-                        children: [
-                          const _Header(),
-                          Expanded(
-                            child: _RefreshableBody(child: widget.child),
-                          ),
-                        ],
+          // The shell draws its own header instead of an AppBar, and a Scaffold
+          // body fills the window: on a phone that put the menu, the search and
+          // the people selector underneath the status bar, where the system
+          // takes the taps. Desktop and web report no inset, so this costs them
+          // nothing.
+          body: SafeArea(
+            child: isMobile
+                ? Column(
+                    children: [
+                      _Header(
+                        onOpenMenu: () =>
+                            _scaffoldKey.currentState?.openDrawer(),
                       ),
-                    ),
-                  ],
-                ),
+                      Expanded(child: _RefreshableBody(child: widget.child)),
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        curve: Curves.easeInOut,
+                        width: isExpanded ? 246 : 80,
+                        child: const _Sidebar(),
+                      ),
+                      Expanded(
+                        child: Column(
+                          children: [
+                            const _Header(),
+                            Expanded(
+                              child: _RefreshableBody(child: widget.child),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
         Align(
           alignment: Alignment.topCenter,
