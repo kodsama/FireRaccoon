@@ -5,28 +5,39 @@ import 'package:intl/intl.dart';
 import '../providers/locale_provider.dart';
 
 /// Locale-aware formatting for numbers, currency, and dates.
+///
+/// Numbers and dates carry their own locale because the conventions are chosen
+/// separately from the interface language: reading the app in English while
+/// writing amounts the French way and dates the American way is a combination
+/// no single locale expresses.
 class LocaleFormatting {
-  LocaleFormatting(this.locale);
+  /// One locale for everything, which is what a caller wants when it has no
+  /// preference to honour.
+  LocaleFormatting(Locale locale) : numberLocale = locale, dateLocale = locale;
 
-  final Locale locale;
+  LocaleFormatting.split({
+    required this.numberLocale,
+    required this.dateLocale,
+  });
+
+  final Locale numberLocale;
+  final Locale dateLocale;
 
   // ICU pattern parsing is expensive (notably on web); formatters are cached
   // per instance, which is safe because localeFormattingProvider creates one
-  // instance per locale and formatting happens on the UI thread.
+  // instance per pair of locales and formatting happens on the UI thread.
   final Map<int, NumberFormat> _decimalFormats = {};
   final Map<String, DateFormat> _dateFormats = {};
 
-  String get _localeTag => locale.toString();
+  String get _numberTag => numberLocale.toString();
+  String get _dateTag => dateLocale.toString();
 
-  NumberFormat _decimal({int? decimalDigits}) {
-    return _decimalFormats.putIfAbsent(decimalDigits ?? -1, () {
-      if (decimalDigits != null) {
-        return NumberFormat.decimalPatternDigits(
-          locale: _localeTag,
-          decimalDigits: decimalDigits,
-        );
-      }
-      return NumberFormat.decimalPattern(_localeTag);
+  NumberFormat _decimal({required int decimalDigits}) {
+    return _decimalFormats.putIfAbsent(decimalDigits, () {
+      return NumberFormat.decimalPatternDigits(
+        locale: _numberTag,
+        decimalDigits: decimalDigits,
+      );
     });
   }
 
@@ -58,32 +69,32 @@ class LocaleFormatting {
   }
 
   String formatMonth(DateTime date) {
-    return _date('MMMM', () => DateFormat.MMMM(_localeTag)).format(date);
+    return _date('MMMM', () => DateFormat.MMMM(_dateTag)).format(date);
   }
 
   String formatShortMonth(DateTime date) {
-    return _date('MMM', () => DateFormat.MMM(_localeTag)).format(date);
+    return _date('MMM', () => DateFormat.MMM(_dateTag)).format(date);
   }
 
   String formatMonthYear(DateTime date) {
-    return _date('yMMMM', () => DateFormat.yMMMM(_localeTag)).format(date);
+    return _date('yMMMM', () => DateFormat.yMMMM(_dateTag)).format(date);
   }
 
   String formatMediumDate(DateTime date) {
-    return _date('yMMMd', () => DateFormat.yMMMd(_localeTag)).format(date);
+    return _date('yMMMd', () => DateFormat.yMMMd(_dateTag)).format(date);
   }
 
   String formatDateTime(DateTime date) {
     return _date(
       'yMMMd_jm',
-      () => DateFormat.yMMMd(_localeTag).add_jm(),
+      () => DateFormat.yMMMd(_dateTag).add_jm(),
     ).format(date);
   }
 
   String formatIsoDate(DateTime date) {
     return _date(
       'yyyy-MM-dd',
-      () => DateFormat('yyyy-MM-dd', _localeTag),
+      () => DateFormat('yyyy-MM-dd', _dateTag),
     ).format(date);
   }
 
@@ -100,6 +111,8 @@ class LocaleFormatting {
 }
 
 final localeFormattingProvider = Provider<LocaleFormatting>((ref) {
-  final appLocale = ref.watch(localeProvider);
-  return LocaleFormatting(appLocale.locale);
+  return LocaleFormatting.split(
+    numberLocale: ref.watch(effectiveNumberLocaleProvider),
+    dateLocale: ref.watch(effectiveDateLocaleProvider),
+  );
 });
