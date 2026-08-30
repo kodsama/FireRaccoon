@@ -1,6 +1,6 @@
-import 'package:fireracoon/utils/locale_formatting.dart';
-import 'package:fireracoon/widgets/transaction_edit_panel.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/utils/locale_formatting.dart';
+import 'package:fireraccoon/widgets/transaction_edit_panel.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';

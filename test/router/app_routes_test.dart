@@ -1,15 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/undo_history_provider.dart';
-import 'package:fireracoon/router/accounts_route.dart';
-import 'package:fireracoon/router/budgets_route.dart';
-import 'package:fireracoon/router/categories_tags_route.dart';
-import 'package:fireracoon/router/dashboard_route.dart';
-import 'package:fireracoon/router/history_route.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon/router/expenses_route.dart';
-import 'package:fireracoon/router/projection_route.dart';
-import 'package:fireracoon/router/transactions_route.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/undo_history_provider.dart';
+import 'package:fireraccoon/router/accounts_route.dart';
+import 'package:fireraccoon/router/budgets_route.dart';
+import 'package:fireraccoon/router/categories_tags_route.dart';
+import 'package:fireraccoon/router/dashboard_route.dart';
+import 'package:fireraccoon/router/history_route.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon/router/expenses_route.dart';
+import 'package:fireraccoon/router/projection_route.dart';
+import 'package:fireraccoon/router/transactions_route.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {

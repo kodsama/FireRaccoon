@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart' show signedListAmount;
+import 'package:fireraccoon_engine/fireraccoon_engine.dart'
+    show signedListAmount;
 
 import '../l10n/l10n_extensions.dart';
 import '../models/transaction.dart';
@@ -148,7 +149,7 @@ class _TransactionsExpandedPanelState
   Widget _actionsRow(BuildContext context) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final count = widget.transactions?.length;
 
     return Padding(
@@ -200,7 +201,7 @@ class _TransactionsExpandedPanelState
   Widget _futureBlock(BuildContext context, List<Transaction> rows) {
     final format = LocaleFormatting(Localizations.localeOf(context));
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final sum = rows.fold<double>(
       0,
       (total, row) =>

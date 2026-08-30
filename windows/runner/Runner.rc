@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.fireracoon" "\0"
-            VALUE "FileDescription", "fireracoon" "\0"
+            VALUE "CompanyName", "com.fireraccoon" "\0"
+            VALUE "FileDescription", "fireraccoon" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "fireracoon" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.fireracoon. All rights reserved." "\0"
-            VALUE "OriginalFilename", "fireracoon.exe" "\0"
-            VALUE "ProductName", "fireracoon" "\0"
+            VALUE "InternalName", "fireraccoon" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 com.fireraccoon. All rights reserved." "\0"
+            VALUE "OriginalFilename", "fireraccoon.exe" "\0"
+            VALUE "ProductName", "fireraccoon" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

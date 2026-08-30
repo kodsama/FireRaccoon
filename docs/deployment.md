@@ -1,6 +1,6 @@
 # Deployment
 
-FireRacoon ships as a Flutter **web** build served by nginx in Docker. Tagged
+FireRaccoon ships as a Flutter **web** build served by nginx in Docker. Tagged
 releases also build Android, iOS, macOS, Windows, and Linux installers via
 `.github/workflows/release.yml`.
 
@@ -43,11 +43,11 @@ and attaches artifacts to a GitHub Release for that tag:
 |----------|-----------|
 | Android | `*.apk`, `*.aab`, Linux MCP binary |
 | iOS | unsigned `*.ipa` |
-| macOS | `FireRacoon-macos.dmg`, macOS MCP binary |
+| macOS | `FireRaccoon-macos.dmg`, macOS MCP binary |
 | Windows | Inno `*.exe` installer, WiX `*.msi`, raw Release `.zip`, Windows MCP binary |
 | Linux | `*.AppImage`, `*.deb`, `*.rpm`, bundle `.tar.gz`, Linux MCP binary |
-| Web | `FireRacoon-web.tar.gz` |
-| Docker | `ghcr.io/<owner>/fireracoon:<tag>` (and `:latest`), `linux/amd64` + `linux/arm64` |
+| Web | `FireRaccoon-web.tar.gz` |
+| Docker | `ghcr.io/<owner>/fireraccoon:<tag>` (and `:latest`), `linux/amd64` + `linux/arm64` |
 
 Every `flutter build` uses `--obfuscate --split-debug-info=build/symbols/<platform>`.
 Keep the uploaded `*-symbols` artifacts to de-obfuscate crash traces.
@@ -64,28 +64,28 @@ Packaging configs: `distribute_options.yaml`, `windows/packaging/exe/`,
 ## Docker (web only)
 
 The Dockerfile is a multi-stage build: Flutter compiles arch-independent
-`build/web` on the host (`BUILDPLATFORM`), then `fireracoon_server` is AOT-compiled
+`build/web` on the host (`BUILDPLATFORM`), then `fireraccoon_server` is AOT-compiled
 on the image's target arch (`TARGETPLATFORM`, via QEMU when cross-building
 arm64). The runtime image runs that binary on port 8080 with `DATA_DIR=/data`.
 Release CI pushes a multi-arch manifest (`linux/amd64`, `linux/arm64`). Nothing
 from the host `./build/web` directory is mounted at runtime; app state belongs
-on the `fireracoon_data` volume.
+on the `fireraccoon_data` volume.
 
 Tagged releases publish that image to GHCR (anonymous pull; package is public):
 
 ```bash
-docker pull ghcr.io/kodsama/fireracoon:latest
-docker run -p 8082:8080 ghcr.io/kodsama/fireracoon:latest
+docker pull ghcr.io/kodsama/fireraccoon:latest
+docker run -p 8082:8080 ghcr.io/kodsama/fireraccoon:latest
 ```
 
-Pin a version with the release tag, e.g. `ghcr.io/kodsama/fireracoon:0.1`.
-Inspect platforms with `docker buildx imagetools inspect ghcr.io/kodsama/fireracoon:latest`.
+Pin a version with the release tag, e.g. `ghcr.io/kodsama/fireraccoon:0.1`.
+Inspect platforms with `docker buildx imagetools inspect ghcr.io/kodsama/fireraccoon:latest`.
 
 ### Build and run one container
 
 ```bash
-docker build -t fireracoon .
-docker run -p 8082:80 fireracoon
+docker build -t fireraccoon .
+docker run -p 8082:80 fireraccoon
 ```
 
 Open http://localhost:8082.
@@ -100,36 +100,36 @@ root**. Both publish on loopback only; put a reverse proxy in front for TLS.
 When Firefly already runs somewhere else:
 
 ```bash
-docker compose -f docs/examples/compose.fireracoon-only.yml up -d
-# FireRacoon → http://127.0.0.1:8082
+docker compose -f docs/examples/compose.fireraccoon-only.yml up -d
+# FireRaccoon → http://127.0.0.1:8082
 ```
 
 ```yaml
 services:
-  fireracoon:
-    image: ghcr.io/kodsama/fireracoon:latest
+  fireraccoon:
+    image: ghcr.io/kodsama/fireraccoon:latest
     ports:
       - "127.0.0.1:8082:80"
     restart: unless-stopped
 ```
 
-Open FireRacoon, set Server URL to your existing Firefly HTTPS (or HTTP)
+Open FireRaccoon, set Server URL to your existing Firefly HTTPS (or HTTP)
 endpoint, paste a token. Full file:
-[`examples/compose.fireracoon-only.yml`](examples/compose.fireracoon-only.yml).
+[`examples/compose.fireraccoon-only.yml`](examples/compose.fireraccoon-only.yml).
 
 #### App + Firefly III + MariaDB
 
 ```bash
 # Edit CHANGE_ME_* in the file first (APP_KEY must be 32 characters).
-docker compose -f docs/examples/compose.fireracoon-firefly.yml up -d
-# FireRacoon → http://127.0.0.1:8082
+docker compose -f docs/examples/compose.fireraccoon-firefly.yml up -d
+# FireRaccoon → http://127.0.0.1:8082
 # Firefly III → http://127.0.0.1:8081
 ```
 
 ```yaml
 services:
-  fireracoon:
-    image: ghcr.io/kodsama/fireracoon:latest
+  fireraccoon:
+    image: ghcr.io/kodsama/fireraccoon:latest
     ports:
       - "127.0.0.1:8082:80"
     restart: unless-stopped
@@ -166,10 +166,10 @@ volumes:
 ```
 
 Full file:
-[`examples/compose.fireracoon-firefly.yml`](examples/compose.fireracoon-firefly.yml).
+[`examples/compose.fireraccoon-firefly.yml`](examples/compose.fireraccoon-firefly.yml).
 
 1. Open Firefly, finish the installer, create a personal access token.
-2. Open FireRacoon → Settings → URL `http://127.0.0.1:8081` (or your public
+2. Open FireRaccoon → Settings → URL `http://127.0.0.1:8081` (or your public
    HTTPS URL behind a proxy) → paste the token. Enable “allow insecure HTTP”
    for local `http://`.
 
@@ -177,7 +177,7 @@ Volumes `firefly_upload` and `firefly_db` persist Firefly data.
 
 #### Local demo from repo root
 
-Root [`compose.yml`](../compose.yml) builds FireRacoon from source and starts
+Root [`compose.yml`](../compose.yml) builds FireRaccoon from source and starts
 the same three services with **demo** passwords (localhost only):
 
 ```bash
@@ -186,14 +186,14 @@ docker compose up --build
 
 | Service | Published port | URL |
 |---------|----------------|-----|
-| FireRacoon (`fireracoon`) | `127.0.0.1:8082` → 80 | http://127.0.0.1:8082 |
+| FireRaccoon (`fireraccoon`) | `127.0.0.1:8082` → 80 | http://127.0.0.1:8082 |
 | Firefly III (`firefly-app`) | `8081` → 8080 | http://localhost:8081 |
 | MariaDB (`firefly-db`) | none | internal only |
 
 After editing app source, rebuild and recreate the web service:
 
 ```bash
-docker compose up -d --build --force-recreate fireracoon
+docker compose up -d --build --force-recreate fireraccoon
 ```
 
 Hard-refresh the browser if an old `main.dart.js` is cached.
@@ -201,7 +201,7 @@ Hard-refresh the browser if an old `main.dart.js` is cached.
 ### Deploy on a server with Docker Compose
 
 Use the example files above (or root `compose.yml`) when the host should serve
-FireRacoon beyond a laptop. Do not leave demo passwords or open Firefly ports
+FireRaccoon beyond a laptop. Do not leave demo passwords or open Firefly ports
 on the public internet.
 
 **1. Prepare the host**
@@ -214,8 +214,8 @@ on the public internet.
 
 | Goal | Command |
 |------|---------|
-| App only (Firefly elsewhere) | `docker compose -f docs/examples/compose.fireracoon-only.yml up -d` |
-| App + Firefly + DB | Edit secrets, then `docker compose -f docs/examples/compose.fireracoon-firefly.yml up -d` |
+| App only (Firefly elsewhere) | `docker compose -f docs/examples/compose.fireraccoon-only.yml up -d` |
+| App + Firefly + DB | Edit secrets, then `docker compose -f docs/examples/compose.fireraccoon-firefly.yml up -d` |
 | Build UI from this git checkout | Uncomment `build.context` in the example, or use root `compose.yml` |
 
 **3. Harden before first `up`**
@@ -233,7 +233,7 @@ below). Same-origin `/api` avoids browser CORS.
 **4. First boot**
 
 1. Open Firefly over HTTPS, finish the installer, create a personal access token.
-2. Open FireRacoon, set the Firefly URL to the **public** HTTPS origin users will
+2. Open FireRaccoon, set the Firefly URL to the **public** HTTPS origin users will
    call (same origin as the app if you proxy `/api`), paste the token, test connection.
 3. Confirm volumes exist: `docker volume ls | grep firefly`.
 
@@ -241,12 +241,12 @@ below). Same-origin `/api` avoids browser CORS.
 
 ```bash
 # GHCR image (examples/)
-docker compose -f docs/examples/compose.fireracoon-only.yml pull
-docker compose -f docs/examples/compose.fireracoon-only.yml up -d
+docker compose -f docs/examples/compose.fireraccoon-only.yml pull
+docker compose -f docs/examples/compose.fireraccoon-only.yml up -d
 
 # Built from this repo
 git pull
-docker compose up -d --build --force-recreate fireracoon
+docker compose up -d --build --force-recreate fireraccoon
 ```
 
 Firefly / MariaDB keep data in named volumes across image updates. Still run
@@ -301,7 +301,7 @@ a throwaway machine before you need it.
 Cron example (daily at 01:01):
 
 ```cron
-1 1 * * * cd /path/to/FireRacoon && bash tool/firefly_backup.sh backup /var/backups/firefly
+1 1 * * * cd /path/to/FireRaccoon && bash tool/firefly_backup.sh backup /var/backups/firefly
 ```
 
 ### Demo credentials (local only)
@@ -320,12 +320,12 @@ credential and enabling TLS.
 
 ### Credentials
 
-#### Local mode (`FIRERACOON_MODE=local`)
+#### Local mode (`FIRERACCOON_MODE=local`)
 
 Credentials are never embedded in builds or images. Users connect once via
 **Settings → Firefly III connection**; values stay in platform secure storage.
 
-#### Server mode (Docker, `FIRERACOON_MODE=server`)
+#### Server mode (Docker, `FIRERACCOON_MODE=server`)
 
 - Set `DATA_PASSWORD` in Compose / secrets. On every boot the server uses
   it to **create** (empty `DATA_DIR`) or **unlock** the encrypted store.
@@ -335,8 +335,8 @@ Credentials are never embedded in builds or images. Users connect once via
 - If `DATA_DIR` is empty and the env var is unset, a one-time create form
   appears; after that, put the same password in `DATA_PASSWORD` so
   restarts unlock automatically.
-- Mount durable state on volume `fireracoon_data` (default) or a bind path:
-  `./data/fireracoon:/data`.
+- Mount durable state on volume `fireraccoon_data` (default) or a bind path:
+  `./data/fireraccoon:/data`.
 - Do not put the storage password inside `DATA_DIR`. Back up the volume and
   keep `DATA_PASSWORD` safe separately.
 - After unlock, first visit runs admin setup (URL + token + admin user) unless
@@ -353,7 +353,7 @@ Serve `build/web/` with any static file server (nginx, Caddy, `dart pub global r
 
 ## Production checklist
 
-- [ ] Use HTTPS for both FireRacoon and Firefly III
+- [ ] Use HTTPS for both FireRaccoon and Firefly III
 - [ ] Put a reverse proxy in front (nginx, Traefik, Caddy)
 - [ ] Same-origin proxy for `/api` to avoid CORS (see [Firefly connection](firefly-connection.md))
 - [ ] Change `APP_KEY` and database passwords in `compose.yml`
@@ -371,7 +371,7 @@ server {
     listen 443 ssl;
     server_name finance.example.com;
 
-    # FireRacoon static web app (Compose → 127.0.0.1:8082)
+    # FireRaccoon static web app (Compose → 127.0.0.1:8082)
     location / {
         proxy_pass http://127.0.0.1:8082;
         proxy_set_header Host $host;
@@ -390,7 +390,7 @@ server {
 ```
 
 If nginx runs in Docker on the same Compose network, replace the upstreams with
-service names (`http://fireracoon:80`, `http://firefly-app:8080/api/`) and do not
+service names (`http://fireraccoon:80`, `http://firefly-app:8080/api/`) and do not
 publish those container ports on the host.
 
 ## Desktop and mobile

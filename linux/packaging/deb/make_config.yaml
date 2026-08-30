@@ -1,6 +1,6 @@
 # flutter_distributor .deb config.
-display_name: FireRacoon
-package_name: fireracoon
+display_name: FireRaccoon
+package_name: fireraccoon
 maintainer:
   name: Kodsama
   email: support@kodsama.ai

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../l10n/l10n_extensions.dart';
@@ -403,7 +403,7 @@ class _TransactionEntityCardState extends ConsumerState<TransactionEntityCard> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = context.format;
     final t = widget.transaction;
     final signedAmount = signedListAmount(t, accountName: widget.filterAccount);
@@ -958,7 +958,7 @@ class _TransactionTypeBadge extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

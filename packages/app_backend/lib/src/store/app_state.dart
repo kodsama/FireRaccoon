@@ -1,4 +1,4 @@
-/// In-memory FireRacoon app state persisted as one encrypted JSON document.
+/// In-memory FireRaccoon app state persisted as one encrypted JSON document.
 class AppState {
   AppState({
     FireflyConnection? firefly,
@@ -49,7 +49,7 @@ class AppState {
 
   /// MCP agent keys. Each record carries its digest and, so the owner can
   /// read the key back rather than reissue it, the secret itself. See
-  /// `AgentKey` in fireracoon_engine.
+  /// `AgentKey` in fireraccoon_engine.
   List<Map<String, dynamic>> agentKeys;
 
   /// personId → base64 PNG

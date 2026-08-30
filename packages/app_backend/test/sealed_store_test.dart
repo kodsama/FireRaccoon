@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
-import 'package:fireracoon_app_backend/src/crypto/passwords.dart';
+import 'package:fireraccoon_app_backend/fireraccoon_app_backend.dart';
+import 'package:fireraccoon_app_backend/src/crypto/passwords.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
@@ -13,7 +13,7 @@ void main() {
   late Directory tmp;
 
   setUp(() async {
-    tmp = await Directory.systemTemp.createTemp('fireracoon_store_');
+    tmp = await Directory.systemTemp.createTemp('fireraccoon_store_');
   });
 
   tearDown(() async {
@@ -261,19 +261,19 @@ void main() {
   test('ServerConfig allows missing password (UI unlock)', () {
     expect(
       () => ServerConfig.fromEnvironment(
-        environment: {'FIRERACOON_MODE': 'local', 'DATA_PASSWORD': 'x'},
+        environment: {'FIRERACCOON_MODE': 'local', 'DATA_PASSWORD': 'x'},
       ),
       throwsA(isA<StateError>()),
     );
 
     final locked = ServerConfig.fromEnvironment(
       environment: {
-        'FIRERACOON_MODE': 'server',
+        'FIRERACCOON_MODE': 'server',
         'DATA_DIR': tmp.path,
         'PORT': '9090',
       },
     );
-    expect(locked.mode, FireracoonMode.server);
+    expect(locked.mode, FireraccoonMode.server);
     expect(locked.dataPassword, isNull);
     expect(locked.port, 9090);
   });
@@ -281,7 +281,7 @@ void main() {
   test('starts locked then unlocks via API', () async {
     final server = await openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         port: 0,
         webRoot: tmp.path,
@@ -316,7 +316,7 @@ void main() {
   test('create requires confirm; unlock uses existing DATA_DIR', () async {
     final server = await openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         port: 0,
         webRoot: tmp.path,
@@ -349,7 +349,7 @@ void main() {
     // Simulate restart: new process, same DATA_DIR, no env password.
     final restarted = await openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         port: 0,
         webRoot: tmp.path,
@@ -373,7 +373,7 @@ void main() {
   test('DATA_PASSWORD creates store on empty DATA_DIR', () async {
     final server = await openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         dataPassword: 'correct-horse',
         port: 0,
@@ -385,7 +385,7 @@ void main() {
 
     final restarted = await openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         dataPassword: 'correct-horse',
         port: 0,
@@ -452,7 +452,7 @@ void main() {
 
     final server = await openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         dataPassword: 'correct-horse-battery',
         port: 0,
@@ -466,7 +466,7 @@ void main() {
       Request(
         'PUT',
         Uri.parse('http://localhost/api/state/people'),
-        headers: {'x-fireracoon-session': admin.token},
+        headers: {'x-fireraccoon-session': admin.token},
         body: jsonEncode({
           'people': [
             {'id': 'p9', 'name': 'Imported'},
@@ -506,7 +506,7 @@ void main() {
 
       final server = await openTestServer(
         ServerConfig(
-          mode: FireracoonMode.server,
+          mode: FireraccoonMode.server,
           dataDir: tmp.path,
           dataPassword: 'correct-horse-battery',
           port: 0,
@@ -520,7 +520,7 @@ void main() {
         Request(
           'PUT',
           Uri.parse('http://localhost/api/avatars/$person'),
-          headers: {'x-fireracoon-session': admin.token},
+          headers: {'x-fireraccoon-session': admin.token},
           body: '"just a string"',
         ),
       );
@@ -556,7 +556,7 @@ void main() {
 
     final server = await openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         dataPassword: 'correct-horse-battery',
         port: 0,
@@ -574,7 +574,7 @@ void main() {
         Request(
           method,
           Uri.parse('http://localhost$path'),
-          headers: {'x-fireracoon-session': ?session},
+          headers: {'x-fireraccoon-session': ?session},
           body: body == null ? null : jsonEncode(body),
         ),
       );
@@ -653,7 +653,7 @@ void main() {
 
     final server = await openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         dataPassword: 'correct-horse-battery',
         port: 0,
@@ -669,7 +669,7 @@ void main() {
       Request(
         'GET',
         Uri.parse('http://localhost/api/state/backup-secrets'),
-        headers: {'x-fireracoon-session': issued.secret},
+        headers: {'x-fireraccoon-session': issued.secret},
       ),
     );
     expect(asAgent.statusCode, 403);
@@ -683,7 +683,7 @@ void main() {
       Request(
         'PUT',
         Uri.parse('http://localhost/api/state/firefly'),
-        headers: {'x-fireracoon-session': issued.secret},
+        headers: {'x-fireraccoon-session': issued.secret},
         body: jsonEncode({'url': 'https://attacker.test', 'token': 'stolen'}),
       ),
     );
@@ -695,7 +695,7 @@ void main() {
       Request(
         'GET',
         Uri.parse('http://localhost/api/state/backup-secrets'),
-        headers: {'x-fireracoon-session': login.token},
+        headers: {'x-fireraccoon-session': login.token},
       ),
     );
     expect(asPerson.statusCode, 200);
@@ -721,7 +721,7 @@ void main() {
 
     final server = await openTestServer(
       ServerConfig(
-        mode: FireracoonMode.server,
+        mode: FireraccoonMode.server,
         dataDir: tmp.path,
         dataPassword: 'correct-horse-battery',
         port: 0,
@@ -738,7 +738,7 @@ void main() {
       Request(
         'GET',
         Uri.parse('http://localhost/api/state/backup-secrets'),
-        headers: {'x-fireracoon-session': login.token},
+        headers: {'x-fireraccoon-session': login.token},
       ),
     );
     expect(ok.statusCode, 200);
@@ -755,7 +755,7 @@ void main() {
     // The header sits next to the ciphertext, so this is not a defence against
     // someone editing it: they already hold the file. What it catches is a count
     // that is nonsense, quietly deriving a weak key and opening as if fine.
-    final dir = await Directory.systemTemp.createTemp('fireracoon-floor');
+    final dir = await Directory.systemTemp.createTemp('fireraccoon-floor');
     addTearDown(() async {
       if (dir.existsSync()) await dir.delete(recursive: true);
     });

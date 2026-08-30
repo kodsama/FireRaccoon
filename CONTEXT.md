@@ -1,4 +1,4 @@
-# FireRacoon domain context
+# FireRaccoon domain context
 
 Glossary for agents and humans working in this repo. Prefer these terms in
 code comments, ADRs, and MCP descriptions.
@@ -7,14 +7,14 @@ code comments, ADRs, and MCP descriptions.
 
 | Term | Meaning |
 |------|---------|
-| **Firefly III** | External personal-finance API FireRacoon talks to |
+| **Firefly III** | External personal-finance API FireRaccoon talks to |
 | **Engine** | `packages/engine` — models, Firefly client, projection/prognosis, stats |
 | **MCP surface** | Engine capabilities exposed as agent tools (see Agent access) |
-| **Local mode** | `FIRERACOON_MODE=local` — FireRacoon state on device secure storage |
-| **Server mode** | `FIRERACOON_MODE=server` — Docker backend; encrypted `DATA_DIR` store |
+| **Local mode** | `FIRERACCOON_MODE=local` — FireRaccoon state on device secure storage |
+| **Server mode** | `FIRERACCOON_MODE=server` — Docker backend; encrypted `DATA_DIR` store |
 | **App store** | Persistence seam for people, prefs, avatars, undo, Firefly connection |
 | **BFF proxy** | Server-mode `/api/firefly/*` that attaches the server-held PAT |
-| **DATA_DIR** | Mounted directory for encrypted FireRacoon state (`fireracoon_data`) |
+| **DATA_DIR** | Mounted directory for encrypted FireRaccoon state (`fireraccoon_data`) |
 | **DATA_PASSWORD** | Env password that creates/unlocks encrypted DATA_DIR on boot |
 | **Projection** | Coarse on-device forecast (`ProjectionService` / MCP `run_projection`) |
 | **Prognosis** | Rich account forecast in the UI (`AccountPrognosisService`) |

@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:fireracoon/utils/settings_secrets_crypto.dart';
+import 'package:fireraccoon/utils/settings_secrets_crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

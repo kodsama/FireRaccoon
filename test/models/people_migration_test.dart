@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/models/app_user_models.dart';
-import 'package:fireracoon/models/people_migration.dart';
-import 'package:fireracoon/models/people_models.dart';
+import 'package:fireraccoon/models/app_user_models.dart';
+import 'package:fireraccoon/models/people_migration.dart';
+import 'package:fireraccoon/models/people_models.dart';
 
 void main() {
   test('merges linked app user onto matching person', () {

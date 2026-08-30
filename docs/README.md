@@ -1,6 +1,6 @@
-# FireRacoon documentation
+# FireRaccoon documentation
 
-Welcome to the FireRacoon docs. Start here if you are setting up, deploying, or contributing to the project.
+Welcome to the FireRaccoon docs. Start here if you are setting up, deploying, or contributing to the project.
 
 ## Guides
 
@@ -24,11 +24,11 @@ Welcome to the FireRacoon docs. Start here if you are setting up, deploying, or 
 | [../CONTRIBUTING.md](../CONTRIBUTING.md) | How to contribute |
 | [../SECURITY.md](../SECURITY.md) | Vulnerability reporting |
 | [../.env.example](../.env.example) | Environment variable template for Firefly credentials |
-| [cosmos-compose.fireracoon-only.json](examples/cosmos-compose.fireracoon-only.json) | Cosmos: FireRacoon only |
-| [cosmos-compose.fireracoon-with-firefly.json](examples/cosmos-compose.fireracoon-with-firefly.json) | Cosmos: FireRacoon next to existing Firefly |
-| [cosmos-compose.fireracoon-firefly-stack.json](examples/cosmos-compose.fireracoon-firefly-stack.json) | Cosmos: FireRacoon + Firefly + MariaDB |
-| [compose.fireracoon-only.yml](examples/compose.fireracoon-only.yml) | Docker Compose: FireRacoon only |
-| [compose.fireracoon-firefly.yml](examples/compose.fireracoon-firefly.yml) | Docker Compose: FireRacoon + Firefly + MariaDB |
+| [cosmos-compose.fireraccoon-only.json](examples/cosmos-compose.fireraccoon-only.json) | Cosmos: FireRaccoon only |
+| [cosmos-compose.fireraccoon-with-firefly.json](examples/cosmos-compose.fireraccoon-with-firefly.json) | Cosmos: FireRaccoon next to existing Firefly |
+| [cosmos-compose.fireraccoon-firefly-stack.json](examples/cosmos-compose.fireraccoon-firefly-stack.json) | Cosmos: FireRaccoon + Firefly + MariaDB |
+| [compose.fireraccoon-only.yml](examples/compose.fireraccoon-only.yml) | Docker Compose: FireRaccoon only |
+| [compose.fireraccoon-firefly.yml](examples/compose.fireraccoon-firefly.yml) | Docker Compose: FireRaccoon + Firefly + MariaDB |
 
 ## Quick links
 

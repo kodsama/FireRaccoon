@@ -1,18 +1,18 @@
 import 'dart:io';
 
-/// Deployment mode selected by [FIRERACOON_MODE].
-enum FireracoonMode {
+/// Deployment mode selected by [FIRERACCOON_MODE].
+enum FireraccoonMode {
   local,
   server;
 
-  static FireracoonMode parse(String? raw) {
+  static FireraccoonMode parse(String? raw) {
     final value = (raw ?? '').trim().toLowerCase();
     return switch (value) {
-      'server' => FireracoonMode.server,
-      'local' => FireracoonMode.local,
-      '' => FireracoonMode.local,
+      'server' => FireraccoonMode.server,
+      'local' => FireraccoonMode.local,
+      '' => FireraccoonMode.local,
       _ => throw FormatException(
-        'FIRERACOON_MODE must be "local" or "server", got "$raw"',
+        'FIRERACCOON_MODE must be "local" or "server", got "$raw"',
       ),
     };
   }
@@ -32,7 +32,7 @@ class ServerConfig {
     this.allowedOrigins = const <String>[],
   });
 
-  final FireracoonMode mode;
+  final FireraccoonMode mode;
   final String dataDir;
 
   /// Optional env password that creates or unlocks DATA_DIR on every boot so
@@ -59,11 +59,11 @@ class ServerConfig {
     String? webRootOverride,
   }) {
     final env = environment ?? Platform.environment;
-    final mode = FireracoonMode.parse(env['FIRERACOON_MODE']);
-    if (mode != FireracoonMode.server) {
+    final mode = FireraccoonMode.parse(env['FIRERACCOON_MODE']);
+    if (mode != FireraccoonMode.server) {
       throw StateError(
-        'fireracoon_server requires FIRERACOON_MODE=server '
-        '(got "${env['FIRERACOON_MODE'] ?? ''}").',
+        'fireraccoon_server requires FIRERACCOON_MODE=server '
+        '(got "${env['FIRERACCOON_MODE'] ?? ''}").',
       );
     }
 
@@ -74,7 +74,7 @@ class ServerConfig {
     final port =
         portOverride ??
         int.tryParse(env['PORT'] ?? '') ??
-        int.tryParse(env['FIRERACOON_PORT'] ?? '') ??
+        int.tryParse(env['FIRERACCOON_PORT'] ?? '') ??
         8080;
 
     final webRoot =

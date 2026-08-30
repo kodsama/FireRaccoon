@@ -1,5 +1,5 @@
-import 'package:fireracoon/models/app_user_models.dart';
-import 'package:fireracoon/models/people_models.dart';
+import 'package:fireraccoon/models/app_user_models.dart';
+import 'package:fireraccoon/models/people_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -17,14 +17,14 @@ void main() {
     test('copy, json, equality, and hashCode', () {
       const preferences = AppUserPreferences(
         themeModeName: 'dark',
-        funModeName: 'racoon',
+        funModeName: 'raccoon',
         localeCode: 'en',
         personFilterId: 'person-1',
       );
 
       final copy = preferences.copyWith(localeCode: 'fr');
       expect(copy.themeModeName, 'dark');
-      expect(copy.funModeName, 'racoon');
+      expect(copy.funModeName, 'raccoon');
       expect(copy.localeCode, 'fr');
       expect(copy.personFilterId, 'person-1');
       expect(preferences.copyWith(), preferences);
@@ -159,7 +159,7 @@ void main() {
   test('preferences copy and compare by value', () {
     const preferences = PersonPreferences(
       themeModeName: 'dark',
-      funModeName: 'racoon',
+      funModeName: 'raccoon',
       localeCode: 'en',
       personFilterId: 'person-1',
     );
@@ -167,7 +167,7 @@ void main() {
     final copy = preferences.copyWith(localeCode: 'fr');
 
     expect(copy.themeModeName, 'dark');
-    expect(copy.funModeName, 'racoon');
+    expect(copy.funModeName, 'raccoon');
     expect(copy.localeCode, 'fr');
     expect(copy.personFilterId, 'person-1');
     expect(preferences.copyWith(), preferences);

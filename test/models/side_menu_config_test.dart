@@ -1,4 +1,4 @@
-import 'package:fireracoon/models/side_menu_config.dart';
+import 'package:fireraccoon/models/side_menu_config.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 

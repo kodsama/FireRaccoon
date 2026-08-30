@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.fireracoon"
+    namespace = "com.fireraccoon"
     // Plugins such as flutter_keyboard_visibility still declare compileSdk 31;
     // AGP refuses to resolve androidx libraries that require 34+ unless the
     // app itself compiles against a matching SDK. flutter_secure_storage 11
@@ -20,7 +20,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.fireracoon.app"
+        applicationId = "com.fireraccoon.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/models/projection.dart';
-import 'package:fireracoon/services/projection_service.dart';
+import 'package:fireraccoon/models/projection.dart';
+import 'package:fireraccoon/services/projection_service.dart';
 
 void main() {
   group('ProjectionService', () {

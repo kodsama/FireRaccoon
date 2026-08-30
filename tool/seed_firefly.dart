@@ -215,18 +215,18 @@ Future<void> main() async {
   final funBudget = await createBudget('Entertainment');
 
   print('Creating Accounts & Liabilities...');
-  final checking = await createAccount('FireRacoon Checking', 'asset', '50000.00', 'USD');
-  final savings = await createAccount('FireRacoon Savings', 'asset', '150000.00', 'USD');
-  final creditCard = await createAccount('FireRacoon Credit Card', 'liability', null, 'USD', 'credit');
-  final carLoan = await createAccount('FireRacoon Car Loan', 'liability', null, 'USD', 'loan');
+  final checking = await createAccount('FireRaccoon Checking', 'asset', '50000.00', 'USD');
+  final savings = await createAccount('FireRaccoon Savings', 'asset', '150000.00', 'USD');
+  final creditCard = await createAccount('FireRaccoon Credit Card', 'liability', null, 'USD', 'credit');
+  final carLoan = await createAccount('FireRaccoon Car Loan', 'liability', null, 'USD', 'loan');
   
-  final salary = await createAccount('FireRacoon Employer', 'revenue', null, 'USD');
+  final salary = await createAccount('FireRaccoon Employer', 'revenue', null, 'USD');
 
-  final groceries = await createAccount('FireRacoon Supermarket', 'expense', null, 'USD');
-  final rent = await createAccount('FireRacoon Landlord', 'expense', null, 'USD');
-  final internet = await createAccount('FireRacoon ISP', 'expense', null, 'USD');
-  final restaurants = await createAccount('FireRacoon Restaurants', 'expense', null, 'USD');
-  final gasStation = await createAccount('FireRacoon Fuel', 'expense', null, 'USD');
+  final groceries = await createAccount('FireRaccoon Supermarket', 'expense', null, 'USD');
+  final rent = await createAccount('FireRaccoon Landlord', 'expense', null, 'USD');
+  final internet = await createAccount('FireRaccoon ISP', 'expense', null, 'USD');
+  final restaurants = await createAccount('FireRaccoon Restaurants', 'expense', null, 'USD');
+  final gasStation = await createAccount('FireRaccoon Fuel', 'expense', null, 'USD');
 
   print('Creating Bills/Subscriptions...');
   final rentBill = await createBill('Monthly Rent', '1200', '1200', '2021-01-03');
@@ -258,15 +258,15 @@ Future<void> main() async {
 
       // Salary
       final salaryAmount = 4000 + random.nextInt(1000);
-      await createTransaction(sourceId: salary, sourceName: 'FireRacoon Employer', destId: checking, destName: 'FireRacoon Checking', description: 'Salary', amount: '$salaryAmount.00', type: 'deposit', dateStr: dateStr(1), currencyCode: 'USD', categoryId: catIncome);
+      await createTransaction(sourceId: salary, sourceName: 'FireRaccoon Employer', destId: checking, destName: 'FireRaccoon Checking', description: 'Salary', amount: '$salaryAmount.00', type: 'deposit', dateStr: dateStr(1), currencyCode: 'USD', categoryId: catIncome);
       transactionsCreated++;
       
       // Rent
-      await createTransaction(sourceId: checking, sourceName: 'FireRacoon Checking', destId: rent, destName: 'FireRacoon Landlord', description: 'Rent', amount: '1200.00', type: 'withdrawal', dateStr: dateStr(3), currencyCode: 'USD', budgetId: housingBudget, categoryId: catHousing, billId: rentBill, tags: [tagShared]);
+      await createTransaction(sourceId: checking, sourceName: 'FireRaccoon Checking', destId: rent, destName: 'FireRaccoon Landlord', description: 'Rent', amount: '1200.00', type: 'withdrawal', dateStr: dateStr(3), currencyCode: 'USD', budgetId: housingBudget, categoryId: catHousing, billId: rentBill, tags: [tagShared]);
       transactionsCreated++;
 
       // Netflix
-      await createTransaction(sourceId: creditCard, sourceName: 'FireRacoon Credit Card', destId: internet, destName: 'Netflix', description: 'Netflix Subscription', amount: '15.99', type: 'withdrawal', dateStr: dateStr(15), currencyCode: 'USD', budgetId: funBudget, categoryId: catEntertainment, billId: netflixBill);
+      await createTransaction(sourceId: creditCard, sourceName: 'FireRaccoon Credit Card', destId: internet, destName: 'Netflix', description: 'Netflix Subscription', amount: '15.99', type: 'withdrawal', dateStr: dateStr(15), currencyCode: 'USD', budgetId: funBudget, categoryId: catEntertainment, billId: netflixBill);
       transactionsCreated++;
 
       // Batch 90 random transactions to prevent 500s or making it too slow
@@ -277,19 +277,19 @@ Future<void> main() async {
         
         if (r < 30) {
           final amt = 10 + random.nextInt(90);
-          txFutures.add(createTransaction(sourceId: creditCard, sourceName: 'FireRacoon Credit Card', destId: groceries, destName: 'FireRacoon Supermarket', description: 'Groceries', amount: '$amt.00', type: 'withdrawal', dateStr: dateStr(day), currencyCode: 'USD', budgetId: foodBudget, categoryId: catFood));
+          txFutures.add(createTransaction(sourceId: creditCard, sourceName: 'FireRaccoon Credit Card', destId: groceries, destName: 'FireRaccoon Supermarket', description: 'Groceries', amount: '$amt.00', type: 'withdrawal', dateStr: dateStr(day), currencyCode: 'USD', budgetId: foodBudget, categoryId: catFood));
         } else if (r < 60) {
           final amt = 15 + random.nextInt(60);
-          txFutures.add(createTransaction(sourceId: creditCard, sourceName: 'FireRacoon Credit Card', destId: restaurants, destName: 'FireRacoon Restaurants', description: 'Dining Out', amount: '$amt.00', type: 'withdrawal', dateStr: dateStr(day), currencyCode: 'USD', budgetId: funBudget, categoryId: catEntertainment, tags: (random.nextBool() ? [tagShared] : null)));
+          txFutures.add(createTransaction(sourceId: creditCard, sourceName: 'FireRaccoon Credit Card', destId: restaurants, destName: 'FireRaccoon Restaurants', description: 'Dining Out', amount: '$amt.00', type: 'withdrawal', dateStr: dateStr(day), currencyCode: 'USD', budgetId: funBudget, categoryId: catEntertainment, tags: (random.nextBool() ? [tagShared] : null)));
         } else if (r < 80) {
           final amt = 30 + random.nextInt(40);
-          txFutures.add(createTransaction(sourceId: creditCard, sourceName: 'FireRacoon Credit Card', destId: gasStation, destName: 'FireRacoon Fuel', description: 'Gas', amount: '$amt.00', type: 'withdrawal', dateStr: dateStr(day), currencyCode: 'USD', categoryId: catTransport));
+          txFutures.add(createTransaction(sourceId: creditCard, sourceName: 'FireRaccoon Credit Card', destId: gasStation, destName: 'FireRaccoon Fuel', description: 'Gas', amount: '$amt.00', type: 'withdrawal', dateStr: dateStr(day), currencyCode: 'USD', categoryId: catTransport));
         } else if (r < 90) {
           final amt = 4 + random.nextInt(6);
-          txFutures.add(createTransaction(sourceId: creditCard, sourceName: 'FireRacoon Credit Card', destId: restaurants, destName: 'Starbucks', description: 'Starbucks Coffee', amount: '$amt.00', type: 'withdrawal', dateStr: dateStr(day), currencyCode: 'USD', budgetId: funBudget, categoryId: catEntertainment, tags: [tagCoffee]));
+          txFutures.add(createTransaction(sourceId: creditCard, sourceName: 'FireRaccoon Credit Card', destId: restaurants, destName: 'Starbucks', description: 'Starbucks Coffee', amount: '$amt.00', type: 'withdrawal', dateStr: dateStr(day), currencyCode: 'USD', budgetId: funBudget, categoryId: catEntertainment, tags: [tagCoffee]));
         } else {
           final amt = 5 + random.nextInt(20);
-          txFutures.add(createTransaction(sourceId: checking, sourceName: 'FireRacoon Checking', destId: restaurants, destName: 'Local Shop', description: 'Misc', amount: '$amt.00', type: 'withdrawal', dateStr: dateStr(day), currencyCode: 'USD'));
+          txFutures.add(createTransaction(sourceId: checking, sourceName: 'FireRaccoon Checking', destId: restaurants, destName: 'Local Shop', description: 'Misc', amount: '$amt.00', type: 'withdrawal', dateStr: dateStr(day), currencyCode: 'USD'));
         }
         transactionsCreated++;
       }
@@ -302,7 +302,7 @@ Future<void> main() async {
       
       // Transfer to Savings
       final saveAmt = 200 + random.nextInt(300);
-      await createTransaction(sourceId: checking, sourceName: 'FireRacoon Checking', destId: savings, destName: 'FireRacoon Savings', description: 'Monthly Transfer', amount: '$saveAmt.00', type: 'transfer', dateStr: dateStr(28), currencyCode: 'USD');
+      await createTransaction(sourceId: checking, sourceName: 'FireRaccoon Checking', destId: savings, destName: 'FireRaccoon Savings', description: 'Monthly Transfer', amount: '$saveAmt.00', type: 'transfer', dateStr: dateStr(28), currencyCode: 'USD');
       transactionsCreated++;
       
       // Piggy Bank add
@@ -312,11 +312,11 @@ Future<void> main() async {
 
       // Credit card payoff
       final ccPayoff = 500 + random.nextInt(500);
-      await createTransaction(sourceId: checking, sourceName: 'FireRacoon Checking', destId: creditCard, destName: 'FireRacoon Credit Card', description: 'Credit Card Payment', amount: '$ccPayoff.00', type: 'transfer', dateStr: dateStr(25), currencyCode: 'USD');
+      await createTransaction(sourceId: checking, sourceName: 'FireRaccoon Checking', destId: creditCard, destName: 'FireRaccoon Credit Card', description: 'Credit Card Payment', amount: '$ccPayoff.00', type: 'transfer', dateStr: dateStr(25), currencyCode: 'USD');
       transactionsCreated++;
 
       // Car Loan Payment
-      await createTransaction(sourceId: checking, sourceName: 'FireRacoon Checking', destId: carLoan, destName: 'FireRacoon Car Loan', description: 'Car Loan Installment', amount: '350.00', type: 'transfer', dateStr: dateStr(12), currencyCode: 'USD');
+      await createTransaction(sourceId: checking, sourceName: 'FireRaccoon Checking', destId: carLoan, destName: 'FireRaccoon Car Loan', description: 'Car Loan Installment', amount: '350.00', type: 'transfer', dateStr: dateStr(12), currencyCode: 'USD');
       transactionsCreated++;
       
       print('Processed $year-$monthStr');

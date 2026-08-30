@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon_engine/models/account.dart';
-import 'package:fireracoon/models/people_models.dart';
+import 'package:fireraccoon_engine/models/account.dart';
+import 'package:fireraccoon/models/people_models.dart';
 
 void main() {
   group('Person model tests', () {

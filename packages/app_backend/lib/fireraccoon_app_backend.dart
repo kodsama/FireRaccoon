@@ -1,4 +1,4 @@
-/// FireRacoon Docker / server-mode backend.
+/// FireRaccoon Docker / server-mode backend.
 library;
 
 export 'src/config.dart';

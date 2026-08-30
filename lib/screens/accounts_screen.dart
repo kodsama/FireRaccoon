@@ -31,7 +31,7 @@ class AccountsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = ref.watch(localeFormattingProvider);
     final routeState = GoRouterState.of(context);
     final typeFilter = AccountsRoute.typeFrom(routeState);
@@ -547,7 +547,7 @@ class _AccountSearchBoxState extends ConsumerState<_AccountSearchBox> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
 
     return SizedBox(
       width: 200,

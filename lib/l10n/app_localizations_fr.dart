@@ -9,7 +9,7 @@ class AppLocalizationsFr extends AppLocalizations {
   AppLocalizationsFr([String locale = 'fr']) : super(locale);
 
   @override
-  String get appTitle => 'FireRacoon';
+  String get appTitle => 'FireRaccoon';
 
   @override
   String get appTagline => 'Le bandit le plus brillant pour votre budget.';
@@ -18,7 +18,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appNameFire => 'Fire';
 
   @override
-  String get appNameRacoon => 'Racoon';
+  String get appNameRaccoon => 'Raccoon';
 
   @override
   String get navDashboard => 'Tableau de bord';
@@ -159,7 +159,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get appearance => 'Apparence';
 
   @override
-  String get racoonMode => 'Mode Racoon';
+  String get raccoonMode => 'Mode Raccoon';
 
   @override
   String get themeStyle => 'Style du thème';
@@ -364,198 +364,198 @@ class AppLocalizationsFr extends AppLocalizations {
   String get burnt => 'Cramé';
 
   @override
-  String get navDashboardRacoon => 'Le Repaire';
+  String get navDashboardRaccoon => 'Le Repaire';
 
   @override
-  String get navDashboardShortRacoon => 'Repaire';
+  String get navDashboardShortRaccoon => 'Repaire';
 
   @override
-  String get navAccountsRacoon => 'Planques';
+  String get navAccountsRaccoon => 'Planques';
 
   @override
-  String get navTransactionsRacoon => 'Journal de coups';
+  String get navTransactionsRaccoon => 'Journal de coups';
 
   @override
-  String get navBudgetsRacoon => 'Plans de butin';
+  String get navBudgetsRaccoon => 'Plans de butin';
 
   @override
-  String get navSubscriptionsRacoon => 'Recurring Raids';
+  String get navSubscriptionsRaccoon => 'Recurring Raids';
 
   @override
-  String get navPiggyBanksRacoon => 'Mini Stashes';
+  String get navPiggyBanksRaccoon => 'Mini Stashes';
 
   @override
-  String get navExpensesRacoon => 'Rapport de crame';
+  String get navExpensesRaccoon => 'Rapport de crame';
 
   @override
-  String get navProjectionRacoon => 'Butin de cristal';
+  String get navProjectionRaccoon => 'Butin de cristal';
 
   @override
-  String get navPrognosisRacoon => 'Month-end loot';
+  String get navPrognosisRaccoon => 'Month-end loot';
 
   @override
-  String get navSettingsRacoon => 'Règles du repaire';
+  String get navSettingsRaccoon => 'Règles du repaire';
 
   @override
-  String get netWorthRacoon => 'Butin total';
+  String get netWorthRaccoon => 'Butin total';
 
   @override
-  String get searchRacoon => 'Renifler…';
+  String get searchRaccoon => 'Renifler…';
 
   @override
-  String get accountsTitleRacoon => 'Planques';
+  String get accountsTitleRaccoon => 'Planques';
 
   @override
-  String get transactionsTitleRacoon => 'Journal de coups';
+  String get transactionsTitleRaccoon => 'Journal de coups';
 
   @override
-  String get budgetsTitleRacoon => 'Plans de butin';
+  String get budgetsTitleRaccoon => 'Plans de butin';
 
   @override
-  String get expensesTitleRacoon => 'Rapport de crame';
+  String get expensesTitleRaccoon => 'Rapport de crame';
 
   @override
-  String get projectionTitleRacoon => 'Butin de cristal';
+  String get projectionTitleRaccoon => 'Butin de cristal';
 
   @override
-  String get settingsTitleRacoon => 'Règles du repaire';
+  String get settingsTitleRaccoon => 'Règles du repaire';
 
   @override
-  String get tabInsightsRacoon => 'Infos butin';
+  String get tabInsightsRaccoon => 'Infos butin';
 
   @override
-  String get tabAccountsRacoon => 'Planques';
+  String get tabAccountsRaccoon => 'Planques';
 
   @override
-  String get tabFocusRacoon => 'QG des coups';
+  String get tabFocusRaccoon => 'QG des coups';
 
   @override
-  String get totalBalanceRacoon => 'Planque pleine';
+  String get totalBalanceRaccoon => 'Planque pleine';
 
   @override
-  String incomeMonthRacoon(String month) {
+  String incomeMonthRaccoon(String month) {
     return 'Chapardé · $month';
   }
 
   @override
-  String spendingMonthRacoon(String month) {
+  String spendingMonthRaccoon(String month) {
     return 'Cramé · $month';
   }
 
   @override
-  String savedMonthRacoon(String month) {
+  String savedMonthRaccoon(String month) {
     return 'Planqué · $month';
   }
 
   @override
-  String get cashFlowRacoon => 'Flux de butin';
+  String get cashFlowRaccoon => 'Flux de butin';
 
   @override
-  String get whereMoneyGoesRacoon => 'Où va le butin';
+  String get whereMoneyGoesRaccoon => 'Où va le butin';
 
   @override
-  String get recentActivityRacoon => 'Derniers coups';
+  String get recentActivityRaccoon => 'Derniers coups';
 
   @override
-  String get yourAccountsRacoon => 'Vos planques';
+  String get yourAccountsRaccoon => 'Vos planques';
 
   @override
-  String get budgetsAtGlanceRacoon => 'Butin en un coup d\'œil';
+  String get budgetsAtGlanceRaccoon => 'Butin en un coup d\'œil';
 
   @override
-  String get viewAllAccountsRacoon => 'Toutes les planques';
+  String get viewAllAccountsRaccoon => 'Toutes les planques';
 
   @override
-  String get assetAccountsRacoon => 'Planques au trésor';
+  String get assetAccountsRaccoon => 'Planques au trésor';
 
   @override
-  String get liabilityAccountsRacoon => 'Dettes & IOU';
+  String get liabilityAccountsRaccoon => 'Dettes & IOU';
 
   @override
-  String get stocksAndFundsAccountsRacoon => 'Planques boursières';
+  String get stocksAndFundsAccountsRaccoon => 'Planques boursières';
 
   @override
-  String get allAccountsRacoon => 'Toutes les planques';
+  String get allAccountsRaccoon => 'Toutes les planques';
 
   @override
-  String get accountsRacoon => 'Planques';
+  String get accountsRaccoon => 'Planques';
 
   @override
-  String get newTransactionRacoon => 'Planifier un coup';
+  String get newTransactionRaccoon => 'Planifier un coup';
 
   @override
-  String get editTransactionRacoon => 'Modifier le coup';
+  String get editTransactionRaccoon => 'Modifier le coup';
 
   @override
-  String transactionsCountRacoon(int count) {
+  String transactionsCountRaccoon(int count) {
     return '$count coups';
   }
 
   @override
-  String get oneTransactionRacoon => '1 coup';
+  String get oneTransactionRaccoon => '1 coup';
 
   @override
-  String get transactionTypeDepositRacoon => 'Chapardage';
+  String get transactionTypeDepositRaccoon => 'Chapardage';
 
   @override
-  String get transactionTypeWithdrawalRacoon => 'Crame';
+  String get transactionTypeWithdrawalRaccoon => 'Crame';
 
   @override
-  String get transactionTypeTransferRacoon => 'Échange de planques';
+  String get transactionTypeTransferRaccoon => 'Échange de planques';
 
   @override
-  String get expenseLabelRacoon => 'Crame';
+  String get expenseLabelRaccoon => 'Crame';
 
   @override
-  String get spentRacoon => 'Cramé';
+  String get spentRaccoon => 'Cramé';
 
   @override
-  String get newBudgetRacoon => 'Nouveau plan de butin';
+  String get newBudgetRaccoon => 'Nouveau plan de butin';
 
   @override
-  String get projectedBalanceRacoon => 'Butin futur';
+  String get projectedBalanceRaccoon => 'Butin futur';
 
   @override
-  String get piggyBankRacoon => 'Mini-planque';
+  String get piggyBankRaccoon => 'Mini-planque';
 
   @override
-  String get transfersRacoon => 'Échanges de planques';
+  String get transfersRaccoon => 'Échanges de planques';
 
   @override
-  String get expensesFilterRacoon => 'Crames';
+  String get expensesFilterRaccoon => 'Crames';
 
   @override
-  String get noTransactionsYetRacoon => 'Aucun coup pour l\'instant';
+  String get noTransactionsYetRaccoon => 'Aucun coup pour l\'instant';
 
   @override
-  String get lookingAheadRacoon => 'Jeter un œil';
+  String get lookingAheadRaccoon => 'Jeter un œil';
 
   @override
-  String get openProjectionRacoon => 'Voir l\'avenir';
+  String get openProjectionRaccoon => 'Voir l\'avenir';
 
   @override
-  String get editAccountRacoon => 'Modifier la planque';
+  String get editAccountRaccoon => 'Modifier la planque';
 
   @override
-  String get accountNameRacoon => 'Nom de la planque';
+  String get accountNameRaccoon => 'Nom de la planque';
 
   @override
-  String get filterAccountRacoon => 'Filtrer la planque';
+  String get filterAccountRaccoon => 'Filtrer la planque';
 
   @override
-  String get sourceAccountRacoon => 'Depuis la planque';
+  String get sourceAccountRaccoon => 'Depuis la planque';
 
   @override
-  String get destinationAccountRacoon => 'Vers la planque';
+  String get destinationAccountRaccoon => 'Vers la planque';
 
   @override
-  String get totalSpentPeriodRacoon => 'Total cramé sur la période';
+  String get totalSpentPeriodRaccoon => 'Total cramé sur la période';
 
   @override
-  String get totalIncomePeriodRacoon => 'Total chapardé sur la période';
+  String get totalIncomePeriodRaccoon => 'Total chapardé sur la période';
 
   @override
-  String get totalTransferredPeriodRacoon => 'Total shuffled this period';
+  String get totalTransferredPeriodRaccoon => 'Total shuffled this period';
 
   @override
   String get newAccount => 'New Account';
@@ -567,13 +567,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get newExpense => 'New Expense';
 
   @override
-  String get newAccountRacoon => 'Nouvelle planque';
+  String get newAccountRaccoon => 'Nouvelle planque';
 
   @override
-  String get newLiabilityRacoon => 'Nouvelle dette';
+  String get newLiabilityRaccoon => 'Nouvelle dette';
 
   @override
-  String get newExpenseRacoon => 'Planifier une crame';
+  String get newExpenseRaccoon => 'Planifier une crame';
 
   @override
   String get income => 'Revenus';
@@ -1054,7 +1054,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String reconciliationCreateCorrectionBody(String amount) {
-    return 'Il reste un écart de $amount. FireRacoon créera une transaction de rapprochement.';
+    return 'Il reste un écart de $amount. FireRaccoon créera une transaction de rapprochement.';
   }
 
   @override
@@ -1448,10 +1448,10 @@ class AppLocalizationsFr extends AppLocalizations {
       'Ouvrir les abonnements et factures récurrentes.';
 
   @override
-  String get subscriptionsTitleRacoon => 'Recurring Raids & Schedules';
+  String get subscriptionsTitleRaccoon => 'Recurring Raids & Schedules';
 
   @override
-  String get newSubscriptionRacoon => 'New Recurring Raid';
+  String get newSubscriptionRaccoon => 'New Recurring Raid';
 
   @override
   String get piggyBanksTitle => 'Piggy banks';
@@ -1540,10 +1540,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get piggyBanksTitleRacoon => 'Mini Stashes';
+  String get piggyBanksTitleRaccoon => 'Mini Stashes';
 
   @override
-  String get newPiggyBankRacoon => 'New Mini Stash';
+  String get newPiggyBankRaccoon => 'New Mini Stash';
 
   @override
   String get newBudget => 'Nouveau budget';
@@ -2212,7 +2212,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mcpAgentKeysHint =>
-      'Agents authenticate with a FireRacoon key, not your Firefly III token. Each key acts as the person who created it.';
+      'Agents authenticate with a FireRaccoon key, not your Firefly III token. Each key acts as the person who created it.';
 
   @override
   String get mcpNoAgentKeys => 'No agent keys yet';
@@ -2247,7 +2247,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mcpKeyIssuedBody =>
-      'Paste this into your MCP client as initialize.params.apiKey, or set FIRERACOON_API_KEY. You can reopen it later from this list.';
+      'Paste this into your MCP client as initialize.params.apiKey, or set FIRERACCOON_API_KEY. You can reopen it later from this list.';
 
   @override
   String get mcpCopyKey => 'Copy';
@@ -2475,7 +2475,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get newIncome => 'New Income';
 
   @override
-  String get newIncomeRacoon => 'New Snatch';
+  String get newIncomeRaccoon => 'New Snatch';
 
   @override
   String get create => 'Create';
@@ -2564,25 +2564,25 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRacoon => 'Snatched';
+  String get navIncomeRaccoon => 'Snatched';
 
   @override
-  String get navTransfersRacoon => 'Stash Shuffles';
+  String get navTransfersRaccoon => 'Stash Shuffles';
 
   @override
-  String get navLiabilitiesRacoon => 'Debts';
+  String get navLiabilitiesRaccoon => 'Debts';
 
   @override
-  String get incomeTitleRacoon => 'Snatched Funds';
+  String get incomeTitleRaccoon => 'Snatched Funds';
 
   @override
-  String get transfersTitleRacoon => 'Stash Shuffles';
+  String get transfersTitleRaccoon => 'Stash Shuffles';
 
   @override
-  String get newTransferActionRacoon => 'New Stash Shuffle';
+  String get newTransferActionRaccoon => 'New Stash Shuffle';
 
   @override
-  String get liabilitiesTitleRacoon => 'Debts Owed';
+  String get liabilitiesTitleRaccoon => 'Debts Owed';
 
   @override
   String tooltipOpenSection(String section) {
@@ -3004,7 +3004,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navHistory => 'Historique';
 
   @override
-  String get navHistoryRacoon => 'Replay de coups';
+  String get navHistoryRaccoon => 'Replay de coups';
 
   @override
   String get tooltipOpenHistory =>
@@ -3076,7 +3076,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get historyExportSubject => 'Export de l\'historique';
 
   @override
-  String get historyExportText => 'Export historique FireRacoon';
+  String get historyExportText => 'Export historique FireRaccoon';
 
   @override
   String get historySectionToday => 'Aujourd\'hui';
@@ -3102,7 +3102,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get undoActionTypeThemeAccent => 'Couleur d\'accent';
 
   @override
-  String get undoActionTypeThemeFunMode => 'Mode Racoon';
+  String get undoActionTypeThemeFunMode => 'Mode Raccoon';
 
   @override
   String get undoActionTypeLocale => 'Langue';
@@ -3333,7 +3333,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get password => 'Mot de passe';
 
   @override
-  String get loginSubtitle => 'Connectez-vous pour continuer vers FireRacoon.';
+  String get loginSubtitle => 'Connectez-vous pour continuer vers FireRaccoon.';
 
   @override
   String get loginMissingFields =>
@@ -3424,7 +3424,7 @@ class AppLocalizationsFr extends AppLocalizations {
       'Utilisez Face ID, Touch ID, une empreinte ou le code de l’appareil sur l’écran de connexion.';
 
   @override
-  String get biometricUnlockReason => 'Déverrouiller FireRacoon';
+  String get biometricUnlockReason => 'Déverrouiller FireRaccoon';
 
   @override
   String get biometricEnableReason =>
@@ -3598,10 +3598,10 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get settingsExportSubject => 'FireRacoon settings';
+  String get settingsExportSubject => 'FireRaccoon settings';
 
   @override
-  String get settingsExportText => 'FireRacoon settings backup';
+  String get settingsExportText => 'FireRaccoon settings backup';
 
   @override
   String get recordedBalance => 'Enregistré';

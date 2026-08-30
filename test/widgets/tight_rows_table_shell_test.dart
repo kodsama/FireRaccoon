@@ -1,4 +1,4 @@
-import 'package:fireracoon/widgets/tight_rows_table_shell.dart';
+import 'package:fireraccoon/widgets/tight_rows_table_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 

@@ -329,14 +329,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.9.3+5"
-  fireracoon_engine:
+  fireraccoon_engine:
     dependency: "direct main"
     description:
       path: "packages/engine"
       relative: true
     source: path
     version: "1.0.0"
-  fireracoon_mcp:
+  fireraccoon_mcp:
     dependency: "direct main"
     description:
       path: "packages/mcp"

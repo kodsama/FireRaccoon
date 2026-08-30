@@ -24,7 +24,7 @@ const int kLegacyPbkdf2Iterations = 100000;
 const int _kDerivedKeyLength = 32;
 const int _kSaltLength = 16;
 
-/// Result of checking a candidate password against the FireRacoon policy:
+/// Result of checking a candidate password against the FireRaccoon policy:
 /// at least 10 characters, one upper, one lower, one digit, one special char.
 class PasswordPolicyResult {
   final bool hasMinLength;
@@ -56,7 +56,7 @@ class PasswordPolicyResult {
   }
 }
 
-/// Individual clauses of the FireRacoon password policy.
+/// Individual clauses of the FireRaccoon password policy.
 enum PasswordRequirement { minLength, upper, lower, digit, special }
 
 const int kPasswordMinLength = 10;
@@ -66,7 +66,7 @@ final RegExp _lowerPattern = RegExp('[a-z]');
 final RegExp _digitPattern = RegExp('[0-9]');
 final RegExp _specialPattern = RegExp(r'[^A-Za-z0-9]');
 
-/// Validates [password] against the FireRacoon policy. Pure and synchronous;
+/// Validates [password] against the FireRaccoon policy. Pure and synchronous;
 /// callers that also want the HIBP breach check should call
 /// [isPasswordPwned] separately since that requires a network round trip.
 PasswordPolicyResult validatePasswordPolicy(String password) {

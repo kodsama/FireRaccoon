@@ -1,5 +1,5 @@
-import 'package:fireracoon_engine/models/account.dart';
-import 'package:fireracoon_engine/services/account_resolution.dart';
+import 'package:fireraccoon_engine/models/account.dart';
+import 'package:fireraccoon_engine/services/account_resolution.dart';
 import 'package:test/test.dart';
 
 Account _account({

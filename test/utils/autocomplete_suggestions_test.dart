@@ -1,5 +1,5 @@
-import 'package:fireracoon/utils/autocomplete_suggestions.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/utils/autocomplete_suggestions.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

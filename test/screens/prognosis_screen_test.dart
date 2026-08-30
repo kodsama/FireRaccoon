@@ -1,7 +1,7 @@
-import 'package:fireracoon/providers/view_mode_provider.dart';
-import 'package:fireracoon/screens/prognosis_screen.dart';
-import 'package:fireracoon/widgets/autocomplete_text_field.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/providers/view_mode_provider.dart';
+import 'package:fireraccoon/screens/prognosis_screen.dart';
+import 'package:fireraccoon/widgets/autocomplete_text_field.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/mock_firefly_service.dart';

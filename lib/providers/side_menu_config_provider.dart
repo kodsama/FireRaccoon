@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/side_menu_config.dart';
 
-const String _kSideMenuConfigPrefKey = 'fireracoon_side_menu_config';
+const String _kSideMenuConfigPrefKey = 'fireraccoon_side_menu_config';
 
 enum FlatNodeType { groupHeader, groupChild, standaloneItem }
 

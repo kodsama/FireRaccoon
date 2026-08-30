@@ -1,14 +1,14 @@
-import 'package:fireracoon/fun_modes/fun_mode.dart';
-import 'package:fireracoon/fun_modes/fun_mode_registry.dart';
-import 'package:fireracoon/fun_modes/fun_mode_resolver.dart';
-import 'package:fireracoon/fun_modes/fun_sticker.dart';
+import 'package:fireraccoon/fun_modes/fun_mode.dart';
+import 'package:fireraccoon/fun_modes/fun_mode_registry.dart';
+import 'package:fireraccoon/fun_modes/fun_mode_resolver.dart';
+import 'package:fireraccoon/fun_modes/fun_sticker.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('resolver keeps explicit user mode over seasonal default', () {
     expect(
-      FunModeResolver.resolve(FunMode.racoon, DateTime(2026, 12, 25)),
-      FunMode.racoon,
+      FunModeResolver.resolve(FunMode.raccoon, DateTime(2026, 12, 25)),
+      FunMode.raccoon,
     );
   });
 
@@ -37,12 +37,12 @@ void main() {
     }
   });
 
-  test('racoon mode keeps the standard sidebar logo', () {
-    final racoon = FunModeRegistry.get(FunMode.racoon);
+  test('raccoon mode keeps the standard sidebar logo', () {
+    final raccoon = FunModeRegistry.get(FunMode.raccoon);
     final none = FunModeRegistry.get(FunMode.none);
 
-    expect(racoon.logoAsset, none.logoAsset);
-    expect(racoon.logoSizeMultiplier, none.logoSizeMultiplier);
+    expect(raccoon.logoAsset, none.logoAsset);
+    expect(raccoon.logoSizeMultiplier, none.logoSizeMultiplier);
   });
 
   test('registry maps birthday stickers to painters', () {

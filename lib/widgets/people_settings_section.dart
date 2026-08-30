@@ -4,7 +4,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:fireracoon_engine/models/account.dart';
+import 'package:fireraccoon_engine/models/account.dart';
 
 import '../fun_modes/fun_mode.dart';
 import '../l10n/app_localizations.dart';
@@ -546,12 +546,12 @@ void showAddEditPersonDialog(
                   ),
                   SwitchListTile(
                     contentPadding: EdgeInsets.zero,
-                    title: Text(l10n.racoonMode),
-                    value: funModeName == FunMode.racoon.name,
+                    title: Text(l10n.raccoonMode),
+                    value: funModeName == FunMode.raccoon.name,
                     onChanged: (v) {
                       setState(() {
                         funModeName = v
-                            ? FunMode.racoon.name
+                            ? FunMode.raccoon.name
                             : FunMode.none.name;
                       });
                     },

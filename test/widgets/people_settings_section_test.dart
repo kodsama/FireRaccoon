@@ -6,10 +6,10 @@ import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fireracoon/models/people_models.dart';
-import 'package:fireracoon/providers/people_providers.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/widgets/people_settings_section.dart';
+import 'package:fireraccoon/models/people_models.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/widgets/people_settings_section.dart';
 
 import '../helpers/dialog_test_helpers.dart';
 import '../helpers/fake_biometric_auth.dart';
