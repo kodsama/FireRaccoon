@@ -636,7 +636,7 @@ void main() {
       type: 'asset',
       role: 'defaultAsset',
       currentBalance: 500,
-      currencySymbol: '€',
+      currencySymbol: '\u20AC',
       currencyCode: 'EUR',
     );
     final expenseTwin = Account(
@@ -645,7 +645,7 @@ void main() {
       type: 'expense',
       role: 'defaultAsset',
       currentBalance: 0,
-      currencySymbol: '€',
+      currencySymbol: '\u20AC',
       currencyCode: 'EUR',
     );
     final revenueTwin = Account(
@@ -654,7 +654,7 @@ void main() {
       type: 'revenue',
       role: 'defaultAsset',
       currentBalance: 0,
-      currencySymbol: '€',
+      currencySymbol: '\u20AC',
       currencyCode: 'EUR',
     );
 
@@ -667,7 +667,7 @@ void main() {
       sourceName: revenueTwin.name,
       destinationName: asset.name,
       categoryName: '',
-      currencySymbol: '€',
+      currencySymbol: '\u20AC',
       currencyCode: 'EUR',
     );
 
@@ -703,5 +703,34 @@ void main() {
 
     expect(saved, isNotNull);
     expect(saved!.sourceId, '20001');
+  });
+
+  testWidgets('a split shows one date, with the group fields', (tester) async {
+    // The date is held once and written to every split, so showing it inside
+    // the first split's fields read as though it belonged to that split alone
+    // while it quietly governed the rest.
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: splitTransaction(),
+              onCancel: () {},
+              onSave: (_) async {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Date'), findsOneWidget);
+    expect(
+      tester.getTopLeft(find.text('Date')).dy,
+      lessThan(tester.getTopLeft(find.text('Split 1')).dy),
+    );
   });
 }
