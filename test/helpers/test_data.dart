@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 // Keep sample activity inside the default "this month" window and on or before
 // today so period-scoped screens and the transactions list (which splits out

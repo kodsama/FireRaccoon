@@ -1,8 +1,8 @@
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/widgets/piggy_bank_form_dialog.dart';
-import 'package:fireracoon/widgets/recurring_transaction_form_dialog.dart';
-import 'package:fireracoon/widgets/subscription_form_dialog.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/widgets/piggy_bank_form_dialog.dart';
+import 'package:fireraccoon/widgets/recurring_transaction_form_dialog.dart';
+import 'package:fireraccoon/widgets/subscription_form_dialog.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';

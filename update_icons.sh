@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-NEW_LOGO="$ROOT/assets/fireracoon_logo.png"
+NEW_LOGO="$ROOT/assets/fireraccoon_logo.png"
 
 if [[ ! -f "$NEW_LOGO" ]]; then
   echo "Missing source logo: $NEW_LOGO" >&2

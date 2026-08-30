@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon/providers/view_mode_provider.dart';
-import 'package:fireracoon/screens/transactions_screen.dart';
-import 'package:fireracoon/widgets/selection_check_control.dart';
-import 'package:fireracoon/widgets/small_loading_indicator.dart';
-import 'package:fireracoon/widgets/transaction_month_header.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon/providers/view_mode_provider.dart';
+import 'package:fireraccoon/screens/transactions_screen.dart';
+import 'package:fireraccoon/widgets/selection_check_control.dart';
+import 'package:fireraccoon/widgets/small_loading_indicator.dart';
+import 'package:fireraccoon/widgets/transaction_month_header.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/test_data.dart';

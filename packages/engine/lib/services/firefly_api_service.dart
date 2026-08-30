@@ -223,6 +223,26 @@ class FireflyApiService implements FireflyService {
     );
   }
 
+  /// Firefly's per-field validation messages, keyed as Firefly names them.
+  Map<String, String> _validationFields(String body) {
+    if (body.isEmpty) return const <String, String>{};
+    final Object? decoded;
+    try {
+      decoded = jsonDecode(body);
+    } on FormatException {
+      return const <String, String>{};
+    }
+    if (decoded is! Map) return const <String, String>{};
+    final errors = decoded['errors'];
+    if (errors is! Map) return const <String, String>{};
+    return <String, String>{
+      for (final entry in errors.entries)
+        '${entry.key}': entry.value is List && (entry.value as List).isNotEmpty
+            ? '${(entry.value as List).first}'
+            : '${entry.value}',
+    };
+  }
+
   String? _validationDetail(String body) {
     if (body.isEmpty) return null;
     final Object? decoded;
@@ -1318,26 +1338,80 @@ class FireflyApiService implements FireflyService {
     }
   }
 
+  /// Updates a recurrence, leaving its schedule alone unless [current] shows it
+  /// changed.
+  ///
+  /// Firefly only touches repetitions when the key is on the request, so a
+  /// schedule nobody edited is left off the body entirely. That keeps it away
+  /// from a validation rule that would otherwise refuse the whole write: on
+  /// update, and only on update, `repetitions.*.moment` is checked as
+  /// `numeric|max:10`, so a monthly rule falling after the 10th is refused, and
+  /// a yearly moment (a date) or an ndom moment (`week,weekday`) is refused for
+  /// not being a number at all. Firefly's own type-aware check right after it
+  /// allows 1 to 31 for a monthly rule, which is why the same values can be
+  /// created and then never edited.
   @override
   Future<Recurrence> updateRecurrence(
     String recurrenceId,
-    RecurrenceInput input,
-  ) async {
+    RecurrenceInput input, {
+    Recurrence? current,
+  }) async {
+    final scheduleEdited = current == null || !_sameSchedule(input, current);
     try {
       final response = await _send(
         'PUT',
         '/api/v1/recurrences/$recurrenceId',
         headers: {..._headers, 'Content-Type': 'application/json'},
-        body: jsonEncode(input.toJson(isUpdate: true)),
+        body: jsonEncode(
+          input.toJson(isUpdate: true, includeRepetitions: scheduleEdited),
+        ),
       );
       if (response.statusCode != 200) {
-        throw Exception('Failed to update recurrence: ${_status(response)}');
+        throw _refusedWrite(response, 'update recurrence');
       }
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return Recurrence.fromJson(data['data'] as Map<String, dynamic>);
+    } on FireflyApiException {
+      rethrow;
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
     }
+  }
+
+  bool _sameSchedule(RecurrenceInput input, Recurrence current) {
+    if (input.repetitions.length != current.repetitions.length) return false;
+    for (var i = 0; i < input.repetitions.length; i++) {
+      if (!input.repetitions[i].matches(current.repetitions[i])) return false;
+    }
+    return true;
+  }
+
+  static final RegExp _momentField = RegExp(r'^repetitions\.\d+\.moment$');
+
+  /// Turns a refused write into something the person reading it can act on.
+  FireflyApiException _refusedWrite(http.Response response, String operation) {
+    final fields = _validationFields(response.body);
+    String? momentRefusal;
+    for (final entry in fields.entries) {
+      if (_momentField.hasMatch(entry.key)) {
+        momentRefusal = entry.value;
+        break;
+      }
+    }
+    final message = momentRefusal == null
+        ? 'Failed to $operation: ${_status(response)}'
+        : 'Firefly III refused the repetition day. It checks that field as a '
+              'number no greater than 10 when updating, while its own monthly '
+              'check allows 1 to 31, so a schedule falling after the 10th of '
+              'the month cannot be changed through the API. Nothing was saved. '
+              'Change the day in the Firefly III web interface, or run a build '
+              'carrying the fix. Firefly said: $momentRefusal';
+    return FireflyApiException(
+      message,
+      operation: operation,
+      statusCode: response.statusCode,
+      fieldErrors: fields,
+    );
   }
 
   @override

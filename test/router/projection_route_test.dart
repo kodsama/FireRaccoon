@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/router/projection_route.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/router/projection_route.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {

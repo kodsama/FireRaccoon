@@ -1,14 +1,14 @@
 {
   "mcpServers": {
-    "fireracoon": {
+    "fireraccoon": {
       "command": "dart",
       "args": [
         "run",
-        "packages/mcp/bin/fireracoon_mcp.dart"
+        "packages/mcp/bin/fireraccoon_mcp.dart"
       ],
       "env": {
-        "FIRERACOON_URL": "https://fireracoon.example",
-        "FIRERACOON_API_KEY": "frcn_YOUR_AGENT_KEY"
+        "FIRERACCOON_URL": "https://fireraccoon.example",
+        "FIRERACCOON_API_KEY": "frcn_YOUR_AGENT_KEY"
       }
     }
   }

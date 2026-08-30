@@ -1,4 +1,4 @@
-/// MCP (Model Context Protocol) server for FireRacoon.
+/// MCP (Model Context Protocol) server for FireRaccoon.
 library;
 
 export 'src/auth.dart';

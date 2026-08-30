@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 class FakeFireflyService implements FireflyService {
   FakeFireflyService({
@@ -599,8 +599,9 @@ class FakeFireflyService implements FireflyService {
   @override
   Future<Recurrence> updateRecurrence(
     String recurrenceId,
-    RecurrenceInput input,
-  ) async {
+    RecurrenceInput input, {
+    Recurrence? current,
+  }) async {
     _maybeThrow();
     final created = await createRecurrence(input);
     return Recurrence(

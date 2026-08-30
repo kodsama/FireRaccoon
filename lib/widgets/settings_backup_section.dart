@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../l10n/l10n_extensions.dart';
 import '../models/settings_bundle.dart';
@@ -20,7 +20,7 @@ import '../utils/settings_secrets_crypto.dart';
 import 'backup_passphrase_dialog.dart';
 import 'confirmation_dialog.dart';
 
-/// Export / import FireRacoon settings.
+/// Export / import FireRaccoon settings.
 ///
 /// Firefly tokens and salted password hashes are sealed with a backup
 /// passphrase (AES-256-GCM). Biometrics and custom avatar bytes are omitted.
@@ -68,7 +68,7 @@ class SettingsBackupSection extends ConsumerWidget {
 
     final contents = await bundle.encodeSealed(passphrase);
     final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-    final fileName = 'fireracoon_settings_$timestamp.json';
+    final fileName = 'fireraccoon_settings_$timestamp.json';
     final path = await jsonStoreDocumentsPath(fileName);
     await jsonStoreWrite(path, contents);
 
@@ -110,7 +110,7 @@ class SettingsBackupSection extends ConsumerWidget {
       final snapshot = await DataExportService(api).export();
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
       final path = await jsonStoreDocumentsPath(
-        'fireracoon_firefly_data_$timestamp.json',
+        'fireraccoon_firefly_data_$timestamp.json',
       );
       await jsonStoreWrite(
         path,

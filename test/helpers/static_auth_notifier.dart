@@ -1,4 +1,4 @@
-import 'package:fireracoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
 
 /// Auth notifier that skips async storage/env loading for deterministic tests.
 class StaticAuthNotifier extends AuthNotifier {

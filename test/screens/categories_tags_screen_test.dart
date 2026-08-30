@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fireracoon/router/categories_tags_route.dart';
-import 'package:fireracoon/screens/categories_tags_screen.dart';
+import 'package:fireraccoon/router/categories_tags_route.dart';
+import 'package:fireraccoon/screens/categories_tags_screen.dart';
 import '../helpers/dialog_test_helpers.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/ui_test_data.dart';

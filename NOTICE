@@ -1,5 +1,5 @@
-FireRacoon
-Copyright (c) 2026 FireRacoon contributors
+FireRaccoon
+Copyright (c) 2026 FireRaccoon contributors
 
 This project bundles the following third-party assets:
 
@@ -13,5 +13,5 @@ Roboto Slab (Apache License 2.0)
   License: assets/fonts/RobotoSlab-LICENSE.txt
   Source: https://github.com/googlefonts/robotoslab
 
-Firefly III is a separate project (AGPL-3.0). FireRacoon communicates with
+Firefly III is a separate project (AGPL-3.0). FireRaccoon communicates with
 Firefly III over its REST API but does not include Firefly III source code.

@@ -1,30 +1,30 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fireracoon/deployment/deployment_providers.dart';
-import 'package:fireracoon/deployment/fireracoon_mode.dart';
-import 'package:fireracoon/models/account_prognosis.dart';
-import 'package:fireracoon/models/people_models.dart';
-import 'package:fireracoon/models/settings_bundle.dart';
-import 'package:fireracoon/providers/account_classification_provider.dart';
-import 'package:fireracoon/providers/agent_keys_provider.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/providers/default_period_provider.dart';
-import 'package:fireracoon/providers/locale_provider.dart';
-import 'package:fireracoon/providers/people_providers.dart';
-import 'package:fireracoon/providers/prognosis_settings_provider.dart';
-import 'package:fireracoon/providers/server_session_provider.dart';
-import 'package:fireracoon/providers/settings_export_import_provider.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/providers/tight_rows_columns_provider.dart';
-import 'package:fireracoon/providers/transaction_page_size_provider.dart';
-import 'package:fireracoon/providers/undo_history_provider.dart';
-import 'package:fireracoon/providers/view_mode_provider.dart';
-import 'package:fireracoon/providers/write_ahead_provider.dart';
-import 'package:fireracoon/store/remote_server_client.dart';
-import 'package:fireracoon/theme/app_colors.dart';
-import 'package:fireracoon/theme/theme_palette.dart';
-import 'package:fireracoon_engine/utils/dashboard_period.dart';
+import 'package:fireraccoon/deployment/deployment_providers.dart';
+import 'package:fireraccoon/deployment/fireraccoon_mode.dart';
+import 'package:fireraccoon/models/account_prognosis.dart';
+import 'package:fireraccoon/models/people_models.dart';
+import 'package:fireraccoon/models/settings_bundle.dart';
+import 'package:fireraccoon/providers/account_classification_provider.dart';
+import 'package:fireraccoon/providers/agent_keys_provider.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/default_period_provider.dart';
+import 'package:fireraccoon/providers/locale_provider.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/providers/prognosis_settings_provider.dart';
+import 'package:fireraccoon/providers/server_session_provider.dart';
+import 'package:fireraccoon/providers/settings_export_import_provider.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/providers/tight_rows_columns_provider.dart';
+import 'package:fireraccoon/providers/transaction_page_size_provider.dart';
+import 'package:fireraccoon/providers/undo_history_provider.dart';
+import 'package:fireraccoon/providers/view_mode_provider.dart';
+import 'package:fireraccoon/providers/write_ahead_provider.dart';
+import 'package:fireraccoon/store/remote_server_client.dart';
+import 'package:fireraccoon/theme/app_colors.dart';
+import 'package:fireraccoon/theme/theme_palette.dart';
+import 'package:fireraccoon_engine/utils/dashboard_period.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -482,7 +482,7 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(prefs),
           deploymentConfigProvider.overrideWithValue(
             const DeploymentConfig(
-              mode: FireracoonMode.server,
+              mode: FireraccoonMode.server,
               apiBase: 'http://example.test',
             ),
           ),

@@ -1,22 +1,22 @@
-import 'package:fireracoon/deployment/fireracoon_mode.dart';
-import 'package:fireracoon/providers/people_providers.dart';
-import 'package:fireracoon/providers/server_session_provider.dart';
-import 'package:fireracoon/router/app_router.dart';
+import 'package:fireraccoon/deployment/fireraccoon_mode.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/providers/server_session_provider.dart';
+import 'package:fireraccoon/router/app_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
-    'resolveFireracoonMode prefers config.json over dart-define default',
+    'resolveFireraccoonMode prefers config.json over dart-define default',
     () {
-      expect(resolveFireracoonMode(), FireracoonMode.local);
+      expect(resolveFireraccoonMode(), FireraccoonMode.local);
       expect(
-        resolveFireracoonMode(configJson: {'FIRERACOON_MODE': 'server'}),
-        FireracoonMode.server,
+        resolveFireraccoonMode(configJson: {'FIRERACCOON_MODE': 'server'}),
+        FireraccoonMode.server,
       );
       expect(
-        resolveFireracoonMode(configJson: {'mode': 'local'}),
-        FireracoonMode.local,
+        resolveFireraccoonMode(configJson: {'mode': 'local'}),
+        FireraccoonMode.local,
       );
     },
   );

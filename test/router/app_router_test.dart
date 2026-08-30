@@ -1,13 +1,13 @@
 import 'dart:convert';
 
-import 'package:fireracoon/deployment/deployment_providers.dart';
-import 'package:fireracoon/deployment/fireracoon_mode.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/providers/people_providers.dart';
-import 'package:fireracoon/providers/server_session_provider.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/router/app_router.dart';
-import 'package:fireracoon/store/remote_server_client.dart';
+import 'package:fireraccoon/deployment/deployment_providers.dart';
+import 'package:fireraccoon/deployment/fireraccoon_mode.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/providers/server_session_provider.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/router/app_router.dart';
+import 'package:fireraccoon/store/remote_server_client.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -88,7 +88,7 @@ void main() {
         authProvider.overrideWith(() => StaticAuthNotifier(AuthSettings())),
         deploymentConfigProvider.overrideWithValue(
           const DeploymentConfig(
-            mode: FireracoonMode.server,
+            mode: FireraccoonMode.server,
             apiBase: 'http://example.test',
           ),
         ),

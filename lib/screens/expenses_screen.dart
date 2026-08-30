@@ -13,7 +13,7 @@ class ExpensesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     return TransactionAnalyticsScreen(
       title: fun.expensesTitle,
       route: expensesAnalyticsRoute,

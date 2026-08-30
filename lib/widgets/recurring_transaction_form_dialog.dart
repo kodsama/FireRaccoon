@@ -1,4 +1,4 @@
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -8,6 +8,7 @@ import '../providers/data_providers.dart';
 import '../providers/suggestion_providers.dart';
 import '../providers/undo_history_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
 import 'autocomplete_text_field.dart';
@@ -333,7 +334,11 @@ class _RecurringTransactionFormDialogState
       final service = ref.read(apiServiceProvider);
       final input = _buildInput();
       if (widget.isEditing) {
-        await service?.updateRecurrence(widget.recurrence!.id, input);
+        await service?.updateRecurrence(
+          widget.recurrence!.id,
+          input,
+          current: widget.recurrence,
+        );
         final old = widget.recurrence!;
         final oldRep = old.primaryRepetition;
         final oldTx = old.primaryTransaction;
@@ -412,14 +417,15 @@ class _RecurringTransactionFormDialogState
       if (mounted) {
         setState(() => _saving = false);
         final l10n = context.l10n;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.isEditing
-                  ? l10n.failedToUpdateRecurringTransaction(e.toString())
-                  : l10n.failedToCreateRecurringTransaction(e.toString()),
-            ),
-          ),
+        // A SnackBar raised from a dialog renders inside the Scaffold below it,
+        // so the one thing worth reading here was drawn under the form that
+        // caused it. Firefly's own words go in: it names the field it refused.
+        final reason = e is FireflyApiException ? e.message : '$e';
+        showErrorToast(
+          context,
+          widget.isEditing
+              ? l10n.failedToUpdateRecurringTransaction(reason)
+              : l10n.failedToCreateRecurringTransaction(reason),
         );
       }
     }

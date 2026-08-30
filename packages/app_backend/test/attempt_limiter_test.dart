@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
-import 'package:fireracoon_app_backend/src/http/attempt_limiter.dart';
+import 'package:fireraccoon_app_backend/fireraccoon_app_backend.dart';
+import 'package:fireraccoon_app_backend/src/http/attempt_limiter.dart';
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
@@ -90,7 +90,7 @@ void main() {
     const password = 'Store-Password1!';
 
     setUp(() async {
-      tmp = await Directory.systemTemp.createTemp('fireracoon-attempts');
+      tmp = await Directory.systemTemp.createTemp('fireraccoon-attempts');
     });
 
     tearDown(() async {
@@ -100,7 +100,7 @@ void main() {
     Future<AppServer> ready() async {
       final app = await openTestServer(
         ServerConfig(
-          mode: FireracoonMode.server,
+          mode: FireraccoonMode.server,
           dataDir: tmp.path,
           dataPassword: password,
           port: 0,

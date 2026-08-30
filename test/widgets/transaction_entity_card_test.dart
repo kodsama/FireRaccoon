@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/widgets/split_transaction_rows.dart';
-import 'package:fireracoon/widgets/transaction_entity_card.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/widgets/split_transaction_rows.dart';
+import 'package:fireraccoon/widgets/transaction_entity_card.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../helpers/screen_test_app.dart';
 

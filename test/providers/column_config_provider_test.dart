@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:fireracoon/providers/column_config_provider.dart';
-import 'package:fireracoon/providers/tight_rows_columns_provider.dart';
+import 'package:fireraccoon/providers/column_config_provider.dart';
+import 'package:fireraccoon/providers/tight_rows_columns_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';

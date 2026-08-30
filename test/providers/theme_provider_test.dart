@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fireracoon/fun_modes/fun_mode.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/theme/app_colors.dart';
-import 'package:fireracoon/theme/theme_palette.dart';
+import 'package:fireraccoon/fun_modes/fun_mode.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/theme/app_colors.dart';
+import 'package:fireraccoon/theme/theme_palette.dart';
 
 void main() {
   setUp(() {
@@ -36,7 +36,7 @@ void main() {
       'themeMode': 'dark',
       'paletteType': 'spectrum',
       'accentType': 'orange',
-      'isRacoonMode': true,
+      'isRaccoonMode': true,
     });
     final prefs = await SharedPreferences.getInstance();
     final container = createContainer(prefs);
@@ -45,7 +45,7 @@ void main() {
     expect(settings.themeMode, ThemeMode.dark);
     expect(settings.paletteType, ThemePaletteType.spectrum);
     expect(settings.accentType, AccentColorType.orange);
-    expect(settings.isRacoonMode, true);
+    expect(settings.isRaccoonMode, true);
   });
 
   test('update theme mode', () async {
@@ -82,15 +82,15 @@ void main() {
     expect(prefs.getString('accentType'), 'violet');
   });
 
-  test('update racoon mode', () async {
+  test('update raccoon mode', () async {
     final prefs = await SharedPreferences.getInstance();
     final container = createContainer(prefs);
 
-    container.read(themeProvider.notifier).setRacoonMode(true);
+    container.read(themeProvider.notifier).setRaccoonMode(true);
 
     final settings = container.read(themeProvider);
-    expect(settings.isRacoonMode, true);
-    expect(prefs.getString('funMode'), 'racoon');
+    expect(settings.isRaccoonMode, true);
+    expect(prefs.getString('funMode'), 'raccoon');
   });
 
   test('update palette type', () async {
@@ -134,12 +134,12 @@ void main() {
     expect(prefs.getString('funMode'), 'birthday');
   });
 
-  test('effective palette switches to raccoon when Racoon Mode is on', () {
+  test('effective palette switches to raccoon when Raccoon Mode is on', () {
     const settings = ThemeSettings(
       themeMode: ThemeMode.system,
       paletteType: ThemePaletteType.classic,
       accentType: AccentColorType.green,
-      funMode: FunMode.racoon,
+      funMode: FunMode.raccoon,
     );
 
     expect(settings.effectivePalette, ThemePaletteType.raccoon);
@@ -168,13 +168,13 @@ void main() {
     final updated = settings.copyWith(
       themeMode: ThemeMode.dark,
       paletteType: ThemePaletteType.raccoon,
-      funMode: FunMode.racoon,
+      funMode: FunMode.raccoon,
     );
 
     expect(updated.themeMode, ThemeMode.dark);
     expect(updated.paletteType, ThemePaletteType.raccoon);
     expect(updated.accentType, AccentColorType.green);
-    expect(updated.funMode, FunMode.racoon);
+    expect(updated.funMode, FunMode.raccoon);
   });
 
   test('sharedPreferencesProvider throws when not overridden', () {

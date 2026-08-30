@@ -270,14 +270,26 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
   bool _requiresForeignAmount(_SplitDraft split, List<Account> accounts) {
     // Resolve both ends, including expense/revenue counterparties, so a
     // same-currency withdrawal never asks the user for a foreign amount.
+    //
+    // Only an end that holds money in a currency of its own can put a second
+    // currency on the journal. A counterparty label cannot: Firefly reports it
+    // carrying the installation's primary currency whether or not anyone set
+    // one, so reading that back made every EUR expense on an SEK installation
+    // look like a currency crossing and demand a foreign amount that Firefly
+    // itself did not want.
     final counterparties =
         ref.watch(counterpartyAccountsProvider).value ?? const <Account>[];
     final all = [...accounts, ...counterparties];
-    final source = _accountByName(all, split.sourceName);
-    final destination = _accountByName(all, split.destinationName);
+    bool denominated(Account? account) =>
+        account != null &&
+        account.hasCurrencySetting &&
+        (account.type == 'asset' || account.isLiability);
     final involved = [
-      if (source != null) source.currencyCode,
-      if (destination != null) destination.currencyCode,
+      for (final end in [
+        _accountByName(all, split.sourceName),
+        _accountByName(all, split.destinationName),
+      ])
+        if (denominated(end)) end!.currencyCode,
     ];
     if (involved.isEmpty) return false;
     return involved.any((code) => code != split.currencyCode);
@@ -556,7 +568,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
         if (foreignAmountRaw.isEmpty) {
           setState(() => _saving = false);
           messenger.showSnackBar(
-            SnackBar(content: Text(context.l10n.missingAmount)),
+            SnackBar(content: Text(context.l10n.missingForeignAmount)),
           );
           return;
         }

@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:fireracoon_app_backend/fireracoon_app_backend.dart';
-import 'package:fireracoon_engine/utils/agent_key.dart' as keys;
+import 'package:fireraccoon_app_backend/fireraccoon_app_backend.dart';
+import 'package:fireraccoon_engine/utils/agent_key.dart' as keys;
 import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
@@ -25,7 +25,7 @@ void main() {
   late Directory tmp;
 
   setUp(() async {
-    tmp = await Directory.systemTemp.createTemp('fireracoon_keys_');
+    tmp = await Directory.systemTemp.createTemp('fireraccoon_keys_');
   });
 
   tearDown(() async {
@@ -53,7 +53,7 @@ void main() {
 
   Future<AppServer> server() => openTestServer(
     ServerConfig(
-      mode: FireracoonMode.server,
+      mode: FireraccoonMode.server,
       dataDir: tmp.path,
       dataPassword: _password,
       port: 0,
@@ -685,7 +685,7 @@ void main() {
           body: jsonEncode({'label': 'Claude Desktop'}),
           headers: {
             'content-type': 'application/json',
-            'x-fireracoon-session': session,
+            'x-fireraccoon-session': session,
           },
         ),
       );
@@ -699,7 +699,7 @@ void main() {
         Request(
           'GET',
           Uri.parse('http://localhost/api/agent-keys'),
-          headers: {'x-fireracoon-session': session},
+          headers: {'x-fireraccoon-session': session},
         ),
       );
       final keys = (await body(listed))['keys'] as List<Object?>;
@@ -719,7 +719,7 @@ void main() {
           body: jsonEncode({'label': 'Claude Desktop'}),
           headers: {
             'content-type': 'application/json',
-            'x-fireracoon-session': session,
+            'x-fireraccoon-session': session,
           },
         ),
       );
@@ -764,7 +764,7 @@ void main() {
             body: jsonEncode({'label': 'temporary'}),
             headers: {
               'content-type': 'application/json',
-              'x-fireracoon-session': session,
+              'x-fireraccoon-session': session,
             },
           ),
         ),
@@ -776,7 +776,7 @@ void main() {
         Request(
           'DELETE',
           Uri.parse('http://localhost/api/agent-keys/$keyId'),
-          headers: {'x-fireracoon-session': session},
+          headers: {'x-fireraccoon-session': session},
         ),
       );
       expect(revoke.statusCode, 200);
@@ -798,7 +798,7 @@ void main() {
         Request(
           'DELETE',
           Uri.parse('http://localhost/api/agent-keys/nope'),
-          headers: {'x-fireracoon-session': session},
+          headers: {'x-fireraccoon-session': session},
         ),
       );
 
@@ -815,7 +815,7 @@ void main() {
             body: jsonEncode({'label': 'first'}),
             headers: {
               'content-type': 'application/json',
-              'x-fireracoon-session': session,
+              'x-fireraccoon-session': session,
             },
           ),
         ),
@@ -865,7 +865,7 @@ void main() {
             body: jsonEncode({'label': 'Claude Desktop'}),
             headers: {
               'content-type': 'application/json',
-              'x-fireracoon-session': session,
+              'x-fireraccoon-session': session,
             },
           ),
         ),
@@ -887,7 +887,7 @@ void main() {
           Request(
             'GET',
             Uri.parse('http://localhost/api/agent-keys'),
-            headers: {'x-fireracoon-session': session},
+            headers: {'x-fireraccoon-session': session},
           ),
         ),
       );
@@ -915,7 +915,7 @@ void main() {
             body: jsonEncode({'label': 'unused agent'}),
             headers: {
               'content-type': 'application/json',
-              'x-fireracoon-session': session,
+              'x-fireraccoon-session': session,
             },
           ),
         ),
@@ -925,7 +925,7 @@ void main() {
         Request(
           'GET',
           Uri.parse('http://localhost/api/me'),
-          headers: {'x-fireracoon-session': session},
+          headers: {'x-fireraccoon-session': session},
         ),
       );
 
@@ -934,7 +934,7 @@ void main() {
           Request(
             'GET',
             Uri.parse('http://localhost/api/agent-keys'),
-            headers: {'x-fireracoon-session': session},
+            headers: {'x-fireraccoon-session': session},
           ),
         ),
       );
@@ -952,7 +952,7 @@ void main() {
             body: jsonEncode({'label': 'revoked agent'}),
             headers: {
               'content-type': 'application/json',
-              'x-fireracoon-session': session,
+              'x-fireraccoon-session': session,
             },
           ),
         ),
@@ -964,7 +964,7 @@ void main() {
           Uri.parse(
             'http://localhost/api/agent-keys/${(created['key'] as Map)['id']}',
           ),
-          headers: {'x-fireracoon-session': session},
+          headers: {'x-fireraccoon-session': session},
         ),
       );
 
@@ -981,7 +981,7 @@ void main() {
           Request(
             'GET',
             Uri.parse('http://localhost/api/agent-keys'),
-            headers: {'x-fireracoon-session': session},
+            headers: {'x-fireraccoon-session': session},
           ),
         ),
       );
@@ -998,7 +998,7 @@ void main() {
             body: jsonEncode({'label': 'Claude Desktop'}),
             headers: {
               'content-type': 'application/json',
-              'x-fireracoon-session': session,
+              'x-fireraccoon-session': session,
             },
           ),
         ),
@@ -1009,7 +1009,7 @@ void main() {
         Request(
           'GET',
           Uri.parse('http://localhost/api/agent-keys/$keyId/secret'),
-          headers: {'x-fireracoon-session': session},
+          headers: {'x-fireraccoon-session': session},
         ),
       );
 
@@ -1027,7 +1027,7 @@ void main() {
             body: jsonEncode({'label': 'Claude Desktop'}),
             headers: {
               'content-type': 'application/json',
-              'x-fireracoon-session': session,
+              'x-fireraccoon-session': session,
             },
           ),
         ),
@@ -1055,7 +1055,7 @@ void main() {
             body: jsonEncode({'label': 'Claude Desktop'}),
             headers: {
               'content-type': 'application/json',
-              'x-fireracoon-session': session,
+              'x-fireraccoon-session': session,
             },
           ),
         ),
@@ -1079,7 +1079,7 @@ void main() {
         Request(
           'GET',
           Uri.parse('http://localhost/api/agent-keys/nope/secret'),
-          headers: {'x-fireracoon-session': session},
+          headers: {'x-fireraccoon-session': session},
         ),
       );
 
@@ -1096,7 +1096,7 @@ void main() {
             body: jsonEncode({'label': 'discard'}),
             headers: {
               'content-type': 'application/json',
-              'x-fireracoon-session': session,
+              'x-fireraccoon-session': session,
             },
           ),
         ),
@@ -1108,7 +1108,7 @@ void main() {
         Request(
           'DELETE',
           Uri.parse('http://localhost/api/agent-keys/$keyId/record'),
-          headers: {'x-fireracoon-session': session},
+          headers: {'x-fireraccoon-session': session},
         ),
       );
       expect(tooSoon.statusCode, 404);
@@ -1117,14 +1117,14 @@ void main() {
         Request(
           'DELETE',
           Uri.parse('http://localhost/api/agent-keys/$keyId'),
-          headers: {'x-fireracoon-session': session},
+          headers: {'x-fireraccoon-session': session},
         ),
       );
       final forgotten = await app.handler(
         Request(
           'DELETE',
           Uri.parse('http://localhost/api/agent-keys/$keyId/record'),
-          headers: {'x-fireracoon-session': session},
+          headers: {'x-fireraccoon-session': session},
         ),
       );
 
@@ -1155,7 +1155,7 @@ void main() {
           body: jsonEncode({'label': ''}),
           headers: {
             'content-type': 'application/json',
-            'x-fireracoon-session': session,
+            'x-fireraccoon-session': session,
           },
         ),
       );

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
-import 'package:fireracoon/providers/auth_provider.dart';
-import 'package:fireracoon/screens/settings_screen.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/screens/settings_screen.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../helpers/dialog_test_helpers.dart';
 import '../helpers/mock_firefly_service.dart';
@@ -21,15 +21,15 @@ void main() {
       secureStorage,
     );
     PackageInfo.setMockInitialValues(
-      appName: 'FireRacoon',
-      packageName: 'com.fireracoon.app',
+      appName: 'FireRaccoon',
+      packageName: 'com.fireraccoon.app',
       version: '0.1.0',
       buildNumber: '1',
       buildSignature: '',
     );
   });
 
-  testWidgets('SettingsScreen toggles Racoon Mode', (tester) async {
+  testWidgets('SettingsScreen toggles Raccoon Mode', (tester) async {
     configureLargeScreen(tester);
     addTearDown(tester.view.resetPhysicalSize);
 
@@ -38,7 +38,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Racoon Mode'), findsOneWidget);
+    expect(find.text('Raccoon Mode'), findsOneWidget);
 
     final switchFinder = find.byType(Switch);
     expect(switchFinder, findsOneWidget);

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import '../theme/app_theme.dart';
 import '../providers/budget_period_providers.dart';
 import '../providers/data_providers.dart';
@@ -32,7 +32,7 @@ class BudgetsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final defaultPeriod = ref.watch(defaultDashboardPeriodProvider);
     final routeFilters = BudgetsRoute.filtersFrom(
       GoRouterState.of(context),
@@ -498,7 +498,7 @@ class _BudgetCardState extends ConsumerState<_BudgetCard> {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = context.l10n;
-    final fun = context.funL10n(ref.watch(themeProvider).isRacoonMode);
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = ref.watch(localeFormattingProvider);
     final b = widget.budget;
     final metrics = widget.metrics ?? _fallbackMetrics(b, widget.filters);

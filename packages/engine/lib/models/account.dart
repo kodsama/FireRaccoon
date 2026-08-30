@@ -8,6 +8,19 @@ class Account {
   final double currentBalance;
   final String currencySymbol;
   final String currencyCode;
+
+  /// Whether [currencyCode] is the account's own setting or Firefly's fallback.
+  ///
+  /// An expense or revenue account is a counterparty label: any currency can
+  /// flow through it, and most carry no currency of their own. Firefly still
+  /// fills `currency_code` in for them, with the installation's primary
+  /// currency, and says so only through `object_has_currency_setting`. Read
+  /// without that flag, every counterparty looks like an account denominated in
+  /// the primary currency.
+  ///
+  /// Absent from the payload means unknown, and unknown stays trusted: a
+  /// version that does not send the flag should keep behaving as it did.
+  final bool hasCurrencySetting;
   final String? iban;
   final String? bic;
   final String? accountNumber;
@@ -30,6 +43,7 @@ class Account {
     required this.currentBalance,
     required this.currencySymbol,
     required this.currencyCode,
+    this.hasCurrencySetting = true,
     this.iban,
     this.bic,
     this.accountNumber,
@@ -65,6 +79,7 @@ class Account {
           double.tryParse(attrs['current_balance']?.toString() ?? '0') ?? 0.0,
       currencySymbol: attrs['currency_symbol'] as String? ?? '€',
       currencyCode: attrs['currency_code'] as String? ?? 'EUR',
+      hasCurrencySetting: attrs['object_has_currency_setting'] as bool? ?? true,
       iban: attrs['iban'] as String?,
       bic: attrs['bic'] as String?,
       accountNumber: attrs['account_number'] as String?,
@@ -95,6 +110,7 @@ class Account {
     double? currentBalance,
     String? currencySymbol,
     String? currencyCode,
+    bool? hasCurrencySetting,
     String? iban,
     String? bic,
     String? accountNumber,
@@ -117,6 +133,7 @@ class Account {
       currentBalance: currentBalance ?? this.currentBalance,
       currencySymbol: currencySymbol ?? this.currencySymbol,
       currencyCode: currencyCode ?? this.currencyCode,
+      hasCurrencySetting: hasCurrencySetting ?? this.hasCurrencySetting,
       iban: iban ?? this.iban,
       bic: bic ?? this.bic,
       accountNumber: accountNumber ?? this.accountNumber,

@@ -5,15 +5,15 @@ import 'package:flutter/material.dart';
 
 import '../fun_sticker.dart';
 
-final Map<FunStickerId, FunStickerPainterBuilder> racoonStickerPainters = {
-  FunStickerId.racoonTail: RacoonTailPainter.new,
-  FunStickerId.racoonEyes: RacoonEyesPainter.new,
+final Map<FunStickerId, FunStickerPainterBuilder> raccoonStickerPainters = {
+  FunStickerId.raccoonTail: RaccoonTailPainter.new,
+  FunStickerId.raccoonEyes: RaccoonEyesPainter.new,
   FunStickerId.goldCoin: GoldCoinPainter.new,
   FunStickerId.rainbow: RainbowArcPainter.new,
   FunStickerId.sparkle: SparklePainter.new,
 };
 
-class RacoonTailPainter extends CustomPainter {
+class RaccoonTailPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..style = PaintingStyle.fill;
@@ -63,7 +63,7 @@ class RacoonTailPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class RacoonEyesPainter extends CustomPainter {
+class RaccoonEyesPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final mask = Paint()..color = const Color(0xFF333333);

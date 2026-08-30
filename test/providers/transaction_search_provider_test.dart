@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/transaction_search_provider.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/transaction_search_provider.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/test_data.dart';
 

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:fireracoon/utils/locale_formatting.dart';
-import 'package:fireracoon/widgets/selectable_transaction_row.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/utils/locale_formatting.dart';
+import 'package:fireraccoon/widgets/selectable_transaction_row.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../helpers/screen_test_app.dart';
 import '../helpers/test_data.dart';

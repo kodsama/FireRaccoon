@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:fireracoon/screens/payees_screen.dart';
+import 'package:fireraccoon/screens/payees_screen.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/ui_test_data.dart';
 

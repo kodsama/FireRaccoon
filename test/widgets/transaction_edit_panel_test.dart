@@ -1,10 +1,12 @@
-import 'package:fireracoon/utils/locale_formatting.dart';
-import 'package:fireracoon/widgets/transaction_edit_panel.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/utils/locale_formatting.dart';
+import 'package:fireraccoon/widgets/transaction_edit_panel.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../helpers/fixed_accounts_notifier.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/test_data.dart';
@@ -540,5 +542,82 @@ void main() {
 
     expect(saved, isNotNull);
     expect(saved!.totalAmount, 120);
+  });
+
+  testWidgets('an expense counterparty does not make a spend foreign', (
+    tester,
+  ) async {
+    // Firefly reports every counterparty in the installation's primary
+    // currency whether or not one was set, and says which through
+    // object_has_currency_setting. Taken at face value, a EUR spend on an SEK
+    // installation looked like a currency crossing: the panel demanded a
+    // foreign amount and refused to save without one, so the write never left
+    // the app.
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final asset = Account(
+      id: '10328',
+      name: 'Revolut EUR',
+      type: 'asset',
+      role: 'defaultAsset',
+      currentBalance: 500,
+      currencySymbol: '€',
+      currencyCode: 'EUR',
+    );
+    final counterparty = Account(
+      id: '12581',
+      name: 'Fabrica Do Meu Avo',
+      type: 'expense',
+      role: 'defaultAsset',
+      currentBalance: 0,
+      currencySymbol: 'kr',
+      currencyCode: 'SEK',
+      hasCurrencySetting: false,
+    );
+
+    final spend = Transaction(
+      id: '111770',
+      type: 'withdrawal',
+      date: DateTime(2026, 8, 30),
+      amount: 4.30,
+      description: 'Lunch',
+      sourceName: asset.name,
+      destinationName: counterparty.name,
+      categoryName: '',
+      currencySymbol: '€',
+      currencyCode: 'EUR',
+    );
+
+    Transaction? saved;
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        fireflyService: FakeFireflyService(accounts: [asset, counterparty]),
+        extraOverrides: [
+          accountsProvider.overrideWith(() => FixedAccountsNotifier([asset])),
+          counterpartyAccountsProvider.overrideWith((ref) => [counterparty]),
+        ],
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: spend,
+              onCancel: () {},
+              onSave: (result) async => saved = result,
+            ),
+          ),
+        ),
+      ),
+    );
+    await pumpScreen(tester);
+
+    await tester.ensureVisible(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Save'));
+    await tester.pumpAndSettle();
+
+    // The spend leaves the app rather than stopping at a demand for a second
+    // amount, and it carries no foreign amount, because there is no second
+    // currency on it to carry.
+    expect(saved, isNotNull);
+    expect(saved!.foreignAmount, isNull);
   });
 }

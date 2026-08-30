@@ -2,7 +2,7 @@
 
 import 'dart:io';
 
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 /// Verifies revenue/deposit transaction CRUD against live Firefly III.
 Future<void> main() async {
@@ -16,7 +16,7 @@ Future<void> main() async {
 
   final service = FireflyApiService(serverUrl: url, apiToken: token);
   final stamp = DateTime.now().millisecondsSinceEpoch;
-  final description = 'FireRacoon verify deposit $stamp';
+  final description = 'FireRaccoon verify deposit $stamp';
 
   print('Connected as ${(await service.getCurrentUser()).email}');
 

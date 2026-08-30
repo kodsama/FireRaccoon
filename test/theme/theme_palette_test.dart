@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon/theme/app_colors.dart';
-import 'package:fireracoon/theme/theme_palette.dart';
+import 'package:fireraccoon/theme/app_colors.dart';
+import 'package:fireraccoon/theme/theme_palette.dart';
 
 void main() {
   test('ThemePalette.classic uses accent-based ramp', () {

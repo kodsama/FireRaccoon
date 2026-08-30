@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:logging/logging.dart';
 
-/// Centralized logger for FireRacoon app and engine packages.
+/// Centralized logger for FireRaccoon app and engine packages.
 ///
 /// The logger is intentionally lightweight and depends on `package:logging`
 /// so every package can share the same level filters and output format.
@@ -45,8 +45,8 @@ final class AppLogger {
     });
   }
 
-  /// Creates a namespaced logger under `fireracoon.<scope>`.
-  static Logger scoped(String scope) => Logger('fireracoon.$scope');
+  /// Creates a namespaced logger under `fireraccoon.<scope>`.
+  static Logger scoped(String scope) => Logger('fireraccoon.$scope');
 
   /// Formats records in a single searchable line.
   static String formatRecord(LogRecord record) {

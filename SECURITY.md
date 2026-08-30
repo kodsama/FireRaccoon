@@ -15,7 +15,7 @@ Email **kodsama@protonmail.com** with:
 
 - Description of the issue and potential impact
 - Steps to reproduce (proof-of-concept if available)
-- FireRacoon version or commit hash
+- FireRaccoon version or commit hash
 - Your environment (platform, Firefly III version if relevant)
 
 We aim to acknowledge reports within 72 hours and will coordinate disclosure
@@ -25,7 +25,7 @@ once a fix is available.
 
 In scope:
 
-- FireRacoon app, MCP server, and bundled tooling in this repository
+- FireRaccoon app, MCP server, and bundled tooling in this repository
 - Credential handling, transport security, and auth flows
 
 Out of scope:

@@ -23,7 +23,7 @@ class SettingsSecretsCrypto {
   static const int version = 1;
   static const int pbkdf2Iterations = 210000;
   static const int saltLength = 16;
-  static const String aad = 'fireracoon-settings-secrets-v1';
+  static const String aad = 'fireraccoon-settings-secrets-v1';
 
   static Future<Map<String, dynamic>> seal({
     required Map<String, dynamic> plaintext,

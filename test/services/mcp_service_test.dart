@@ -7,9 +7,9 @@ import 'dart:io';
 import 'dart:isolate';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
-import 'package:fireracoon/services/mcp_service.dart';
-import 'package:fireracoon/l10n/app_localizations_en.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon/services/mcp_service.dart';
+import 'package:fireraccoon/l10n/app_localizations_en.dart';
 
 const _url = 'http://localhost:8080';
 const _token = 'test-token';
@@ -233,8 +233,8 @@ Future<Map<String, Object?>> _callTool(
   }
 }
 
-Map<String, Object?> _fireracoonBlock(Map<String, Object?> response) {
-  return (response['result'] as Map<String, Object?>)['fireracoon']
+Map<String, Object?> _fireraccoonBlock(Map<String, Object?> response) {
+  return (response['result'] as Map<String, Object?>)['fireraccoon']
       as Map<String, Object?>;
 }
 
@@ -310,13 +310,13 @@ void main() {
     await _waitUntil(() => service.running || service.error != null);
     expect(service.error, isNull, reason: service.error);
 
-    final fireracoon = _fireracoonBlock(
+    final fireraccoon = _fireraccoonBlock(
       await _initialize(service.port!, issued.secret),
     );
 
-    expect(fireracoon['write_access'], isTrue);
+    expect(fireraccoon['write_access'], isTrue);
     expect(
-      (fireracoon['account'] as Map<String, Object?>)['person_name'],
+      (fireraccoon['account'] as Map<String, Object?>)['person_name'],
       'Ada',
     );
   });
@@ -336,12 +336,12 @@ void main() {
     await _waitUntil(() => service.running || service.error != null);
     expect(service.error, isNull, reason: service.error);
 
-    final fireracoon = _fireracoonBlock(
+    final fireraccoon = _fireraccoonBlock(
       await _initialize(service.port!, issued.secret),
     );
 
-    expect(fireracoon['write_access'], isFalse);
-    expect((fireracoon['account'] as Map<String, Object?>)['role'], 'viewer');
+    expect(fireraccoon['write_access'], isFalse);
+    expect((fireraccoon['account'] as Map<String, Object?>)['role'], 'viewer');
   });
 
   test('an unknown key is refused', () async {

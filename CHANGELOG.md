@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-30
+
+### Fixed
+
+- A recurring transaction dated after the 10th of the month could not be
+  edited, whatever the edit was. Firefly checks a repetition's day as a number
+  no greater than 10 when updating and not when creating, so these were
+  creatable and then permanently read-only through the API, as were yearly
+  rules and rules on the nth weekday, whose day is not a number at all. Firefly
+  only rechecks a schedule the request carries one of, so a schedule nobody
+  edited is no longer sent. When the day itself is what changed and Firefly
+  still refuses it, the refusal now says why, that nothing was saved, and where
+  the day can be changed instead
+- A spend from an account in one currency to a payee could not be saved on an
+  installation whose primary currency is another. Firefly gives every account a
+  currency, filling one in for the payees and other counterparties that have
+  none of their own, so a euro spend on a krona installation read as a currency
+  crossing and asked for a second amount. Refusing to give one blocked the save
+  before it left the app, and giving one would have written a second currency
+  onto a transaction with a single currency
+- A refused write reported itself as a network error though Firefly had
+  answered, and the recurring transaction form raised it through a SnackBar,
+  which draws inside the page underneath the form that caused it. The empty
+  foreign amount field also complained in the same words as an empty main
+  amount, which read as though the amount already typed was the one refused
+
+### Changed
+
+- The name is spelled FireRaccoon. It had shipped as FireRacoon in the package
+  names, file paths, bundle identifiers, environment variables, stored
+  preference keys and the OAuth callback scheme. Nothing keeps working under the
+  old spelling, so upgrading is not a drop-in
+- Bundle identifiers are `com.fireraccoon` and `com.fireraccoon.app`. macOS, iOS
+  and Android read that as a different application, so an existing install will
+  not upgrade in place and the secure storage written under the old identifier
+  is not visible to the new one
+- The OAuth redirect is `fireraccoon://oauth-callback`. Update the redirect URI
+  on the Firefly III OAuth client before signing in again, or the callback is
+  refused
+- Three Firefly III preference keys were renamed: the people config, the account
+  classifications and the side menu layout. Values saved under the old keys are
+  no longer read and those settings start from their defaults
+- Settings backups exported by an earlier version carry the old app marker and
+  are refused on import
+- `FIRERACCOON_MODE`, `FIRERACCOON_URL`, `FIRERACCOON_API_KEY` and
+  `FIRERACCOON_PORT` replace their old names, as do the `x-fireraccoon-session`
+  header and the `fireraccoon_session` cookie. Compose files and MCP client
+  configs need the new spelling, and open browser sessions are signed out once
+- The published image is `ghcr.io/<owner>/fireraccoon`, a new package rather
+  than a new tag on the old one
+
 ## [0.1.12] - 2026-08-25
 
 ### Added

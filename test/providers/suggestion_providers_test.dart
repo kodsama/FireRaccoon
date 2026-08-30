@@ -1,5 +1,5 @@
-import 'package:fireracoon/providers/data_providers.dart';
-import 'package:fireracoon/providers/suggestion_providers.dart';
+import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/suggestion_providers.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 

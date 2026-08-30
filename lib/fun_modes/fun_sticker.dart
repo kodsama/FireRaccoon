@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 /// Identifies a corner sticker; painters live in mode-specific files.
 enum FunStickerId {
-  racoonTail,
-  racoonEyes,
+  raccoonTail,
+  raccoonEyes,
   goldCoin,
   rainbow,
   sparkle,

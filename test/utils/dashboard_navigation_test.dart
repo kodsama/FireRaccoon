@@ -1,6 +1,6 @@
-import 'package:fireracoon/router/dashboard_route.dart';
-import 'package:fireracoon/utils/dashboard_navigation.dart';
-import 'package:fireracoon_engine/fireracoon_engine.dart';
+import 'package:fireraccoon/router/dashboard_route.dart';
+import 'package:fireraccoon/utils/dashboard_navigation.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

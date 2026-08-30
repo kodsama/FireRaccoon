@@ -3,23 +3,23 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fireracoon/providers/theme_provider.dart';
-import 'package:fireracoon/widgets/fun_decorated_surface.dart';
-import 'package:fireracoon/widgets/small_loading_indicator.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/widgets/fun_decorated_surface.dart';
+import 'package:fireraccoon/widgets/small_loading_indicator.dart';
 
 import '../helpers/localized_test_app.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('fireracoon_logo.png is in the asset bundle', () async {
-    final data = await rootBundle.load('assets/fireracoon_logo.png');
+  test('fireraccoon_logo.png is in the asset bundle', () async {
+    final data = await rootBundle.load('assets/fireraccoon_logo.png');
     expect(data.lengthInBytes, greaterThan(1000));
     expect(data.buffer.asUint8List().sublist(0, 4), [0x89, 0x50, 0x4E, 0x47]);
   });
 
-  testWidgets('FunLogo paints the bundled racoon asset', (tester) async {
-    SharedPreferences.setMockInitialValues({'funMode': 'racoon'});
+  testWidgets('FunLogo paints the bundled raccoon asset', (tester) async {
+    SharedPreferences.setMockInitialValues({'funMode': 'raccoon'});
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
@@ -36,10 +36,10 @@ void main() {
     expect(find.byType(Image), findsOneWidget);
   });
 
-  testWidgets('PageLoadingIndicator shows breathing logo in Racoon Mode', (
+  testWidgets('PageLoadingIndicator shows breathing logo in Raccoon Mode', (
     tester,
   ) async {
-    SharedPreferences.setMockInitialValues({'funMode': 'racoon'});
+    SharedPreferences.setMockInitialValues({'funMode': 'raccoon'});
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
@@ -56,7 +56,7 @@ void main() {
     expect(find.text('Loading…'), findsOneWidget);
   });
 
-  testWidgets('SmallLoadingIndicator uses spinner outside Racoon Mode', (
+  testWidgets('SmallLoadingIndicator uses spinner outside Raccoon Mode', (
     tester,
   ) async {
     SharedPreferences.setMockInitialValues({'funMode': 'none'});
