@@ -309,6 +309,7 @@ MockClient fireflyMockClient({
   List<Uri>? record,
   List<String>? recordBodies,
   Set<String> failingExports = const {},
+  Set<String> failingWrites = const {},
 }) {
   final transactions = <String, Map<String, Object?>>{
     '1': transactionItem(
@@ -359,6 +360,10 @@ MockClient fireflyMockClient({
     if (request.body.isNotEmpty) recordBodies?.add(request.body);
     final path = request.url.path;
     final method = request.method;
+
+    if (method != 'GET' && failingWrites.contains(path)) {
+      return jsonHttpResponse({'message': 'refused'}, status: 500);
+    }
 
     if (path == '/api/v1/about') {
       return jsonHttpResponse({
