@@ -3636,4 +3636,65 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get upcoming => 'Próximas';
+
+  @override
+  String get fireflyBackups => 'Cópias de segurança do Firefly';
+
+  @override
+  String get fireflyBackupsHint =>
+      'Uma cópia de segurança leva o que a API do Firefly entrega: contas, transações, orçamentos, faturas, mealheiros e recorrências, mais a exportação do próprio Firefly, que é a única cópia das regras e dos limites de orçamento. Não chega à base de dados, aos anexos nem à chave da instância, por isso uma instância destruída continua a precisar do arquivo do volume.';
+
+  @override
+  String get backupTakeNow => 'Criar cópia de segurança';
+
+  @override
+  String backupReading(String stage) {
+    return 'A ler $stage…';
+  }
+
+  @override
+  String get backupNone => 'Ainda sem cópias de segurança';
+
+  @override
+  String get backupUnavailableHere =>
+      'Esta versão não tem onde guardar uma cópia de segurança, por isso não é possível criar nenhuma aqui.';
+
+  @override
+  String get backupIncomplete => 'Faltam partes';
+
+  @override
+  String backupSize(int files, String kilobytes) {
+    return '$files ficheiros, $kilobytes kB';
+  }
+
+  @override
+  String backupCountsSummary(int transactions, int accounts) {
+    return '$transactions transações, $accounts contas';
+  }
+
+  @override
+  String get backupDeleteTitle => 'Eliminar esta cópia de segurança?';
+
+  @override
+  String backupDeleteBody(String id) {
+    return '$id desaparece com tudo o que tem dentro, e mais nada guarda uma cópia.';
+  }
+
+  @override
+  String backupTaken(String id) {
+    return 'Cópia de segurança $id criada';
+  }
+
+  @override
+  String backupFailed(String error) {
+    return 'Não foi possível criar a cópia de segurança: $error';
+  }
+
+  @override
+  String get backupSaveSnapshot => 'Guardar instantâneo';
+
+  @override
+  String backupSavedTo(String path) {
+    return 'Instantâneo guardado em $path';
+  }
 }

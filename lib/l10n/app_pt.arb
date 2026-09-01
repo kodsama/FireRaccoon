@@ -1728,5 +1728,75 @@
   "biometricEnableReason": "Confirme para ativar o desbloqueio biométrico",
   "biometricUnlockFailed": "O desbloqueio biométrico foi cancelado ou falhou.",
   "recordedBalance": "Registado",
-  "upcoming": "Próximas"
+  "upcoming": "Próximas",
+  "fireflyBackups": "Cópias de segurança do Firefly",
+  "fireflyBackupsHint": "Uma cópia de segurança leva o que a API do Firefly entrega: contas, transações, orçamentos, faturas, mealheiros e recorrências, mais a exportação do próprio Firefly, que é a única cópia das regras e dos limites de orçamento. Não chega à base de dados, aos anexos nem à chave da instância, por isso uma instância destruída continua a precisar do arquivo do volume.",
+  "backupTakeNow": "Criar cópia de segurança",
+  "backupReading": "A ler {stage}…",
+  "@backupReading": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNone": "Ainda sem cópias de segurança",
+  "backupUnavailableHere": "Esta versão não tem onde guardar uma cópia de segurança, por isso não é possível criar nenhuma aqui.",
+  "backupIncomplete": "Faltam partes",
+  "backupSize": "{files} ficheiros, {kilobytes} kB",
+  "@backupSize": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "kilobytes": {
+        "type": "String"
+      }
+    }
+  },
+  "backupCountsSummary": "{transactions} transações, {accounts} contas",
+  "@backupCountsSummary": {
+    "placeholders": {
+      "transactions": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
+  "backupDeleteTitle": "Eliminar esta cópia de segurança?",
+  "backupDeleteBody": "{id} desaparece com tudo o que tem dentro, e mais nada guarda uma cópia.",
+  "@backupDeleteBody": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupTaken": "Cópia de segurança {id} criada",
+  "@backupTaken": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailed": "Não foi possível criar a cópia de segurança: {error}",
+  "@backupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSaveSnapshot": "Guardar instantâneo",
+  "backupSavedTo": "Instantâneo guardado em {path}",
+  "@backupSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  }
 }

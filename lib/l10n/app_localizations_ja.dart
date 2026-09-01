@@ -3533,4 +3533,64 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get upcoming => '今後';
+
+  @override
+  String get fireflyBackups => 'Firefly のバックアップ';
+
+  @override
+  String get fireflyBackupsHint =>
+      'バックアップは Firefly API が渡すもの、つまり口座、取引、予算、請求、貯金箱、繰り返しに加えて、ルールと予算上限の唯一の写しである Firefly 自身のエクスポートを控えます。データベース、添付ファイル、インスタンスキーには届かないため、壊れたインスタンスの復旧にはボリュームのアーカイブが必要です。';
+
+  @override
+  String get backupTakeNow => 'バックアップを取る';
+
+  @override
+  String backupReading(String stage) {
+    return '$stage を読み込み中…';
+  }
+
+  @override
+  String get backupNone => 'バックアップはまだありません';
+
+  @override
+  String get backupUnavailableHere => 'このビルドにはバックアップの置き場所がないため、ここでは取れません。';
+
+  @override
+  String get backupIncomplete => '欠けている部分があります';
+
+  @override
+  String backupSize(int files, String kilobytes) {
+    return '$files ファイル、$kilobytes kB';
+  }
+
+  @override
+  String backupCountsSummary(int transactions, int accounts) {
+    return '取引 $transactions 件、口座 $accounts 件';
+  }
+
+  @override
+  String get backupDeleteTitle => 'このバックアップを削除しますか？';
+
+  @override
+  String backupDeleteBody(String id) {
+    return '$id は中身ごと消え、ほかに写しはありません。';
+  }
+
+  @override
+  String backupTaken(String id) {
+    return 'バックアップ $id を取りました';
+  }
+
+  @override
+  String backupFailed(String error) {
+    return 'バックアップを取れませんでした: $error';
+  }
+
+  @override
+  String get backupSaveSnapshot => 'スナップショットを保存';
+
+  @override
+  String backupSavedTo(String path) {
+    return 'スナップショットを $path に保存しました';
+  }
 }

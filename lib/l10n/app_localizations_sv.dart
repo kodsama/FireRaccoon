@@ -3622,4 +3622,65 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get upcoming => 'Kommande';
+
+  @override
+  String get fireflyBackups => 'Firefly-säkerhetskopior';
+
+  @override
+  String get fireflyBackupsHint =>
+      'En säkerhetskopia tar med det som Firefly-API:et lämnar ifrån sig: konton, transaktioner, budgetar, räkningar, spargrisar och upprepningar, plus Fireflys egen export, som är enda kopian av regler och budgettak. Den når varken databasen, bilagorna eller instansnyckeln, så en förstörd instans behöver fortfarande sitt volymarkiv.';
+
+  @override
+  String get backupTakeNow => 'Ta en säkerhetskopia';
+
+  @override
+  String backupReading(String stage) {
+    return 'Läser $stage…';
+  }
+
+  @override
+  String get backupNone => 'Inga säkerhetskopior än';
+
+  @override
+  String get backupUnavailableHere =>
+      'Den här versionen har ingenstans att lägga en säkerhetskopia, så ingen kan tas här.';
+
+  @override
+  String get backupIncomplete => 'Delar saknas';
+
+  @override
+  String backupSize(int files, String kilobytes) {
+    return '$files filer, $kilobytes kB';
+  }
+
+  @override
+  String backupCountsSummary(int transactions, int accounts) {
+    return '$transactions transaktioner, $accounts konton';
+  }
+
+  @override
+  String get backupDeleteTitle => 'Ta bort säkerhetskopian?';
+
+  @override
+  String backupDeleteBody(String id) {
+    return '$id försvinner med allt i den, och ingen annanstans finns en kopia.';
+  }
+
+  @override
+  String backupTaken(String id) {
+    return 'Säkerhetskopia $id tagen';
+  }
+
+  @override
+  String backupFailed(String error) {
+    return 'Kunde inte ta en säkerhetskopia: $error';
+  }
+
+  @override
+  String get backupSaveSnapshot => 'Spara ögonblicksbild';
+
+  @override
+  String backupSavedTo(String path) {
+    return 'Ögonblicksbild sparad i $path';
+  }
 }

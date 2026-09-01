@@ -1728,5 +1728,75 @@
   "biometricEnableReason": "Confirmez pour activer le déverrouillage biométrique",
   "biometricUnlockFailed": "Le déverrouillage biométrique a été annulé ou a échoué.",
   "recordedBalance": "Enregistré",
-  "upcoming": "À venir"
+  "upcoming": "À venir",
+  "fireflyBackups": "Sauvegardes Firefly",
+  "fireflyBackupsHint": "Une sauvegarde copie ce que l'API Firefly veut bien donner : comptes, transactions, budgets, factures, tirelires et récurrences, plus l'export de Firefly lui-même, seule copie des règles et des plafonds de budget. Elle n'atteint ni la base de données, ni les pièces jointes, ni la clé de l'instance : une instance détruite a toujours besoin de son archive de volume.",
+  "backupTakeNow": "Créer une sauvegarde",
+  "backupReading": "Lecture de {stage}…",
+  "@backupReading": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNone": "Aucune sauvegarde",
+  "backupUnavailableHere": "Cette version n'a nulle part où ranger une sauvegarde, aucune ne peut être créée ici.",
+  "backupIncomplete": "Éléments manquants",
+  "backupSize": "{files} fichiers, {kilobytes} ko",
+  "@backupSize": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "kilobytes": {
+        "type": "String"
+      }
+    }
+  },
+  "backupCountsSummary": "{transactions} transactions, {accounts} comptes",
+  "@backupCountsSummary": {
+    "placeholders": {
+      "transactions": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
+  "backupDeleteTitle": "Supprimer cette sauvegarde ?",
+  "backupDeleteBody": "{id} disparaît avec tout son contenu, et rien d'autre n'en garde de copie.",
+  "@backupDeleteBody": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupTaken": "Sauvegarde {id} créée",
+  "@backupTaken": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailed": "Impossible de créer la sauvegarde : {error}",
+  "@backupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSaveSnapshot": "Enregistrer l'instantané",
+  "backupSavedTo": "Instantané enregistré dans {path}",
+  "@backupSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  }
 }

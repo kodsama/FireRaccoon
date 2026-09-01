@@ -6591,6 +6591,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upcoming'**
   String get upcoming;
+
+  /// No description provided for @fireflyBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'Firefly backups'**
+  String get fireflyBackups;
+
+  /// No description provided for @fireflyBackupsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A backup copies what the Firefly API will hand over: accounts, transactions, budgets, bills, piggy banks and recurrences, plus Firefly\'s own export, which is the only copy of rules and budget limits. It cannot reach the database, the attachments or the instance key, so a destroyed instance still needs its volume archive.'**
+  String get fireflyBackupsHint;
+
+  /// No description provided for @backupTakeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a backup'**
+  String get backupTakeNow;
+
+  /// No description provided for @backupReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading {stage}…'**
+  String backupReading(String stage);
+
+  /// No description provided for @backupNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups yet'**
+  String get backupNone;
+
+  /// No description provided for @backupUnavailableHere.
+  ///
+  /// In en, this message translates to:
+  /// **'This build has nowhere to keep a backup, so none can be taken here.'**
+  String get backupUnavailableHere;
+
+  /// No description provided for @backupIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Parts missing'**
+  String get backupIncomplete;
+
+  /// No description provided for @backupSize.
+  ///
+  /// In en, this message translates to:
+  /// **'{files} files, {kilobytes} kB'**
+  String backupSize(int files, String kilobytes);
+
+  /// No description provided for @backupCountsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{transactions} transactions, {accounts} accounts'**
+  String backupCountsSummary(int transactions, int accounts);
+
+  /// No description provided for @backupDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this backup?'**
+  String get backupDeleteTitle;
+
+  /// No description provided for @backupDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{id} and everything in it goes, and nothing else keeps a copy.'**
+  String backupDeleteBody(String id);
+
+  /// No description provided for @backupTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup {id} taken'**
+  String backupTaken(String id);
+
+  /// No description provided for @backupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not take a backup: {error}'**
+  String backupFailed(String error);
+
+  /// No description provided for @backupSaveSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Save snapshot'**
+  String get backupSaveSnapshot;
+
+  /// No description provided for @backupSavedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapshot saved to {path}'**
+  String backupSavedTo(String path);
 }
 
 class _AppLocalizationsDelegate
