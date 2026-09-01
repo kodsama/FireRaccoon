@@ -3631,4 +3631,9 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get backupRestoreWrongLedger =>
       'このバックアップは別の Firefly ユーザーが取ったものなので、ここには復元できません。';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return '$total 件中 $done 件を復元中';
+  }
 }

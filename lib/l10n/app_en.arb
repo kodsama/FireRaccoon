@@ -2093,5 +2093,16 @@
       }
     }
   },
-  "backupRestoreWrongLedger": "This backup was taken from a different Firefly user, so it cannot be restored here."
+  "backupRestoreWrongLedger": "This backup was taken from a different Firefly user, so it cannot be restored here.",
+  "backupRestoring": "Restoring {done} of {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

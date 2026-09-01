@@ -146,8 +146,12 @@ class FakeFireflyService implements FireflyService {
     DateTime? end,
     String? type,
     void Function(List<Transaction> firstPage)? onFirstPage,
+    void Function(int loadedPages, int totalPages)? onPageProgress,
   }) async {
     _maybeThrow();
+    await _maybeDelay();
+    // One page, reported the way the real walk reports its first.
+    onPageProgress?.call(1, 1);
     final typed = type == null || type.isEmpty
         ? transactions
         : transactions.where((t) => t.type == type).toList();

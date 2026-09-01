@@ -6741,6 +6741,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This backup was taken from a different Firefly user, so it cannot be restored here.'**
   String get backupRestoreWrongLedger;
+
+  /// No description provided for @backupRestoring.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring {done} of {total}'**
+  String backupRestoring(int done, int total);
 }
 
 class _AppLocalizationsDelegate

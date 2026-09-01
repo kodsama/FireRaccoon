@@ -1838,5 +1838,16 @@
       }
     }
   },
-  "backupRestoreWrongLedger": "Cette sauvegarde vient d'un autre utilisateur Firefly, elle ne peut pas être restaurée ici."
+  "backupRestoreWrongLedger": "Cette sauvegarde vient d'un autre utilisateur Firefly, elle ne peut pas être restaurée ici.",
+  "backupRestoring": "Restauration de {done} sur {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

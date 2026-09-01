@@ -1838,5 +1838,16 @@
       }
     }
   },
-  "backupRestoreWrongLedger": "Säkerhetskopian togs av en annan Firefly-användare och kan inte återställas här."
+  "backupRestoreWrongLedger": "Säkerhetskopian togs av en annan Firefly-användare och kan inte återställas här.",
+  "backupRestoring": "Återställer {done} av {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

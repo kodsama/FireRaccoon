@@ -3752,4 +3752,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get backupRestoreWrongLedger =>
       'Cette sauvegarde vient d\'un autre utilisateur Firefly, elle ne peut pas être restaurée ici.';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return 'Restauration de $done sur $total';
+  }
 }

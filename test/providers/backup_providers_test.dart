@@ -267,6 +267,22 @@ void main() {
         throwsA(isA<StateError>()),
       );
 
+      // Nor can one with no Firefly connection to write the rows back to.
+      final disconnected = ProviderContainer(
+        overrides: [
+          apiServiceProvider.overrideWithValue(null),
+          backupsDirectoryProvider.overrideWithValue(null),
+          backupStoreProvider.overrideWithValue(_MemoryBackupStore()),
+        ],
+      );
+      addTearDown(disconnected.dispose);
+      await expectLater(
+        disconnected
+            .read(backupsProvider.notifier)
+            .applyRestore(const RestorePlan(steps: [], unrestorable: [])),
+        throwsA(isA<StateError>()),
+      );
+
       // Neither can a deployment with nowhere to keep backups at all.
       final nowhere = _container();
       await expectLater(

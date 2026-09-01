@@ -281,4 +281,61 @@ void main() {
     expect(find.text('No backups yet'), findsNothing);
     expect(find.textContaining('4 transactions, 1 accounts'), findsOneWidget);
   });
+
+  testWidgets('a running backup shows a bar, and stops showing one after', (
+    tester,
+  ) async {
+    final api = FakeFireflyService()
+      ..responseDelay = const Duration(milliseconds: 80);
+    await _pump(tester, store: _MemoryBackupStore(), api: api);
+
+    await tester.tap(find.text('Take a backup'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
+
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.textContaining('Reading'), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    await _letToastPass(tester);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+  });
+
+  testWidgets('the label says what is running and how far along', (
+    tester,
+  ) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      buildLocalizedTestApp(
+        child: Builder(
+          builder: (ctx) {
+            context = ctx;
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    expect(
+      backupActivityLabel(
+        context,
+        const BackupActivity(running: true, stage: 'transactions'),
+      ),
+      'Reading transactions…',
+    );
+    expect(
+      backupActivityLabel(
+        context,
+        const BackupActivity(running: true, stage: 'csv:rules', fraction: 0.42),
+      ),
+      contains('42%'),
+    );
+    expect(
+      backupActivityLabel(
+        context,
+        const BackupActivity(running: true, restoreStep: 3, restoreTotal: 12),
+      ),
+      'Restoring 3 of 12',
+    );
+  });
 }

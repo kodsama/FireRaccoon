@@ -51,7 +51,14 @@ class RestoreRunner {
   /// Old id to new id, for rows this run recreated.
   Map<String, String> get remappedIds => Map.unmodifiable(_remapped);
 
-  Future<List<RestoreOutcome>> apply(RestorePlan plan) async {
+  /// Runs [plan], reporting each step as it finishes.
+  ///
+  /// [onStep] is exact, unlike a backup's: a plan knows how many rows it will
+  /// touch before it touches the first.
+  Future<List<RestoreOutcome>> apply(
+    RestorePlan plan, {
+    void Function(int done, int total)? onStep,
+  }) async {
     final outcomes = <RestoreOutcome>[];
     for (final step in plan.steps) {
       try {
@@ -63,6 +70,7 @@ class RestoreRunner {
           RestoreOutcome(step: step, applied: false, error: '$error'),
         );
       }
+      onStep?.call(outcomes.length, plan.steps.length);
     }
     return outcomes;
   }

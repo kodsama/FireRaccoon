@@ -25,6 +25,7 @@ class _DelayedTransactionsService extends FakeFireflyService {
     DateTime? end,
     String? type,
     void Function(List<Transaction> firstPage)? onFirstPage,
+    void Function(int loadedPages, int totalPages)? onPageProgress,
   }) async {
     await gate.future;
     return super.getTransactions(

@@ -1838,5 +1838,16 @@
       }
     }
   },
-  "backupRestoreWrongLedger": "该备份由另一个 Firefly 用户创建，无法在此恢复。"
+  "backupRestoreWrongLedger": "该备份由另一个 Firefly 用户创建，无法在此恢复。",
+  "backupRestoring": "正在恢复第 {done} 条，共 {total} 条",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }

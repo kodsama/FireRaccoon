@@ -70,6 +70,9 @@ class FireflyCsvExportService {
 
   /// Reads every data set, transactions over [from]..[to].
   ///
+  /// [onChunk] fires once per request, which is what a caller counts to show a
+  /// year-at-a-time walk moving.
+  ///
   /// A data set that fails is reported rather than thrown: an export that loses
   /// its rules is still worth keeping, and the manifest is where that shows up.
   /// Reads run one after another for the same reason the snapshot does, so a
@@ -78,16 +81,27 @@ class FireflyCsvExportService {
     required DateTime from,
     required DateTime to,
     void Function(FireflyCsvDataset dataset)? onDataset,
+    void Function()? onChunk,
   }) async {
     final files = <FireflyCsvFile>[];
     for (final dataset in FireflyCsvDataset.values) {
       onDataset?.call(dataset);
       try {
-        files.add(
-          dataset.isWindowed
-              ? await _exportWindowed(dataset, from: from, to: to)
-              : FireflyCsvFile.written(dataset, await _api.exportCsv(dataset)),
-        );
+        if (dataset.isWindowed) {
+          files.add(
+            await _exportWindowed(
+              dataset,
+              from: from,
+              to: to,
+              onChunk: onChunk,
+            ),
+          );
+        } else {
+          files.add(
+            FireflyCsvFile.written(dataset, await _api.exportCsv(dataset)),
+          );
+          onChunk?.call();
+        }
       } on Object catch (error) {
         files.add(FireflyCsvFile.failed(dataset, '$error'));
       }
@@ -99,6 +113,7 @@ class FireflyCsvExportService {
     FireflyCsvDataset dataset, {
     required DateTime from,
     required DateTime to,
+    void Function()? onChunk,
   }) async {
     final buffer = StringBuffer();
     var chunks = 0;
@@ -107,6 +122,7 @@ class FireflyCsvExportService {
       final end = year == to.year ? to : DateTime(year, 12, 31);
       final chunk = await _api.exportCsv(dataset, start: start, end: end);
       chunks++;
+      onChunk?.call();
       final body = chunks == 1 ? chunk : _withoutHeader(chunk);
       if (body.trim().isEmpty) continue;
       if (buffer.isNotEmpty && !buffer.toString().endsWith('\n')) {
