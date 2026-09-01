@@ -6591,6 +6591,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Upcoming'**
   String get upcoming;
+
+  /// No description provided for @fireflyBackups.
+  ///
+  /// In en, this message translates to:
+  /// **'Firefly backups'**
+  String get fireflyBackups;
+
+  /// No description provided for @fireflyBackupsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'A backup copies what the Firefly API will hand over: accounts, transactions, budgets, bills, piggy banks and recurrences, plus Firefly\'s own export, which is the only copy of rules and budget limits. It cannot reach the database, the attachments or the instance key, so a destroyed instance still needs its volume archive.'**
+  String get fireflyBackupsHint;
+
+  /// No description provided for @backupTakeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a backup'**
+  String get backupTakeNow;
+
+  /// No description provided for @backupReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading {stage}…'**
+  String backupReading(String stage);
+
+  /// No description provided for @backupNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No backups yet'**
+  String get backupNone;
+
+  /// No description provided for @backupUnavailableHere.
+  ///
+  /// In en, this message translates to:
+  /// **'This build has nowhere to keep a backup, so none can be taken here.'**
+  String get backupUnavailableHere;
+
+  /// No description provided for @backupIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Parts missing'**
+  String get backupIncomplete;
+
+  /// No description provided for @backupSize.
+  ///
+  /// In en, this message translates to:
+  /// **'{files} files, {kilobytes} kB'**
+  String backupSize(int files, String kilobytes);
+
+  /// No description provided for @backupCountsSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{transactions} transactions, {accounts} accounts'**
+  String backupCountsSummary(int transactions, int accounts);
+
+  /// No description provided for @backupDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this backup?'**
+  String get backupDeleteTitle;
+
+  /// No description provided for @backupDeleteBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{id} and everything in it goes, and nothing else keeps a copy.'**
+  String backupDeleteBody(String id);
+
+  /// No description provided for @backupTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup {id} taken'**
+  String backupTaken(String id);
+
+  /// No description provided for @backupFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not take a backup: {error}'**
+  String backupFailed(String error);
+
+  /// No description provided for @backupSaveSnapshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Save snapshot'**
+  String get backupSaveSnapshot;
+
+  /// No description provided for @backupSavedTo.
+  ///
+  /// In en, this message translates to:
+  /// **'Snapshot saved to {path}'**
+  String backupSavedTo(String path);
+
+  /// No description provided for @backupRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get backupRestore;
+
+  /// No description provided for @backupRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from this backup?'**
+  String get backupRestoreTitle;
+
+  /// No description provided for @backupRestorePlanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Working out what would change…'**
+  String get backupRestorePlanning;
+
+  /// No description provided for @backupRestoreNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to put back: the ledger already matches this backup.'**
+  String get backupRestoreNothing;
+
+  /// No description provided for @backupRestoreSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{creates} to put back, {updates} to write over, {deletes} to remove.'**
+  String backupRestoreSummary(int creates, int updates, int deletes);
+
+  /// No description provided for @backupRestoreDeletes.
+  ///
+  /// In en, this message translates to:
+  /// **'Also remove rows added since this backup'**
+  String get backupRestoreDeletes;
+
+  /// No description provided for @backupRestoreNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows put back come back under new identifiers, and a fresh backup is taken before anything is written. Rules, budget limits, attachments and currencies cannot be written back through the API.'**
+  String get backupRestoreNote;
+
+  /// No description provided for @backupRestoreDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored {applied} rows, {failed} failed'**
+  String backupRestoreDone(int applied, int failed);
+
+  /// No description provided for @backupRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not restore: {error}'**
+  String backupRestoreFailed(String error);
+
+  /// No description provided for @backupRestoreWrongLedger.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup was taken from a different Firefly user, so it cannot be restored here.'**
+  String get backupRestoreWrongLedger;
 }
 
 class _AppLocalizationsDelegate

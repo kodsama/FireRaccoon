@@ -3533,4 +3533,102 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get upcoming => '今後';
+
+  @override
+  String get fireflyBackups => 'Firefly のバックアップ';
+
+  @override
+  String get fireflyBackupsHint =>
+      'バックアップは Firefly API が渡すもの、つまり口座、取引、予算、請求、貯金箱、繰り返しに加えて、ルールと予算上限の唯一の写しである Firefly 自身のエクスポートを控えます。データベース、添付ファイル、インスタンスキーには届かないため、壊れたインスタンスの復旧にはボリュームのアーカイブが必要です。';
+
+  @override
+  String get backupTakeNow => 'バックアップを取る';
+
+  @override
+  String backupReading(String stage) {
+    return '$stage を読み込み中…';
+  }
+
+  @override
+  String get backupNone => 'バックアップはまだありません';
+
+  @override
+  String get backupUnavailableHere => 'このビルドにはバックアップの置き場所がないため、ここでは取れません。';
+
+  @override
+  String get backupIncomplete => '欠けている部分があります';
+
+  @override
+  String backupSize(int files, String kilobytes) {
+    return '$files ファイル、$kilobytes kB';
+  }
+
+  @override
+  String backupCountsSummary(int transactions, int accounts) {
+    return '取引 $transactions 件、口座 $accounts 件';
+  }
+
+  @override
+  String get backupDeleteTitle => 'このバックアップを削除しますか？';
+
+  @override
+  String backupDeleteBody(String id) {
+    return '$id は中身ごと消え、ほかに写しはありません。';
+  }
+
+  @override
+  String backupTaken(String id) {
+    return 'バックアップ $id を取りました';
+  }
+
+  @override
+  String backupFailed(String error) {
+    return 'バックアップを取れませんでした: $error';
+  }
+
+  @override
+  String get backupSaveSnapshot => 'スナップショットを保存';
+
+  @override
+  String backupSavedTo(String path) {
+    return 'スナップショットを $path に保存しました';
+  }
+
+  @override
+  String get backupRestore => '復元';
+
+  @override
+  String get backupRestoreTitle => 'このバックアップから復元しますか？';
+
+  @override
+  String get backupRestorePlanning => '何が変わるかを確認しています…';
+
+  @override
+  String get backupRestoreNothing => '戻すものはありません。台帳はすでにこのバックアップと一致しています。';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '戻す $creates 件、上書きする $updates 件、削除する $deletes 件。';
+  }
+
+  @override
+  String get backupRestoreDeletes => 'このバックアップ以降に追加された行も削除する';
+
+  @override
+  String get backupRestoreNote =>
+      '戻した行には新しい識別子が付き、書き込む前に新しいバックアップを取ります。ルール、予算上限、添付ファイル、通貨は API では書き戻せません。';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return '$applied 件を復元、$failed 件が失敗';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return '復元できませんでした: $error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger =>
+      'このバックアップは別の Firefly ユーザーが取ったものなので、ここには復元できません。';
 }

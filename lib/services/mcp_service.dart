@@ -69,6 +69,7 @@ class McpService extends ChangeNotifier {
     required List<AgentKey> agentKeys,
     required List<AgentKeyPerson> people,
     String? agentKeysError,
+    String? backupsDirectory,
     int basePort = 8787,
   }) {
     final next = (_queue ?? Future<void>.value()).then(
@@ -78,6 +79,7 @@ class McpService extends ChangeNotifier {
         agentKeys: agentKeys,
         people: people,
         agentKeysError: agentKeysError,
+        backupsDirectory: backupsDirectory,
         basePort: basePort,
       ),
     );
@@ -92,6 +94,7 @@ class McpService extends ChangeNotifier {
     required List<AgentKey> agentKeys,
     required List<AgentKeyPerson> people,
     required String? agentKeysError,
+    required String? backupsDirectory,
     required int basePort,
   }) async {
     final active = [
@@ -157,6 +160,7 @@ class McpService extends ChangeNotifier {
           fireflyToken,
           active,
           people,
+          backupsDirectory,
         ),
         debugName: 'fireraccoon-mcp-server',
         // A healthy isolate never finishes: the listening socket keeps its event
@@ -316,6 +320,7 @@ class McpIsolateConfig {
     this.fireflyToken,
     this.agentKeys,
     this.people,
+    this.backupsDirectory,
   );
 
   final SendPort send;
@@ -324,6 +329,11 @@ class McpIsolateConfig {
   final String fireflyToken;
   final List<AgentKey> agentKeys;
   final List<AgentKeyPerson> people;
+
+  /// Where the backup tools write. Null leaves them refusing rather than
+  /// missing, so an agent is told backups are unavailable here instead of
+  /// concluding FireRaccoon does not take them.
+  final String? backupsDirectory;
 }
 
 Future<void> _serverEntry(McpIsolateConfig cfg) async {
@@ -349,10 +359,14 @@ Future<void> _serverEntry(McpIsolateConfig cfg) async {
   // decides which tools that agent may call, and which person get_capabilities
   // reports it as. One server per connection is what carries that identity;
   // sharing one across all of them left every caller anonymous.
+  final backupsDirectory = cfg.backupsDirectory;
   McpServer serverFor(AgentIdentity identity) => McpServer(
     tools: buildTools(
       target: FireflyTarget(baseUrl: cfg.fireflyUrl, bearer: cfg.fireflyToken),
       identity: identity,
+      backups: backupsDirectory == null
+          ? null
+          : FileBackupStore(backupsDirectory),
     ),
     onActivity: reportUse,
   );

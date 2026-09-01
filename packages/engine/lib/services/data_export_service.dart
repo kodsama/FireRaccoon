@@ -15,7 +15,10 @@ import 'firefly_service.dart';
 /// readable after the models move on, so its shape is versioned separately and
 /// written out here instead of borrowed from whatever a model happens to
 /// serialise for the API today.
-const int kDataExportSchemaVersion = 1;
+///
+/// 2 carries the identifiers a restore needs where 1 carried only names: the
+/// category, budget and bill a recurrence line points at.
+const int kDataExportSchemaVersion = 2;
 
 /// What a snapshot covers, and what it does not.
 ///
@@ -262,8 +265,11 @@ Map<String, dynamic> _recurrenceJson(Recurrence r) => {
         'source_name': line.sourceName,
         'destination_id': line.destinationId,
         'destination_name': line.destinationName,
+        'category_id': line.categoryId,
         'category_name': line.categoryName,
+        'budget_id': line.budgetId,
         'budget_name': line.budgetName,
+        'bill_id': line.billId,
         'bill_name': line.billName,
         'tags': line.tags,
       },
