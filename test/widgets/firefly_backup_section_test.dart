@@ -338,4 +338,70 @@ void main() {
       'Restoring 3 of 12',
     );
   });
+
+  testWidgets('a protected backup asks for a password and seals itself', (
+    tester,
+  ) async {
+    final store = _MemoryBackupStore();
+    await _pump(tester, store: store);
+
+    await tester.tap(find.byTooltip('Take a protected backup'));
+    await tester.pumpAndSettle();
+
+    // Twice, because a password nobody can reproduce loses the backup.
+    final fields = find.byType(TextField);
+    expect(fields, findsNWidgets(2));
+    await tester.enterText(fields.first, 'Correct-horse9');
+    await tester.enterText(fields.last, 'Correct-horse9');
+    await tester.pump();
+    await tester.tap(find.byType(FilledButton).last);
+    await tester.pumpAndSettle();
+    await _letToastPass(tester);
+
+    final id = (await store.listBackupIds()).single;
+    expect(
+      isSealedBackupFile((await store.get(id, kBackupSnapshotFile))!),
+      isTrue,
+    );
+    expect(find.text('Password protected'), findsNothing);
+    expect(find.textContaining('Password protected'), findsOneWidget);
+  });
+
+  testWidgets('verifying a backup reports it matches the ledger', (
+    tester,
+  ) async {
+    final store = _MemoryBackupStore();
+    await _pump(tester, store: store);
+    await tester.tap(find.text('Take a backup'));
+    await tester.pumpAndSettle();
+    await _letToastPass(tester);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Verify').last);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('matches the ledger'), findsOneWidget);
+    await _letToastPass(tester);
+  });
+
+  testWidgets('verifying reports a backup whose files changed', (tester) async {
+    final store = _MemoryBackupStore();
+    await _pump(tester, store: store);
+    await tester.tap(find.text('Take a backup'));
+    await tester.pumpAndSettle();
+    await _letToastPass(tester);
+    final id = (await store.listBackupIds()).single;
+    // Same length, different bytes: what a digest catches and a size does not.
+    final tags = (await store.get(id, 'csv/tags.csv'))!;
+    await store.put(id, 'csv/tags.csv', utf8.encode('x' * tags.length));
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Verify').last);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('problems with this backup'), findsOneWidget);
+    await _letToastPass(tester);
+  });
 }

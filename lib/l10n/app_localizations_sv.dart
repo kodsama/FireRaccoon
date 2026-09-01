@@ -3728,4 +3728,37 @@ class AppLocalizationsSv extends AppLocalizations {
   String backupRestoring(int done, int total) {
     return 'Återställer $done av $total';
   }
+
+  @override
+  String get backupTakeProtected => 'Ta en skyddad säkerhetskopia';
+
+  @override
+  String get backupEncryptedBadge => 'Lösenordsskyddad';
+
+  @override
+  String get backupPasswordNeeded =>
+      'Den här säkerhetskopian är lösenordsskyddad.';
+
+  @override
+  String get backupPasswordWrong =>
+      'Lösenordet öppnar inte den här säkerhetskopian.';
+
+  @override
+  String get backupVerify => 'Kontrollera';
+
+  @override
+  String get backupVerifyIntact => 'Hel, och stämmer med liggaren';
+
+  @override
+  String backupVerifyDrifted(int creates, int updates, int deletes) {
+    return 'Hel. Liggaren har ändrats: $creates saknas, $updates ändrade, $deletes tillkomna sedan dess.';
+  }
+
+  @override
+  String backupVerifyBroken(int count, String first) {
+    return '$count problem med säkerhetskopian: $first';
+  }
+
+  @override
+  String get backupOpen => 'Öppna';
 }

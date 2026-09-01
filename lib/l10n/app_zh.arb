@@ -1849,5 +1849,37 @@
         "type": "int"
       }
     }
-  }
+  },
+  "backupTakeProtected": "创建受保护的备份",
+  "backupEncryptedBadge": "已用密码保护",
+  "backupPasswordNeeded": "该备份受密码保护。",
+  "backupPasswordWrong": "该密码无法打开这个备份。",
+  "backupVerify": "校验",
+  "backupVerifyIntact": "完好，且与账本一致",
+  "backupVerifyDrifted": "完好。账本已变动：缺少 {creates} 条，改动 {updates} 条，之后新增 {deletes} 条。",
+  "@backupVerifyDrifted": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupVerifyBroken": "该备份有 {count} 个问题：{first}",
+  "@backupVerifyBroken": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOpen": "打开"
 }
