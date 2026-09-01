@@ -1798,5 +1798,45 @@
         "type": "String"
       }
     }
-  }
+  },
+  "backupRestore": "Restaurar",
+  "backupRestoreTitle": "Restaurar a partir desta cópia de segurança?",
+  "backupRestorePlanning": "A calcular o que mudaria…",
+  "backupRestoreNothing": "Nada para repor: o registo já corresponde a esta cópia de segurança.",
+  "backupRestoreSummary": "{creates} para repor, {updates} para reescrever, {deletes} para remover.",
+  "@backupRestoreSummary": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreDeletes": "Remover também linhas acrescentadas desde esta cópia",
+  "backupRestoreNote": "As linhas repostas voltam com identificadores novos, e é criada uma cópia de segurança antes de qualquer escrita. Regras, limites de orçamento, anexos e moedas não podem ser reescritos pela API.",
+  "backupRestoreDone": "{applied} linhas restauradas, {failed} falharam",
+  "@backupRestoreDone": {
+    "placeholders": {
+      "applied": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreFailed": "Não foi possível restaurar: {error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWrongLedger": "Esta cópia de segurança foi criada por outro utilizador do Firefly, por isso não pode ser restaurada aqui."
 }

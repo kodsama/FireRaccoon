@@ -45,6 +45,11 @@ final backupServiceProvider = Provider<BackupService?>((ref) {
   return BackupService(api, store);
 });
 
+/// Raised when a backup belongs to a different Firefly user.
+class WrongLedgerException implements Exception {
+  const WrongLedgerException();
+}
+
 /// What a backup is doing right now, for a screen that has to stay honest about
 /// a read that walks a whole ledger.
 class BackupProgress {
@@ -116,6 +121,54 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
     final service = ref.read(backupServiceProvider);
     if (service == null) return null;
     return service.file(backupId, fileName);
+  }
+
+  /// What restoring [backupId] would change, without changing anything.
+  ///
+  /// Throws when the backup was taken as a different Firefly user: putting one
+  /// ledger's rows into another is the mistake worth refusing outright rather
+  /// than listing as a plan someone might approve.
+  Future<RestorePlan> planRestoreOf(
+    String backupId, {
+    bool includeDeletes = false,
+  }) async {
+    final service = ref.read(backupServiceProvider);
+    final api = ref.read(apiServiceProvider);
+    if (service == null || api == null) {
+      throw StateError('Backups are unavailable in this deployment');
+    }
+    final manifest = await service.read(backupId);
+    final snapshot = await service.snapshot(backupId);
+    if (manifest == null || snapshot == null) {
+      throw StateError('Backup $backupId has no snapshot to restore from');
+    }
+    final owner = await api.getCurrentUser();
+    if (manifest.ownerId != null && manifest.ownerId != owner.id) {
+      throw const WrongLedgerException();
+    }
+    final current = await DataExportService(
+      api,
+    ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+    return planRestore(
+      backup: snapshot,
+      current: current.toJson(),
+      includeDeletes: includeDeletes,
+    );
+  }
+
+  /// Applies [plan], after taking a backup of what it is about to change.
+  Future<List<RestoreOutcome>> applyRestore(RestorePlan plan) async {
+    final api = ref.read(apiServiceProvider);
+    if (api == null) {
+      throw StateError('Not connected to Firefly III');
+    }
+    await create();
+    final outcomes = await RestoreRunner(api).apply(plan);
+    _log.info(
+      'Restore applied: ${outcomes.where((o) => o.applied).length} of '
+      '${outcomes.length} steps',
+    );
+    return outcomes;
   }
 
   Future<void> refresh() async {

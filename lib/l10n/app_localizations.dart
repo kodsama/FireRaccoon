@@ -6681,6 +6681,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Snapshot saved to {path}'**
   String backupSavedTo(String path);
+
+  /// No description provided for @backupRestore.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get backupRestore;
+
+  /// No description provided for @backupRestoreTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore from this backup?'**
+  String get backupRestoreTitle;
+
+  /// No description provided for @backupRestorePlanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Working out what would change…'**
+  String get backupRestorePlanning;
+
+  /// No description provided for @backupRestoreNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to put back: the ledger already matches this backup.'**
+  String get backupRestoreNothing;
+
+  /// No description provided for @backupRestoreSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{creates} to put back, {updates} to write over, {deletes} to remove.'**
+  String backupRestoreSummary(int creates, int updates, int deletes);
+
+  /// No description provided for @backupRestoreDeletes.
+  ///
+  /// In en, this message translates to:
+  /// **'Also remove rows added since this backup'**
+  String get backupRestoreDeletes;
+
+  /// No description provided for @backupRestoreNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Rows put back come back under new identifiers, and a fresh backup is taken before anything is written. Rules, budget limits, attachments and currencies cannot be written back through the API.'**
+  String get backupRestoreNote;
+
+  /// No description provided for @backupRestoreDone.
+  ///
+  /// In en, this message translates to:
+  /// **'Restored {applied} rows, {failed} failed'**
+  String backupRestoreDone(int applied, int failed);
+
+  /// No description provided for @backupRestoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not restore: {error}'**
+  String backupRestoreFailed(String error);
+
+  /// No description provided for @backupRestoreWrongLedger.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup was taken from a different Firefly user, so it cannot be restored here.'**
+  String get backupRestoreWrongLedger;
 }
 
 class _AppLocalizationsDelegate

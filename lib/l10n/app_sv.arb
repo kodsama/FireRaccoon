@@ -1798,5 +1798,45 @@
         "type": "String"
       }
     }
-  }
+  },
+  "backupRestore": "Återställ",
+  "backupRestoreTitle": "Återställa från den här säkerhetskopian?",
+  "backupRestorePlanning": "Räknar ut vad som skulle ändras…",
+  "backupRestoreNothing": "Inget att lägga tillbaka: liggaren stämmer redan med säkerhetskopian.",
+  "backupRestoreSummary": "{creates} att lägga tillbaka, {updates} att skriva över, {deletes} att ta bort.",
+  "@backupRestoreSummary": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreDeletes": "Ta även bort rader som tillkommit sedan säkerhetskopian",
+  "backupRestoreNote": "Rader som läggs tillbaka får nya identifierare, och en ny säkerhetskopia tas innan något skrivs. Regler, budgettak, bilagor och valutor går inte att skriva tillbaka via API:et.",
+  "backupRestoreDone": "{applied} rader återställda, {failed} misslyckades",
+  "@backupRestoreDone": {
+    "placeholders": {
+      "applied": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreFailed": "Kunde inte återställa: {error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWrongLedger": "Säkerhetskopian togs av en annan Firefly-användare och kan inte återställas här."
 }

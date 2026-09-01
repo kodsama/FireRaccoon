@@ -1798,5 +1798,45 @@
         "type": "String"
       }
     }
-  }
+  },
+  "backupRestore": "恢复",
+  "backupRestoreTitle": "从这个备份恢复？",
+  "backupRestorePlanning": "正在计算会有哪些改动…",
+  "backupRestoreNothing": "没有需要放回的内容：账本已经与该备份一致。",
+  "backupRestoreSummary": "放回 {creates} 条，覆盖 {updates} 条，删除 {deletes} 条。",
+  "@backupRestoreSummary": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreDeletes": "同时删除该备份之后新增的行",
+  "backupRestoreNote": "放回的行会获得新的标识符，写入之前会先创建一份新备份。规则、预算限额、附件和货币无法通过 API 写回。",
+  "backupRestoreDone": "已恢复 {applied} 条，{failed} 条失败",
+  "@backupRestoreDone": {
+    "placeholders": {
+      "applied": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreFailed": "无法恢复：{error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWrongLedger": "该备份由另一个 Firefly 用户创建，无法在此恢复。"
 }

@@ -3712,4 +3712,44 @@ class AppLocalizationsFr extends AppLocalizations {
   String backupSavedTo(String path) {
     return 'Instantané enregistré dans $path';
   }
+
+  @override
+  String get backupRestore => 'Restaurer';
+
+  @override
+  String get backupRestoreTitle => 'Restaurer depuis cette sauvegarde ?';
+
+  @override
+  String get backupRestorePlanning => 'Calcul de ce qui changerait…';
+
+  @override
+  String get backupRestoreNothing =>
+      'Rien à remettre : le registre correspond déjà à cette sauvegarde.';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '$creates à remettre, $updates à réécrire, $deletes à supprimer.';
+  }
+
+  @override
+  String get backupRestoreDeletes =>
+      'Supprimer aussi les lignes ajoutées depuis cette sauvegarde';
+
+  @override
+  String get backupRestoreNote =>
+      'Les lignes remises reviennent sous de nouveaux identifiants, et une nouvelle sauvegarde est prise avant toute écriture. Les règles, les plafonds de budget, les pièces jointes et les devises ne peuvent pas être réécrits via l\'API.';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return '$applied lignes restaurées, $failed en échec';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return 'Restauration impossible : $error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger =>
+      'Cette sauvegarde vient d\'un autre utilisateur Firefly, elle ne peut pas être restaurée ici.';
 }

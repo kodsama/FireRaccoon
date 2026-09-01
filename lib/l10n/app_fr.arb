@@ -1798,5 +1798,45 @@
         "type": "String"
       }
     }
-  }
+  },
+  "backupRestore": "Restaurer",
+  "backupRestoreTitle": "Restaurer depuis cette sauvegarde ?",
+  "backupRestorePlanning": "Calcul de ce qui changerait…",
+  "backupRestoreNothing": "Rien à remettre : le registre correspond déjà à cette sauvegarde.",
+  "backupRestoreSummary": "{creates} à remettre, {updates} à réécrire, {deletes} à supprimer.",
+  "@backupRestoreSummary": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreDeletes": "Supprimer aussi les lignes ajoutées depuis cette sauvegarde",
+  "backupRestoreNote": "Les lignes remises reviennent sous de nouveaux identifiants, et une nouvelle sauvegarde est prise avant toute écriture. Les règles, les plafonds de budget, les pièces jointes et les devises ne peuvent pas être réécrits via l'API.",
+  "backupRestoreDone": "{applied} lignes restaurées, {failed} en échec",
+  "@backupRestoreDone": {
+    "placeholders": {
+      "applied": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreFailed": "Restauration impossible : {error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWrongLedger": "Cette sauvegarde vient d'un autre utilisateur Firefly, elle ne peut pas être restaurée ici."
 }

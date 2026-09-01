@@ -440,9 +440,13 @@ class FakeFireflyService implements FireflyService {
     return categories;
   }
 
+  /// Names passed to [createCategory], so a test can see what was written.
+  final List<String> createdCategories = [];
+
   @override
   Future<Category> createCategory(String name, {String? notes}) async {
     _maybeThrow();
+    createdCategories.add(name);
     return Category(id: 'cat-${categories.length + 1}', name: name);
   }
 

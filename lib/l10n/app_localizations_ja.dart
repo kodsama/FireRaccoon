@@ -3593,4 +3593,42 @@ class AppLocalizationsJa extends AppLocalizations {
   String backupSavedTo(String path) {
     return 'スナップショットを $path に保存しました';
   }
+
+  @override
+  String get backupRestore => '復元';
+
+  @override
+  String get backupRestoreTitle => 'このバックアップから復元しますか？';
+
+  @override
+  String get backupRestorePlanning => '何が変わるかを確認しています…';
+
+  @override
+  String get backupRestoreNothing => '戻すものはありません。台帳はすでにこのバックアップと一致しています。';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '戻す $creates 件、上書きする $updates 件、削除する $deletes 件。';
+  }
+
+  @override
+  String get backupRestoreDeletes => 'このバックアップ以降に追加された行も削除する';
+
+  @override
+  String get backupRestoreNote =>
+      '戻した行には新しい識別子が付き、書き込む前に新しいバックアップを取ります。ルール、予算上限、添付ファイル、通貨は API では書き戻せません。';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return '$applied 件を復元、$failed 件が失敗';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return '復元できませんでした: $error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger =>
+      'このバックアップは別の Firefly ユーザーが取ったものなので、ここには復元できません。';
 }

@@ -252,5 +252,80 @@ void main() {
       await notifier.refresh();
       expect(await notifier.file('whatever', kBackupSnapshotFile), isNull);
     });
+
+    test('restoring needs a store, a snapshot and a connection', () async {
+      final store = _MemoryBackupStore();
+      final container = _container(store: store);
+      await container.read(backupsProvider.future);
+      final notifier = container.read(backupsProvider.notifier);
+      final manifest = await notifier.create();
+
+      // A backup whose snapshot went missing cannot be planned from.
+      store.backups[manifest.id]!.remove(kBackupSnapshotFile);
+      await expectLater(
+        notifier.planRestoreOf(manifest.id),
+        throwsA(isA<StateError>()),
+      );
+
+      // Neither can a deployment with nowhere to keep backups at all.
+      final nowhere = _container();
+      await expectLater(
+        nowhere.read(backupsProvider.notifier).planRestoreOf('b1'),
+        throwsA(isA<StateError>()),
+      );
+      await expectLater(
+        nowhere
+            .read(backupsProvider.notifier)
+            .applyRestore(const RestorePlan(steps: [], unrestorable: [])),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('a backup from another ledger is refused before planning', () async {
+      final store = _MemoryBackupStore();
+      final container = _container(store: store);
+      await container.read(backupsProvider.future);
+      final notifier = container.read(backupsProvider.notifier);
+      final manifest = await notifier.create();
+      final json =
+          jsonDecode(
+                utf8.decode(store.backups[manifest.id]![kBackupManifestFile]!),
+              )
+              as Map<String, Object?>;
+      json['owner'] = {'id': '99', 'email': 'someone@else.test'};
+      store.backups[manifest.id]![kBackupManifestFile] = utf8.encode(
+        jsonEncode(json),
+      );
+
+      await expectLater(
+        notifier.planRestoreOf(manifest.id),
+        throwsA(isA<WrongLedgerException>()),
+      );
+    });
+
+    test('applying a plan takes a backup first', () async {
+      final store = _MemoryBackupStore();
+      final container = _container(store: store);
+      await container.read(backupsProvider.future);
+      final notifier = container.read(backupsProvider.notifier);
+
+      final outcomes = await notifier.applyRestore(
+        RestorePlan(
+          steps: [
+            const RestoreStep(
+              type: 'categories',
+              action: RestoreAction.create,
+              id: '7',
+              label: 'Food',
+              row: {'id': '7', 'name': 'Food'},
+            ),
+          ],
+          unrestorable: const [],
+        ),
+      );
+
+      expect(outcomes.single.applied, isTrue);
+      expect(store.backups, hasLength(1));
+    });
   });
 }
