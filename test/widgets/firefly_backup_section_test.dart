@@ -251,4 +251,34 @@ void main() {
     expect(find.textContaining('Restored 1 rows'), findsOneWidget);
     await _letToastPass(tester);
   });
+
+  testWidgets('refreshing picks up a backup taken elsewhere', (tester) async {
+    final store = _MemoryBackupStore();
+    await _pump(tester, store: store);
+    expect(find.text('No backups yet'), findsOneWidget);
+
+    // What an agent taking one over MCP leaves behind: the same store, written
+    // to by another process, with nothing to tell this screen about it.
+    await store.put(
+      '20260101T000000+0000',
+      kBackupManifestFile,
+      utf8.encode(
+        jsonEncode({
+          'id': '20260101T000000+0000',
+          'taken_at': '2026-01-01T12:00:00Z',
+          'timezone': {'name': 'UTC', 'offset_minutes': 0},
+          'counts': {'transactions': 4, 'accounts': 1},
+          'entries': [
+            {'name': 'snapshot.json', 'bytes': 1024},
+          ],
+        }),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Refresh'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No backups yet'), findsNothing);
+    expect(find.textContaining('4 transactions, 1 accounts'), findsOneWidget);
+  });
 }
