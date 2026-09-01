@@ -84,6 +84,13 @@ Map<String, Object?> _notFound(String message) => {
 /// Refused rather than hidden: an agent that cannot find `create_backup` in the
 /// catalog concludes backups are not a thing FireRaccoon does, and goes on to
 /// change the ledger without one.
+/// Answer for a sealed backup nobody supplied the password for.
+Map<String, Object?> _sealed(BackupPasswordException error) => {
+  'ok': false,
+  'code': 'password_required',
+  'error': '$error',
+};
+
 Map<String, Object?> _backupsUnavailable() => {
   'ok': false,
   'code': 'unavailable',
@@ -2364,12 +2371,27 @@ List<McpTool> buildTools({
           'the whole ledger, so it is slower than a single call; take one per '
           'session of changes rather than one per change. It cannot reach the '
           'database, the attachments or the instance key: what it protects '
-          'against is a change someone made, not a destroyed instance.',
-      inputSchema: {'type': 'object', 'properties': <String, Object?>{}},
+          'against is a change someone made, not a destroyed instance. Pass a '
+          'password to seal it; everything carrying ledger data is then '
+          'encrypted at rest and reading it back needs the same password.',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'password': {
+            'type': 'string',
+            'description':
+                'Seals the backup. It travels in this call and is never stored, '
+                'so a backup nobody can produce the password for is a backup '
+                'nobody can restore.',
+          },
+        },
+      },
       run: (args) async {
         final service = backupService();
         if (service == null) return _backupsUnavailable();
-        final manifest = await service.create();
+        final manifest = await service.create(
+          password: args['password'] as String?,
+        );
         return {
           'ok': true,
           'backup': manifest.toJson(),
@@ -2414,6 +2436,12 @@ List<McpTool> buildTools({
                 'Path inside the backup, as the manifest names it: '
                 '`snapshot.json` or `csv/rules.csv`.',
           },
+          'password': {
+            'type': 'string',
+            'description':
+                'Required to read a file out of a sealed backup. The manifest '
+                'comes back either way and says whether one is needed.',
+          },
           'max_bytes': {
             'type': 'integer',
             'default': 200000,
@@ -2432,7 +2460,16 @@ List<McpTool> buildTools({
         if (file == null || file.isEmpty) {
           return {'ok': true, 'backup': manifest.toJson()};
         }
-        final contents = await service.file(id, file);
+        final String? contents;
+        try {
+          contents = await service.file(
+            id,
+            file,
+            password: args['password'] as String?,
+          );
+        } on BackupPasswordException catch (error) {
+          return _sealed(error);
+        }
         if (contents == null) return _notFound('No $file in backup $id');
         final maxBytes = ((args['max_bytes'] as num?)?.toInt() ?? 200000).clamp(
           1,
@@ -2470,6 +2507,99 @@ List<McpTool> buildTools({
         if (await service.read(id) == null) return _notFound('No backup $id');
         await service.delete(id);
         return {'ok': true, 'backup_id': id, 'deleted': true};
+      },
+    ),
+    McpTool(
+      name: 'verify_backup',
+      description:
+          'Check a backup two ways and write nothing. First whether it is still '
+          'the backup its manifest describes: every part present, the sizes '
+          'unchanged, and a sealed one opening with the password given. Then '
+          'how far the ledger has moved since it was taken, counted by row. A '
+          'backup that is intact and finds no differences is one you can trust '
+          'to put things back.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['backup_id'],
+        'properties': {
+          'backup_id': {'type': 'string'},
+          'password': {
+            'type': 'string',
+            'description': 'Required when the backup is sealed.',
+          },
+          'compare_ledger': {
+            'type': 'boolean',
+            'default': true,
+            'description':
+                'Read the ledger and report the differences. Turn it off to '
+                'check only the files, which costs one read instead of a walk '
+                'over everything.',
+          },
+          'max_differences_reported': {
+            'type': 'integer',
+            'default': 50,
+            'description': 'Ceiling on the rows listed. Counts stay whole.',
+          },
+        },
+      },
+      run: (args) async {
+        final id = (args['backup_id'] as String?)?.trim() ?? '';
+        if (id.isEmpty) return _badInput('backup_id is required');
+        final backupsService = backupService();
+        if (backupsService == null) return _backupsUnavailable();
+        final password = args['password'] as String?;
+
+        final integrity = await backupsService.check(id, password: password);
+        if (integrity.manifest == null) return _notFound('No backup $id');
+        final manifest = integrity.manifest!;
+
+        final result = <String, Object?>{
+          'ok': true,
+          'backup_id': id,
+          'taken_at': backupTimestampFor(manifest.takenAt),
+          'encrypted': manifest.encrypted,
+          'integrity': integrity.toJson(),
+        };
+        if (args['compare_ledger'] == false) return result;
+        if (!integrity.intact && integrity.readableFiles == 0) {
+          // Nothing opened, so there is nothing to compare the ledger against.
+          return result
+            ..['skipped_comparison'] =
+                'The backup could not be read, so the ledger was left alone.';
+        }
+
+        final Map<String, Object?>? snapshot;
+        try {
+          snapshot = await backupsService.snapshot(id, password: password);
+        } on BackupPasswordException catch (error) {
+          return _sealed(error);
+        }
+        if (snapshot == null) {
+          return result
+            ..['skipped_comparison'] =
+                'This backup has no snapshot, so there is nothing to compare.';
+        }
+
+        final api = service();
+        final owner = await api.getCurrentUser();
+        final current = await DataExportService(
+          api,
+        ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+        final plan = planRestore(backup: snapshot, current: current.toJson());
+        final max = ((args['max_differences_reported'] as num?)?.toInt() ?? 50)
+            .clamp(1, 2000);
+        return result
+          ..['same_ledger'] =
+              manifest.ownerId == null || manifest.ownerId == owner.id
+          ..['matches'] = plan.isEmpty
+          ..['differences'] = {
+            'counts_by_action': plan.countsByAction,
+            'counts_by_type': plan.countsByType,
+            'rows': [for (final step in plan.steps.take(max)) step.toJson()],
+            if (plan.steps.length > max)
+              'rows_truncated': plan.steps.length - max,
+          }
+          ..['unrestorable'] = plan.unrestorable;
       },
     ),
     McpTool(
@@ -2533,7 +2663,15 @@ List<McpTool> buildTools({
 
         final manifest = await backupsService.read(id);
         if (manifest == null) return _notFound('No backup $id');
-        final snapshot = await backupsService.snapshot(id);
+        final Map<String, Object?>? snapshot;
+        try {
+          snapshot = await backupsService.snapshot(
+            id,
+            password: args['password'] as String?,
+          );
+        } on BackupPasswordException catch (error) {
+          return _sealed(error);
+        }
         if (snapshot == null) {
           return _notFound('Backup $id has no snapshot to restore from');
         }
@@ -2594,8 +2732,11 @@ List<McpTool> buildTools({
           );
         }
 
-        // The restore is itself a change worth being able to undo.
-        final safety = await backupsService.create();
+        // The restore is itself a change worth being able to undo, sealed the
+        // same way the backup being restored was.
+        final safety = await backupsService.create(
+          password: args['password'] as String?,
+        );
         final runner = RestoreRunner(api);
         final outcomes = await runner.apply(plan);
         final failed = [

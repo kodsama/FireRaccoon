@@ -1,13 +1,20 @@
 import 'dart:convert';
 
+import 'package:crypto/crypto.dart';
+
 import '../models/firefly_csv_dataset.dart';
 import '../utils/date_range.dart';
+import 'backup_crypto.dart';
 import 'data_export_service.dart';
 import 'firefly_csv_export_service.dart';
 import 'firefly_service.dart';
 
 /// Schema version of a backup, separate from the snapshot's own.
-const int kBackupSchemaVersion = 1;
+///
+/// 2 records a digest per file, so a check can tell a file that changed from
+/// one that only changed size. Backups written at 1 have no digests and are
+/// checked on what they do carry.
+const int kBackupSchemaVersion = 2;
 
 /// Share of a backup's wall clock the snapshot takes, for turning two phases
 /// into one number.
@@ -76,6 +83,7 @@ class BackupEntry {
     required this.bytes,
     this.rows,
     this.error,
+    this.sha256,
   });
 
   factory BackupEntry.fromJson(Map<String, Object?> json) => BackupEntry(
@@ -83,6 +91,7 @@ class BackupEntry {
     bytes: (json['bytes'] as num?)?.toInt() ?? 0,
     rows: (json['rows'] as num?)?.toInt(),
     error: json['error'] as String?,
+    sha256: json['sha256'] as String?,
   );
 
   /// Path inside the backup, e.g. `snapshot.json` or `csv/rules.csv`.
@@ -95,6 +104,12 @@ class BackupEntry {
   /// Why this part is missing, null when it is not.
   final String? error;
 
+  /// Digest of the bytes as stored, absent on backups written before schema 2.
+  ///
+  /// Over the stored bytes rather than the plaintext, so a sealed backup can be
+  /// checked without its password.
+  final String? sha256;
+
   bool get ok => error == null;
 
   Map<String, Object?> toJson() => {
@@ -102,6 +117,7 @@ class BackupEntry {
     'bytes': bytes,
     if (rows != null) 'rows': rows,
     if (error != null) 'error': error,
+    if (sha256 != null) 'sha256': sha256,
   };
 }
 
@@ -120,6 +136,7 @@ class BackupManifest {
     this.ownerEmail,
     this.transactionsFrom,
     this.transactionsTo,
+    this.seal,
     this.schemaVersion = kBackupSchemaVersion,
   });
 
@@ -161,6 +178,11 @@ class BackupManifest {
       transactionsTo: DateTime.tryParse(
         json['transactions_to'] as String? ?? '',
       ),
+      seal: json['encryption'] == null
+          ? null
+          : BackupSeal.fromJson(
+              (json['encryption']! as Map).cast<String, Object?>(),
+            ),
       schemaVersion: (json['schema_version'] as num?)?.toInt() ?? 0,
     );
   }
@@ -187,7 +209,15 @@ class BackupManifest {
 
   final DateTime? transactionsFrom;
   final DateTime? transactionsTo;
+
+  /// How the payload was sealed, null when it was written in the clear.
+  ///
+  /// The manifest itself is never sealed: a list of backups has to be readable
+  /// to be a list, and this holds counts and a moment rather than the ledger.
+  final BackupSeal? seal;
   final int schemaVersion;
+
+  bool get encrypted => seal != null;
 
   /// True when every part was written, so a caller can tell a whole backup from
   /// one that lost a data set on the way.
@@ -208,10 +238,34 @@ class BackupManifest {
     'transactions_from': transactionsFrom?.toIso8601String(),
     'transactions_to': transactionsTo?.toIso8601String(),
     'complete': complete,
+    'encrypted': encrypted,
+    if (seal != null) 'encryption': seal!.toJson(),
     'total_bytes': totalBytes,
     'covers': covers,
     'excludes': excludes,
     'entries': [for (final entry in entries) entry.toJson()],
+  };
+}
+
+/// What a check of a backup's own files found.
+class BackupIntegrity {
+  const BackupIntegrity({
+    required this.problems,
+    this.readableFiles = 0,
+    this.manifest,
+  });
+
+  /// Everything wrong with it, one line each. Empty means intact.
+  final List<String> problems;
+  final int readableFiles;
+  final BackupManifest? manifest;
+
+  bool get intact => problems.isEmpty;
+
+  Map<String, Object?> toJson() => {
+    'intact': intact,
+    'readable_files': readableFiles,
+    'problems': problems,
   };
 }
 
@@ -246,12 +300,22 @@ class BackupService {
   ///
   /// [onProgress] reports what is being read and how far along it is, for a
   /// caller that has to show a ledger this size is moving rather than stuck.
+  /// [password] seals the payload as it is written. The manifest stays in the
+  /// clear so a list of backups is still a list; everything carrying ledger
+  /// data is sealed.
   Future<BackupManifest> create({
     DateTime? takenAt,
+    String? password,
     void Function(BackupProgress progress)? onProgress,
   }) async {
     final at = takenAt ?? DateTime.now();
     final id = await _freeId(backupIdFor(at));
+    final seal = (password == null || password.isEmpty)
+        ? null
+        : BackupSeal.create();
+    final cipher = seal == null
+        ? null
+        : await BackupCipher.derive(password!, seal);
     void report(String stage, double? fraction) =>
         onProgress?.call(BackupProgress(stage: stage, fraction: fraction));
 
@@ -271,7 +335,12 @@ class BackupService {
     );
     final entries = <BackupEntry>[];
     entries.add(
-      await _write(id, kBackupSnapshotFile, jsonEncode(snapshot.toJson())),
+      await _write(
+        id,
+        kBackupSnapshotFile,
+        jsonEncode(snapshot.toJson()),
+        cipher: cipher,
+      ),
     );
 
     final window = _transactionWindow(snapshot, at);
@@ -294,7 +363,13 @@ class BackupService {
       final name = '$kBackupCsvDirectory/${file.dataset.fileName}';
       entries.add(
         file.ok
-            ? await _write(id, name, file.contents, rows: file.rowCount)
+            ? await _write(
+                id,
+                name,
+                file.contents,
+                rows: file.rowCount,
+                cipher: cipher,
+              )
             : BackupEntry(name: name, bytes: 0, error: file.error),
       );
     }
@@ -318,6 +393,7 @@ class BackupService {
       ownerEmail: owner.email,
       transactionsFrom: window.from,
       transactionsTo: window.to,
+      seal: seal,
     );
     report('manifest', 1);
     await _store.put(
@@ -360,24 +436,108 @@ class BackupService {
   }
 
   /// The snapshot a restore reads, or null when the backup has no readable one.
-  Future<Map<String, Object?>?> snapshot(String backupId) async {
-    final bytes = await _store.get(backupId, kBackupSnapshotFile);
-    if (bytes == null) return null;
+  ///
+  /// Throws [BackupPasswordException] when the backup is sealed and the
+  /// password is missing or wrong, rather than answering null: "there is no
+  /// snapshot" and "you gave the wrong password" are different problems and a
+  /// caller has to tell them apart.
+  Future<Map<String, Object?>?> snapshot(
+    String backupId, {
+    String? password,
+  }) async {
+    final contents = await file(
+      backupId,
+      kBackupSnapshotFile,
+      password: password,
+    );
+    if (contents == null) return null;
     final Object? decoded;
     try {
-      decoded = jsonDecode(utf8.decode(bytes));
+      decoded = jsonDecode(contents);
     } on FormatException {
       return null;
     }
     return decoded is Map ? decoded.cast<String, Object?>() : null;
   }
 
-  Future<String?> file(String backupId, String fileName) async {
+  Future<String?> file(
+    String backupId,
+    String fileName, {
+    String? password,
+  }) async {
     final bytes = await _store.get(backupId, fileName);
-    return bytes == null ? null : utf8.decode(bytes);
+    if (bytes == null) return null;
+    if (!isSealedBackupFile(bytes)) return utf8.decode(bytes);
+    final manifest = await read(backupId);
+    final seal = manifest?.seal;
+    if (seal == null) {
+      throw const BackupPasswordException(
+        'This backup is sealed but its manifest does not say how, so nothing '
+        'can open it.',
+      );
+    }
+    if (password == null || password.isEmpty) {
+      throw const BackupPasswordException('This backup is password protected.');
+    }
+    final cipher = await BackupCipher.derive(password, seal);
+    return utf8.decode(await cipher.open(fileName, bytes));
   }
 
   Future<void> delete(String backupId) => _store.deleteBackup(backupId);
+
+  /// Whether a backup is still the backup its manifest describes.
+  ///
+  /// Checks what is on disk against what was written: every part present, the
+  /// sizes unchanged, and the payload opening with the password given. This says
+  /// nothing about whether the ledger has moved on since; that is what a restore
+  /// plan is for.
+  Future<BackupIntegrity> check(String backupId, {String? password}) async {
+    final manifest = await read(backupId);
+    if (manifest == null) {
+      return const BackupIntegrity(problems: ['No manifest to check against']);
+    }
+    final problems = <String>[];
+    var readable = 0;
+    for (final entry in manifest.entries) {
+      if (!entry.ok) {
+        problems.add('${entry.name} was never written: ${entry.error}');
+        continue;
+      }
+      final bytes = await _store.get(backupId, entry.name);
+      if (bytes == null) {
+        problems.add('${entry.name} is missing');
+        continue;
+      }
+      if (bytes.length != entry.bytes) {
+        problems.add(
+          '${entry.name} is ${bytes.length} bytes, '
+          'the manifest says ${entry.bytes}',
+        );
+        continue;
+      }
+      final digest = entry.sha256;
+      if (digest != null && sha256.convert(bytes).toString() != digest) {
+        problems.add('${entry.name} has changed since it was written');
+        continue;
+      }
+      if (!isSealedBackupFile(bytes)) {
+        readable++;
+        continue;
+      }
+      // Sealed: the only way to know it opens is to open it.
+      try {
+        await file(backupId, entry.name, password: password);
+        readable++;
+      } on BackupPasswordException catch (error) {
+        problems.add('${entry.name} would not open: ${error.message}');
+      }
+    }
+    return BackupIntegrity(
+      problems: problems,
+      readableFiles: readable,
+      manifest: manifest,
+    );
+  }
 
   /// [base] unless the store already holds it, then the next free suffix.
   ///
@@ -399,10 +559,19 @@ class BackupService {
     String name,
     String contents, {
     int? rows,
+    BackupCipher? cipher,
   }) async {
-    final bytes = utf8.encode(contents);
+    final plain = utf8.encode(contents);
+    final bytes = cipher == null ? plain : await cipher.seal(name, plain);
     await _store.put(id, name, bytes);
-    return BackupEntry(name: name, bytes: bytes.length, rows: rows);
+    // The stored size and digest, which is what a reader will find on disk,
+    // not what it was before sealing.
+    return BackupEntry(
+      name: name,
+      bytes: bytes.length,
+      rows: rows,
+      sha256: sha256.convert(bytes).toString(),
+    );
   }
 
   /// The window the CSV export walks, taken from what the snapshot found.

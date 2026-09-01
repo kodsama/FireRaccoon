@@ -98,7 +98,7 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
   /// Errors are thrown rather than folded into the state: the list of backups
   /// that already exist is still true, and a failed attempt is the caller's to
   /// report.
-  Future<BackupManifest> create() async {
+  Future<BackupManifest> create({String? password}) async {
     final service = ref.read(backupServiceProvider);
     if (service == null) {
       throw StateError('Backups are unavailable in this deployment');
@@ -106,6 +106,7 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
     _progress.value = const BackupActivity(running: true);
     try {
       final manifest = await service.create(
+        password: password,
         onProgress: (progress) => _progress.value = BackupActivity(
           running: true,
           stage: progress.stage,
@@ -135,10 +136,53 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
   }
 
   /// One file out of a backup, for handing it to something else.
-  Future<String?> file(String backupId, String fileName) async {
+  Future<String?> file(
+    String backupId,
+    String fileName, {
+    String? password,
+  }) async {
     final service = ref.read(backupServiceProvider);
     if (service == null) return null;
-    return service.file(backupId, fileName);
+    return service.file(backupId, fileName, password: password);
+  }
+
+  /// Whether a backup is still itself, and how far the ledger has moved from
+  /// it. Reads only.
+  Future<({BackupIntegrity integrity, RestorePlan? drift})> verify(
+    String backupId, {
+    String? password,
+  }) async {
+    final service = ref.read(backupServiceProvider);
+    final api = ref.read(apiServiceProvider);
+    if (service == null || api == null) {
+      throw StateError('Backups are unavailable in this deployment');
+    }
+    _progress.value = const BackupActivity(running: true, stage: 'verify');
+    try {
+      final integrity = await service.check(backupId, password: password);
+      if (!integrity.intact && integrity.readableFiles == 0) {
+        return (integrity: integrity, drift: null);
+      }
+      final snapshot = await service.snapshot(backupId, password: password);
+      if (snapshot == null) return (integrity: integrity, drift: null);
+      // Reading the ledger is the long half, and it reports itself, so a check
+      // of a large ledger moves the same bar a backup does.
+      final current = await DataExportService(api).export(
+        from: kFireflyLedgerStart,
+        to: kFireflyLedgerEnd,
+        onProgress: (stage, fraction) => _progress.value = BackupActivity(
+          running: true,
+          stage: stage,
+          fraction: fraction,
+        ),
+      );
+      return (
+        integrity: integrity,
+        drift: planRestore(backup: snapshot, current: current.toJson()),
+      );
+    } finally {
+      _progress.value = BackupActivity.idle;
+    }
   }
 
   /// What restoring [backupId] would change, without changing anything.
@@ -149,6 +193,7 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
   Future<RestorePlan> planRestoreOf(
     String backupId, {
     bool includeDeletes = false,
+    String? password,
   }) async {
     final service = ref.read(backupServiceProvider);
     final api = ref.read(apiServiceProvider);
@@ -156,7 +201,7 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
       throw StateError('Backups are unavailable in this deployment');
     }
     final manifest = await service.read(backupId);
-    final snapshot = await service.snapshot(backupId);
+    final snapshot = await service.snapshot(backupId, password: password);
     if (manifest == null || snapshot == null) {
       throw StateError('Backup $backupId has no snapshot to restore from');
     }
@@ -175,12 +220,17 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
   }
 
   /// Applies [plan], after taking a backup of what it is about to change.
-  Future<List<RestoreOutcome>> applyRestore(RestorePlan plan) async {
+  Future<List<RestoreOutcome>> applyRestore(
+    RestorePlan plan, {
+    String? password,
+  }) async {
     final api = ref.read(apiServiceProvider);
     if (api == null) {
       throw StateError('Not connected to Firefly III');
     }
-    await create();
+    // Sealed the same way the backup being restored was, so the safety net is
+    // no more readable than what it protects.
+    await create(password: password);
     _progress.value = const BackupActivity(running: true, restoreTotal: 0);
     try {
       final outcomes = await RestoreRunner(api).apply(

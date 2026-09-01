@@ -490,4 +490,212 @@ void main() {
       expect(failure['label'], 'Lost row');
     });
   });
+  group('sealed backups', () {
+    test('a password seals everything but the manifest', () async {
+      final client = fireflyMockClient();
+      final result = await _tool(
+        'create_backup',
+        client: client,
+        backups: store,
+      ).run({'password': 'a good password'});
+
+      final backup = result['backup']! as Map<String, Object?>;
+      expect(backup['encrypted'], isTrue);
+      final id = backup['id']! as String;
+      expect(
+        File('${root.path}/$id/manifest.json').readAsStringSync(),
+        contains('"encrypted": true'),
+      );
+      expect(
+        File('${root.path}/$id/snapshot.json').readAsBytesSync().take(4),
+        kSealedBackupMagic,
+      );
+    });
+
+    test('reading one back needs the password', () async {
+      final client = fireflyMockClient();
+      final created = await _tool(
+        'create_backup',
+        client: client,
+        backups: store,
+      ).run({'password': 'a good password'});
+      final id = (created['backup']! as Map)['id']! as String;
+      final tool = _tool('get_backup', client: client, backups: store);
+
+      final without = await tool.run({'backup_id': id, 'file': 'csv/tags.csv'});
+      final wrong = await tool.run({
+        'backup_id': id,
+        'file': 'csv/tags.csv',
+        'password': 'nope',
+      });
+      final right = await tool.run({
+        'backup_id': id,
+        'file': 'csv/tags.csv',
+        'password': 'a good password',
+      });
+
+      expect(without['code'], 'password_required');
+      expect(wrong['code'], 'password_required');
+      expect(wrong['error'], contains('does not open'));
+      expect(right['contents'], contains('tags'));
+      // The manifest still reads without one, or a list would be useless.
+      expect(
+        (await tool.run({'backup_id': id}))['backup'],
+        isA<Map<String, Object?>>(),
+      );
+    });
+
+    test('restoring a sealed backup asks for the password', () async {
+      final client = fireflyMockClient();
+      final created = await _tool(
+        'create_backup',
+        client: client,
+        backups: store,
+      ).run({'password': 'a good password'});
+      final id = (created['backup']! as Map)['id']! as String;
+      final tool = _tool('restore_backup', client: client, backups: store);
+
+      final without = await tool.run({'backup_id': id});
+      final with_ = await tool.run({
+        'backup_id': id,
+        'password': 'a good password',
+      });
+
+      expect(without['code'], 'password_required');
+      expect(with_['ok'], isTrue);
+      expect((with_['plan']! as Map)['steps'], isEmpty);
+    });
+
+    test('a restore seals the backup it takes first the same way', () async {
+      final client = fireflyMockClient();
+      final created = await _tool(
+        'create_backup',
+        client: client,
+        backups: store,
+      ).run({'password': 'a good password'});
+      final id = (created['backup']! as Map)['id']! as String;
+
+      final restored =
+          await _tool('restore_backup', client: client, backups: store).run({
+            'backup_id': id,
+            'password': 'a good password',
+            'dry_run': false,
+            'confirm': true,
+          });
+
+      final safety = restored['backup_taken_first']! as String;
+      expect(
+        File('${root.path}/$safety/snapshot.json').readAsBytesSync().take(4),
+        kSealedBackupMagic,
+      );
+    });
+  });
+
+  group('verify', () {
+    test('a fresh backup is intact and matches the ledger', () async {
+      final client = fireflyMockClient();
+      final created = await _tool(
+        'create_backup',
+        client: client,
+        backups: store,
+      ).run({});
+      final id = (created['backup']! as Map)['id']! as String;
+
+      final result = await _tool(
+        'verify_backup',
+        client: client,
+        backups: store,
+      ).run({'backup_id': id});
+
+      expect(result['ok'], isTrue);
+      expect((result['integrity']! as Map)['intact'], isTrue);
+      expect(result['matches'], isTrue);
+      expect(result['same_ledger'], isTrue);
+      expect(result['encrypted'], isFalse);
+    });
+
+    test('a file that changed on disk is reported', () async {
+      final client = fireflyMockClient();
+      final created = await _tool(
+        'create_backup',
+        client: client,
+        backups: store,
+      ).run({});
+      final id = (created['backup']! as Map)['id']! as String;
+      File('${root.path}/$id/csv/tags.csv').writeAsStringSync('tampered');
+
+      final result = await _tool(
+        'verify_backup',
+        client: client,
+        backups: store,
+      ).run({'backup_id': id, 'compare_ledger': false});
+
+      final integrity = result['integrity']! as Map;
+      expect(integrity['intact'], isFalse);
+      expect((integrity['problems']! as List).single, contains('csv/tags.csv'));
+      expect(result['matches'], isNull);
+    });
+
+    test('a ledger that moved on is counted row by row', () async {
+      final client = fireflyMockClient();
+      final created = await _tool(
+        'create_backup',
+        client: client,
+        backups: store,
+      ).run({});
+      final id = (created['backup']! as Map)['id']! as String;
+      final snapshotFile = File('${root.path}/$id/snapshot.json');
+      final snapshot =
+          jsonDecode(snapshotFile.readAsStringSync()) as Map<String, Object?>;
+      (snapshot['categories']! as List).add({'id': '404', 'name': 'Gone'});
+      snapshotFile.writeAsStringSync(jsonEncode(snapshot));
+
+      final result = await _tool(
+        'verify_backup',
+        client: client,
+        backups: store,
+      ).run({'backup_id': id});
+
+      expect(result['matches'], isFalse);
+      final differences = result['differences']! as Map;
+      expect((differences['counts_by_action']! as Map)['create'], 1);
+      expect(((differences['rows']! as List).single as Map)['label'], 'Gone');
+    });
+
+    test('a sealed backup is verified with its password', () async {
+      final client = fireflyMockClient();
+      final created = await _tool(
+        'create_backup',
+        client: client,
+        backups: store,
+      ).run({'password': 'a good password'});
+      final id = (created['backup']! as Map)['id']! as String;
+      final tool = _tool('verify_backup', client: client, backups: store);
+
+      final wrong = await tool.run({'backup_id': id, 'password': 'nope'});
+      final right = await tool.run({
+        'backup_id': id,
+        'password': 'a good password',
+      });
+
+      expect((wrong['integrity']! as Map)['intact'], isFalse);
+      expect(right['matches'], isTrue);
+      expect(right['encrypted'], isTrue);
+    });
+
+    test('refuses what it cannot find, and needs an id', () async {
+      final client = fireflyMockClient();
+      final tool = _tool('verify_backup', client: client, backups: store);
+
+      expect((await tool.run({'backup_id': ''}))['code'], 'bad_input');
+      expect((await tool.run({'backup_id': 'nope'}))['code'], 'not_found');
+      expect(
+        (await _tool(
+          'verify_backup',
+          client: client,
+        ).run({'backup_id': 'b1'}))['code'],
+        'unavailable',
+      );
+    });
+  });
 }

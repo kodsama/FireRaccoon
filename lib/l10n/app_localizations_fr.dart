@@ -3757,4 +3757,37 @@ class AppLocalizationsFr extends AppLocalizations {
   String backupRestoring(int done, int total) {
     return 'Restauration de $done sur $total';
   }
+
+  @override
+  String get backupTakeProtected => 'Créer une sauvegarde protégée';
+
+  @override
+  String get backupEncryptedBadge => 'Protégée par mot de passe';
+
+  @override
+  String get backupPasswordNeeded =>
+      'Cette sauvegarde est protégée par un mot de passe.';
+
+  @override
+  String get backupPasswordWrong =>
+      'Ce mot de passe n\'ouvre pas cette sauvegarde.';
+
+  @override
+  String get backupVerify => 'Vérifier';
+
+  @override
+  String get backupVerifyIntact => 'Intacte, et conforme au registre';
+
+  @override
+  String backupVerifyDrifted(int creates, int updates, int deletes) {
+    return 'Intacte. Le registre a changé : $creates manquantes, $updates modifiées, $deletes ajoutées depuis.';
+  }
+
+  @override
+  String backupVerifyBroken(int count, String first) {
+    return '$count problèmes avec cette sauvegarde : $first';
+  }
+
+  @override
+  String get backupOpen => 'Ouvrir';
 }

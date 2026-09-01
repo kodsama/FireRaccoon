@@ -10,6 +10,7 @@ import 'package:share_plus/share_plus.dart';
 import '../l10n/l10n_extensions.dart';
 import '../providers/backup_providers.dart';
 import '../utils/app_feedback.dart';
+import 'backup_passphrase_dialog.dart';
 import 'confirmation_dialog.dart';
 import 'small_loading_indicator.dart';
 
@@ -129,10 +130,27 @@ class _TakeBackupButton extends ConsumerWidget {
 
   static final _log = AppLogger.scoped('widgets.fireflyBackup');
 
-  Future<void> _take(BuildContext context, WidgetRef ref) async {
+  Future<void> _take(
+    BuildContext context,
+    WidgetRef ref, {
+    bool protected = false,
+  }) async {
     final l10n = context.l10n;
+    String? password;
+    if (protected) {
+      // Confirmed twice, because a password nobody can reproduce is a backup
+      // nobody can restore.
+      password = await showBackupPassphraseDialog(
+        context: context,
+        confirm: true,
+        confirmLabel: l10n.backupTakeNow,
+      );
+      if (password == null || !context.mounted) return;
+    }
     try {
-      final manifest = await ref.read(backupsProvider.notifier).create();
+      final manifest = await ref
+          .read(backupsProvider.notifier)
+          .create(password: password);
       if (!context.mounted) return;
       showInfoToast(context, l10n.backupTaken(manifest.id));
     } on Object catch (error, stackTrace) {
@@ -162,6 +180,13 @@ class _TakeBackupButton extends ConsumerWidget {
                       : () => _take(context, ref),
                   icon: const Icon(LucideIcons.databaseBackup, size: 18),
                   label: Text(l10n.backupTakeNow),
+                ),
+                IconButton(
+                  tooltip: l10n.backupTakeProtected,
+                  icon: const Icon(LucideIcons.lock, size: 18),
+                  onPressed: progress.running
+                      ? null
+                      : () => _take(context, ref, protected: true),
                 ),
                 if (!progress.running) const Spacer(),
                 if (progress.running) ...[
@@ -207,6 +232,58 @@ class _BackupTile extends ConsumerWidget {
     await ref.read(backupsProvider.notifier).delete(manifest.id);
   }
 
+  /// The password for a sealed backup, or null when the person backed out.
+  ///
+  /// Asked for only when the manifest says the payload is sealed, so an
+  /// unprotected backup never prompts for nothing.
+  Future<String?> _passwordIfSealed(BuildContext context) async {
+    if (!manifest.encrypted) return '';
+    return showBackupPassphraseDialog(
+      context: context,
+      confirm: false,
+      confirmLabel: context.l10n.backupOpen,
+    );
+  }
+
+  /// Checks the backup opens and still matches its manifest, then how far the
+  /// ledger has moved from it. Writes nothing either way.
+  Future<void> _verify(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final password = await _passwordIfSealed(context);
+    if (password == null || !context.mounted) return;
+    try {
+      final result = await ref
+          .read(backupsProvider.notifier)
+          .verify(manifest.id, password: password);
+      if (!context.mounted) return;
+      final problems = result.integrity.problems;
+      if (problems.isNotEmpty) {
+        showErrorToast(
+          context,
+          l10n.backupVerifyBroken(problems.length, problems.first),
+        );
+        return;
+      }
+      final drift = result.drift;
+      if (drift == null || drift.isEmpty) {
+        showInfoToast(context, l10n.backupVerifyIntact);
+        return;
+      }
+      final counts = drift.countsByAction;
+      showInfoToast(
+        context,
+        l10n.backupVerifyDrifted(
+          counts['create'] ?? 0,
+          counts['update'] ?? 0,
+          counts['delete'] ?? 0,
+        ),
+      );
+    } on Object catch (error) {
+      if (!context.mounted) return;
+      showErrorToast(context, l10n.backupRestoreFailed('$error'));
+    }
+  }
+
   /// Plans first, always, and writes only after someone reads the plan.
   ///
   /// A restore is the one thing here that changes the ledger, so what it would
@@ -214,9 +291,11 @@ class _BackupTile extends ConsumerWidget {
   Future<void> _restore(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
     final notifier = ref.read(backupsProvider.notifier);
+    final password = await _passwordIfSealed(context);
+    if (password == null || !context.mounted) return;
     final RestorePlan plan;
     try {
-      plan = await notifier.planRestoreOf(manifest.id);
+      plan = await notifier.planRestoreOf(manifest.id, password: password);
     } on WrongLedgerException {
       if (!context.mounted) return;
       showErrorToast(context, l10n.backupRestoreWrongLedger);
@@ -245,7 +324,7 @@ class _BackupTile extends ConsumerWidget {
     if (confirmed != true) return;
 
     try {
-      final outcomes = await notifier.applyRestore(plan);
+      final outcomes = await notifier.applyRestore(plan, password: password);
       final failed = outcomes.where((outcome) => !outcome.applied).length;
       if (!context.mounted) return;
       showInfoToast(
@@ -259,9 +338,11 @@ class _BackupTile extends ConsumerWidget {
   }
 
   Future<void> _saveSnapshot(BuildContext context, WidgetRef ref) async {
+    final password = await _passwordIfSealed(context);
+    if (password == null || !context.mounted) return;
     final contents = await ref
         .read(backupsProvider.notifier)
-        .file(manifest.id, kBackupSnapshotFile);
+        .file(manifest.id, kBackupSnapshotFile, password: password);
     if (contents == null || !context.mounted) return;
     await SharePlus.instance.share(
       ShareParams(
@@ -286,7 +367,11 @@ class _BackupTile extends ConsumerWidget {
 
     return ListTile(
       leading: Icon(
-        manifest.complete ? LucideIcons.archive : LucideIcons.triangleAlert,
+        !manifest.complete
+            ? LucideIcons.triangleAlert
+            : manifest.encrypted
+            ? LucideIcons.lock
+            : LucideIcons.archive,
         color: manifest.complete ? null : theme.colorScheme.error,
       ),
       title: Text(
@@ -300,16 +385,19 @@ class _BackupTile extends ConsumerWidget {
             manifest.counts['accounts'] ?? 0,
           ),
           l10n.backupSize(manifest.entries.length, kilobytes),
+          if (manifest.encrypted) l10n.backupEncryptedBadge,
           if (!manifest.complete) l10n.backupIncomplete,
         ].join(' · '),
       ),
       trailing: PopupMenuButton<String>(
         itemBuilder: (context) => [
+          PopupMenuItem(value: 'verify', child: Text(l10n.backupVerify)),
           PopupMenuItem(value: 'restore', child: Text(l10n.backupRestore)),
           PopupMenuItem(value: 'save', child: Text(l10n.backupSaveSnapshot)),
           PopupMenuItem(value: 'delete', child: Text(l10n.delete)),
         ],
         onSelected: (value) => switch (value) {
+          'verify' => _verify(context, ref),
           'restore' => _restore(context, ref),
           'save' => _saveSnapshot(context, ref),
           _ => _delete(context, ref),

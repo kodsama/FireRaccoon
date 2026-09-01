@@ -459,4 +459,260 @@ void main() {
       expect(await service.list(), isEmpty);
     });
   });
+
+  group('sealed with a password', () {
+    test('nothing carrying ledger data is left in the clear', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(_serviceWith(_ledger()), store);
+
+      final manifest = await service.create(
+        takenAt: DateTime.utc(2026, 9, 1),
+        password: 'correct horse battery staple',
+      );
+
+      expect(manifest.encrypted, isTrue);
+      expect(manifest.seal!.iterations, kBackupPbkdf2Iterations);
+      final files = store.backups[manifest.id]!;
+      for (final entry in files.entries) {
+        if (entry.key == kBackupManifestFile) {
+          // The list has to stay readable, and this holds counts, not rows.
+          expect(isSealedBackupFile(entry.value), isFalse);
+          continue;
+        }
+        expect(
+          isSealedBackupFile(entry.value),
+          isTrue,
+          reason: '${entry.key} was written in the clear',
+        );
+        expect(
+          utf8.decode(entry.value, allowMalformed: true),
+          isNot(contains('Groceries')),
+        );
+      }
+    });
+
+    test('the password reads it back, unchanged', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(_serviceWith(_ledger()), store);
+      final sealed = await service.create(password: 'a good password');
+      final plain = await BackupService(
+        _serviceWith(_ledger()),
+        _MemoryBackupStore(),
+      ).create();
+
+      final snapshot = await service.snapshot(
+        sealed.id,
+        password: 'a good password',
+      );
+
+      expect(snapshot!['counts'], isNotNull);
+      expect(
+        (snapshot['transactions']! as List).length,
+        plain.counts['transactions'],
+      );
+      expect(
+        await service.file(
+          sealed.id,
+          'csv/tags.csv',
+          password: 'a good password',
+        ),
+        contains('tags'),
+      );
+    });
+
+    test('a wrong or missing password is refused, not answered', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(_serviceWith(_ledger()), store);
+      final manifest = await service.create(password: 'the right one');
+
+      await expectLater(
+        service.snapshot(manifest.id),
+        throwsA(
+          isA<BackupPasswordException>().having(
+            (e) => e.message,
+            'message',
+            contains('password protected'),
+          ),
+        ),
+      );
+      await expectLater(
+        service.snapshot(manifest.id, password: 'the wrong one'),
+        throwsA(
+          isA<BackupPasswordException>().having(
+            (e) => e.message,
+            'message',
+            contains('does not open'),
+          ),
+        ),
+      );
+    });
+
+    test('a backup with no password is read without one', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(_serviceWith(_ledger()), store);
+
+      final manifest = await service.create(password: '');
+
+      expect(manifest.encrypted, isFalse);
+      expect(await service.snapshot(manifest.id), isNotNull);
+    });
+
+    test('a sealed file whose manifest lost its salt says so', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(_serviceWith(_ledger()), store);
+      final manifest = await service.create(password: 'a good password');
+      final json =
+          jsonDecode(
+                utf8.decode(store.backups[manifest.id]![kBackupManifestFile]!),
+              )
+              as Map<String, Object?>;
+      json.remove('encryption');
+      store.backups[manifest.id]![kBackupManifestFile] = utf8.encode(
+        jsonEncode(json),
+      );
+
+      await expectLater(
+        service.snapshot(manifest.id, password: 'a good password'),
+        throwsA(
+          isA<BackupPasswordException>().having(
+            (e) => e.message,
+            'message',
+            contains('does not say how'),
+          ),
+        ),
+      );
+    });
+
+    test('the manifest says whether a backup is sealed', () {
+      final open = BackupManifest.fromJson(const {});
+      final sealed = BackupManifest.fromJson({
+        'encryption': {
+          'iterations': 1000,
+          'salt': base64Encode(const [1, 2, 3]),
+        },
+      });
+
+      expect(open.encrypted, isFalse);
+      expect(sealed.encrypted, isTrue);
+      expect(sealed.seal!.iterations, 1000);
+      expect(sealed.toJson()['encrypted'], isTrue);
+    });
+  });
+
+  group('checking a backup against itself', () {
+    test('a backup as written is intact', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(_serviceWith(_ledger()), store);
+      final manifest = await service.create();
+
+      final check = await service.check(manifest.id);
+
+      expect(check.intact, isTrue);
+      expect(check.problems, isEmpty);
+      expect(check.readableFiles, manifest.entries.length);
+      expect(check.manifest!.id, manifest.id);
+      expect(check.toJson()['intact'], isTrue);
+    });
+
+    test('a file changed without changing size is caught', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(_serviceWith(_ledger()), store);
+      final manifest = await service.create();
+      final tags = store.backups[manifest.id]!['csv/tags.csv']!;
+      // Same length, different bytes: only a digest tells these apart.
+      store.backups[manifest.id]!['csv/tags.csv'] = utf8.encode(
+        'x' * tags.length,
+      );
+
+      final check = await service.check(manifest.id);
+
+      expect(check.intact, isFalse);
+      expect(
+        check.problems.single,
+        contains('has changed since it was written'),
+      );
+    });
+
+    test('a backup written before digests is checked on what it has', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(_serviceWith(_ledger()), store);
+      final manifest = await service.create();
+      final json =
+          jsonDecode(
+                utf8.decode(store.backups[manifest.id]![kBackupManifestFile]!),
+              )
+              as Map<String, Object?>;
+      for (final entry in (json['entries']! as List)) {
+        (entry as Map).remove('sha256');
+      }
+      store.backups[manifest.id]![kBackupManifestFile] = utf8.encode(
+        jsonEncode(json),
+      );
+
+      final check = await service.check(manifest.id);
+
+      expect(check.intact, isTrue);
+      expect(check.readableFiles, manifest.entries.length);
+    });
+
+    test('a part gone missing or resized is reported', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(_serviceWith(_ledger()), store);
+      final manifest = await service.create();
+      store.backups[manifest.id]!.remove('csv/tags.csv');
+      store.backups[manifest.id]!['csv/rules.csv'] = utf8.encode('truncated');
+
+      final check = await service.check(manifest.id);
+
+      expect(check.intact, isFalse);
+      expect(check.problems, hasLength(2));
+      expect(check.problems, contains('csv/tags.csv is missing'));
+      expect(
+        check.problems,
+        contains(contains('csv/rules.csv is 9 bytes, the manifest says')),
+      );
+    });
+
+    test('a sealed backup is checked by opening it', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(_serviceWith(_ledger()), store);
+      final manifest = await service.create(password: 'a good password');
+
+      final wrong = await service.check(manifest.id, password: 'not it');
+      final right = await service.check(
+        manifest.id,
+        password: 'a good password',
+      );
+
+      expect(right.intact, isTrue);
+      expect(wrong.intact, isFalse);
+      expect(wrong.problems.first, contains('would not open'));
+    });
+
+    test('a data set that never made it is named again', () async {
+      final store = _MemoryBackupStore();
+      final service = BackupService(
+        _serviceWith(_ledger(failingExports: {'rules'})),
+        store,
+      );
+      final manifest = await service.create();
+
+      final check = await service.check(manifest.id);
+
+      expect(check.intact, isFalse);
+      expect(check.problems.single, contains('was never written'));
+    });
+
+    test('a backup that is not there cannot be checked', () async {
+      final service = BackupService(
+        _serviceWith(_ledger()),
+        _MemoryBackupStore(),
+      );
+
+      final check = await service.check('nope');
+
+      expect(check.intact, isFalse);
+      expect(check.manifest, isNull);
+    });
+  });
 }
