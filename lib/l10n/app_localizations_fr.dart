@@ -3651,4 +3651,65 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get upcoming => 'À venir';
+
+  @override
+  String get fireflyBackups => 'Sauvegardes Firefly';
+
+  @override
+  String get fireflyBackupsHint =>
+      'Une sauvegarde copie ce que l\'API Firefly veut bien donner : comptes, transactions, budgets, factures, tirelires et récurrences, plus l\'export de Firefly lui-même, seule copie des règles et des plafonds de budget. Elle n\'atteint ni la base de données, ni les pièces jointes, ni la clé de l\'instance : une instance détruite a toujours besoin de son archive de volume.';
+
+  @override
+  String get backupTakeNow => 'Créer une sauvegarde';
+
+  @override
+  String backupReading(String stage) {
+    return 'Lecture de $stage…';
+  }
+
+  @override
+  String get backupNone => 'Aucune sauvegarde';
+
+  @override
+  String get backupUnavailableHere =>
+      'Cette version n\'a nulle part où ranger une sauvegarde, aucune ne peut être créée ici.';
+
+  @override
+  String get backupIncomplete => 'Éléments manquants';
+
+  @override
+  String backupSize(int files, String kilobytes) {
+    return '$files fichiers, $kilobytes ko';
+  }
+
+  @override
+  String backupCountsSummary(int transactions, int accounts) {
+    return '$transactions transactions, $accounts comptes';
+  }
+
+  @override
+  String get backupDeleteTitle => 'Supprimer cette sauvegarde ?';
+
+  @override
+  String backupDeleteBody(String id) {
+    return '$id disparaît avec tout son contenu, et rien d\'autre n\'en garde de copie.';
+  }
+
+  @override
+  String backupTaken(String id) {
+    return 'Sauvegarde $id créée';
+  }
+
+  @override
+  String backupFailed(String error) {
+    return 'Impossible de créer la sauvegarde : $error';
+  }
+
+  @override
+  String get backupSaveSnapshot => 'Enregistrer l\'instantané';
+
+  @override
+  String backupSavedTo(String path) {
+    return 'Instantané enregistré dans $path';
+  }
 }

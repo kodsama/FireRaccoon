@@ -1728,5 +1728,75 @@
   "biometricEnableReason": "确认以启用生物识别解锁",
   "biometricUnlockFailed": "生物识别解锁已取消或失败。",
   "recordedBalance": "已记账",
-  "upcoming": "即将到来"
+  "upcoming": "即将到来",
+  "fireflyBackups": "Firefly 备份",
+  "fireflyBackupsHint": "备份会带走 Firefly API 愿意给出的内容：账户、交易、预算、账单、存钱罐和周期规则，另加 Firefly 自己的导出，那是规则与预算限额的唯一副本。它接触不到数据库、附件和实例密钥，所以实例真的坏了仍然需要卷归档。",
+  "backupTakeNow": "创建备份",
+  "backupReading": "正在读取 {stage}…",
+  "@backupReading": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNone": "还没有备份",
+  "backupUnavailableHere": "此版本没有存放备份的地方，因此无法在这里创建。",
+  "backupIncomplete": "有部分缺失",
+  "backupSize": "{files} 个文件，{kilobytes} kB",
+  "@backupSize": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "kilobytes": {
+        "type": "String"
+      }
+    }
+  },
+  "backupCountsSummary": "{transactions} 笔交易，{accounts} 个账户",
+  "@backupCountsSummary": {
+    "placeholders": {
+      "transactions": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
+  "backupDeleteTitle": "删除这个备份？",
+  "backupDeleteBody": "{id} 会连同其中的一切一起消失，别处没有副本。",
+  "@backupDeleteBody": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupTaken": "已创建备份 {id}",
+  "@backupTaken": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailed": "无法创建备份：{error}",
+  "@backupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSaveSnapshot": "保存快照",
+  "backupSavedTo": "快照已保存到 {path}",
+  "@backupSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  }
 }

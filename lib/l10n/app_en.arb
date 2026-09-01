@@ -1796,7 +1796,13 @@
   "exportFireflyData": "Back up Firefly data",
   "exportFireflyDataDescription": "Saves a snapshot of your Firefly data to a JSON file: accounts, transactions with every split, budgets, categories, tags, bills, piggy banks, recurring rules and currencies.\n\nThis is not a full backup. Firefly III has no backup feature, and an app talking to its API cannot reach the database, uploaded attachments or the instance key. Restoring a working Firefly needs a volume archive taken on the server; see the deployment guide.",
   "fireflyDataExportedTo": "Firefly data exported to {path}",
-  "@fireflyDataExportedTo": {"placeholders": {"path": {"type": "String"}}},
+  "@fireflyDataExportedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
   "missingInformation": "Missing information",
   "missingDescription": "Please enter a description.",
   "missingAmount": "Please enter an amount.",
@@ -1812,7 +1818,13 @@
   "copyProblems": "Copy",
   "clearProblems": "Clear",
   "problemsCopied": "Copied {count} lines.",
-  "@problemsCopied": {"placeholders": {"count": {"type": "int"}}},
+  "@problemsCopied": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "missingForeignAmount": "Please enter the foreign amount.",
   "missingAccounts": "Please select both source and destination accounts.",
   "appUsers": "People",
@@ -1954,18 +1966,92 @@
   "settingsExportedTo": "Settings exported to {path}",
   "@settingsExportedTo": {
     "placeholders": {
-      "path": { "type": "String" }
+      "path": {
+        "type": "String"
+      }
     }
   },
   "settingsImported": "Settings imported.",
   "settingsImportFailed": "Could not import settings: {error}",
   "@settingsImportFailed": {
     "placeholders": {
-      "error": { "type": "String" }
+      "error": {
+        "type": "String"
+      }
     }
   },
   "settingsExportSubject": "FireRaccoon settings",
   "settingsExportText": "FireRaccoon settings backup",
   "recordedBalance": "Recorded",
-  "upcoming": "Upcoming"
+  "upcoming": "Upcoming",
+  "fireflyBackups": "Firefly backups",
+  "fireflyBackupsHint": "A backup copies what the Firefly API will hand over: accounts, transactions, budgets, bills, piggy banks and recurrences, plus Firefly's own export, which is the only copy of rules and budget limits. It cannot reach the database, the attachments or the instance key, so a destroyed instance still needs its volume archive.",
+  "backupTakeNow": "Take a backup",
+  "backupReading": "Reading {stage}…",
+  "@backupReading": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNone": "No backups yet",
+  "backupUnavailableHere": "This build has nowhere to keep a backup, so none can be taken here.",
+  "backupIncomplete": "Parts missing",
+  "backupSize": "{files} files, {kilobytes} kB",
+  "@backupSize": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "kilobytes": {
+        "type": "String"
+      }
+    }
+  },
+  "backupCountsSummary": "{transactions} transactions, {accounts} accounts",
+  "@backupCountsSummary": {
+    "placeholders": {
+      "transactions": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
+  "backupDeleteTitle": "Delete this backup?",
+  "backupDeleteBody": "{id} and everything in it goes, and nothing else keeps a copy.",
+  "@backupDeleteBody": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupTaken": "Backup {id} taken",
+  "@backupTaken": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailed": "Could not take a backup: {error}",
+  "@backupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSaveSnapshot": "Save snapshot",
+  "backupSavedTo": "Snapshot saved to {path}",
+  "@backupSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  }
 }
