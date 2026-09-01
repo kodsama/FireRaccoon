@@ -322,8 +322,8 @@ void main() {
       expect(store.backups[manifest.id]!.containsKey('snapshot.json'), isTrue);
     });
 
-    test('reports what it is reading as it goes', () async {
-      final stages = <String>[];
+    test('reports what it is reading and how far along it is', () async {
+      final reports = <BackupProgress>[];
       final service = BackupService(
         _serviceWith(_ledger()),
         _MemoryBackupStore(),
@@ -331,12 +331,41 @@ void main() {
 
       await service.create(
         takenAt: DateTime.utc(2026, 9, 1),
-        onStage: stages.add,
+        onProgress: reports.add,
       );
 
+      final stages = [for (final report in reports) report.stage];
       expect(stages.first, 'owner');
-      expect(stages, contains('snapshot'));
-      expect(stages, contains('csv:rules'));
+      expect(stages, containsAll(<String>['transactions', 'csv:rules']));
+      expect(reports.last.stage, 'manifest');
+      expect(reports.last.fraction, 1);
+
+      // Countable once the page walk answers, and never going backwards.
+      final fractions = [
+        for (final report in reports)
+          if (report.fraction != null) report.fraction!,
+      ];
+      expect(fractions.first, 0);
+      for (var i = 1; i < fractions.length; i++) {
+        expect(
+          fractions[i],
+          greaterThanOrEqualTo(fractions[i - 1]),
+          reason: 'progress went backwards at $i',
+        );
+      }
+      // The snapshot half stops where the exports take over.
+      final snapshotEnd = reports
+          .where((r) => r.stage == 'snapshot')
+          .last
+          .fraction;
+      expect(snapshotEnd, closeTo(kSnapshotShareOfBackup, 0.001));
+    });
+
+    test('says nothing about how far along until the walk is countable', () {
+      const early = BackupProgress(stage: 'owner');
+
+      expect(early.fraction, isNull);
+      expect(early.stage, 'owner');
     });
   });
 

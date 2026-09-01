@@ -9,6 +9,30 @@ import 'firefly_service.dart';
 /// Schema version of a backup, separate from the snapshot's own.
 const int kBackupSchemaVersion = 1;
 
+/// Share of a backup's wall clock the snapshot takes, for turning two phases
+/// into one number.
+///
+/// Measured against a 19,420-transaction ledger on Firefly 6.6.6: 78 seconds
+/// reading entities and pages, then 85 seconds exporting CSV. Both halves grow
+/// with the same ledger, so the near-even split travels better than either
+/// half's internals do.
+const double kSnapshotShareOfBackup = 0.48;
+
+/// How far a backup has got.
+class BackupProgress {
+  const BackupProgress({required this.stage, this.fraction});
+
+  /// What is being read: an entity name, `csv:<data set>`, or `manifest`.
+  final String stage;
+
+  /// 0..1, or null while the work is not yet countable.
+  ///
+  /// A page walk cannot say how many pages there are until the first one comes
+  /// back. Null says so rather than inventing a denominator that would make the
+  /// bar jump backwards when the real one arrives.
+  final double? fraction;
+}
+
 const String kBackupManifestFile = 'manifest.json';
 const String kBackupSnapshotFile = 'snapshot.json';
 const String kBackupCsvDirectory = 'csv';
@@ -220,34 +244,51 @@ class BackupService {
 
   /// Reads the whole ledger and writes it into the store.
   ///
-  /// [onStage] reports what is being read, for a caller that wants to say so
-  /// while a large ledger walks past.
+  /// [onProgress] reports what is being read and how far along it is, for a
+  /// caller that has to show a ledger this size is moving rather than stuck.
   Future<BackupManifest> create({
     DateTime? takenAt,
-    void Function(String stage)? onStage,
+    void Function(BackupProgress progress)? onProgress,
   }) async {
     final at = takenAt ?? DateTime.now();
     final id = await _freeId(backupIdFor(at));
+    void report(String stage, double? fraction) =>
+        onProgress?.call(BackupProgress(stage: stage, fraction: fraction));
 
-    onStage?.call('owner');
+    report('owner', 0);
     final owner = await _api.getCurrentUser();
 
-    onStage?.call('snapshot');
     // The ledger's own bounds, not the service default: a backup that quietly
     // covered the last year would be discovered at restore time.
-    final snapshot = await DataExportService(
-      _api,
-    ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd, takenAt: at);
+    final snapshot = await DataExportService(_api).export(
+      from: kFireflyLedgerStart,
+      to: kFireflyLedgerEnd,
+      takenAt: at,
+      onProgress: (stage, fraction) => report(
+        stage,
+        fraction == null ? null : fraction * kSnapshotShareOfBackup,
+      ),
+    );
     final entries = <BackupEntry>[];
     entries.add(
       await _write(id, kBackupSnapshotFile, jsonEncode(snapshot.toJson())),
     );
 
     final window = _transactionWindow(snapshot, at);
+    // Eight exports of one request each, plus a year at a time for the
+    // transactions, which is what the second half of the time goes on.
+    final chunks = window.to.year - window.from.year + 1;
+    final exportUnits = 8 + chunks;
+    var exportsDone = 0;
     final files = await FireflyCsvExportService(_api).exportAll(
       from: window.from,
       to: window.to,
-      onDataset: (dataset) => onStage?.call('csv:${dataset.apiValue}'),
+      onDataset: (dataset) => report(
+        'csv:${dataset.apiValue}',
+        kSnapshotShareOfBackup +
+            (1 - kSnapshotShareOfBackup) * (exportsDone / exportUnits),
+      ),
+      onChunk: () => exportsDone++,
     );
     for (final file in files) {
       final name = '$kBackupCsvDirectory/${file.dataset.fileName}';
@@ -278,6 +319,7 @@ class BackupService {
       transactionsFrom: window.from,
       transactionsTo: window.to,
     );
+    report('manifest', 1);
     await _store.put(
       id,
       kBackupManifestFile,

@@ -13,6 +13,28 @@ import '../utils/app_feedback.dart';
 import 'confirmation_dialog.dart';
 import 'small_loading_indicator.dart';
 
+/// What to say while a backup or a restore runs.
+///
+/// A percentage only once there is one to give: a page walk cannot say how far
+/// along it is until the first page comes back, and a number invented to fill
+/// the gap is one that has to jump backwards later.
+String backupActivityLabel(BuildContext context, BackupActivity activity) {
+  final l10n = context.l10n;
+  if (activity.isRestore) {
+    return l10n.backupRestoring(
+      activity.restoreStep ?? 0,
+      activity.restoreTotal ?? 0,
+    );
+  }
+  final reading = l10n.backupReading(activity.stage ?? '');
+  final fraction = activity.fraction;
+  if (fraction == null) return reading;
+  final percent = NumberFormat.percentPattern(
+    Localizations.localeOf(context).toString(),
+  ).format(fraction);
+  return '$reading  $percent';
+}
+
 /// Backups of the Firefly ledger, next to the settings backup that is not one.
 ///
 /// The same backups an agent takes over MCP: one list, whether it was a person
@@ -123,29 +145,42 @@ class _TakeBackupButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    return ValueListenableBuilder<BackupProgress>(
+    return ValueListenableBuilder<BackupActivity>(
       valueListenable: ref.watch(backupsProvider.notifier).progress,
       builder: (context, progress, _) {
-        // A whole ledger takes a while to read, and a button that only greys
-        // out looks like it did nothing. The stage names what is being read.
-        return Row(
+        // A whole ledger takes minutes to read, and a button that only greys
+        // out looks like it did nothing. The bar says it is moving; the
+        // percentage says how much is left; the stage says what it is on.
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            FilledButton.icon(
-              onPressed: progress.running ? null : () => _take(context, ref),
-              icon: const Icon(LucideIcons.databaseBackup, size: 18),
-              label: Text(l10n.backupTakeNow),
+            Row(
+              children: [
+                FilledButton.icon(
+                  onPressed: progress.running
+                      ? null
+                      : () => _take(context, ref),
+                  icon: const Icon(LucideIcons.databaseBackup, size: 18),
+                  label: Text(l10n.backupTakeNow),
+                ),
+                if (!progress.running) const Spacer(),
+                if (progress.running) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      backupActivityLabel(context, progress),
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ],
             ),
             if (progress.running) ...[
-              const SizedBox(width: 12),
-              const SmallLoadingIndicator(),
-              const SizedBox(width: 8),
-              Flexible(
-                child: Text(
-                  l10n.backupReading(progress.stage ?? ''),
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
+              const SizedBox(height: 8),
+              // Indeterminate until the work is countable: a page walk cannot
+              // say how many pages there are until the first one answers.
+              LinearProgressIndicator(value: progress.fraction),
             ],
           ],
         );

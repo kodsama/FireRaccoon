@@ -50,26 +50,41 @@ class WrongLedgerException implements Exception {
   const WrongLedgerException();
 }
 
-/// What a backup is doing right now, for a screen that has to stay honest about
-/// a read that walks a whole ledger.
-class BackupProgress {
-  const BackupProgress({required this.running, this.stage});
+/// What a backup or a restore is doing right now, for a screen that has to stay
+/// honest about work that walks a whole ledger.
+class BackupActivity {
+  const BackupActivity({
+    required this.running,
+    this.stage,
+    this.fraction,
+    this.restoreStep,
+    this.restoreTotal,
+  });
 
-  static const idle = BackupProgress(running: false);
+  static const idle = BackupActivity(running: false);
 
   final bool running;
 
   /// The part being read, as [BackupService.create] reports it.
   final String? stage;
+
+  /// 0..1, or null while the work is not yet countable.
+  final double? fraction;
+
+  /// Rows written so far of the plan's total, while a restore runs.
+  final int? restoreStep;
+  final int? restoreTotal;
+
+  bool get isRestore => restoreTotal != null;
 }
 
 /// The backups this FireRaccoon holds.
 class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
   static final _log = AppLogger.scoped('providers.backups');
 
-  final _progress = ValueNotifier<BackupProgress>(BackupProgress.idle);
+  final _progress = ValueNotifier<BackupActivity>(BackupActivity.idle);
 
-  ValueListenable<BackupProgress> get progress => _progress;
+  ValueListenable<BackupActivity> get progress => _progress;
 
   @override
   Future<List<BackupManifest>> build() async {
@@ -88,11 +103,14 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
     if (service == null) {
       throw StateError('Backups are unavailable in this deployment');
     }
-    _progress.value = const BackupProgress(running: true);
+    _progress.value = const BackupActivity(running: true);
     try {
       final manifest = await service.create(
-        onStage: (stage) =>
-            _progress.value = BackupProgress(running: true, stage: stage),
+        onProgress: (progress) => _progress.value = BackupActivity(
+          running: true,
+          stage: progress.stage,
+          fraction: progress.fraction,
+        ),
       );
       _log.info(
         'Backup ${manifest.id} written: ${manifest.totalBytes} bytes, '
@@ -101,7 +119,7 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
       state = AsyncData([manifest, ...state.value ?? const []]);
       return manifest;
     } finally {
-      _progress.value = BackupProgress.idle;
+      _progress.value = BackupActivity.idle;
     }
   }
 
@@ -163,12 +181,25 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
       throw StateError('Not connected to Firefly III');
     }
     await create();
-    final outcomes = await RestoreRunner(api).apply(plan);
-    _log.info(
-      'Restore applied: ${outcomes.where((o) => o.applied).length} of '
-      '${outcomes.length} steps',
-    );
-    return outcomes;
+    _progress.value = const BackupActivity(running: true, restoreTotal: 0);
+    try {
+      final outcomes = await RestoreRunner(api).apply(
+        plan,
+        onStep: (done, total) => _progress.value = BackupActivity(
+          running: true,
+          fraction: total == 0 ? 1 : done / total,
+          restoreStep: done,
+          restoreTotal: total,
+        ),
+      );
+      _log.info(
+        'Restore applied: ${outcomes.where((o) => o.applied).length} of '
+        '${outcomes.length} steps',
+      );
+      return outcomes;
+    } finally {
+      _progress.value = BackupActivity.idle;
+    }
   }
 
   Future<void> refresh() async {

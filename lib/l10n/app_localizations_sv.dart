@@ -3723,4 +3723,9 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get backupRestoreWrongLedger =>
       'Säkerhetskopian togs av en annan Firefly-användare och kan inte återställas här.';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return 'Återställer $done av $total';
+  }
 }

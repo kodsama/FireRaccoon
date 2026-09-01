@@ -3624,4 +3624,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupRestoreWrongLedger => '该备份由另一个 Firefly 用户创建，无法在此恢复。';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return '正在恢复第 $done 条，共 $total 条';
+  }
 }

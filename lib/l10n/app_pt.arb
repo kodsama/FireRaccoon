@@ -1838,5 +1838,16 @@
       }
     }
   },
-  "backupRestoreWrongLedger": "Esta cópia de segurança foi criada por outro utilizador do Firefly, por isso não pode ser restaurada aqui."
+  "backupRestoreWrongLedger": "Esta cópia de segurança foi criada por outro utilizador do Firefly, por isso não pode ser restaurada aqui.",
+  "backupRestoring": "A restaurar {done} de {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  }
 }
