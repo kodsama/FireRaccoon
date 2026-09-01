@@ -1873,5 +1873,45 @@
         "type": "String"
       }
     }
-  }
+  },
+  "backupRestore": "復元",
+  "backupRestoreTitle": "このバックアップから復元しますか？",
+  "backupRestorePlanning": "何が変わるかを確認しています…",
+  "backupRestoreNothing": "戻すものはありません。台帳はすでにこのバックアップと一致しています。",
+  "backupRestoreSummary": "戻す {creates} 件、上書きする {updates} 件、削除する {deletes} 件。",
+  "@backupRestoreSummary": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreDeletes": "このバックアップ以降に追加された行も削除する",
+  "backupRestoreNote": "戻した行には新しい識別子が付き、書き込む前に新しいバックアップを取ります。ルール、予算上限、添付ファイル、通貨は API では書き戻せません。",
+  "backupRestoreDone": "{applied} 件を復元、{failed} 件が失敗",
+  "@backupRestoreDone": {
+    "placeholders": {
+      "applied": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreFailed": "復元できませんでした: {error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWrongLedger": "このバックアップは別の Firefly ユーザーが取ったものなので、ここには復元できません。"
 }

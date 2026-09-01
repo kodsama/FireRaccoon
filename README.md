@@ -58,9 +58,11 @@ restarts unlock automatically; users only enter their account password.
 - **Theming** light/dark, Classic / Spectrum / Raccoon palettes (six accents
   each), Comfortaa + Roboto Slab
 - **Locales** English, French, Swedish, Portuguese, Japanese, Chinese
+- **Backups** of the Firefly ledger, stamped with the moment they were taken,
+  restorable row by row after a plan you approve
 - **MCP server** accounts, transactions, budgets, projections, dashboard KPIs,
-  and bank statement matching for LLM clients (desktop embeds it; mobile and web
-  do not)
+  backups and restores, and bank statement matching for LLM clients (desktop
+  embeds it; mobile and web do not)
 
 ## Quick start
 

@@ -3697,4 +3697,45 @@ class AppLocalizationsPt extends AppLocalizations {
   String backupSavedTo(String path) {
     return 'Instantâneo guardado em $path';
   }
+
+  @override
+  String get backupRestore => 'Restaurar';
+
+  @override
+  String get backupRestoreTitle =>
+      'Restaurar a partir desta cópia de segurança?';
+
+  @override
+  String get backupRestorePlanning => 'A calcular o que mudaria…';
+
+  @override
+  String get backupRestoreNothing =>
+      'Nada para repor: o registo já corresponde a esta cópia de segurança.';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '$creates para repor, $updates para reescrever, $deletes para remover.';
+  }
+
+  @override
+  String get backupRestoreDeletes =>
+      'Remover também linhas acrescentadas desde esta cópia';
+
+  @override
+  String get backupRestoreNote =>
+      'As linhas repostas voltam com identificadores novos, e é criada uma cópia de segurança antes de qualquer escrita. Regras, limites de orçamento, anexos e moedas não podem ser reescritos pela API.';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return '$applied linhas restauradas, $failed falharam';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return 'Não foi possível restaurar: $error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger =>
+      'Esta cópia de segurança foi criada por outro utilizador do Firefly, por isso não pode ser restaurada aqui.';
 }

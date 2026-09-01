@@ -160,6 +160,57 @@ class _BackupTile extends ConsumerWidget {
     await ref.read(backupsProvider.notifier).delete(manifest.id);
   }
 
+  /// Plans first, always, and writes only after someone reads the plan.
+  ///
+  /// A restore is the one thing here that changes the ledger, so what it would
+  /// do is on screen before it does any of it.
+  Future<void> _restore(BuildContext context, WidgetRef ref) async {
+    final l10n = context.l10n;
+    final notifier = ref.read(backupsProvider.notifier);
+    final RestorePlan plan;
+    try {
+      plan = await notifier.planRestoreOf(manifest.id);
+    } on WrongLedgerException {
+      if (!context.mounted) return;
+      showErrorToast(context, l10n.backupRestoreWrongLedger);
+      return;
+    } on Object catch (error) {
+      if (!context.mounted) return;
+      showErrorToast(context, l10n.backupRestoreFailed('$error'));
+      return;
+    }
+    if (!context.mounted) return;
+    if (plan.isEmpty) {
+      showInfoToast(context, l10n.backupRestoreNothing);
+      return;
+    }
+
+    final counts = plan.countsByAction;
+    final confirmed = await showConfirmationDialog(
+      context: context,
+      title: l10n.backupRestoreTitle,
+      message:
+          '${l10n.backupRestoreSummary(counts['create'] ?? 0, counts['update'] ?? 0, counts['delete'] ?? 0)}'
+          '\n\n${l10n.backupRestoreNote}',
+      confirmLabel: l10n.backupRestore,
+      confirmColor: Theme.of(context).colorScheme.error,
+    );
+    if (confirmed != true) return;
+
+    try {
+      final outcomes = await notifier.applyRestore(plan);
+      final failed = outcomes.where((outcome) => !outcome.applied).length;
+      if (!context.mounted) return;
+      showInfoToast(
+        context,
+        l10n.backupRestoreDone(outcomes.length - failed, failed),
+      );
+    } on Object catch (error) {
+      if (!context.mounted) return;
+      showErrorToast(context, l10n.backupRestoreFailed('$error'));
+    }
+  }
+
   Future<void> _saveSnapshot(BuildContext context, WidgetRef ref) async {
     final contents = await ref
         .read(backupsProvider.notifier)
@@ -207,12 +258,15 @@ class _BackupTile extends ConsumerWidget {
       ),
       trailing: PopupMenuButton<String>(
         itemBuilder: (context) => [
+          PopupMenuItem(value: 'restore', child: Text(l10n.backupRestore)),
           PopupMenuItem(value: 'save', child: Text(l10n.backupSaveSnapshot)),
           PopupMenuItem(value: 'delete', child: Text(l10n.delete)),
         ],
-        onSelected: (value) => value == 'save'
-            ? _saveSnapshot(context, ref)
-            : _delete(context, ref),
+        onSelected: (value) => switch (value) {
+          'restore' => _restore(context, ref),
+          'save' => _saveSnapshot(context, ref),
+          _ => _delete(context, ref),
+        },
       ),
     );
   }

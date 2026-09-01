@@ -3682,4 +3682,43 @@ class AppLocalizationsEn extends AppLocalizations {
   String backupSavedTo(String path) {
     return 'Snapshot saved to $path';
   }
+
+  @override
+  String get backupRestore => 'Restore';
+
+  @override
+  String get backupRestoreTitle => 'Restore from this backup?';
+
+  @override
+  String get backupRestorePlanning => 'Working out what would change…';
+
+  @override
+  String get backupRestoreNothing =>
+      'Nothing to put back: the ledger already matches this backup.';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '$creates to put back, $updates to write over, $deletes to remove.';
+  }
+
+  @override
+  String get backupRestoreDeletes => 'Also remove rows added since this backup';
+
+  @override
+  String get backupRestoreNote =>
+      'Rows put back come back under new identifiers, and a fresh backup is taken before anything is written. Rules, budget limits, attachments and currencies cannot be written back through the API.';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return 'Restored $applied rows, $failed failed';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return 'Could not restore: $error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger =>
+      'This backup was taken from a different Firefly user, so it cannot be restored here.';
 }

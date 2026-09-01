@@ -2053,5 +2053,45 @@
         "type": "String"
       }
     }
-  }
+  },
+  "backupRestore": "Restore",
+  "backupRestoreTitle": "Restore from this backup?",
+  "backupRestorePlanning": "Working out what would change…",
+  "backupRestoreNothing": "Nothing to put back: the ledger already matches this backup.",
+  "backupRestoreSummary": "{creates} to put back, {updates} to write over, {deletes} to remove.",
+  "@backupRestoreSummary": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreDeletes": "Also remove rows added since this backup",
+  "backupRestoreNote": "Rows put back come back under new identifiers, and a fresh backup is taken before anything is written. Rules, budget limits, attachments and currencies cannot be written back through the API.",
+  "backupRestoreDone": "Restored {applied} rows, {failed} failed",
+  "@backupRestoreDone": {
+    "placeholders": {
+      "applied": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreFailed": "Could not restore: {error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWrongLedger": "This backup was taken from a different Firefly user, so it cannot be restored here."
 }

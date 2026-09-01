@@ -3587,4 +3587,41 @@ class AppLocalizationsZh extends AppLocalizations {
   String backupSavedTo(String path) {
     return '快照已保存到 $path';
   }
+
+  @override
+  String get backupRestore => '恢复';
+
+  @override
+  String get backupRestoreTitle => '从这个备份恢复？';
+
+  @override
+  String get backupRestorePlanning => '正在计算会有哪些改动…';
+
+  @override
+  String get backupRestoreNothing => '没有需要放回的内容：账本已经与该备份一致。';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '放回 $creates 条，覆盖 $updates 条，删除 $deletes 条。';
+  }
+
+  @override
+  String get backupRestoreDeletes => '同时删除该备份之后新增的行';
+
+  @override
+  String get backupRestoreNote =>
+      '放回的行会获得新的标识符，写入之前会先创建一份新备份。规则、预算限额、附件和货币无法通过 API 写回。';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return '已恢复 $applied 条，$failed 条失败';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return '无法恢复：$error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger => '该备份由另一个 Firefly 用户创建，无法在此恢复。';
 }

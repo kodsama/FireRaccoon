@@ -3683,4 +3683,44 @@ class AppLocalizationsSv extends AppLocalizations {
   String backupSavedTo(String path) {
     return 'Ögonblicksbild sparad i $path';
   }
+
+  @override
+  String get backupRestore => 'Återställ';
+
+  @override
+  String get backupRestoreTitle => 'Återställa från den här säkerhetskopian?';
+
+  @override
+  String get backupRestorePlanning => 'Räknar ut vad som skulle ändras…';
+
+  @override
+  String get backupRestoreNothing =>
+      'Inget att lägga tillbaka: liggaren stämmer redan med säkerhetskopian.';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '$creates att lägga tillbaka, $updates att skriva över, $deletes att ta bort.';
+  }
+
+  @override
+  String get backupRestoreDeletes =>
+      'Ta även bort rader som tillkommit sedan säkerhetskopian';
+
+  @override
+  String get backupRestoreNote =>
+      'Rader som läggs tillbaka får nya identifierare, och en ny säkerhetskopia tas innan något skrivs. Regler, budgettak, bilagor och valutor går inte att skriva tillbaka via API:et.';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return '$applied rader återställda, $failed misslyckades';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return 'Kunde inte återställa: $error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger =>
+      'Säkerhetskopian togs av en annan Firefly-användare och kan inte återställas här.';
 }

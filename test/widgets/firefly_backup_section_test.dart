@@ -167,4 +167,88 @@ void main() {
     expect(find.textContaining('Could not take a backup'), findsOneWidget);
     await _letToastPass(tester);
   });
+
+  testWidgets('restoring an unchanged ledger says there is nothing to do', (
+    tester,
+  ) async {
+    final store = _MemoryBackupStore();
+    await _pump(tester, store: store);
+    await tester.tap(find.text('Take a backup'));
+    await tester.pumpAndSettle();
+    await _letToastPass(tester);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Restore').last);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('already matches'), findsOneWidget);
+    await _letToastPass(tester);
+  });
+
+  testWidgets('a backup from another ledger is refused', (tester) async {
+    final store = _MemoryBackupStore();
+    await store.put(
+      '20260101T000000+0000',
+      kBackupManifestFile,
+      utf8.encode(
+        jsonEncode({
+          'id': '20260101T000000+0000',
+          'taken_at': '2026-01-01T12:00:00Z',
+          'owner': {'id': '99', 'email': 'someone@else.test'},
+          'entries': [
+            {'name': 'snapshot.json', 'bytes': 2},
+          ],
+        }),
+      ),
+    );
+    await store.put(
+      '20260101T000000+0000',
+      kBackupSnapshotFile,
+      utf8.encode('{}'),
+    );
+
+    await _pump(tester, store: store);
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Restore').last);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('different Firefly user'), findsOneWidget);
+    await _letToastPass(tester);
+  });
+
+  testWidgets('a restore shows what it would change before it writes', (
+    tester,
+  ) async {
+    final store = _MemoryBackupStore();
+    final api = FakeFireflyService();
+    await _pump(tester, store: store, api: api);
+    await tester.tap(find.text('Take a backup'));
+    await tester.pumpAndSettle();
+    await _letToastPass(tester);
+    // The ledger loses a row after the backup was taken.
+    final id = (await store.listBackupIds()).single;
+    final snapshot =
+        jsonDecode(utf8.decode((await store.get(id, kBackupSnapshotFile))!))
+            as Map<String, Object?>;
+    (snapshot['categories']! as List).add({'id': '7', 'name': 'Food'});
+    await store.put(id, kBackupSnapshotFile, utf8.encode(jsonEncode(snapshot)));
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Restore').last);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('1 to put back'), findsOneWidget);
+    expect(find.textContaining('new identifiers'), findsOneWidget);
+    expect(api.createdCategories, isEmpty);
+
+    await confirmDialogWithChallenge(tester);
+    await tester.pumpAndSettle();
+
+    expect(api.createdCategories, ['Food']);
+    expect(find.textContaining('Restored 1 rows'), findsOneWidget);
+    await _letToastPass(tester);
+  });
 }
