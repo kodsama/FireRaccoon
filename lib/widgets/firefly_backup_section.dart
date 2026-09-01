@@ -51,9 +51,21 @@ class FireflyBackupSection extends ConsumerWidget {
               ),
             )
           else ...[
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
-              child: _TakeBackupButton(),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Row(
+                children: [
+                  const Expanded(child: _TakeBackupButton()),
+                  // An agent taking a backup over MCP writes to the same place
+                  // this list reads, and nothing tells an open screen about it.
+                  IconButton(
+                    tooltip: l10n.refreshFromFirefly,
+                    icon: const Icon(LucideIcons.refreshCw, size: 18),
+                    onPressed: () =>
+                        ref.read(backupsProvider.notifier).refresh(),
+                  ),
+                ],
+              ),
             ),
             const Divider(height: 1),
             backups.when(
