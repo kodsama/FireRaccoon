@@ -1201,6 +1201,8 @@ x-mcp:
       - update_recurrence
       - delete_recurrence
       - create_liability
+      - create_backup
+      - delete_backup
   tools:
     get_capabilities:
       description: Server capabilities and tool catalog
@@ -1277,6 +1279,24 @@ x-mcp:
         client cannot reach the database, the attachments or the instance key,
         so restoring an instance still needs the volume archive.
       mapsTo: GET /api/v1/accounts
+    create_backup:
+      description: >
+        Take a backup before changing anything. Writes the snapshot a restore
+        reads plus Firefly's own CSV export, which is the only copy of rules and
+        budget limits, named by the moment it was taken with the offset kept.
+        Reaches neither the database, the attachments nor the instance key.
+      mapsTo: GET /api/v1/data/export/{dataset}
+    list_backups:
+      description: Backups this FireRaccoon holds, newest first
+      inputSchema: { type: object, properties: {} }
+    get_backup:
+      description: >
+        One backup's manifest, or a file inside it when file is named, truncated
+        at max_bytes.
+      required: [backup_id]
+    delete_backup:
+      description: Remove one backup and everything in it
+      required: [backup_id]
     find_incomplete_transactions:
       description: >
         Find transactions missing bookkeeping, for filling the blanks:

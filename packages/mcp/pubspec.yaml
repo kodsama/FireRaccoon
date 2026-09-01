@@ -12,6 +12,7 @@ dependencies:
   fireraccoon_engine:
     path: ../engine
   http: ^1.6.0
+  path: ^1.9.1
 
 dev_dependencies:
   test: ^1.31.0

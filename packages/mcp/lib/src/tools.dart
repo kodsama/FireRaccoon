@@ -59,6 +59,8 @@ const List<String> _writeToolNames = [
   'update_recurrence',
   'delete_recurrence',
   'create_liability',
+  'create_backup',
+  'delete_backup',
 ];
 
 List<String> _strList(Object? value) =>
@@ -68,6 +70,26 @@ Map<String, Object?> _badInput(String message) => {
   'ok': false,
   'code': 'bad_input',
   'error': message,
+};
+
+Map<String, Object?> _notFound(String message) => {
+  'ok': false,
+  'code': 'not_found',
+  'error': message,
+};
+
+/// Answer for a backup tool on a connection with nowhere to keep backups.
+///
+/// Refused rather than hidden: an agent that cannot find `create_backup` in the
+/// catalog concludes backups are not a thing FireRaccoon does, and goes on to
+/// change the ledger without one.
+Map<String, Object?> _backupsUnavailable() => {
+  'ok': false,
+  'code': 'unavailable',
+  'error':
+      'This connection has nowhere to keep backups. The desktop app stores them '
+      'beside its own data and a server stores them in DATA_DIR; a client '
+      'reaching Firefly directly has neither.',
 };
 
 /// Fields `update_account` forwards, in the order it reports them back. Named
@@ -1172,6 +1194,7 @@ List<McpTool> buildTools({
   required FireflyTarget target,
   http.Client? httpClient,
   AgentIdentity? identity,
+  BackupStore? backups,
 }) {
   FireflyService service() {
     if (!target.isConfigured) {
@@ -1186,6 +1209,11 @@ List<McpTool> buildTools({
       client: httpClient,
     );
   }
+
+  /// Null where nothing can keep a backup, which is every client that reaches
+  /// Firefly directly rather than through FireRaccoon.
+  BackupService? backupService() =>
+      backups == null ? null : BackupService(service(), backups);
 
   Future<bool> checkAbout() async {
     final client = httpClient ?? http.Client();
@@ -2322,6 +2350,125 @@ List<McpTool> buildTools({
           );
         }
         return {'ok': true, 'counts_only': countsOnly, 'export': json};
+      },
+    ),
+    McpTool(
+      name: 'create_backup',
+      writes: true,
+      description:
+          'Take a backup before changing anything, so there is something to put '
+          'back. Writes two halves: the snapshot FireRaccoon restores from, and '
+          "Firefly's own CSV export, which is the only copy of rules and budget "
+          'limits. Named by the moment it was taken, offset included. It reads '
+          'the whole ledger, so it is slower than a single call; take one per '
+          'session of changes rather than one per change. It cannot reach the '
+          'database, the attachments or the instance key: what it protects '
+          'against is a change someone made, not a destroyed instance.',
+      inputSchema: {'type': 'object', 'properties': <String, Object?>{}},
+      run: (args) async {
+        final service = backupService();
+        if (service == null) return _backupsUnavailable();
+        final manifest = await service.create();
+        return {
+          'ok': true,
+          'backup': manifest.toJson(),
+          if (!manifest.complete)
+            'warning':
+                'Some data sets could not be read; see entries[].error. The '
+                'snapshot is what a restore needs, so check it is there.',
+        };
+      },
+    ),
+    McpTool(
+      name: 'list_backups',
+      description:
+          'Backups this FireRaccoon holds, newest first, with what each one '
+          'covers and whether every part of it was written.',
+      inputSchema: {'type': 'object', 'properties': <String, Object?>{}},
+      run: (args) async {
+        final service = backupService();
+        if (service == null) return _backupsUnavailable();
+        final manifests = await service.list();
+        return {
+          'ok': true,
+          'count': manifests.length,
+          'backups': [for (final manifest in manifests) manifest.toJson()],
+        };
+      },
+    ),
+    McpTool(
+      name: 'get_backup',
+      description:
+          'One backup: its manifest, or a file inside it when file is named. A '
+          'whole ledger of CSV does not belong in a conversation, so a file is '
+          'truncated at max_bytes and says so.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['backup_id'],
+        'properties': {
+          'backup_id': {'type': 'string'},
+          'file': {
+            'type': 'string',
+            'description':
+                'Path inside the backup, as the manifest names it: '
+                '`snapshot.json` or `csv/rules.csv`.',
+          },
+          'max_bytes': {
+            'type': 'integer',
+            'default': 200000,
+            'description': 'Ceiling on a file read, 1..2000000.',
+          },
+        },
+      },
+      run: (args) async {
+        final id = (args['backup_id'] as String?)?.trim() ?? '';
+        if (id.isEmpty) return _badInput('backup_id is required');
+        final service = backupService();
+        if (service == null) return _backupsUnavailable();
+        final manifest = await service.read(id);
+        if (manifest == null) return _notFound('No backup $id');
+        final file = (args['file'] as String?)?.trim();
+        if (file == null || file.isEmpty) {
+          return {'ok': true, 'backup': manifest.toJson()};
+        }
+        final contents = await service.file(id, file);
+        if (contents == null) return _notFound('No $file in backup $id');
+        final maxBytes = ((args['max_bytes'] as num?)?.toInt() ?? 200000).clamp(
+          1,
+          2000000,
+        );
+        final truncated = contents.length > maxBytes;
+        return {
+          'ok': true,
+          'backup_id': id,
+          'file': file,
+          'bytes': contents.length,
+          'truncated': truncated,
+          'contents': truncated ? contents.substring(0, maxBytes) : contents,
+        };
+      },
+    ),
+    McpTool(
+      name: 'delete_backup',
+      writes: true,
+      description:
+          'Remove one backup and everything in it. There is no undoing this and '
+          'no copy elsewhere.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['backup_id'],
+        'properties': {
+          'backup_id': {'type': 'string'},
+        },
+      },
+      run: (args) async {
+        final id = (args['backup_id'] as String?)?.trim() ?? '';
+        if (id.isEmpty) return _badInput('backup_id is required');
+        final service = backupService();
+        if (service == null) return _backupsUnavailable();
+        if (await service.read(id) == null) return _notFound('No backup $id');
+        await service.delete(id);
+        return {'ok': true, 'backup_id': id, 'deleted': true};
       },
     ),
     McpTool(
