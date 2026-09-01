@@ -1052,6 +1052,108 @@ paths:
         '503':
           description: Encrypted store is locked
 
+  /api/backups:
+    get:
+      operationId: listBackups
+      summary: Backup ids the sealed store holds
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      responses:
+        '200':
+          description: >
+            ok and backups, the ids only. A manifest is a file inside a backup,
+            read through /api/backups/{backupId}/files/manifest.json, so a
+            listing costs the same whether one backup is held or fifty.
+        '401':
+          description: No credential resolves to a person
+        '503':
+          description: Encrypted store is locked
+
+  /api/backups/{backupId}/files/{file}:
+    get:
+      operationId: getBackupFile
+      summary: Read one part of a backup
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      parameters:
+        - name: backupId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: file
+          in: path
+          required: true
+          description: Path inside the backup, e.g. manifest.json or csv/rules.csv
+          schema: { type: string }
+      responses:
+        '200':
+          description: The stored bytes, decrypted
+        '400':
+          description: A name outside the shape FireRaccoon writes
+        '401':
+          description: No credential resolves to a person
+        '404':
+          description: No such backup or no such part of one
+        '503':
+          description: Encrypted store is locked
+    put:
+      operationId: putBackupFile
+      summary: Store one part of a backup
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      parameters:
+        - name: backupId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: file
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        '201':
+          description: ok and bytes
+        '400':
+          description: A name outside the shape FireRaccoon writes
+        '401':
+          description: No credential resolves to a person
+        '403':
+          description: A viewer, who cannot fill the volume any more than they can write to Firefly
+        '503':
+          description: Encrypted store is locked
+
+  /api/backups/{backupId}:
+    delete:
+      operationId: deleteBackup
+      summary: Remove a backup and everything in it
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      parameters:
+        - name: backupId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: ok and deleted. Saying so for an id that was never there too, since the outcome asked for is the same.
+        '400':
+          description: An id outside the shape FireRaccoon writes
+        '401':
+          description: No credential resolves to a person
+        '403':
+          description: A viewer
+        '503':
+          description: Encrypted store is locked
+
   /api/avatars/{personId}:
     get:
       operationId: getAvatar

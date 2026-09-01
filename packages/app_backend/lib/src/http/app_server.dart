@@ -12,6 +12,7 @@ import '../config.dart';
 import 'attempt_limiter.dart';
 import '../crypto/passwords.dart';
 import '../crypto/sealed_store.dart';
+import '../store/sealed_backup_store.dart';
 import '../store/state_repository.dart';
 
 const _sessionCookie = 'fireraccoon_session';
@@ -153,6 +154,10 @@ class AppServer {
       ..get('/api/agent-keys/<keyId>/secret', _revealAgentKey)
       ..delete('/api/agent-keys/<keyId>/record', _forgetAgentKey)
       ..delete('/api/agent-keys/<keyId>', _revokeAgentKey)
+      ..get('/api/backups', _listBackups)
+      ..get('/api/backups/<backupId>/files/<file|.*>', _getBackupFile)
+      ..put('/api/backups/<backupId>/files/<file|.*>', _putBackupFile)
+      ..delete('/api/backups/<backupId>', _deleteBackup)
       ..get('/api/avatars/<personId>', _getAvatar)
       ..put('/api/avatars/<personId>', _putAvatar)
       ..all('/api/firefly/<path|.*>', _fireflyProxyTagged)
@@ -875,6 +880,92 @@ class AppServer {
       'ok': true,
       ...repository.snapshotForClient(sessionToken: session),
     });
+  }
+
+  /// Backups the sealed store holds.
+  ///
+  /// Storage only: what a backup is and how one is taken lives in the engine,
+  /// and the app and the MCP binary both run that themselves. This end keeps
+  /// the bytes so a server deployment has one copy rather than one per client.
+  SealedBackupStore get _backups => SealedBackupStore(repository.store);
+
+  Future<Response> _listBackups(Request request) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    if (repository.personForSession(_session(request)) == null) {
+      return _json({'ok': false, 'error': 'Unauthorized'}, status: 401);
+    }
+    return _json({'ok': true, 'backups': await _backups.listBackupIds()});
+  }
+
+  Future<Response> _getBackupFile(
+    Request request,
+    String backupId,
+    String file,
+  ) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    if (repository.personForSession(_session(request)) == null) {
+      return _json({'ok': false, 'error': 'Unauthorized'}, status: 401);
+    }
+    final List<int>? bytes;
+    try {
+      bytes = await _backups.get(backupId, Uri.decodeComponent(file));
+    } on ArgumentError catch (error) {
+      return _json({'ok': false, 'error': '${error.message}'}, status: 400);
+    }
+    if (bytes == null) {
+      return _json({'ok': false, 'error': 'Not found'}, status: 404);
+    }
+    return Response.ok(
+      bytes,
+      headers: {'content-type': 'application/octet-stream'},
+    );
+  }
+
+  Future<Response> _putBackupFile(
+    Request request,
+    String backupId,
+    String file,
+  ) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    final session = _session(request);
+    if (repository.personForSession(session) == null) {
+      return _json({'ok': false, 'error': 'Unauthorized'}, status: 401);
+    }
+    // Same gate as a Firefly write: a viewer cannot fill the volume up.
+    if (!repository.canWrite(session)) {
+      return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
+    }
+    final bytes = await request.read().fold<List<int>>(
+      <int>[],
+      (prev, chunk) => prev..addAll(chunk),
+    );
+    try {
+      await _backups.put(backupId, Uri.decodeComponent(file), bytes);
+    } on ArgumentError catch (error) {
+      return _json({'ok': false, 'error': '${error.message}'}, status: 400);
+    }
+    return _json({'ok': true, 'bytes': bytes.length}, status: 201);
+  }
+
+  Future<Response> _deleteBackup(Request request, String backupId) async {
+    final locked = _lockedResponse();
+    if (locked != null) return locked;
+    final session = _session(request);
+    if (repository.personForSession(session) == null) {
+      return _json({'ok': false, 'error': 'Unauthorized'}, status: 401);
+    }
+    if (!repository.canWrite(session)) {
+      return _json({'ok': false, 'error': 'Forbidden'}, status: 403);
+    }
+    try {
+      await _backups.deleteBackup(backupId);
+    } on ArgumentError catch (error) {
+      return _json({'ok': false, 'error': '${error.message}'}, status: 400);
+    }
+    return _json({'ok': true, 'deleted': true});
   }
 
   Future<Response> _getAvatar(Request request, String personId) async {
