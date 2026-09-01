@@ -308,6 +308,7 @@ MockClient fireflyMockClient({
   Map<String, Map<String, Object?>> transactionOverrides = const {},
   List<Uri>? record,
   List<String>? recordBodies,
+  Set<String> failingExports = const {},
 }) {
   final transactions = <String, Map<String, Object?>>{
     '1': transactionItem(
@@ -366,6 +367,13 @@ MockClient fireflyMockClient({
     }
     if (path == '/api/v1/about/user') {
       return jsonHttpResponse(userBody());
+    }
+    if (path.startsWith('/api/v1/data/export/')) {
+      final dataset = request.url.pathSegments.last;
+      if (failingExports.contains(dataset)) {
+        return jsonHttpResponse({'message': 'export failed'}, status: 500);
+      }
+      return jsonHttpResponse('id,name\n1,$dataset\n');
     }
     if (path == '/api/v1/currencies/primary') {
       return jsonHttpResponse(primaryCurrencyBody());
