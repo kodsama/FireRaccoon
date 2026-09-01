@@ -186,6 +186,47 @@ void main() {
       );
     });
 
+    test('joins chunks that do not end their last row', () async {
+      final service = FireflyCsvExportService(
+        _serviceWith(
+          _exports(bodies: {'transactions': 'id,description\n1,rent'}),
+        ),
+      );
+
+      final files = await service.exportAll(
+        from: DateTime(2025, 1, 1),
+        to: DateTime(2026, 12, 31),
+      );
+      final transactions = files.firstWhere(
+        (f) => f.dataset == FireflyCsvDataset.transactions,
+      );
+
+      expect(transactions.contents, 'id,description\n1,rent\n1,rent');
+      expect(transactions.rowCount, 2);
+    });
+
+    test('counts a row whose field carries a doubled quote once', () async {
+      final service = FireflyCsvExportService(
+        _serviceWith(
+          _exports(
+            bodies: {'transactions': 'id,description\n1,"say ""hi"" now"\n'},
+          ),
+        ),
+      );
+
+      final files = await service.exportAll(
+        from: DateTime(2026, 1, 1),
+        to: DateTime(2026, 12, 31),
+      );
+
+      expect(
+        files
+            .firstWhere((f) => f.dataset == FireflyCsvDataset.transactions)
+            .rowCount,
+        1,
+      );
+    });
+
     test('counts no rows for an export that only has a header', () async {
       final service = FireflyCsvExportService(
         _serviceWith(_exports(bodies: {'bills': 'id,name\n'})),
