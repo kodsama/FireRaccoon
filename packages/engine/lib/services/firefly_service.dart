@@ -4,6 +4,7 @@ import '../models/recurrence.dart';
 import '../models/budget.dart';
 import '../models/category.dart';
 import '../models/currency.dart';
+import '../models/firefly_csv_dataset.dart';
 import '../models/firefly_user.dart';
 import '../models/liability.dart';
 import '../models/piggy_bank.dart';
@@ -157,4 +158,14 @@ abstract class FireflyService {
   Future<void> deleteTransaction(String transactionId);
   Future<dynamic> getPreference(String name);
   Future<void> setPreference(String name, dynamic data);
+
+  /// One data set as Firefly's own CSV export writes it.
+  ///
+  /// [start] and [end] are inclusive days and only [FireflyCsvDataset
+  /// .transactions] reads them; the rest come back whole either way.
+  Future<String> exportCsv(
+    FireflyCsvDataset dataset, {
+    DateTime? start,
+    DateTime? end,
+  });
 }

@@ -775,6 +775,22 @@ class FakeFireflyService implements FireflyService {
     preferences[name] = data;
   }
 
+  /// CSV keyed by data set, plus the windows each export was asked for.
+  final Map<FireflyCsvDataset, String> csvExports = {};
+  final List<({FireflyCsvDataset dataset, DateTime? start, DateTime? end})>
+  csvExportCalls = [];
+
+  @override
+  Future<String> exportCsv(
+    FireflyCsvDataset dataset, {
+    DateTime? start,
+    DateTime? end,
+  }) async {
+    _maybeThrow();
+    csvExportCalls.add((dataset: dataset, start: start, end: end));
+    return csvExports[dataset] ?? 'id,name\n';
+  }
+
   void _maybeThrow() {
     if (throwOn != null) throw throwOn!;
   }
