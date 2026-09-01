@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'agent_keys_provider.dart';
 import 'auth_provider.dart';
+import 'backup_providers.dart';
 import '../services/mcp_service.dart';
 import '../store/agent_key_store.dart';
 
@@ -36,6 +37,7 @@ final mcpServiceProvider = Provider<McpService>((ref) {
       agentKeysError: keys.hasError
           ? describeAgentKeyFailure(keys.error!)
           : null,
+      backupsDirectory: ref.read(backupsDirectoryProvider),
     );
   }
 

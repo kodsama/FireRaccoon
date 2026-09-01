@@ -21,6 +21,7 @@ code comments, ADRs, and MCP descriptions.
 | **Write-ahead** | Materializing upcoming recurrence occurrences as future transactions |
 | **Reconciliation** | Marking journals reconciled and optionally posting a correction; for `ccAsset` accounts, also creating a multi-split payback transfer |
 | **Agent key** | Credential an MCP client presents (`frcn_…`); bound to a person, stored with its digest so the owner can read it back, revocable |
+| **Backup** | Snapshot plus Firefly's CSV export, kept under an id naming the moment it was taken; covers ledger data, never the database, attachments or `APP_KEY` |
 
 ## Money objects
 
@@ -44,11 +45,11 @@ code comments, ADRs, and MCP descriptions.
 
 ## Agent access
 
-MCP tools are the supported agent API: 55 of them, 31 write-gated, covering
+MCP tools are the supported agent API: 64 of them, 34 write-gated, covering
 accounts, transactions, budgets and their limits, categories, tags, bills, piggy
-banks, recurrences, currencies, search, reconciliation, and the on-device
-projection. The rich account prognosis is the one engine capability that stays
-UI-only.
+banks, recurrences, currencies, search, reconciliation, backups and restores,
+and the on-device projection. The rich account prognosis is the one engine
+capability that stays UI-only.
 
 A new tool means editing `buildTools()`, `openapi.yaml` `x-mcp.tools`,
 `docs/mcp-server.md`, `AGENTS.md`, and the `surface` note in

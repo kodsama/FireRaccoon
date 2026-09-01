@@ -24,6 +24,7 @@ import '../widgets/autocomplete_text_field.dart';
 import '../widgets/small_loading_indicator.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/diagnostics_section.dart';
+import '../widgets/firefly_backup_section.dart';
 import '../widgets/mcp_settings_section.dart';
 import '../widgets/people_settings_section.dart';
 import '../widgets/settings_backup_section.dart';
@@ -908,6 +909,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         const SizedBox(height: 16),
         const SettingsBackupSection(),
+        const SizedBox(height: 24),
+        // Its own section rather than part of the one above: that one exports
+        // FireRaccoon's settings, this one copies the ledger they point at.
+        Text(
+          l10n.fireflyBackups,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 16),
+        const FireflyBackupSection(),
         const SizedBox(height: 24),
         const SideMenuSettingsSection(),
         if (ref.watch(canManageFireflyConnectionProvider)) ...[

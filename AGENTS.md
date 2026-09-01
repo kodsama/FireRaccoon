@@ -73,6 +73,11 @@ live in `CONTEXT.md`.
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides |
 | `delete_transaction` | Delete a transaction group and every split in it |
 | `export_firefly_data` | Snapshot of every entity the API exposes, for taking before a bulk change |
+| `create_backup` | Take a backup before changing anything: snapshot plus Firefly's CSV export, named by the moment it was taken with the offset kept |
+| `list_backups` | Backups this FireRaccoon holds, newest first |
+| `get_backup` | One backup's manifest, or a file inside it |
+| `delete_backup` | Remove one backup and everything in it |
+| `restore_backup` | Plan or apply putting a backup back; dry run by default, takes a fresh backup before it writes, refuses another user's ledger |
 | `find_incomplete_transactions` | Transactions missing a description, category, budget, tags, payee, notes or piggy bank |
 | `search_transactions` | Full-text search, for matching statement lines |
 | `find_account` | Resolve raw bank text to an account; matches account number and IBAN before any name tier, returns ranked candidates with a reason and a last-four hint, never the identifier |

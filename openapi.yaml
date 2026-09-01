@@ -1052,6 +1052,108 @@ paths:
         '503':
           description: Encrypted store is locked
 
+  /api/backups:
+    get:
+      operationId: listBackups
+      summary: Backup ids the sealed store holds
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      responses:
+        '200':
+          description: >
+            ok and backups, the ids only. A manifest is a file inside a backup,
+            read through /api/backups/{backupId}/files/manifest.json, so a
+            listing costs the same whether one backup is held or fifty.
+        '401':
+          description: No credential resolves to a person
+        '503':
+          description: Encrypted store is locked
+
+  /api/backups/{backupId}/files/{file}:
+    get:
+      operationId: getBackupFile
+      summary: Read one part of a backup
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      parameters:
+        - name: backupId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: file
+          in: path
+          required: true
+          description: Path inside the backup, e.g. manifest.json or csv/rules.csv
+          schema: { type: string }
+      responses:
+        '200':
+          description: The stored bytes, decrypted
+        '400':
+          description: A name outside the shape FireRaccoon writes
+        '401':
+          description: No credential resolves to a person
+        '404':
+          description: No such backup or no such part of one
+        '503':
+          description: Encrypted store is locked
+    put:
+      operationId: putBackupFile
+      summary: Store one part of a backup
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      parameters:
+        - name: backupId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: file
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        '201':
+          description: ok and bytes
+        '400':
+          description: A name outside the shape FireRaccoon writes
+        '401':
+          description: No credential resolves to a person
+        '403':
+          description: A viewer, who cannot fill the volume any more than they can write to Firefly
+        '503':
+          description: Encrypted store is locked
+
+  /api/backups/{backupId}:
+    delete:
+      operationId: deleteBackup
+      summary: Remove a backup and everything in it
+      tags: [Backend]
+      servers: [*backendServer]
+      security: [{ sessionCookie: [] }, { sessionHeader: [] }, { sessionBearer: [] }, { agentKeyBearer: [] }]
+      parameters:
+        - name: backupId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: ok and deleted. Saying so for an id that was never there too, since the outcome asked for is the same.
+        '400':
+          description: An id outside the shape FireRaccoon writes
+        '401':
+          description: No credential resolves to a person
+        '403':
+          description: A viewer
+        '503':
+          description: Encrypted store is locked
+
   /api/avatars/{personId}:
     get:
       operationId: getAvatar
@@ -1201,6 +1303,9 @@ x-mcp:
       - update_recurrence
       - delete_recurrence
       - create_liability
+      - create_backup
+      - delete_backup
+      - restore_backup
   tools:
     get_capabilities:
       description: Server capabilities and tool catalog
@@ -1277,6 +1382,31 @@ x-mcp:
         client cannot reach the database, the attachments or the instance key,
         so restoring an instance still needs the volume archive.
       mapsTo: GET /api/v1/accounts
+    create_backup:
+      description: >
+        Take a backup before changing anything. Writes the snapshot a restore
+        reads plus Firefly's own CSV export, which is the only copy of rules and
+        budget limits, named by the moment it was taken with the offset kept.
+        Reaches neither the database, the attachments nor the instance key.
+      mapsTo: GET /api/v1/data/export/{dataset}
+    list_backups:
+      description: Backups this FireRaccoon holds, newest first
+      inputSchema: { type: object, properties: {} }
+    get_backup:
+      description: >
+        One backup's manifest, or a file inside it when file is named, truncated
+        at max_bytes.
+      required: [backup_id]
+    delete_backup:
+      description: Remove one backup and everything in it
+      required: [backup_id]
+    restore_backup:
+      description: >
+        Put a backup back: recreate what the ledger lost, write back what
+        differs, and optionally delete what was added since. Plans only unless
+        dry_run is false and confirm is true, and takes a fresh backup before it
+        writes. Refuses a backup taken from a different Firefly user.
+      required: [backup_id]
     find_incomplete_transactions:
       description: >
         Find transactions missing bookkeeping, for filling the blanks:

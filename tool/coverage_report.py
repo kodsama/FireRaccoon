@@ -61,6 +61,9 @@ PLATFORM_EXCLUDE = {
     "utils/avatar_file_store.dart",
     "utils/avatar_file_store_io.dart",
     "utils/avatar_file_store_stub.dart",
+    "utils/backup_directory.dart",
+    "utils/backup_directory_io.dart",
+    "utils/backup_directory_stub.dart",
 }
 
 APP_LOGIC_TOPS = {

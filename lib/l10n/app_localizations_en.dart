@@ -3621,4 +3621,104 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get upcoming => 'Upcoming';
+
+  @override
+  String get fireflyBackups => 'Firefly backups';
+
+  @override
+  String get fireflyBackupsHint =>
+      'A backup copies what the Firefly API will hand over: accounts, transactions, budgets, bills, piggy banks and recurrences, plus Firefly\'s own export, which is the only copy of rules and budget limits. It cannot reach the database, the attachments or the instance key, so a destroyed instance still needs its volume archive.';
+
+  @override
+  String get backupTakeNow => 'Take a backup';
+
+  @override
+  String backupReading(String stage) {
+    return 'Reading $stage…';
+  }
+
+  @override
+  String get backupNone => 'No backups yet';
+
+  @override
+  String get backupUnavailableHere =>
+      'This build has nowhere to keep a backup, so none can be taken here.';
+
+  @override
+  String get backupIncomplete => 'Parts missing';
+
+  @override
+  String backupSize(int files, String kilobytes) {
+    return '$files files, $kilobytes kB';
+  }
+
+  @override
+  String backupCountsSummary(int transactions, int accounts) {
+    return '$transactions transactions, $accounts accounts';
+  }
+
+  @override
+  String get backupDeleteTitle => 'Delete this backup?';
+
+  @override
+  String backupDeleteBody(String id) {
+    return '$id and everything in it goes, and nothing else keeps a copy.';
+  }
+
+  @override
+  String backupTaken(String id) {
+    return 'Backup $id taken';
+  }
+
+  @override
+  String backupFailed(String error) {
+    return 'Could not take a backup: $error';
+  }
+
+  @override
+  String get backupSaveSnapshot => 'Save snapshot';
+
+  @override
+  String backupSavedTo(String path) {
+    return 'Snapshot saved to $path';
+  }
+
+  @override
+  String get backupRestore => 'Restore';
+
+  @override
+  String get backupRestoreTitle => 'Restore from this backup?';
+
+  @override
+  String get backupRestorePlanning => 'Working out what would change…';
+
+  @override
+  String get backupRestoreNothing =>
+      'Nothing to put back: the ledger already matches this backup.';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '$creates to put back, $updates to write over, $deletes to remove.';
+  }
+
+  @override
+  String get backupRestoreDeletes => 'Also remove rows added since this backup';
+
+  @override
+  String get backupRestoreNote =>
+      'Rows put back come back under new identifiers, and a fresh backup is taken before anything is written. Rules, budget limits, attachments and currencies cannot be written back through the API.';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return 'Restored $applied rows, $failed failed';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return 'Could not restore: $error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger =>
+      'This backup was taken from a different Firefly user, so it cannot be restored here.';
 }
