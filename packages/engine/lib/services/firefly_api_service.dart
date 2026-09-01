@@ -8,6 +8,7 @@ import '../models/bill.dart';
 import '../models/budget.dart';
 import '../models/category.dart';
 import '../models/currency.dart';
+import '../models/firefly_csv_dataset.dart';
 import '../models/firefly_user.dart';
 import '../models/liability.dart';
 import '../models/piggy_bank.dart';
@@ -1616,5 +1617,32 @@ class FireflyApiService implements FireflyService {
         }
       }
     }, context: {'name': name});
+  }
+
+  @override
+  Future<String> exportCsv(
+    FireflyCsvDataset dataset, {
+    DateTime? start,
+    DateTime? end,
+  }) {
+    return _runLogged('exportCsv', () async {
+      final query = <String>[
+        if (start != null) 'start=${_formatApiDate(start)}',
+        if (end != null) 'end=${_formatApiDate(end)}',
+      ].join('&');
+      final path =
+          '/api/v1/data/export/${dataset.apiValue}'
+          '${query.isEmpty ? '' : '?$query'}';
+      // Asked for with the shared headers on purpose: the body is CSV but 6.6.6
+      // refuses `Accept: text/csv` with a 406 and answers the API's own
+      // `application/vnd.api+json` with the file.
+      final response = await _send('GET', path, maxAttempts: _readMaxAttempts);
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Failed to export ${dataset.apiValue}: ${_status(response)}',
+        );
+      }
+      return response.body;
+    }, context: {'dataset': dataset.apiValue});
   }
 }
