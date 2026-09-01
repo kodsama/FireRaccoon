@@ -61,6 +61,7 @@ const List<String> _writeToolNames = [
   'create_liability',
   'create_backup',
   'delete_backup',
+  'restore_backup',
 ];
 
 List<String> _strList(Object? value) =>
@@ -2469,6 +2470,150 @@ List<McpTool> buildTools({
         if (await service.read(id) == null) return _notFound('No backup $id');
         await service.delete(id);
         return {'ok': true, 'backup_id': id, 'deleted': true};
+      },
+    ),
+    McpTool(
+      name: 'restore_backup',
+      writes: true,
+      description:
+          'Put a backup back. Reports what it would do and changes nothing '
+          'unless dry_run is false and confirm is true, and takes a fresh '
+          'backup before it writes so a restore is itself undoable. Rows the '
+          'backup has and the ledger lost are recreated, which gives them new '
+          'ids; rows that differ are written back; rows added since the backup '
+          'are left alone unless delete_created_since says otherwise. Refuses a '
+          'backup taken from a different Firefly user. Rules, budget limits, '
+          'attachments and currencies are not restorable through the API and '
+          'are reported as such rather than silently skipped.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['backup_id'],
+        'properties': {
+          'backup_id': {'type': 'string'},
+          'dry_run': {
+            'type': 'boolean',
+            'default': true,
+            'description': 'Plan only. Nothing is written while this is true.',
+          },
+          'confirm': {
+            'type': 'boolean',
+            'default': false,
+            'description':
+                'Required alongside dry_run false. Two flags rather than one, '
+                'so a restore cannot be a typo.',
+          },
+          'types': {
+            'type': 'array',
+            'items': {'type': 'string'},
+            'description':
+                'Entity types to walk. Defaults to all of them: accounts, '
+                'categories, tags, budgets, bills, piggy_banks, recurrences, '
+                'transactions.',
+          },
+          'delete_created_since': {
+            'type': 'boolean',
+            'default': false,
+            'description':
+                'Delete rows the ledger has and the backup does not. This is '
+                'the one part of a restore that running it again cannot undo.',
+          },
+          'max_steps_reported': {
+            'type': 'integer',
+            'default': 200,
+            'description':
+                'Ceiling on the steps listed back. The counts are always whole.',
+          },
+        },
+      },
+      run: (args) async {
+        final id = (args['backup_id'] as String?)?.trim() ?? '';
+        if (id.isEmpty) return _badInput('backup_id is required');
+        final backupsService = backupService();
+        if (backupsService == null) return _backupsUnavailable();
+
+        final manifest = await backupsService.read(id);
+        if (manifest == null) return _notFound('No backup $id');
+        final snapshot = await backupsService.snapshot(id);
+        if (snapshot == null) {
+          return _notFound('Backup $id has no snapshot to restore from');
+        }
+
+        final api = service();
+        final owner = await api.getCurrentUser();
+        if (manifest.ownerId != null && manifest.ownerId != owner.id) {
+          return {
+            'ok': false,
+            'code': 'wrong_ledger',
+            'error':
+                'Backup $id was taken as Firefly user ${manifest.ownerId} '
+                '(${manifest.ownerEmail}) and this connection is user '
+                '${owner.id} (${owner.email}). Restoring across ledgers would '
+                'write someone else\'s rows into this one.',
+          };
+        }
+
+        final types = _strList(args['types']).toSet();
+        final current = await DataExportService(
+          api,
+        ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+        final plan = planRestore(
+          backup: snapshot,
+          current: current.toJson(),
+          types: types.isEmpty ? null : types,
+          includeDeletes: args['delete_created_since'] as bool? ?? false,
+        );
+
+        final maxSteps = ((args['max_steps_reported'] as num?)?.toInt() ?? 200)
+            .clamp(1, 2000);
+        Map<String, Object?> planJson() {
+          final json = plan.toJson();
+          final steps = json['steps']! as List<Object?>;
+          if (steps.length > maxSteps) {
+            json['steps'] = steps.take(maxSteps).toList();
+            json['steps_truncated'] = steps.length - maxSteps;
+          }
+          return json;
+        }
+
+        final dryRun = args['dry_run'] as bool? ?? true;
+        if (dryRun) {
+          return {
+            'ok': true,
+            'dry_run': true,
+            'backup_id': id,
+            'plan': planJson(),
+            'next': plan.isEmpty
+                ? 'Nothing to put back: the ledger already matches the backup.'
+                : 'Call again with dry_run false and confirm true to apply it.',
+          };
+        }
+        if (args['confirm'] != true) {
+          return _badInput(
+            'confirm must be true to write a restore. Run with dry_run to see '
+            'the plan first.',
+          );
+        }
+
+        // The restore is itself a change worth being able to undo.
+        final safety = await backupsService.create();
+        final runner = RestoreRunner(api);
+        final outcomes = await runner.apply(plan);
+        final failed = [
+          for (final outcome in outcomes)
+            if (!outcome.applied) outcome.toJson(),
+        ];
+        return {
+          'ok': true,
+          'dry_run': false,
+          'backup_id': id,
+          'backup_taken_first': safety.id,
+          'applied': outcomes.length - failed.length,
+          'failed': failed.length,
+          'failures': failed.take(maxSteps).toList(),
+          'remapped_ids': runner.remappedIds,
+          'counts_by_action': plan.countsByAction,
+          'unrestorable': plan.unrestorable,
+        };
       },
     ),
     McpTool(

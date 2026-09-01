@@ -45,11 +45,11 @@ code comments, ADRs, and MCP descriptions.
 
 ## Agent access
 
-MCP tools are the supported agent API: 63 of them, 33 write-gated, covering
+MCP tools are the supported agent API: 64 of them, 34 write-gated, covering
 accounts, transactions, budgets and their limits, categories, tags, bills, piggy
-banks, recurrences, currencies, search, reconciliation, backups, and the
-on-device projection. The rich account prognosis is the one engine capability
-that stays UI-only.
+banks, recurrences, currencies, search, reconciliation, backups and restores,
+and the on-device projection. The rich account prognosis is the one engine
+capability that stays UI-only.
 
 A new tool means editing `buildTools()`, `openapi.yaml` `x-mcp.tools`,
 `docs/mcp-server.md`, `AGENTS.md`, and the `surface` note in

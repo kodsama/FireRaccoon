@@ -254,4 +254,240 @@ void main() {
       expect(names, isNot(contains('get_backup')));
     });
   });
+
+  group('restore', () {
+    Future<String> takeBackup(MockClient client) async {
+      final created = await _tool(
+        'create_backup',
+        client: client,
+        backups: store,
+      ).run({});
+      return (created['backup']! as Map)['id']! as String;
+    }
+
+    test('plans without writing anything', () async {
+      final client = fireflyMockClient();
+      final id = await takeBackup(client);
+
+      final result = await _tool(
+        'restore_backup',
+        client: client,
+        backups: store,
+      ).run({'backup_id': id});
+
+      expect(result['ok'], isTrue);
+      expect(result['dry_run'], isTrue);
+      // Nothing moved between the backup and the plan, so there is nothing to
+      // put back.
+      expect((result['plan']! as Map)['steps'], isEmpty);
+      expect(result['next'], contains('already matches'));
+    });
+
+    test('writing needs both flags', () async {
+      final client = fireflyMockClient();
+      final id = await takeBackup(client);
+
+      final result = await _tool(
+        'restore_backup',
+        client: client,
+        backups: store,
+      ).run({'backup_id': id, 'dry_run': false});
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('confirm'));
+    });
+
+    test('takes a fresh backup before it writes', () async {
+      final client = fireflyMockClient();
+      final id = await takeBackup(client);
+
+      final result = await _tool(
+        'restore_backup',
+        client: client,
+        backups: store,
+      ).run({'backup_id': id, 'dry_run': false, 'confirm': true});
+
+      expect(result['ok'], isTrue);
+      expect(result['backup_taken_first'], isNot(id));
+      expect(await store.listBackupIds(), hasLength(2));
+    });
+
+    test('refuses a backup taken from another ledger', () async {
+      final client = fireflyMockClient();
+      final id = await takeBackup(client);
+      final manifest =
+          jsonDecode(utf8.decode((await store.get(id, kBackupManifestFile))!))
+              as Map<String, Object?>;
+      manifest['owner'] = {'id': '99', 'email': 'someone@else.test'};
+      await store.put(
+        id,
+        kBackupManifestFile,
+        utf8.encode(jsonEncode(manifest)),
+      );
+
+      final result = await _tool(
+        'restore_backup',
+        client: client,
+        backups: store,
+      ).run({'backup_id': id});
+
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'wrong_ledger');
+      expect(result['error'], contains('someone@else.test'));
+    });
+
+    test('refuses what it cannot find, and says what it needs', () async {
+      final client = fireflyMockClient();
+      final tool = _tool('restore_backup', client: client, backups: store);
+      final id = await takeBackup(client);
+      await store.put(id, kBackupSnapshotFile, utf8.encode('not json'));
+
+      expect((await tool.run({'backup_id': ''}))['code'], 'bad_input');
+      expect((await tool.run({'backup_id': 'nope'}))['code'], 'not_found');
+      final broken = await tool.run({'backup_id': id});
+      expect(broken['code'], 'not_found');
+      expect(broken['error'], contains('no snapshot'));
+    });
+
+    test('is refused where there is nowhere to keep a backup', () async {
+      final result = await _tool(
+        'restore_backup',
+        client: fireflyMockClient(),
+      ).run({'backup_id': 'b1'});
+
+      expect(result['code'], 'unavailable');
+    });
+
+    test('putting a lost transaction back is one create', () async {
+      final client = fireflyMockClient();
+      final id = await takeBackup(client);
+      // The ledger loses a transaction after the backup was taken.
+      final snapshot =
+          jsonDecode(utf8.decode((await store.get(id, kBackupSnapshotFile))!))
+              as Map<String, Object?>;
+      (snapshot['transactions']! as List).add({
+        'id': '99',
+        'group_title': null,
+        'splits': [
+          {
+            'type': 'withdrawal',
+            'date': '2026-01-15T00:00:00.000',
+            'amount': 12.5,
+            'description': 'Lost row',
+            'source_id': '5',
+            'destination_name': 'Store',
+            'currency_code': 'EUR',
+            'tags': <String>[],
+          },
+        ],
+      });
+      await store.put(
+        id,
+        kBackupSnapshotFile,
+        utf8.encode(jsonEncode(snapshot)),
+      );
+
+      final planned = await _tool(
+        'restore_backup',
+        client: client,
+        backups: store,
+      ).run({'backup_id': id});
+
+      final steps = (planned['plan']! as Map)['steps']! as List<Object?>;
+      expect(steps, hasLength(1));
+      expect((steps.single! as Map)['action'], 'create');
+      expect((steps.single! as Map)['label'], 'Lost row');
+    });
+
+    test('a long plan is reported to a ceiling, counted whole', () async {
+      final client = fireflyMockClient();
+      final id = await takeBackup(client);
+      final snapshot =
+          jsonDecode(utf8.decode((await store.get(id, kBackupSnapshotFile))!))
+              as Map<String, Object?>;
+      for (var i = 0; i < 5; i++) {
+        (snapshot['transactions']! as List).add({
+          'id': 'lost-$i',
+          'splits': [
+            {
+              'type': 'withdrawal',
+              'date': '2026-01-15T00:00:00.000',
+              'amount': 1.0,
+              'description': 'Row $i',
+              'source_id': '5',
+              'destination_name': 'Store',
+              'currency_code': 'EUR',
+              'tags': <String>[],
+            },
+          ],
+        });
+      }
+      await store.put(
+        id,
+        kBackupSnapshotFile,
+        utf8.encode(jsonEncode(snapshot)),
+      );
+
+      final planned = await _tool(
+        'restore_backup',
+        client: client,
+        backups: store,
+      ).run({'backup_id': id, 'max_steps_reported': 2});
+
+      final plan = planned['plan']! as Map<String, Object?>;
+      expect(plan['steps'], hasLength(2));
+      expect(plan['steps_truncated'], 3);
+      expect((plan['counts_by_action']! as Map)['create'], 5);
+    });
+
+    test('a restore is gated on write access', () {
+      final names = [
+        for (final tool in buildTools(target: _target))
+          if (tool.writes) tool.name,
+      ];
+
+      expect(names, contains('restore_backup'));
+    });
+
+    test('a step Firefly refuses is reported, not swallowed', () async {
+      final client = fireflyMockClient(failingWrites: {'/api/v1/transactions'});
+      final id = await takeBackup(client);
+      final snapshot =
+          jsonDecode(utf8.decode((await store.get(id, kBackupSnapshotFile))!))
+              as Map<String, Object?>;
+      (snapshot['transactions']! as List).add({
+        'id': '99',
+        'splits': [
+          {
+            'type': 'withdrawal',
+            'date': '2026-01-15T00:00:00.000',
+            'amount': 12.5,
+            'description': 'Lost row',
+            'source_id': '5',
+            'destination_name': 'Store',
+            'currency_code': 'EUR',
+            'tags': <String>[],
+          },
+        ],
+      });
+      await store.put(
+        id,
+        kBackupSnapshotFile,
+        utf8.encode(jsonEncode(snapshot)),
+      );
+
+      final result = await _tool(
+        'restore_backup',
+        client: client,
+        backups: store,
+      ).run({'backup_id': id, 'dry_run': false, 'confirm': true});
+
+      expect(result['ok'], isTrue);
+      expect(result['failed'], 1);
+      expect(result['applied'], 0);
+      final failure = (result['failures']! as List).single! as Map;
+      expect(failure['error'], contains('500'));
+      expect(failure['label'], 'Lost row');
+    });
+  });
 }

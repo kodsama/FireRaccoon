@@ -1305,6 +1305,7 @@ x-mcp:
       - create_liability
       - create_backup
       - delete_backup
+      - restore_backup
   tools:
     get_capabilities:
       description: Server capabilities and tool catalog
@@ -1398,6 +1399,13 @@ x-mcp:
       required: [backup_id]
     delete_backup:
       description: Remove one backup and everything in it
+      required: [backup_id]
+    restore_backup:
+      description: >
+        Put a backup back: recreate what the ledger lost, write back what
+        differs, and optionally delete what was added since. Plans only unless
+        dry_run is false and confirm is true, and takes a fresh backup before it
+        writes. Refuses a backup taken from a different Firefly user.
       required: [backup_id]
     find_incomplete_transactions:
       description: >

@@ -108,7 +108,7 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 
 ## Available tools
 
-63 tools, 33 of which write. The two that carry a bank import lead the table and
+64 tools, 34 of which write. The two that carry a bank import lead the table and
 are described under [Importing a statement](#importing-a-statement).
 
 | Tool | Description | Writes |
@@ -134,6 +134,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `list_backups` | Backups this FireRaccoon holds, newest first |  |
 | `get_backup` | One manifest, or a file inside a backup, truncated at `max_bytes` |  |
 | `delete_backup` | Remove one backup and everything in it | yes |
+| `restore_backup` | Plan or apply putting a backup back, taking a fresh one first | yes |
 | `find_incomplete_transactions` | Transactions missing a description, category, budget, tags, payee, notes or piggy bank |  |
 | `search_transactions` | Full-text search, for matching statement lines |  |
 | `get_budgets` | List budgets with spent amounts |  |
