@@ -8,6 +8,7 @@ import 'package:fireraccoon_engine/services/firefly_service.dart';
 import 'package:fireraccoon/providers/account_classification_provider.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/store/legacy_rename_migration.dart';
 
 import '../helpers/mock_firefly_service.dart';
 
@@ -263,6 +264,40 @@ void main() {
         container.read(accountClassificationProvider)['account-1'],
         AccountCategory.investment,
       );
+    });
+
+    test('recovers classifications stored before the rename', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final service = FakeFireflyService();
+      service.preferences[legacyPreferenceName(
+        kAccountClassificationPreferenceKey,
+      )] = {
+        'account-1': 'creditCard',
+      };
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          apiServiceProvider.overrideWithValue(service),
+        ],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(
+        accountClassificationProvider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(
+        container.read(accountClassificationProvider)['account-1'],
+        AccountCategory.creditCard,
+      );
+      // Written back under the name in use, so the next launch reads it there.
+      expect(service.preferences[kAccountClassificationPreferenceKey], {
+        'account-1': 'creditCard',
+      });
     });
 
     test('a refused read leaves the local cache alone', () async {
