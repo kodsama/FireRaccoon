@@ -4,11 +4,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fireraccoon_engine/models/account.dart';
+import 'package:fireraccoon_engine/services/firefly_service.dart';
 import 'package:fireraccoon/providers/account_classification_provider.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/store/legacy_rename_migration.dart';
 
 import '../helpers/mock_firefly_service.dart';
+
+/// Stands in for a credential read that answers after the first build, which
+/// is the ordering every first launch has.
+class _LateService extends Notifier<FireflyService?> {
+  @override
+  FireflyService? build() => null;
+
+  void connect(FireflyService service) => state = service;
+}
+
+final _lateServiceProvider = NotifierProvider<_LateService, FireflyService?>(
+  _LateService.new,
+);
 
 Account _createAccount({
   required String id,
@@ -206,6 +221,108 @@ void main() {
       );
       addTearDown(subscription.close);
       await Future<void>.delayed(Duration.zero);
+
+      expect(
+        container.read(accountClassificationProvider)['account-1'],
+        AccountCategory.savings,
+      );
+    });
+
+    test('reads classifications once the connection appears', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final service = FakeFireflyService();
+      service.preferences[kAccountClassificationPreferenceKey] = {
+        'account-1': 'investment',
+      };
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          apiServiceProvider.overrideWith(
+            (ref) => ref.watch(_lateServiceProvider),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(
+        accountClassificationProvider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+      await Future<void>.delayed(Duration.zero);
+
+      expect(container.read(accountClassificationProvider), isEmpty);
+
+      container.read(_lateServiceProvider.notifier).connect(service);
+      for (var i = 0; i < 40; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        if (container.read(accountClassificationProvider).isNotEmpty) break;
+      }
+
+      expect(
+        container.read(accountClassificationProvider)['account-1'],
+        AccountCategory.investment,
+      );
+    });
+
+    test('recovers classifications stored before the rename', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final service = FakeFireflyService();
+      service.preferences[legacyPreferenceName(
+        kAccountClassificationPreferenceKey,
+      )] = {
+        'account-1': 'creditCard',
+      };
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          apiServiceProvider.overrideWithValue(service),
+        ],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(
+        accountClassificationProvider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(
+        container.read(accountClassificationProvider)['account-1'],
+        AccountCategory.creditCard,
+      );
+      // Written back under the name in use, so the next launch reads it there.
+      expect(service.preferences[kAccountClassificationPreferenceKey], {
+        'account-1': 'creditCard',
+      });
+    });
+
+    test('a refused read leaves the local cache alone', () async {
+      SharedPreferences.setMockInitialValues({
+        kAccountClassificationPreferenceKey: jsonEncode({
+          'account-1': 'savings',
+        }),
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final service = FakeFireflyService()
+        ..throwOn = Exception('token expired');
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          apiServiceProvider.overrideWithValue(service),
+        ],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(
+        accountClassificationProvider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+      await Future<void>.delayed(const Duration(milliseconds: 20));
 
       expect(
         container.read(accountClassificationProvider)['account-1'],

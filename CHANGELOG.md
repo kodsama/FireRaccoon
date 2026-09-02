@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-02
+
+### Fixed
+
+- Settings from before the name was spelled FireRaccoon are recovered rather
+  than left stranded. The keys are read out of the store in use, which covers
+  the web and anything else that kept its store across the rename, and fun mode
+  is carried by value as well as by name. The old application support directory
+  is read once, which brings back the undo history, the custom avatars and any
+  backups taken before the rename. The people config and the account
+  classifications are also asked for under the old name in Firefly, which is
+  the only recovery a phone or a sandboxed desktop has, since the bundle
+  identifier changed on both and neither can reach the store the old build
+  wrote to
+- People and account classifications held in Firefly never reached a fresh
+  install. The read fired at the end of hydration, which runs before the
+  credential read answers, so it found no connection and nothing scheduled
+  another: the person picker stayed on All People however much the server held.
+  Both are read again when the connection appears
+- A preference Firefly has never stored read as an error rather than as unset,
+  because 6.6.6 answers a name it does not hold with 401 Unauthenticated rather
+  than 404. The credential is confirmed against `/api/v1/about` before a refusal
+  is taken for an absence, so a first run is not reported as a rejected token
+  and an expired token is not reported as an empty setting
+- A refused or malformed read of either setting no longer passes in silence,
+  where it looked exactly like having no connection yet. Keeping the local copy
+  is still right; saying nothing about why was not
+
 ## [0.3.0] - 2026-09-02
 
 ### Added

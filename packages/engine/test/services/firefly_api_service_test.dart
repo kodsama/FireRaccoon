@@ -2944,6 +2944,84 @@ void main() {
       );
     });
 
+    test(
+      'getPreference reads a 401 as unset when the token still reads',
+      () async {
+        final paths = <String>[];
+        final client = MockClient((request) async {
+          paths.add(request.url.path);
+          if (request.url.path == '/api/v1/about') {
+            return jsonHttpResponse({
+              'data': {'version': '6.6.6'},
+            });
+          }
+          return http.Response(
+            '{"message":"Unauthenticated.",'
+            '"exception":"AuthenticationException"}',
+            401,
+          );
+        });
+        final service = FireflyApiService(
+          serverUrl: baseUrl,
+          apiToken: token,
+          client: client,
+        );
+
+        expect(
+          await service.getPreference('fireraccoon_people_config'),
+          isNull,
+        );
+        expect(paths, [
+          '/api/v1/preferences/fireraccoon_people_config',
+          '/api/v1/about',
+        ]);
+      },
+    );
+
+    test(
+      'getPreference refuses a 401 when the token no longer reads',
+      () async {
+        final client = MockClient((request) async {
+          return http.Response('{"message":"Unauthenticated."}', 401);
+        });
+        final service = FireflyApiService(
+          serverUrl: baseUrl,
+          apiToken: token,
+          client: client,
+        );
+
+        await expectLater(
+          service.getPreference('fireraccoon_people_config'),
+          throwsA(
+            isA<FireflyApiException>().having(
+              (e) => e.statusCode,
+              'status',
+              401,
+            ),
+          ),
+        );
+      },
+    );
+
+    test('getPreference refuses a 401 it cannot confirm either way', () async {
+      final client = MockClient((request) async {
+        if (request.url.path == '/api/v1/about') {
+          throw Exception('connection closed');
+        }
+        return http.Response('{"message":"Unauthenticated."}', 401);
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await expectLater(
+        service.getPreference('fireraccoon_people_config'),
+        throwsA(isA<FireflyApiException>()),
+      );
+    });
+
     test('setPreference sends JSON content type on POST and PUT', () async {
       final contentTypes = <String, String?>{};
       final client = MockClient((request) async {

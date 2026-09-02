@@ -18,6 +18,8 @@ import 'router/app_router.dart';
 import 'providers/backup_providers.dart';
 import 'services/mcp_service.dart';
 import 'utils/backup_directory.dart';
+import 'store/legacy_rename_migration.dart';
+import 'store/legacy_support_directory.dart';
 import 'store/secure_storage.dart';
 import 'theme/app_theme.dart';
 
@@ -29,6 +31,7 @@ Future<void> main() async {
   // DateFormat for one it has never seen throws, so they are all loaded here.
   await initializeDateFormatting();
   final prefs = await SharedPreferences.getInstance();
+  await _recoverSettingsFromBeforeTheRename(prefs);
   final deployment = await loadDeploymentConfig();
   // One keychain trip before anything hydrates. Each provider reads its own
   // secrets, and on macOS an unprimed read is a separate keychain access and so
@@ -48,6 +51,36 @@ Future<void> main() async {
       child: const FireRaccoonApp(),
     ),
   );
+}
+
+/// Recovers what an install from before the raccoon spelling was corrected
+/// left behind, before anything reads a preference.
+///
+/// The directory is read once and then recorded, because a file the person
+/// deleted on purpose coming back is the one step this cannot undo. The keys
+/// carry no such flag: adopting one drops the old copy, so there is nothing
+/// left to adopt twice.
+Future<void> _recoverSettingsFromBeforeTheRename(
+  SharedPreferences prefs,
+) async {
+  final log = AppLogger.scoped('app.startup');
+  final keys = await adoptLegacyRenamedPreferences(prefs);
+  if (keys.isNotEmpty) {
+    log.info('Recovered ${keys.length} setting(s) from before the rename');
+  }
+  if (prefs.getBool(kLegacySupportAdoptedKey) ?? false) return;
+  try {
+    final files = await adoptLegacySupportDirectory();
+    if (files.isNotEmpty) {
+      log.info('Recovered ${files.length} file(s) from before the rename');
+    }
+  } on Object catch (error, stackTrace) {
+    // A sandboxed build cannot reach the old directory at all. Nothing is
+    // lost by failing here, but a silent failure would look like an empty
+    // history rather than an unreadable one.
+    log.warning('Could not read the pre-rename directory', error, stackTrace);
+  }
+  await prefs.setBool(kLegacySupportAdoptedKey, true);
 }
 
 void _configureLogging() {
