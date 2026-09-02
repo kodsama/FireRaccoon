@@ -2403,6 +2403,48 @@ void main() {
         expect(sent!['title'], 'Fello renamed');
       });
 
+      test(
+        'is left off when Firefly stamped the first date with an offset',
+        () async {
+          // What a real server sends. Read as an instant, `2026-08-28T00:00:00
+          // +02:00` is the 27th, the form derives its monthly day from it, and a
+          // rename arrives carrying a schedule that moved on its own.
+          Map<String, dynamic>? sent;
+          final client = MockClient((request) async {
+            sent = jsonDecode(request.body) as Map<String, dynamic>;
+            return jsonHttpResponse({
+              'data': {'id': '111', 'attributes': attributesOnThe28th()},
+            });
+          });
+          final service = FireflyApiService(
+            serverUrl: baseUrl,
+            apiToken: token,
+            client: client,
+          );
+          final current = Recurrence.fromJson({
+            'id': '111',
+            'attributes': {
+              ...attributesOnThe28th(),
+              'first_date': '2026-08-28T00:00:00+02:00',
+            },
+          });
+
+          await service.updateRecurrence(
+            '111',
+            inputOnThe(
+              RecurrenceRepetitionInput.momentForDate(
+                RecurrenceRepetitionType.monthly,
+                current.firstDate,
+              ),
+              title: 'Fello renamed',
+            ),
+            current: current,
+          );
+
+          expect(sent!.containsKey('repetitions'), isFalse);
+        },
+      );
+
       test('is sent when the day actually changed', () async {
         Map<String, dynamic>? sent;
         final client = MockClient((request) async {
