@@ -18,6 +18,7 @@ import '../models/people_migration.dart';
 import '../models/people_models.dart';
 import '../models/settings_bundle.dart';
 import '../services/biometric_auth.dart';
+import '../store/legacy_rename_migration.dart';
 import '../utils/avatar_file_store.dart';
 import '../utils/password_policy.dart';
 import '../utils/person_permissions.dart' as permissions;
@@ -184,6 +185,13 @@ class PeopleNotifier extends Notifier<PeopleState> {
   /// overwrite a newer avatar/profile with an older payload.
   int _configWriteGeneration = 0;
 
+  /// Guards the Firefly read, which is now asked for from two places.
+  ///
+  /// Credentials can resolve while hydration is still running, so both would
+  /// otherwise fetch at once and the slower answer would land on top of the
+  /// faster one.
+  bool _remoteFetchInFlight = false;
+
   /// Plaintext passwords awaiting a successful server `putPeople` (server mode).
   final Map<String, String> _pendingServerPasswords = {};
 
@@ -200,6 +208,15 @@ class PeopleNotifier extends Notifier<PeopleState> {
     ref.listen(themeProvider, (_, _) => _syncPreferencesFromApp());
     ref.listen(localeProvider, (_, _) => _syncPreferencesFromApp());
     ref.listen(activePersonFilterProvider, (_, _) => _syncPreferencesFromApp());
+    // Hydration runs before the credential read answers, so the Firefly read
+    // it fires finds no service and gives up. Nothing used to schedule another,
+    // which is why a profile with no local people stayed empty however much the
+    // server held: the only launch that ever read it was one where auth had
+    // already resolved, and a first run is never that.
+    ref.listen(apiServiceProvider, (_, next) {
+      if (next == null || !state.isHydrated) return;
+      unawaited(_fetchRemote());
+    });
     ref.listen(serverSessionProvider, (previous, next) {
       final session = next.asData?.value;
       if (session == null || !session.isAuthenticated) return;
@@ -413,11 +430,22 @@ class PeopleNotifier extends Notifier<PeopleState> {
   }
 
   Future<void> _fetchRemote() async {
-    if (_isServerMode) return;
+    if (_isServerMode || _remoteFetchInFlight) return;
+    _remoteFetchInFlight = true;
     try {
       final service = ref.read(apiServiceProvider);
       if (service == null) return;
-      final remote = await service.getPreference(kPeopleConfigPreferenceKey);
+      var remote = await service.getPreference(kPeopleConfigPreferenceKey);
+      // An install from before the raccoon spelling was corrected mirrored the
+      // same config under the old name, and Firefly still holds it. Reading it
+      // is the only recovery a phone or a sandboxed desktop has, since neither
+      // can reach the store the old build wrote to.
+      final fromBeforeTheRename = remote == null;
+      if (fromBeforeTheRename) {
+        remote = await service.getPreference(
+          legacyPreferenceName(kPeopleConfigPreferenceKey),
+        );
+      }
       if (remote == null) return;
       final auth = PeopleAuthStorage(
         byPersonId: {for (final p in state.people) p.id: p.toAuthJson()},
@@ -445,8 +473,33 @@ class PeopleNotifier extends Notifier<PeopleState> {
       if (!ref.mounted) return;
       state = state.copyWith(config: merged);
       await _prefs.setString(kPeopleConfigPreferenceKey, merged.encode());
-    } catch (_) {
-      // Offline / error: keep local.
+      if (fromBeforeTheRename) {
+        // Written back under the name in use so the next launch is an ordinary
+        // one rather than another recovery.
+        await service.setPreference(
+          kPeopleConfigPreferenceKey,
+          merged.toJson(),
+        );
+        _log.info(
+          'Recovered ${merged.people.length} person(s) from the people config '
+          'this ledger still held under the pre-rename name',
+        );
+      } else {
+        _log.info(
+          'People read from Firefly: ${merged.people.length} person(s)',
+        );
+      }
+    } on Object catch (error, stackTrace) {
+      // Local prefs still hold the config, so being offline costs nothing.
+      // Saying nothing did cost something: a refused or malformed read looked
+      // exactly like having no connection yet.
+      _log.warning(
+        'Failed to read the people config from Firefly',
+        error,
+        stackTrace,
+      );
+    } finally {
+      _remoteFetchInFlight = false;
     }
   }
 

@@ -15,6 +15,7 @@ import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fireraccoon_engine/models/account.dart';
 import 'package:fireraccoon_engine/models/transaction.dart';
+import 'package:fireraccoon_engine/services/firefly_service.dart';
 import 'package:fireraccoon/deployment/deployment_providers.dart';
 import 'package:fireraccoon/deployment/fireraccoon_mode.dart';
 import 'package:fireraccoon/models/app_user_models.dart';
@@ -25,12 +26,26 @@ import 'package:fireraccoon/providers/dashboard_stats_providers.dart';
 import 'package:fireraccoon/providers/people_providers.dart';
 import 'package:fireraccoon/providers/server_session_provider.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/store/legacy_rename_migration.dart';
 import 'package:fireraccoon/store/remote_server_client.dart';
 
 import '../helpers/fake_biometric_auth.dart';
 import '../helpers/fixed_accounts_notifier.dart';
 import '../helpers/fixed_transactions_notifier.dart';
 import '../helpers/mock_firefly_service.dart';
+
+/// Stands in for a credential read that answers after hydration has run,
+/// which is the ordering every first launch has.
+class _LateService extends Notifier<FireflyService?> {
+  @override
+  FireflyService? build() => null;
+
+  void connect(FireflyService service) => state = service;
+}
+
+final _lateServiceProvider = NotifierProvider<_LateService, FireflyService?>(
+  _LateService.new,
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -277,6 +292,122 @@ void main() {
       expect(
         service.preferences[kPeopleConfigPreferenceKey],
         isA<Map<String, dynamic>>(),
+      );
+    });
+
+    test('reads the people config once the connection appears', () async {
+      final prefs = await freshPrefs();
+      final service = FakeFireflyService();
+      service.preferences[kPeopleConfigPreferenceKey] = {
+        'version': 1,
+        'people': [
+          {'id': 'p1', 'name': 'Remote', 'colorValue': 0xFF3B82F6},
+        ],
+        'accountOwnerships': <String, dynamic>{},
+      };
+      final container = await buildContainer(
+        prefs: prefs,
+        extraOverrides: [
+          apiServiceProvider.overrideWith(
+            (ref) => ref.watch(_lateServiceProvider),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(
+        peopleProvider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+      await waitHydrated(container);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      // Hydration ran before any credential resolved, which is every first run.
+      expect(container.read(peopleSettingsProvider).people, isEmpty);
+
+      container.read(_lateServiceProvider.notifier).connect(service);
+      for (var i = 0; i < 40; i++) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        if (container.read(peopleSettingsProvider).people.isNotEmpty) break;
+      }
+
+      expect(
+        container.read(peopleSettingsProvider).people.single.name,
+        'Remote',
+      );
+      expect(prefs.getString(kPeopleConfigPreferenceKey), contains('Remote'));
+    });
+
+    test('recovers a people config stored before the rename', () async {
+      final prefs = await freshPrefs();
+      final service = FakeFireflyService();
+      service.preferences[legacyPreferenceName(kPeopleConfigPreferenceKey)] = {
+        'version': 1,
+        'people': [
+          {'id': 'p1', 'name': 'Stranded', 'colorValue': 0xFF3B82F6},
+        ],
+        'accountOwnerships': <String, dynamic>{},
+      };
+      final container = await buildContainer(
+        prefs: prefs,
+        extraOverrides: [apiServiceProvider.overrideWithValue(service)],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(
+        peopleProvider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+      await waitHydrated(container);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(
+        container.read(peopleSettingsProvider).people.single.name,
+        'Stranded',
+      );
+      // Written back under the name in use, so the next launch reads it there.
+      expect(
+        service.preferences[kPeopleConfigPreferenceKey],
+        isA<Map<String, dynamic>>(),
+      );
+    });
+
+    test('a refused people read leaves the local config alone', () async {
+      final encoded = AccountOwnershipConfig(
+        people: [
+          Person(
+            id: 'p1',
+            name: 'Local',
+            colorValue: 0xFF3B82F6,
+            createdAtIso: '2026-01-01T00:00:00.000',
+          ),
+        ],
+      ).encode();
+      SharedPreferences.setMockInitialValues({
+        kPeopleConfigPreferenceKey: encoded,
+      });
+      final prefs = await SharedPreferences.getInstance();
+      final service = FakeFireflyService()
+        ..throwOn = Exception('token expired');
+      final container = await buildContainer(
+        prefs: prefs,
+        extraOverrides: [apiServiceProvider.overrideWithValue(service)],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(
+        peopleProvider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+      await waitHydrated(container);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(
+        container.read(peopleSettingsProvider).people.single.name,
+        'Local',
       );
     });
 
