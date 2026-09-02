@@ -1,3 +1,5 @@
+import 'firefly_date.dart';
+
 class PiggyBankAccountLink {
   final String accountId;
   final String name;
@@ -67,8 +69,8 @@ class PiggyBank {
       leftToSave: _parseNullableAmount(attrs['left_to_save']),
       currencyCode: attrs['currency_code'] as String? ?? 'EUR',
       currencySymbol: attrs['currency_symbol'] as String? ?? '€',
-      startDate: _parseDate(attrs['start_date']) ?? DateTime.now(),
-      targetDate: _parseDate(attrs['target_date']),
+      startDate: parseFireflyDate(attrs['start_date']) ?? DateTime.now(),
+      targetDate: parseFireflyDate(attrs['target_date']),
       active: attrs['active'] as bool? ?? true,
       notes: attrs['notes'] as String?,
       objectGroupTitle: attrs['object_group_title'] as String?,
@@ -81,11 +83,6 @@ class PiggyBank {
   static double? _parseNullableAmount(dynamic value) {
     if (value == null) return null;
     return double.tryParse(value.toString());
-  }
-
-  static DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    return DateTime.tryParse(value.toString());
   }
 }
 

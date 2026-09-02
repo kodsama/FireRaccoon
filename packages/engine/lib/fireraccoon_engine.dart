@@ -8,6 +8,7 @@ export 'models/budget.dart';
 export 'models/category.dart';
 export 'models/currency.dart';
 export 'models/firefly_csv_dataset.dart';
+export 'models/firefly_date.dart';
 export 'models/firefly_user.dart';
 export 'models/liability.dart';
 export 'models/piggy_bank.dart';
