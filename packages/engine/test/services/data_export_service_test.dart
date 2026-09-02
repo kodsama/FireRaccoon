@@ -334,4 +334,29 @@ void main() {
       expect(() => jsonEncode(snapshot.toJson()), returnsNormally);
     });
   });
+
+  test('reports the read running and how far the walk has got', () async {
+    final reports = <({String stage, double? fraction})>[];
+    final service = DataExportService(_serviceWith(_everything()));
+
+    await service.export(
+      onProgress: (stage, fraction) =>
+          reports.add((stage: stage, fraction: fraction)),
+    );
+
+    final stages = [for (final report in reports) report.stage];
+    expect(stages.first, 'accounts');
+    expect(stages, containsAll(<String>['transactions', 'currencies']));
+    expect(reports.last.stage, 'snapshot');
+    expect(reports.last.fraction, 1);
+    // Nothing to divide by until the first page answers with a page count.
+    expect(reports.first.fraction, isNull);
+    final counted = [
+      for (final report in reports)
+        if (report.fraction != null) report.fraction!,
+    ];
+    for (var i = 1; i < counted.length; i++) {
+      expect(counted[i], greaterThanOrEqualTo(counted[i - 1]));
+    }
+  });
 }

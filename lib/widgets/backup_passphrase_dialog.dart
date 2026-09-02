@@ -8,11 +8,13 @@ import '../utils/password_policy.dart';
 Future<String?> showBackupPassphraseDialog({
   required BuildContext context,
   required bool confirm,
+  String? confirmLabel,
 }) {
   return showDialog<String>(
     context: context,
     barrierDismissible: false,
-    builder: (ctx) => _PassphrasePrompt(confirm: confirm),
+    builder: (ctx) =>
+        _PassphrasePrompt(confirm: confirm, confirmLabel: confirmLabel),
   );
 }
 
@@ -22,9 +24,13 @@ Future<String?> showBackupPassphraseDialog({
 /// completes at pop time while the route is still animating out and the fields
 /// still rebuild as focus leaves them, which reads a disposed controller.
 class _PassphrasePrompt extends StatefulWidget {
-  const _PassphrasePrompt({required this.confirm});
+  const _PassphrasePrompt({required this.confirm, this.confirmLabel});
 
   final bool confirm;
+
+  /// What the accepting button says. The settings export named itself, and a
+  /// backup asking for a password should not offer to export settings.
+  final String? confirmLabel;
 
   @override
   State<_PassphrasePrompt> createState() => _PassphrasePromptState();
@@ -145,7 +151,10 @@ class _PassphrasePromptState extends State<_PassphrasePrompt> {
         ),
         FilledButton(
           onPressed: _submit,
-          child: Text(confirm ? l10n.exportSettings : l10n.importSettings),
+          child: Text(
+            widget.confirmLabel ??
+                (confirm ? l10n.exportSettings : l10n.importSettings),
+          ),
         ),
       ],
     );

@@ -3651,4 +3651,143 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get upcoming => 'À venir';
+
+  @override
+  String get fireflyBackups => 'Sauvegardes Firefly';
+
+  @override
+  String get fireflyBackupsHint =>
+      'Une sauvegarde copie ce que l\'API Firefly veut bien donner : comptes, transactions, budgets, factures, tirelires et récurrences, plus l\'export de Firefly lui-même, seule copie des règles et des plafonds de budget. Elle n\'atteint ni la base de données, ni les pièces jointes, ni la clé de l\'instance : une instance détruite a toujours besoin de son archive de volume.';
+
+  @override
+  String get backupTakeNow => 'Créer une sauvegarde';
+
+  @override
+  String backupReading(String stage) {
+    return 'Lecture de $stage…';
+  }
+
+  @override
+  String get backupNone => 'Aucune sauvegarde';
+
+  @override
+  String get backupUnavailableHere =>
+      'Cette version n\'a nulle part où ranger une sauvegarde, aucune ne peut être créée ici.';
+
+  @override
+  String get backupIncomplete => 'Éléments manquants';
+
+  @override
+  String backupSize(int files, String kilobytes) {
+    return '$files fichiers, $kilobytes ko';
+  }
+
+  @override
+  String backupCountsSummary(int transactions, int accounts) {
+    return '$transactions transactions, $accounts comptes';
+  }
+
+  @override
+  String get backupDeleteTitle => 'Supprimer cette sauvegarde ?';
+
+  @override
+  String backupDeleteBody(String id) {
+    return '$id disparaît avec tout son contenu, et rien d\'autre n\'en garde de copie.';
+  }
+
+  @override
+  String backupTaken(String id) {
+    return 'Sauvegarde $id créée';
+  }
+
+  @override
+  String backupFailed(String error) {
+    return 'Impossible de créer la sauvegarde : $error';
+  }
+
+  @override
+  String get backupSaveSnapshot => 'Enregistrer l\'instantané';
+
+  @override
+  String backupSavedTo(String path) {
+    return 'Instantané enregistré dans $path';
+  }
+
+  @override
+  String get backupRestore => 'Restaurer';
+
+  @override
+  String get backupRestoreTitle => 'Restaurer depuis cette sauvegarde ?';
+
+  @override
+  String get backupRestorePlanning => 'Calcul de ce qui changerait…';
+
+  @override
+  String get backupRestoreNothing =>
+      'Rien à remettre : le registre correspond déjà à cette sauvegarde.';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '$creates à remettre, $updates à réécrire, $deletes à supprimer.';
+  }
+
+  @override
+  String get backupRestoreDeletes =>
+      'Supprimer aussi les lignes ajoutées depuis cette sauvegarde';
+
+  @override
+  String get backupRestoreNote =>
+      'Les lignes remises reviennent sous de nouveaux identifiants, et une nouvelle sauvegarde est prise avant toute écriture. Les règles, les plafonds de budget, les pièces jointes et les devises ne peuvent pas être réécrits via l\'API.';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return '$applied lignes restaurées, $failed en échec';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return 'Restauration impossible : $error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger =>
+      'Cette sauvegarde vient d\'un autre utilisateur Firefly, elle ne peut pas être restaurée ici.';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return 'Restauration de $done sur $total';
+  }
+
+  @override
+  String get backupTakeProtected => 'Créer une sauvegarde protégée';
+
+  @override
+  String get backupEncryptedBadge => 'Protégée par mot de passe';
+
+  @override
+  String get backupPasswordNeeded =>
+      'Cette sauvegarde est protégée par un mot de passe.';
+
+  @override
+  String get backupPasswordWrong =>
+      'Ce mot de passe n\'ouvre pas cette sauvegarde.';
+
+  @override
+  String get backupVerify => 'Vérifier';
+
+  @override
+  String get backupVerifyIntact => 'Intacte, et conforme au registre';
+
+  @override
+  String backupVerifyDrifted(int creates, int updates, int deletes) {
+    return 'Intacte. Le registre a changé : $creates manquantes, $updates modifiées, $deletes ajoutées depuis.';
+  }
+
+  @override
+  String backupVerifyBroken(int count, String first) {
+    return '$count problèmes avec cette sauvegarde : $first';
+  }
+
+  @override
+  String get backupOpen => 'Ouvrir';
 }

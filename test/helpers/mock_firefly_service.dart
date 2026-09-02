@@ -146,8 +146,12 @@ class FakeFireflyService implements FireflyService {
     DateTime? end,
     String? type,
     void Function(List<Transaction> firstPage)? onFirstPage,
+    void Function(int loadedPages, int totalPages)? onPageProgress,
   }) async {
     _maybeThrow();
+    await _maybeDelay();
+    // One page, reported the way the real walk reports its first.
+    onPageProgress?.call(1, 1);
     final typed = type == null || type.isEmpty
         ? transactions
         : transactions.where((t) => t.type == type).toList();
@@ -440,9 +444,13 @@ class FakeFireflyService implements FireflyService {
     return categories;
   }
 
+  /// Names passed to [createCategory], so a test can see what was written.
+  final List<String> createdCategories = [];
+
   @override
   Future<Category> createCategory(String name, {String? notes}) async {
     _maybeThrow();
+    createdCategories.add(name);
     return Category(id: 'cat-${categories.length + 1}', name: name);
   }
 
@@ -773,6 +781,22 @@ class FakeFireflyService implements FireflyService {
   Future<void> setPreference(String name, dynamic data) async {
     _maybeThrow();
     preferences[name] = data;
+  }
+
+  /// CSV keyed by data set, plus the windows each export was asked for.
+  final Map<FireflyCsvDataset, String> csvExports = {};
+  final List<({FireflyCsvDataset dataset, DateTime? start, DateTime? end})>
+  csvExportCalls = [];
+
+  @override
+  Future<String> exportCsv(
+    FireflyCsvDataset dataset, {
+    DateTime? start,
+    DateTime? end,
+  }) async {
+    _maybeThrow();
+    csvExportCalls.add((dataset: dataset, start: start, end: end));
+    return csvExports[dataset] ?? 'id,name\n';
   }
 
   void _maybeThrow() {

@@ -8,6 +8,7 @@ import '../models/bill.dart';
 import '../models/budget.dart';
 import '../models/category.dart';
 import '../models/currency.dart';
+import '../models/firefly_csv_dataset.dart';
 import '../models/firefly_user.dart';
 import '../models/liability.dart';
 import '../models/piggy_bank.dart';
@@ -16,6 +17,7 @@ import '../models/tag.dart';
 import '../models/transaction.dart';
 import '../models/transaction_page.dart';
 import '../utils/chart_balance_parser.dart';
+import '../utils/date_range.dart';
 import 'firefly_api_exception.dart';
 import 'firefly_service.dart';
 
@@ -105,10 +107,10 @@ class FireflyApiService implements FireflyService {
     // happy either way, so both ends are named for both: it costs nothing
     // there and is the difference between an answer and silence here.
     final startDay = start == null
-        ? _beforeAnyLedger
+        ? kFireflyLedgerStart
         : DateTime(start.year, start.month, start.day);
     var inclusiveEnd = end == null
-        ? _beyondAnyLedger
+        ? kFireflyLedgerEnd
         : end.subtract(const Duration(days: 1));
     if (!inclusiveEnd.isAfter(startDay)) {
       inclusiveEnd = startDay.add(const Duration(days: 1));
@@ -116,16 +118,6 @@ class FireflyApiService implements FireflyService {
     return 'start=${_formatApiDate(startDay)}'
         '&end=${_formatApiDate(inclusiveEnd)}';
   }
-
-  /// Stands in for an unbounded end of a window.
-  ///
-  /// Firefly validates both ends against 32-bit time and refuses anything
-  /// outside it: "The start must be a date after 1970-01-02" and "The end must
-  /// be a date before 2038-01-17". A sentinel past either edge turned every
-  /// unbounded read into a 422, so these sit just inside them. Naming an end
-  /// only helps if the end is one the server will accept.
-  static final DateTime _beforeAnyLedger = DateTime(1970, 1, 3);
-  static final DateTime _beyondAnyLedger = DateTime(2038, 1, 16);
 
   /// Drops what the widening in [_rangeQuery] pulled in, so a caller reading a
   /// one-day window sees that day and not its neighbour.
@@ -439,8 +431,10 @@ class FireflyApiService implements FireflyService {
   Future<List<Transaction>> _fetchAllTransactionPages(
     String path, {
     void Function(List<Transaction> firstPage)? onFirstPage,
+    void Function(int loadedPages, int totalPages)? onPageProgress,
   }) async {
     final first = await _fetchTransactionPage(path, page: 1, limit: _pageSize);
+    onPageProgress?.call(1, first.totalPages);
     if (first.totalPages <= 1) return first.transactions;
     onFirstPage?.call(first.transactions);
 
@@ -448,6 +442,7 @@ class FireflyApiService implements FireflyService {
     final pages = List<List<Transaction>>.filled(first.totalPages, const []);
     pages[0] = first.transactions;
     var nextPage = 2;
+    var loaded = 1;
     Future<void> worker() async {
       while (true) {
         final page = nextPage;
@@ -459,6 +454,7 @@ class FireflyApiService implements FireflyService {
           limit: _pageSize,
         );
         pages[page - 1] = result.transactions;
+        onPageProgress?.call(++loaded, first.totalPages);
         // Concurrent workers can deliver several 500-row parses back to
         // back; yield so the UI thread can paint between them.
         await Future<void>.delayed(Duration.zero);
@@ -665,6 +661,7 @@ class FireflyApiService implements FireflyService {
     DateTime? end,
     String? type,
     void Function(List<Transaction> firstPage)? onFirstPage,
+    void Function(int loadedPages, int totalPages)? onPageProgress,
   }) async {
     final effectiveStart = start ?? DateTime.now().subtract(_defaultLookback);
     return _runLogged(
@@ -673,6 +670,7 @@ class FireflyApiService implements FireflyService {
         await _fetchAllTransactionPages(
           _transactionsPath(start: effectiveStart, end: end, type: type),
           onFirstPage: onFirstPage,
+          onPageProgress: onPageProgress,
         ),
         start: effectiveStart,
         end: end,
@@ -1616,5 +1614,32 @@ class FireflyApiService implements FireflyService {
         }
       }
     }, context: {'name': name});
+  }
+
+  @override
+  Future<String> exportCsv(
+    FireflyCsvDataset dataset, {
+    DateTime? start,
+    DateTime? end,
+  }) {
+    return _runLogged('exportCsv', () async {
+      final query = <String>[
+        if (start != null) 'start=${_formatApiDate(start)}',
+        if (end != null) 'end=${_formatApiDate(end)}',
+      ].join('&');
+      final path =
+          '/api/v1/data/export/${dataset.apiValue}'
+          '${query.isEmpty ? '' : '?$query'}';
+      // Asked for with the shared headers on purpose: the body is CSV but 6.6.6
+      // refuses `Accept: text/csv` with a 406 and answers the API's own
+      // `application/vnd.api+json` with the file.
+      final response = await _send('GET', path, maxAttempts: _readMaxAttempts);
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Failed to export ${dataset.apiValue}: ${_status(response)}',
+        );
+      }
+      return response.body;
+    }, context: {'dataset': dataset.apiValue});
   }
 }

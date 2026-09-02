@@ -15,7 +15,9 @@ import 'providers/mcp_provider.dart';
 import 'providers/server_session_provider.dart';
 import 'providers/theme_provider.dart';
 import 'router/app_router.dart';
+import 'providers/backup_providers.dart';
 import 'services/mcp_service.dart';
+import 'utils/backup_directory.dart';
 import 'store/secure_storage.dart';
 import 'theme/app_theme.dart';
 
@@ -32,12 +34,16 @@ Future<void> main() async {
   // secrets, and on macOS an unprimed read is a separate keychain access and so
   // a separate password prompt.
   await appSecureStorage.prime();
+  // Resolved here rather than lazily: the path comes from a platform channel,
+  // and the MCP server hands it to its isolate at spawn, which cannot wait.
+  final backupsDirectory = await resolveBackupsDirectory();
 
   runApp(
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         deploymentConfigProvider.overrideWithValue(deployment),
+        backupsDirectoryProvider.overrideWithValue(backupsDirectory),
       ],
       child: const FireRaccoonApp(),
     ),

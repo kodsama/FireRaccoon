@@ -1728,5 +1728,158 @@
   "biometricEnableReason": "Confirmez pour activer le déverrouillage biométrique",
   "biometricUnlockFailed": "Le déverrouillage biométrique a été annulé ou a échoué.",
   "recordedBalance": "Enregistré",
-  "upcoming": "À venir"
+  "upcoming": "À venir",
+  "fireflyBackups": "Sauvegardes Firefly",
+  "fireflyBackupsHint": "Une sauvegarde copie ce que l'API Firefly veut bien donner : comptes, transactions, budgets, factures, tirelires et récurrences, plus l'export de Firefly lui-même, seule copie des règles et des plafonds de budget. Elle n'atteint ni la base de données, ni les pièces jointes, ni la clé de l'instance : une instance détruite a toujours besoin de son archive de volume.",
+  "backupTakeNow": "Créer une sauvegarde",
+  "backupReading": "Lecture de {stage}…",
+  "@backupReading": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNone": "Aucune sauvegarde",
+  "backupUnavailableHere": "Cette version n'a nulle part où ranger une sauvegarde, aucune ne peut être créée ici.",
+  "backupIncomplete": "Éléments manquants",
+  "backupSize": "{files} fichiers, {kilobytes} ko",
+  "@backupSize": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "kilobytes": {
+        "type": "String"
+      }
+    }
+  },
+  "backupCountsSummary": "{transactions} transactions, {accounts} comptes",
+  "@backupCountsSummary": {
+    "placeholders": {
+      "transactions": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
+  "backupDeleteTitle": "Supprimer cette sauvegarde ?",
+  "backupDeleteBody": "{id} disparaît avec tout son contenu, et rien d'autre n'en garde de copie.",
+  "@backupDeleteBody": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupTaken": "Sauvegarde {id} créée",
+  "@backupTaken": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailed": "Impossible de créer la sauvegarde : {error}",
+  "@backupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSaveSnapshot": "Enregistrer l'instantané",
+  "backupSavedTo": "Instantané enregistré dans {path}",
+  "@backupSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestore": "Restaurer",
+  "backupRestoreTitle": "Restaurer depuis cette sauvegarde ?",
+  "backupRestorePlanning": "Calcul de ce qui changerait…",
+  "backupRestoreNothing": "Rien à remettre : le registre correspond déjà à cette sauvegarde.",
+  "backupRestoreSummary": "{creates} à remettre, {updates} à réécrire, {deletes} à supprimer.",
+  "@backupRestoreSummary": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreDeletes": "Supprimer aussi les lignes ajoutées depuis cette sauvegarde",
+  "backupRestoreNote": "Les lignes remises reviennent sous de nouveaux identifiants, et une nouvelle sauvegarde est prise avant toute écriture. Les règles, les plafonds de budget, les pièces jointes et les devises ne peuvent pas être réécrits via l'API.",
+  "backupRestoreDone": "{applied} lignes restaurées, {failed} en échec",
+  "@backupRestoreDone": {
+    "placeholders": {
+      "applied": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreFailed": "Restauration impossible : {error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWrongLedger": "Cette sauvegarde vient d'un autre utilisateur Firefly, elle ne peut pas être restaurée ici.",
+  "backupRestoring": "Restauration de {done} sur {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "backupTakeProtected": "Créer une sauvegarde protégée",
+  "backupEncryptedBadge": "Protégée par mot de passe",
+  "backupPasswordNeeded": "Cette sauvegarde est protégée par un mot de passe.",
+  "backupPasswordWrong": "Ce mot de passe n'ouvre pas cette sauvegarde.",
+  "backupVerify": "Vérifier",
+  "backupVerifyIntact": "Intacte, et conforme au registre",
+  "backupVerifyDrifted": "Intacte. Le registre a changé : {creates} manquantes, {updates} modifiées, {deletes} ajoutées depuis.",
+  "@backupVerifyDrifted": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupVerifyBroken": "{count} problèmes avec cette sauvegarde : {first}",
+  "@backupVerifyBroken": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOpen": "Ouvrir"
 }

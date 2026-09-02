@@ -240,4 +240,34 @@ class SealedStore {
       await file.delete();
     }
   }
+
+  /// Names of the directories directly under [relativePath].
+  ///
+  /// Contents are ciphertext but the layout is not, which is what lets a store
+  /// holding many of something be enumerated without a separate index that could
+  /// disagree with the files.
+  Future<List<String>> listDirectories(String relativePath) async {
+    final dir = _directoryFor(relativePath);
+    if (!dir.existsSync()) return const [];
+    return [
+      for (final entry in dir.listSync(followLinks: false))
+        if (entry is Directory) p.basename(entry.path),
+    ];
+  }
+
+  /// Removes [relativePath] and everything below it.
+  Future<void> deleteDirectory(String relativePath) async {
+    final dir = _directoryFor(relativePath);
+    if (dir.existsSync()) {
+      await dir.delete(recursive: true);
+    }
+  }
+
+  Directory _directoryFor(String relativePath) {
+    final normalized = p.normalize(relativePath);
+    if (normalized.startsWith('..') || p.isAbsolute(normalized)) {
+      throw ArgumentError('invalid relative path: $relativePath');
+    }
+    return Directory(p.join(_dataDir.path, normalized));
+  }
 }

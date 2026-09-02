@@ -1803,5 +1803,158 @@
   "biometricEnableReason": "生体認証のロック解除を有効にするには確認してください",
   "biometricUnlockFailed": "生体認証によるロック解除がキャンセルされたか失敗しました。",
   "recordedBalance": "記録済み",
-  "upcoming": "今後"
+  "upcoming": "今後",
+  "fireflyBackups": "Firefly のバックアップ",
+  "fireflyBackupsHint": "バックアップは Firefly API が渡すもの、つまり口座、取引、予算、請求、貯金箱、繰り返しに加えて、ルールと予算上限の唯一の写しである Firefly 自身のエクスポートを控えます。データベース、添付ファイル、インスタンスキーには届かないため、壊れたインスタンスの復旧にはボリュームのアーカイブが必要です。",
+  "backupTakeNow": "バックアップを取る",
+  "backupReading": "{stage} を読み込み中…",
+  "@backupReading": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNone": "バックアップはまだありません",
+  "backupUnavailableHere": "このビルドにはバックアップの置き場所がないため、ここでは取れません。",
+  "backupIncomplete": "欠けている部分があります",
+  "backupSize": "{files} ファイル、{kilobytes} kB",
+  "@backupSize": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "kilobytes": {
+        "type": "String"
+      }
+    }
+  },
+  "backupCountsSummary": "取引 {transactions} 件、口座 {accounts} 件",
+  "@backupCountsSummary": {
+    "placeholders": {
+      "transactions": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
+  "backupDeleteTitle": "このバックアップを削除しますか？",
+  "backupDeleteBody": "{id} は中身ごと消え、ほかに写しはありません。",
+  "@backupDeleteBody": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupTaken": "バックアップ {id} を取りました",
+  "@backupTaken": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailed": "バックアップを取れませんでした: {error}",
+  "@backupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSaveSnapshot": "スナップショットを保存",
+  "backupSavedTo": "スナップショットを {path} に保存しました",
+  "@backupSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestore": "復元",
+  "backupRestoreTitle": "このバックアップから復元しますか？",
+  "backupRestorePlanning": "何が変わるかを確認しています…",
+  "backupRestoreNothing": "戻すものはありません。台帳はすでにこのバックアップと一致しています。",
+  "backupRestoreSummary": "戻す {creates} 件、上書きする {updates} 件、削除する {deletes} 件。",
+  "@backupRestoreSummary": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreDeletes": "このバックアップ以降に追加された行も削除する",
+  "backupRestoreNote": "戻した行には新しい識別子が付き、書き込む前に新しいバックアップを取ります。ルール、予算上限、添付ファイル、通貨は API では書き戻せません。",
+  "backupRestoreDone": "{applied} 件を復元、{failed} 件が失敗",
+  "@backupRestoreDone": {
+    "placeholders": {
+      "applied": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreFailed": "復元できませんでした: {error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWrongLedger": "このバックアップは別の Firefly ユーザーが取ったものなので、ここには復元できません。",
+  "backupRestoring": "{total} 件中 {done} 件を復元中",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "backupTakeProtected": "保護されたバックアップを取る",
+  "backupEncryptedBadge": "パスワード保護",
+  "backupPasswordNeeded": "このバックアップはパスワードで保護されています。",
+  "backupPasswordWrong": "そのパスワードではこのバックアップを開けません。",
+  "backupVerify": "検証",
+  "backupVerifyIntact": "問題なし。台帳とも一致しています",
+  "backupVerifyDrifted": "問題なし。台帳は変わっています: 不足 {creates} 件、変更 {updates} 件、追加 {deletes} 件。",
+  "@backupVerifyDrifted": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupVerifyBroken": "このバックアップには {count} 件の問題があります: {first}",
+  "@backupVerifyBroken": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOpen": "開く"
 }

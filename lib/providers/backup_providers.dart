@@ -1,0 +1,266 @@
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../deployment/deployment_providers.dart';
+import 'data_providers.dart';
+import 'server_session_provider.dart';
+
+/// Directory local-mode backups are written to, resolved once at startup.
+///
+/// Overridden in `main`, because the path comes from a platform channel and a
+/// provider that reaches for one lazily would leave the first read of a backup
+/// list waiting on it.
+final backupsDirectoryProvider = Provider<String?>((ref) => null);
+
+/// Where this deployment keeps backups, or null when it cannot keep any.
+///
+/// Server mode reaches the sealed DATA_DIR over HTTP, so every client of one
+/// server sees the same backups. Local mode writes files beside the app's own
+/// data. The web build in local mode has neither, and says so rather than
+/// offering a button that writes nothing.
+final backupStoreProvider = Provider<BackupStore?>((ref) {
+  if (ref.watch(deploymentConfigProvider).isServer) {
+    final session = ref.watch(serverSessionProvider.notifier);
+    final client = session.client;
+    final token = ref.watch(serverSessionProvider).value?.token;
+    if (client == null || token == null || token.isEmpty) return null;
+    return RemoteBackupStore(
+      baseUrl: client.baseUrl,
+      headers: {'x-fireraccoon-session': token},
+    );
+  }
+  final directory = ref.watch(backupsDirectoryProvider);
+  if (directory == null || directory.isEmpty) return null;
+  return FileBackupStore(directory);
+});
+
+/// Takes and reads backups, or null while there is no connection or nowhere to
+/// put one.
+final backupServiceProvider = Provider<BackupService?>((ref) {
+  final api = ref.watch(apiServiceProvider);
+  final store = ref.watch(backupStoreProvider);
+  if (api == null || store == null) return null;
+  return BackupService(api, store);
+});
+
+/// Raised when a backup belongs to a different Firefly user.
+class WrongLedgerException implements Exception {
+  const WrongLedgerException();
+}
+
+/// What a backup or a restore is doing right now, for a screen that has to stay
+/// honest about work that walks a whole ledger.
+class BackupActivity {
+  const BackupActivity({
+    required this.running,
+    this.stage,
+    this.fraction,
+    this.restoreStep,
+    this.restoreTotal,
+  });
+
+  static const idle = BackupActivity(running: false);
+
+  final bool running;
+
+  /// The part being read, as [BackupService.create] reports it.
+  final String? stage;
+
+  /// 0..1, or null while the work is not yet countable.
+  final double? fraction;
+
+  /// Rows written so far of the plan's total, while a restore runs.
+  final int? restoreStep;
+  final int? restoreTotal;
+
+  bool get isRestore => restoreTotal != null;
+}
+
+/// The backups this FireRaccoon holds.
+class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
+  static final _log = AppLogger.scoped('providers.backups');
+
+  final _progress = ValueNotifier<BackupActivity>(BackupActivity.idle);
+
+  ValueListenable<BackupActivity> get progress => _progress;
+
+  @override
+  Future<List<BackupManifest>> build() async {
+    final service = ref.watch(backupServiceProvider);
+    if (service == null) return const [];
+    return service.list();
+  }
+
+  /// Takes a backup and puts it at the top of the list.
+  ///
+  /// Errors are thrown rather than folded into the state: the list of backups
+  /// that already exist is still true, and a failed attempt is the caller's to
+  /// report.
+  Future<BackupManifest> create({String? password}) async {
+    final service = ref.read(backupServiceProvider);
+    if (service == null) {
+      throw StateError('Backups are unavailable in this deployment');
+    }
+    _progress.value = const BackupActivity(running: true);
+    try {
+      final manifest = await service.create(
+        password: password,
+        onProgress: (progress) => _progress.value = BackupActivity(
+          running: true,
+          stage: progress.stage,
+          fraction: progress.fraction,
+        ),
+      );
+      _log.info(
+        'Backup ${manifest.id} written: ${manifest.totalBytes} bytes, '
+        'complete=${manifest.complete}',
+      );
+      state = AsyncData([manifest, ...state.value ?? const []]);
+      return manifest;
+    } finally {
+      _progress.value = BackupActivity.idle;
+    }
+  }
+
+  Future<void> delete(String backupId) async {
+    final service = ref.read(backupServiceProvider);
+    if (service == null) return;
+    await service.delete(backupId);
+    _log.info('Backup $backupId deleted');
+    state = AsyncData([
+      for (final manifest in state.value ?? const <BackupManifest>[])
+        if (manifest.id != backupId) manifest,
+    ]);
+  }
+
+  /// One file out of a backup, for handing it to something else.
+  Future<String?> file(
+    String backupId,
+    String fileName, {
+    String? password,
+  }) async {
+    final service = ref.read(backupServiceProvider);
+    if (service == null) return null;
+    return service.file(backupId, fileName, password: password);
+  }
+
+  /// Whether a backup is still itself, and how far the ledger has moved from
+  /// it. Reads only.
+  Future<({BackupIntegrity integrity, RestorePlan? drift})> verify(
+    String backupId, {
+    String? password,
+  }) async {
+    final service = ref.read(backupServiceProvider);
+    final api = ref.read(apiServiceProvider);
+    if (service == null || api == null) {
+      throw StateError('Backups are unavailable in this deployment');
+    }
+    _progress.value = const BackupActivity(running: true, stage: 'verify');
+    try {
+      final integrity = await service.check(backupId, password: password);
+      if (!integrity.intact && integrity.readableFiles == 0) {
+        return (integrity: integrity, drift: null);
+      }
+      final snapshot = await service.snapshot(backupId, password: password);
+      if (snapshot == null) return (integrity: integrity, drift: null);
+      // Reading the ledger is the long half, and it reports itself, so a check
+      // of a large ledger moves the same bar a backup does.
+      final current = await DataExportService(api).export(
+        from: kFireflyLedgerStart,
+        to: kFireflyLedgerEnd,
+        onProgress: (stage, fraction) => _progress.value = BackupActivity(
+          running: true,
+          stage: stage,
+          fraction: fraction,
+        ),
+      );
+      return (
+        integrity: integrity,
+        drift: planRestore(backup: snapshot, current: current.toJson()),
+      );
+    } finally {
+      _progress.value = BackupActivity.idle;
+    }
+  }
+
+  /// What restoring [backupId] would change, without changing anything.
+  ///
+  /// Throws when the backup was taken as a different Firefly user: putting one
+  /// ledger's rows into another is the mistake worth refusing outright rather
+  /// than listing as a plan someone might approve.
+  Future<RestorePlan> planRestoreOf(
+    String backupId, {
+    bool includeDeletes = false,
+    String? password,
+  }) async {
+    final service = ref.read(backupServiceProvider);
+    final api = ref.read(apiServiceProvider);
+    if (service == null || api == null) {
+      throw StateError('Backups are unavailable in this deployment');
+    }
+    final manifest = await service.read(backupId);
+    final snapshot = await service.snapshot(backupId, password: password);
+    if (manifest == null || snapshot == null) {
+      throw StateError('Backup $backupId has no snapshot to restore from');
+    }
+    final owner = await api.getCurrentUser();
+    if (manifest.ownerId != null && manifest.ownerId != owner.id) {
+      throw const WrongLedgerException();
+    }
+    final current = await DataExportService(
+      api,
+    ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+    return planRestore(
+      backup: snapshot,
+      current: current.toJson(),
+      includeDeletes: includeDeletes,
+    );
+  }
+
+  /// Applies [plan], after taking a backup of what it is about to change.
+  Future<List<RestoreOutcome>> applyRestore(
+    RestorePlan plan, {
+    String? password,
+  }) async {
+    final api = ref.read(apiServiceProvider);
+    if (api == null) {
+      throw StateError('Not connected to Firefly III');
+    }
+    // Sealed the same way the backup being restored was, so the safety net is
+    // no more readable than what it protects.
+    await create(password: password);
+    _progress.value = const BackupActivity(running: true, restoreTotal: 0);
+    try {
+      final outcomes = await RestoreRunner(api).apply(
+        plan,
+        onStep: (done, total) => _progress.value = BackupActivity(
+          running: true,
+          fraction: total == 0 ? 1 : done / total,
+          restoreStep: done,
+          restoreTotal: total,
+        ),
+      );
+      _log.info(
+        'Restore applied: ${outcomes.where((o) => o.applied).length} of '
+        '${outcomes.length} steps',
+      );
+      return outcomes;
+    } finally {
+      _progress.value = BackupActivity.idle;
+    }
+  }
+
+  Future<void> refresh() async {
+    final service = ref.read(backupServiceProvider);
+    if (service == null) return;
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(service.list);
+  }
+}
+
+final backupsProvider =
+    AsyncNotifierProvider<BackupsNotifier, List<BackupManifest>>(
+      BackupsNotifier.new,
+    );

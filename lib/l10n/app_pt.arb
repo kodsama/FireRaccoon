@@ -1728,5 +1728,158 @@
   "biometricEnableReason": "Confirme para ativar o desbloqueio biométrico",
   "biometricUnlockFailed": "O desbloqueio biométrico foi cancelado ou falhou.",
   "recordedBalance": "Registado",
-  "upcoming": "Próximas"
+  "upcoming": "Próximas",
+  "fireflyBackups": "Cópias de segurança do Firefly",
+  "fireflyBackupsHint": "Uma cópia de segurança leva o que a API do Firefly entrega: contas, transações, orçamentos, faturas, mealheiros e recorrências, mais a exportação do próprio Firefly, que é a única cópia das regras e dos limites de orçamento. Não chega à base de dados, aos anexos nem à chave da instância, por isso uma instância destruída continua a precisar do arquivo do volume.",
+  "backupTakeNow": "Criar cópia de segurança",
+  "backupReading": "A ler {stage}…",
+  "@backupReading": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNone": "Ainda sem cópias de segurança",
+  "backupUnavailableHere": "Esta versão não tem onde guardar uma cópia de segurança, por isso não é possível criar nenhuma aqui.",
+  "backupIncomplete": "Faltam partes",
+  "backupSize": "{files} ficheiros, {kilobytes} kB",
+  "@backupSize": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "kilobytes": {
+        "type": "String"
+      }
+    }
+  },
+  "backupCountsSummary": "{transactions} transações, {accounts} contas",
+  "@backupCountsSummary": {
+    "placeholders": {
+      "transactions": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
+  "backupDeleteTitle": "Eliminar esta cópia de segurança?",
+  "backupDeleteBody": "{id} desaparece com tudo o que tem dentro, e mais nada guarda uma cópia.",
+  "@backupDeleteBody": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupTaken": "Cópia de segurança {id} criada",
+  "@backupTaken": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailed": "Não foi possível criar a cópia de segurança: {error}",
+  "@backupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSaveSnapshot": "Guardar instantâneo",
+  "backupSavedTo": "Instantâneo guardado em {path}",
+  "@backupSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestore": "Restaurar",
+  "backupRestoreTitle": "Restaurar a partir desta cópia de segurança?",
+  "backupRestorePlanning": "A calcular o que mudaria…",
+  "backupRestoreNothing": "Nada para repor: o registo já corresponde a esta cópia de segurança.",
+  "backupRestoreSummary": "{creates} para repor, {updates} para reescrever, {deletes} para remover.",
+  "@backupRestoreSummary": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreDeletes": "Remover também linhas acrescentadas desde esta cópia",
+  "backupRestoreNote": "As linhas repostas voltam com identificadores novos, e é criada uma cópia de segurança antes de qualquer escrita. Regras, limites de orçamento, anexos e moedas não podem ser reescritos pela API.",
+  "backupRestoreDone": "{applied} linhas restauradas, {failed} falharam",
+  "@backupRestoreDone": {
+    "placeholders": {
+      "applied": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreFailed": "Não foi possível restaurar: {error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWrongLedger": "Esta cópia de segurança foi criada por outro utilizador do Firefly, por isso não pode ser restaurada aqui.",
+  "backupRestoring": "A restaurar {done} de {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "backupTakeProtected": "Criar cópia protegida",
+  "backupEncryptedBadge": "Protegida por palavra-passe",
+  "backupPasswordNeeded": "Esta cópia de segurança está protegida por palavra-passe.",
+  "backupPasswordWrong": "Essa palavra-passe não abre esta cópia de segurança.",
+  "backupVerify": "Verificar",
+  "backupVerifyIntact": "Intacta, e corresponde ao registo",
+  "backupVerifyDrifted": "Intacta. O registo mudou: faltam {creates}, {updates} alteradas, {deletes} acrescentadas desde então.",
+  "@backupVerifyDrifted": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupVerifyBroken": "{count} problemas com esta cópia: {first}",
+  "@backupVerifyBroken": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOpen": "Abrir"
 }

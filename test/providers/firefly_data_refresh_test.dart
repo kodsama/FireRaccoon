@@ -36,6 +36,7 @@ class _CountingFireflyService extends FakeFireflyService {
     DateTime? end,
     String? type,
     void Function(List<Transaction> firstPage)? onFirstPage,
+    void Function(int loadedPages, int totalPages)? onPageProgress,
   }) async {
     transactionReads++;
     return super.getTransactions(

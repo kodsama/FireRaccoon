@@ -3622,4 +3622,143 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get upcoming => 'Kommande';
+
+  @override
+  String get fireflyBackups => 'Firefly-säkerhetskopior';
+
+  @override
+  String get fireflyBackupsHint =>
+      'En säkerhetskopia tar med det som Firefly-API:et lämnar ifrån sig: konton, transaktioner, budgetar, räkningar, spargrisar och upprepningar, plus Fireflys egen export, som är enda kopian av regler och budgettak. Den når varken databasen, bilagorna eller instansnyckeln, så en förstörd instans behöver fortfarande sitt volymarkiv.';
+
+  @override
+  String get backupTakeNow => 'Ta en säkerhetskopia';
+
+  @override
+  String backupReading(String stage) {
+    return 'Läser $stage…';
+  }
+
+  @override
+  String get backupNone => 'Inga säkerhetskopior än';
+
+  @override
+  String get backupUnavailableHere =>
+      'Den här versionen har ingenstans att lägga en säkerhetskopia, så ingen kan tas här.';
+
+  @override
+  String get backupIncomplete => 'Delar saknas';
+
+  @override
+  String backupSize(int files, String kilobytes) {
+    return '$files filer, $kilobytes kB';
+  }
+
+  @override
+  String backupCountsSummary(int transactions, int accounts) {
+    return '$transactions transaktioner, $accounts konton';
+  }
+
+  @override
+  String get backupDeleteTitle => 'Ta bort säkerhetskopian?';
+
+  @override
+  String backupDeleteBody(String id) {
+    return '$id försvinner med allt i den, och ingen annanstans finns en kopia.';
+  }
+
+  @override
+  String backupTaken(String id) {
+    return 'Säkerhetskopia $id tagen';
+  }
+
+  @override
+  String backupFailed(String error) {
+    return 'Kunde inte ta en säkerhetskopia: $error';
+  }
+
+  @override
+  String get backupSaveSnapshot => 'Spara ögonblicksbild';
+
+  @override
+  String backupSavedTo(String path) {
+    return 'Ögonblicksbild sparad i $path';
+  }
+
+  @override
+  String get backupRestore => 'Återställ';
+
+  @override
+  String get backupRestoreTitle => 'Återställa från den här säkerhetskopian?';
+
+  @override
+  String get backupRestorePlanning => 'Räknar ut vad som skulle ändras…';
+
+  @override
+  String get backupRestoreNothing =>
+      'Inget att lägga tillbaka: liggaren stämmer redan med säkerhetskopian.';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '$creates att lägga tillbaka, $updates att skriva över, $deletes att ta bort.';
+  }
+
+  @override
+  String get backupRestoreDeletes =>
+      'Ta även bort rader som tillkommit sedan säkerhetskopian';
+
+  @override
+  String get backupRestoreNote =>
+      'Rader som läggs tillbaka får nya identifierare, och en ny säkerhetskopia tas innan något skrivs. Regler, budgettak, bilagor och valutor går inte att skriva tillbaka via API:et.';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return '$applied rader återställda, $failed misslyckades';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return 'Kunde inte återställa: $error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger =>
+      'Säkerhetskopian togs av en annan Firefly-användare och kan inte återställas här.';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return 'Återställer $done av $total';
+  }
+
+  @override
+  String get backupTakeProtected => 'Ta en skyddad säkerhetskopia';
+
+  @override
+  String get backupEncryptedBadge => 'Lösenordsskyddad';
+
+  @override
+  String get backupPasswordNeeded =>
+      'Den här säkerhetskopian är lösenordsskyddad.';
+
+  @override
+  String get backupPasswordWrong =>
+      'Lösenordet öppnar inte den här säkerhetskopian.';
+
+  @override
+  String get backupVerify => 'Kontrollera';
+
+  @override
+  String get backupVerifyIntact => 'Hel, och stämmer med liggaren';
+
+  @override
+  String backupVerifyDrifted(int creates, int updates, int deletes) {
+    return 'Hel. Liggaren har ändrats: $creates saknas, $updates ändrade, $deletes tillkomna sedan dess.';
+  }
+
+  @override
+  String backupVerifyBroken(int count, String first) {
+    return '$count problem med säkerhetskopian: $first';
+  }
+
+  @override
+  String get backupOpen => 'Öppna';
 }

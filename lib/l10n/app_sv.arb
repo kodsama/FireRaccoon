@@ -1728,5 +1728,158 @@
   "biometricEnableReason": "Bekräfta för att aktivera biometrisk upplåsning",
   "biometricUnlockFailed": "Biometrisk upplåsning avbröts eller misslyckades.",
   "recordedBalance": "Bokfört",
-  "upcoming": "Kommande"
+  "upcoming": "Kommande",
+  "fireflyBackups": "Firefly-säkerhetskopior",
+  "fireflyBackupsHint": "En säkerhetskopia tar med det som Firefly-API:et lämnar ifrån sig: konton, transaktioner, budgetar, räkningar, spargrisar och upprepningar, plus Fireflys egen export, som är enda kopian av regler och budgettak. Den når varken databasen, bilagorna eller instansnyckeln, så en förstörd instans behöver fortfarande sitt volymarkiv.",
+  "backupTakeNow": "Ta en säkerhetskopia",
+  "backupReading": "Läser {stage}…",
+  "@backupReading": {
+    "placeholders": {
+      "stage": {
+        "type": "String"
+      }
+    }
+  },
+  "backupNone": "Inga säkerhetskopior än",
+  "backupUnavailableHere": "Den här versionen har ingenstans att lägga en säkerhetskopia, så ingen kan tas här.",
+  "backupIncomplete": "Delar saknas",
+  "backupSize": "{files} filer, {kilobytes} kB",
+  "@backupSize": {
+    "placeholders": {
+      "files": {
+        "type": "int"
+      },
+      "kilobytes": {
+        "type": "String"
+      }
+    }
+  },
+  "backupCountsSummary": "{transactions} transaktioner, {accounts} konton",
+  "@backupCountsSummary": {
+    "placeholders": {
+      "transactions": {
+        "type": "int"
+      },
+      "accounts": {
+        "type": "int"
+      }
+    }
+  },
+  "backupDeleteTitle": "Ta bort säkerhetskopian?",
+  "backupDeleteBody": "{id} försvinner med allt i den, och ingen annanstans finns en kopia.",
+  "@backupDeleteBody": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupTaken": "Säkerhetskopia {id} tagen",
+  "@backupTaken": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+  "backupFailed": "Kunde inte ta en säkerhetskopia: {error}",
+  "@backupFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupSaveSnapshot": "Spara ögonblicksbild",
+  "backupSavedTo": "Ögonblicksbild sparad i {path}",
+  "@backupSavedTo": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestore": "Återställ",
+  "backupRestoreTitle": "Återställa från den här säkerhetskopian?",
+  "backupRestorePlanning": "Räknar ut vad som skulle ändras…",
+  "backupRestoreNothing": "Inget att lägga tillbaka: liggaren stämmer redan med säkerhetskopian.",
+  "backupRestoreSummary": "{creates} att lägga tillbaka, {updates} att skriva över, {deletes} att ta bort.",
+  "@backupRestoreSummary": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreDeletes": "Ta även bort rader som tillkommit sedan säkerhetskopian",
+  "backupRestoreNote": "Rader som läggs tillbaka får nya identifierare, och en ny säkerhetskopia tas innan något skrivs. Regler, budgettak, bilagor och valutor går inte att skriva tillbaka via API:et.",
+  "backupRestoreDone": "{applied} rader återställda, {failed} misslyckades",
+  "@backupRestoreDone": {
+    "placeholders": {
+      "applied": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
+  "backupRestoreFailed": "Kunde inte återställa: {error}",
+  "@backupRestoreFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "backupRestoreWrongLedger": "Säkerhetskopian togs av en annan Firefly-användare och kan inte återställas här.",
+  "backupRestoring": "Återställer {done} av {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "backupTakeProtected": "Ta en skyddad säkerhetskopia",
+  "backupEncryptedBadge": "Lösenordsskyddad",
+  "backupPasswordNeeded": "Den här säkerhetskopian är lösenordsskyddad.",
+  "backupPasswordWrong": "Lösenordet öppnar inte den här säkerhetskopian.",
+  "backupVerify": "Kontrollera",
+  "backupVerifyIntact": "Hel, och stämmer med liggaren",
+  "backupVerifyDrifted": "Hel. Liggaren har ändrats: {creates} saknas, {updates} ändrade, {deletes} tillkomna sedan dess.",
+  "@backupVerifyDrifted": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupVerifyBroken": "{count} problem med säkerhetskopian: {first}",
+  "@backupVerifyBroken": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOpen": "Öppna"
 }
