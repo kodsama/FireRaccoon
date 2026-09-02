@@ -59,6 +59,9 @@ const List<String> _writeToolNames = [
   'update_recurrence',
   'delete_recurrence',
   'create_liability',
+  'create_backup',
+  'delete_backup',
+  'restore_backup',
 ];
 
 List<String> _strList(Object? value) =>
@@ -68,6 +71,33 @@ Map<String, Object?> _badInput(String message) => {
   'ok': false,
   'code': 'bad_input',
   'error': message,
+};
+
+Map<String, Object?> _notFound(String message) => {
+  'ok': false,
+  'code': 'not_found',
+  'error': message,
+};
+
+/// Answer for a backup tool on a connection with nowhere to keep backups.
+///
+/// Refused rather than hidden: an agent that cannot find `create_backup` in the
+/// catalog concludes backups are not a thing FireRaccoon does, and goes on to
+/// change the ledger without one.
+/// Answer for a sealed backup nobody supplied the password for.
+Map<String, Object?> _sealed(BackupPasswordException error) => {
+  'ok': false,
+  'code': 'password_required',
+  'error': '$error',
+};
+
+Map<String, Object?> _backupsUnavailable() => {
+  'ok': false,
+  'code': 'unavailable',
+  'error':
+      'This connection has nowhere to keep backups. The desktop app stores them '
+      'beside its own data and a server stores them in DATA_DIR; a client '
+      'reaching Firefly directly has neither.',
 };
 
 /// Fields `update_account` forwards, in the order it reports them back. Named
@@ -1172,6 +1202,7 @@ List<McpTool> buildTools({
   required FireflyTarget target,
   http.Client? httpClient,
   AgentIdentity? identity,
+  BackupStore? backups,
 }) {
   FireflyService service() {
     if (!target.isConfigured) {
@@ -1186,6 +1217,11 @@ List<McpTool> buildTools({
       client: httpClient,
     );
   }
+
+  /// Null where nothing can keep a backup, which is every client that reaches
+  /// Firefly directly rather than through FireRaccoon.
+  BackupService? backupService() =>
+      backups == null ? null : BackupService(service(), backups);
 
   Future<bool> checkAbout() async {
     final client = httpClient ?? http.Client();
@@ -2322,6 +2358,403 @@ List<McpTool> buildTools({
           );
         }
         return {'ok': true, 'counts_only': countsOnly, 'export': json};
+      },
+    ),
+    McpTool(
+      name: 'create_backup',
+      writes: true,
+      description:
+          'Take a backup before changing anything, so there is something to put '
+          'back. Writes two halves: the snapshot FireRaccoon restores from, and '
+          "Firefly's own CSV export, which is the only copy of rules and budget "
+          'limits. Named by the moment it was taken, offset included. It reads '
+          'the whole ledger, so it is slower than a single call; take one per '
+          'session of changes rather than one per change. It cannot reach the '
+          'database, the attachments or the instance key: what it protects '
+          'against is a change someone made, not a destroyed instance. Pass a '
+          'password to seal it; everything carrying ledger data is then '
+          'encrypted at rest and reading it back needs the same password.',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'password': {
+            'type': 'string',
+            'description':
+                'Seals the backup. It travels in this call and is never stored, '
+                'so a backup nobody can produce the password for is a backup '
+                'nobody can restore.',
+          },
+        },
+      },
+      run: (args) async {
+        final service = backupService();
+        if (service == null) return _backupsUnavailable();
+        final manifest = await service.create(
+          password: args['password'] as String?,
+        );
+        return {
+          'ok': true,
+          'backup': manifest.toJson(),
+          if (!manifest.complete)
+            'warning':
+                'Some data sets could not be read; see entries[].error. The '
+                'snapshot is what a restore needs, so check it is there.',
+        };
+      },
+    ),
+    McpTool(
+      name: 'list_backups',
+      description:
+          'Backups this FireRaccoon holds, newest first, with what each one '
+          'covers and whether every part of it was written.',
+      inputSchema: {'type': 'object', 'properties': <String, Object?>{}},
+      run: (args) async {
+        final service = backupService();
+        if (service == null) return _backupsUnavailable();
+        final manifests = await service.list();
+        return {
+          'ok': true,
+          'count': manifests.length,
+          'backups': [for (final manifest in manifests) manifest.toJson()],
+        };
+      },
+    ),
+    McpTool(
+      name: 'get_backup',
+      description:
+          'One backup: its manifest, or a file inside it when file is named. A '
+          'whole ledger of CSV does not belong in a conversation, so a file is '
+          'truncated at max_bytes and says so.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['backup_id'],
+        'properties': {
+          'backup_id': {'type': 'string'},
+          'file': {
+            'type': 'string',
+            'description':
+                'Path inside the backup, as the manifest names it: '
+                '`snapshot.json` or `csv/rules.csv`.',
+          },
+          'password': {
+            'type': 'string',
+            'description':
+                'Required to read a file out of a sealed backup. The manifest '
+                'comes back either way and says whether one is needed.',
+          },
+          'max_bytes': {
+            'type': 'integer',
+            'default': 200000,
+            'description': 'Ceiling on a file read, 1..2000000.',
+          },
+        },
+      },
+      run: (args) async {
+        final id = (args['backup_id'] as String?)?.trim() ?? '';
+        if (id.isEmpty) return _badInput('backup_id is required');
+        final service = backupService();
+        if (service == null) return _backupsUnavailable();
+        final manifest = await service.read(id);
+        if (manifest == null) return _notFound('No backup $id');
+        final file = (args['file'] as String?)?.trim();
+        if (file == null || file.isEmpty) {
+          return {'ok': true, 'backup': manifest.toJson()};
+        }
+        final String? contents;
+        try {
+          contents = await service.file(
+            id,
+            file,
+            password: args['password'] as String?,
+          );
+        } on BackupPasswordException catch (error) {
+          return _sealed(error);
+        }
+        if (contents == null) return _notFound('No $file in backup $id');
+        final maxBytes = ((args['max_bytes'] as num?)?.toInt() ?? 200000).clamp(
+          1,
+          2000000,
+        );
+        final truncated = contents.length > maxBytes;
+        return {
+          'ok': true,
+          'backup_id': id,
+          'file': file,
+          'bytes': contents.length,
+          'truncated': truncated,
+          'contents': truncated ? contents.substring(0, maxBytes) : contents,
+        };
+      },
+    ),
+    McpTool(
+      name: 'delete_backup',
+      writes: true,
+      description:
+          'Remove one backup and everything in it. There is no undoing this and '
+          'no copy elsewhere.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['backup_id'],
+        'properties': {
+          'backup_id': {'type': 'string'},
+        },
+      },
+      run: (args) async {
+        final id = (args['backup_id'] as String?)?.trim() ?? '';
+        if (id.isEmpty) return _badInput('backup_id is required');
+        final service = backupService();
+        if (service == null) return _backupsUnavailable();
+        if (await service.read(id) == null) return _notFound('No backup $id');
+        await service.delete(id);
+        return {'ok': true, 'backup_id': id, 'deleted': true};
+      },
+    ),
+    McpTool(
+      name: 'verify_backup',
+      description:
+          'Check a backup two ways and write nothing. First whether it is still '
+          'the backup its manifest describes: every part present, the sizes '
+          'unchanged, and a sealed one opening with the password given. Then '
+          'how far the ledger has moved since it was taken, counted by row. A '
+          'backup that is intact and finds no differences is one you can trust '
+          'to put things back.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['backup_id'],
+        'properties': {
+          'backup_id': {'type': 'string'},
+          'password': {
+            'type': 'string',
+            'description': 'Required when the backup is sealed.',
+          },
+          'compare_ledger': {
+            'type': 'boolean',
+            'default': true,
+            'description':
+                'Read the ledger and report the differences. Turn it off to '
+                'check only the files, which costs one read instead of a walk '
+                'over everything.',
+          },
+          'max_differences_reported': {
+            'type': 'integer',
+            'default': 50,
+            'description': 'Ceiling on the rows listed. Counts stay whole.',
+          },
+        },
+      },
+      run: (args) async {
+        final id = (args['backup_id'] as String?)?.trim() ?? '';
+        if (id.isEmpty) return _badInput('backup_id is required');
+        final backupsService = backupService();
+        if (backupsService == null) return _backupsUnavailable();
+        final password = args['password'] as String?;
+
+        final integrity = await backupsService.check(id, password: password);
+        if (integrity.manifest == null) return _notFound('No backup $id');
+        final manifest = integrity.manifest!;
+
+        final result = <String, Object?>{
+          'ok': true,
+          'backup_id': id,
+          'taken_at': backupTimestampFor(manifest.takenAt),
+          'encrypted': manifest.encrypted,
+          'integrity': integrity.toJson(),
+        };
+        if (args['compare_ledger'] == false) return result;
+        if (!integrity.intact && integrity.readableFiles == 0) {
+          // Nothing opened, so there is nothing to compare the ledger against.
+          return result
+            ..['skipped_comparison'] =
+                'The backup could not be read, so the ledger was left alone.';
+        }
+
+        final Map<String, Object?>? snapshot;
+        try {
+          snapshot = await backupsService.snapshot(id, password: password);
+        } on BackupPasswordException catch (error) {
+          return _sealed(error);
+        }
+        if (snapshot == null) {
+          return result
+            ..['skipped_comparison'] =
+                'This backup has no snapshot, so there is nothing to compare.';
+        }
+
+        final api = service();
+        final owner = await api.getCurrentUser();
+        final current = await DataExportService(
+          api,
+        ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+        final plan = planRestore(backup: snapshot, current: current.toJson());
+        final max = ((args['max_differences_reported'] as num?)?.toInt() ?? 50)
+            .clamp(1, 2000);
+        return result
+          ..['same_ledger'] =
+              manifest.ownerId == null || manifest.ownerId == owner.id
+          ..['matches'] = plan.isEmpty
+          ..['differences'] = {
+            'counts_by_action': plan.countsByAction,
+            'counts_by_type': plan.countsByType,
+            'rows': [for (final step in plan.steps.take(max)) step.toJson()],
+            if (plan.steps.length > max)
+              'rows_truncated': plan.steps.length - max,
+          }
+          ..['unrestorable'] = plan.unrestorable;
+      },
+    ),
+    McpTool(
+      name: 'restore_backup',
+      writes: true,
+      description:
+          'Put a backup back. Reports what it would do and changes nothing '
+          'unless dry_run is false and confirm is true, and takes a fresh '
+          'backup before it writes so a restore is itself undoable. Rows the '
+          'backup has and the ledger lost are recreated, which gives them new '
+          'ids; rows that differ are written back; rows added since the backup '
+          'are left alone unless delete_created_since says otherwise. Refuses a '
+          'backup taken from a different Firefly user. Rules, budget limits, '
+          'attachments and currencies are not restorable through the API and '
+          'are reported as such rather than silently skipped.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['backup_id'],
+        'properties': {
+          'backup_id': {'type': 'string'},
+          'dry_run': {
+            'type': 'boolean',
+            'default': true,
+            'description': 'Plan only. Nothing is written while this is true.',
+          },
+          'confirm': {
+            'type': 'boolean',
+            'default': false,
+            'description':
+                'Required alongside dry_run false. Two flags rather than one, '
+                'so a restore cannot be a typo.',
+          },
+          'types': {
+            'type': 'array',
+            'items': {'type': 'string'},
+            'description':
+                'Entity types to walk. Defaults to all of them: accounts, '
+                'categories, tags, budgets, bills, piggy_banks, recurrences, '
+                'transactions.',
+          },
+          'delete_created_since': {
+            'type': 'boolean',
+            'default': false,
+            'description':
+                'Delete rows the ledger has and the backup does not. This is '
+                'the one part of a restore that running it again cannot undo.',
+          },
+          'max_steps_reported': {
+            'type': 'integer',
+            'default': 200,
+            'description':
+                'Ceiling on the steps listed back. The counts are always whole.',
+          },
+        },
+      },
+      run: (args) async {
+        final id = (args['backup_id'] as String?)?.trim() ?? '';
+        if (id.isEmpty) return _badInput('backup_id is required');
+        final backupsService = backupService();
+        if (backupsService == null) return _backupsUnavailable();
+
+        final manifest = await backupsService.read(id);
+        if (manifest == null) return _notFound('No backup $id');
+        final Map<String, Object?>? snapshot;
+        try {
+          snapshot = await backupsService.snapshot(
+            id,
+            password: args['password'] as String?,
+          );
+        } on BackupPasswordException catch (error) {
+          return _sealed(error);
+        }
+        if (snapshot == null) {
+          return _notFound('Backup $id has no snapshot to restore from');
+        }
+
+        final api = service();
+        final owner = await api.getCurrentUser();
+        if (manifest.ownerId != null && manifest.ownerId != owner.id) {
+          return {
+            'ok': false,
+            'code': 'wrong_ledger',
+            'error':
+                'Backup $id was taken as Firefly user ${manifest.ownerId} '
+                '(${manifest.ownerEmail}) and this connection is user '
+                '${owner.id} (${owner.email}). Restoring across ledgers would '
+                'write someone else\'s rows into this one.',
+          };
+        }
+
+        final types = _strList(args['types']).toSet();
+        final current = await DataExportService(
+          api,
+        ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+        final plan = planRestore(
+          backup: snapshot,
+          current: current.toJson(),
+          types: types.isEmpty ? null : types,
+          includeDeletes: args['delete_created_since'] as bool? ?? false,
+        );
+
+        final maxSteps = ((args['max_steps_reported'] as num?)?.toInt() ?? 200)
+            .clamp(1, 2000);
+        Map<String, Object?> planJson() {
+          final json = plan.toJson();
+          final steps = json['steps']! as List<Object?>;
+          if (steps.length > maxSteps) {
+            json['steps'] = steps.take(maxSteps).toList();
+            json['steps_truncated'] = steps.length - maxSteps;
+          }
+          return json;
+        }
+
+        final dryRun = args['dry_run'] as bool? ?? true;
+        if (dryRun) {
+          return {
+            'ok': true,
+            'dry_run': true,
+            'backup_id': id,
+            'plan': planJson(),
+            'next': plan.isEmpty
+                ? 'Nothing to put back: the ledger already matches the backup.'
+                : 'Call again with dry_run false and confirm true to apply it.',
+          };
+        }
+        if (args['confirm'] != true) {
+          return _badInput(
+            'confirm must be true to write a restore. Run with dry_run to see '
+            'the plan first.',
+          );
+        }
+
+        // The restore is itself a change worth being able to undo, sealed the
+        // same way the backup being restored was.
+        final safety = await backupsService.create(
+          password: args['password'] as String?,
+        );
+        final runner = RestoreRunner(api);
+        final outcomes = await runner.apply(plan);
+        final failed = [
+          for (final outcome in outcomes)
+            if (!outcome.applied) outcome.toJson(),
+        ];
+        return {
+          'ok': true,
+          'dry_run': false,
+          'backup_id': id,
+          'backup_taken_first': safety.id,
+          'applied': outcomes.length - failed.length,
+          'failed': failed.length,
+          'failures': failed.take(maxSteps).toList(),
+          'remapped_ids': runner.remappedIds,
+          'counts_by_action': plan.countsByAction,
+          'unrestorable': plan.unrestorable,
+        };
       },
     ),
     McpTool(

@@ -3636,4 +3636,144 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get upcoming => 'Próximas';
+
+  @override
+  String get fireflyBackups => 'Cópias de segurança do Firefly';
+
+  @override
+  String get fireflyBackupsHint =>
+      'Uma cópia de segurança leva o que a API do Firefly entrega: contas, transações, orçamentos, faturas, mealheiros e recorrências, mais a exportação do próprio Firefly, que é a única cópia das regras e dos limites de orçamento. Não chega à base de dados, aos anexos nem à chave da instância, por isso uma instância destruída continua a precisar do arquivo do volume.';
+
+  @override
+  String get backupTakeNow => 'Criar cópia de segurança';
+
+  @override
+  String backupReading(String stage) {
+    return 'A ler $stage…';
+  }
+
+  @override
+  String get backupNone => 'Ainda sem cópias de segurança';
+
+  @override
+  String get backupUnavailableHere =>
+      'Esta versão não tem onde guardar uma cópia de segurança, por isso não é possível criar nenhuma aqui.';
+
+  @override
+  String get backupIncomplete => 'Faltam partes';
+
+  @override
+  String backupSize(int files, String kilobytes) {
+    return '$files ficheiros, $kilobytes kB';
+  }
+
+  @override
+  String backupCountsSummary(int transactions, int accounts) {
+    return '$transactions transações, $accounts contas';
+  }
+
+  @override
+  String get backupDeleteTitle => 'Eliminar esta cópia de segurança?';
+
+  @override
+  String backupDeleteBody(String id) {
+    return '$id desaparece com tudo o que tem dentro, e mais nada guarda uma cópia.';
+  }
+
+  @override
+  String backupTaken(String id) {
+    return 'Cópia de segurança $id criada';
+  }
+
+  @override
+  String backupFailed(String error) {
+    return 'Não foi possível criar a cópia de segurança: $error';
+  }
+
+  @override
+  String get backupSaveSnapshot => 'Guardar instantâneo';
+
+  @override
+  String backupSavedTo(String path) {
+    return 'Instantâneo guardado em $path';
+  }
+
+  @override
+  String get backupRestore => 'Restaurar';
+
+  @override
+  String get backupRestoreTitle =>
+      'Restaurar a partir desta cópia de segurança?';
+
+  @override
+  String get backupRestorePlanning => 'A calcular o que mudaria…';
+
+  @override
+  String get backupRestoreNothing =>
+      'Nada para repor: o registo já corresponde a esta cópia de segurança.';
+
+  @override
+  String backupRestoreSummary(int creates, int updates, int deletes) {
+    return '$creates para repor, $updates para reescrever, $deletes para remover.';
+  }
+
+  @override
+  String get backupRestoreDeletes =>
+      'Remover também linhas acrescentadas desde esta cópia';
+
+  @override
+  String get backupRestoreNote =>
+      'As linhas repostas voltam com identificadores novos, e é criada uma cópia de segurança antes de qualquer escrita. Regras, limites de orçamento, anexos e moedas não podem ser reescritos pela API.';
+
+  @override
+  String backupRestoreDone(int applied, int failed) {
+    return '$applied linhas restauradas, $failed falharam';
+  }
+
+  @override
+  String backupRestoreFailed(String error) {
+    return 'Não foi possível restaurar: $error';
+  }
+
+  @override
+  String get backupRestoreWrongLedger =>
+      'Esta cópia de segurança foi criada por outro utilizador do Firefly, por isso não pode ser restaurada aqui.';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return 'A restaurar $done de $total';
+  }
+
+  @override
+  String get backupTakeProtected => 'Criar cópia protegida';
+
+  @override
+  String get backupEncryptedBadge => 'Protegida por palavra-passe';
+
+  @override
+  String get backupPasswordNeeded =>
+      'Esta cópia de segurança está protegida por palavra-passe.';
+
+  @override
+  String get backupPasswordWrong =>
+      'Essa palavra-passe não abre esta cópia de segurança.';
+
+  @override
+  String get backupVerify => 'Verificar';
+
+  @override
+  String get backupVerifyIntact => 'Intacta, e corresponde ao registo';
+
+  @override
+  String backupVerifyDrifted(int creates, int updates, int deletes) {
+    return 'Intacta. O registo mudou: faltam $creates, $updates alteradas, $deletes acrescentadas desde então.';
+  }
+
+  @override
+  String backupVerifyBroken(int count, String first) {
+    return '$count problemas com esta cópia: $first';
+  }
+
+  @override
+  String get backupOpen => 'Abrir';
 }

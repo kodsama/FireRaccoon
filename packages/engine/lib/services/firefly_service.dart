@@ -4,6 +4,7 @@ import '../models/recurrence.dart';
 import '../models/budget.dart';
 import '../models/category.dart';
 import '../models/currency.dart';
+import '../models/firefly_csv_dataset.dart';
 import '../models/firefly_user.dart';
 import '../models/liability.dart';
 import '../models/piggy_bank.dart';
@@ -29,11 +30,16 @@ abstract class FireflyService {
 
   /// Fetches all transactions in the window. [onFirstPage] fires with the
   /// newest page as soon as it arrives so callers can paint progressively.
+  ///
+  /// [onPageProgress] fires per page with the count so far and the total, which
+  /// is what lets a long walk report how far along it is rather than only that
+  /// it started.
   Future<List<Transaction>> getTransactions({
     DateTime? start,
     DateTime? end,
     String? type,
     void Function(List<Transaction> firstPage)? onFirstPage,
+    void Function(int loadedPages, int totalPages)? onPageProgress,
   });
   Future<TransactionPageResult> searchTransactionsPage(
     String query, {
@@ -157,4 +163,14 @@ abstract class FireflyService {
   Future<void> deleteTransaction(String transactionId);
   Future<dynamic> getPreference(String name);
   Future<void> setPreference(String name, dynamic data);
+
+  /// One data set as Firefly's own CSV export writes it.
+  ///
+  /// [start] and [end] are inclusive days and only [FireflyCsvDataset
+  /// .transactions] reads them; the rest come back whole either way.
+  Future<String> exportCsv(
+    FireflyCsvDataset dataset, {
+    DateTime? start,
+    DateTime? end,
+  });
 }

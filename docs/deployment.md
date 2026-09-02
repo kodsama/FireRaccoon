@@ -265,13 +265,59 @@ Three separate things, and only the first can rebuild a working instance:
 | | Covers | Leaves out | Taken from |
 |---|---|---|---|
 | `tool/firefly_backup.sh` | Firefly database, uploaded attachments, `compose.yml` | nothing needed to restore, given `APP_KEY` | the server shell |
-| **Back up Firefly data** (Settings) | accounts, transactions with every split, budgets, categories, tags, bills, piggy banks, recurring rules, currencies | database, attachments, `APP_KEY`, budget limits, rules, webhooks | the app, or `export_firefly_data` over MCP |
+| **Firefly backups** (Settings) | accounts, transactions with every split, budgets, categories, tags, bills, piggy banks, recurring rules, currencies, plus Firefly's own CSV export of rules and budget limits | database, attachments, `APP_KEY`, webhooks | the app, or `create_backup` over MCP |
 | **Export settings** (Settings) | people, roles, account assignments and classifications, layout, preferences, the Firefly URL | agent keys, your Firefly data, profile photos, biometrics | the app |
 
-The data export is a portable, readable snapshot, useful for taking before a
-bulk change so there is something to compare against, and reachable over MCP so
-an agent can take one first. It is not a substitute for the volume archive: an
-API client cannot reach the database, the attachments or the instance key.
+A Firefly backup protects against a change someone made, not against a
+destroyed instance: an API client cannot reach the database, the attachments or
+the instance key, so the volume archive is still the one that rebuilds a server.
+
+### Firefly backups
+
+Settings → Firefly backups takes one, lists what is held, and restores from any
+of them. The same backups are reachable over MCP, so an agent can take one
+before a bulk change and put it back afterwards.
+
+Each backup is named for the moment it was taken with the offset kept
+(`20260901T222736+0200`), so a stamp still reads a year later from a machine in
+another zone. Two taken inside the same second get a suffix rather than one
+overwriting the other. Inside are three things:
+
+| File | What it is |
+|---|---|
+| `manifest.json` | when, by which Firefly user, how many of each entity, what failed, and a digest per file |
+| `snapshot.json` | the versioned JSON a restore reads back |
+| `csv/*.csv` | Firefly's own export of all nine data sets, the archival half |
+
+Where they live depends on the deployment. Local mode writes them beside the
+app's own data; server mode seals them in `DATA_DIR` alongside the rest of its
+state, so every client of one server sees the same list. A standalone web build
+in local mode has nowhere to keep one and says so rather than offering a button
+that writes nothing.
+
+**A password** on a backup seals everything carrying ledger data: the snapshot
+and every CSV, AES-256-GCM under a PBKDF2 key derived from the password and a
+salt the manifest keeps. The manifest itself stays readable, so a list of
+backups is still a list; it holds counts and a moment rather than rows.
+Restoring, verifying or reading a file out of a sealed backup asks for the
+password, and nothing stores it. A backup nobody can produce the password for is
+a backup nobody can restore.
+
+**Verifying** checks a backup two ways and writes nothing: whether it is still
+what its manifest describes (every part present, sizes and digests unchanged, a
+sealed one opening with the password given), and then how far the ledger has
+moved since it was taken, counted by row.
+
+**Restoring** compares the backup against a fresh reading of the ledger and
+plans row by row: what the ledger lost is recreated, what differs is written
+back, and what was added since is left alone unless deletes are asked for. The
+plan is shown before anything is written, a fresh backup is taken first, and a
+backup belonging to a different Firefly user is refused.
+
+A restored row is a new row. Firefly assigns identifiers and an API client
+cannot ask for one, so anything naming the old identifier is pointed at the new
+one and the mapping is reported. Rules, budget limits, attachments and
+currencies ride along in the CSVs but cannot be written back through the API.
 
 ### Backup and restore (Docker)
 
