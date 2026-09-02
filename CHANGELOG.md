@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-02
+
+### Added
+
+- Backups of a Firefly ledger, from Settings or over MCP. A backup is two
+  halves: FireRaccoon's own versioned snapshot, which a restore reads back, and
+  Firefly's CSV export, which is the only copy of rules and budget limits an API
+  client can reach. Named for the moment it was taken with the offset kept, so a
+  stamp still reads a year later from a machine in another zone. Neither half
+  reaches the database, the attachments or the instance key, and the manifest
+  says so rather than leaving it to be discovered at restore time
+- Restoring a backup, planned before anything is written. What the ledger lost
+  is recreated, what differs is written over, and what was added since is left
+  alone unless asked for, because that is the one step running the plan again
+  cannot undo. A recreated row comes back under a new identifier, so everything
+  naming the old one is repointed and the mapping is reported. A fresh backup is
+  taken before it writes, and a backup taken as a different Firefly user is
+  refused
+- A password on a backup seals the snapshot and every CSV with AES-256-GCM under
+  a PBKDF2 key, the same construction the settings export and the server's
+  DATA_DIR already use. The manifest stays readable, because a list of backups
+  has to be readable to be a list. Restoring, verifying or reading a file out of
+  a sealed backup asks for the password
+- Verifying a backup, which writes nothing: whether it is still what its
+  manifest describes, down to a digest per file, and then how far the ledger has
+  moved from it, counted by row
+- Progress while a backup or a restore runs, counted in requests and shown as a
+  bar and a percentage. A backup of a 19,420-transaction ledger takes about two
+  and a half minutes, and a percentage only appears once there is one to give: a
+  page walk cannot say how many pages there are until the first comes back
+- Five MCP tools for all of it, so an agent can take a backup before a bulk
+  change and put it back afterwards: `create_backup`, `list_backups`,
+  `get_backup`, `verify_backup`, `restore_backup`. Taking, removing and
+  restoring are write-gated
+- Server mode keeps backups in the sealed `DATA_DIR`, reached over four backend
+  routes, so every client of one server sees the same list
+
+### Fixed
+
+- The backup list stayed empty after an agent took one over MCP: it reads the
+  same store the tools write to, and nothing told an open screen about it
+- The reused passphrase dialog offered to "Export settings" when what it was
+  asking for was a backup password
+
 ## [0.2.1] - 2026-08-30
 
 ### Added
