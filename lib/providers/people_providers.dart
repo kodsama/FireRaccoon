@@ -184,6 +184,13 @@ class PeopleNotifier extends Notifier<PeopleState> {
   /// overwrite a newer avatar/profile with an older payload.
   int _configWriteGeneration = 0;
 
+  /// Guards the Firefly read, which is now asked for from two places.
+  ///
+  /// Credentials can resolve while hydration is still running, so both would
+  /// otherwise fetch at once and the slower answer would land on top of the
+  /// faster one.
+  bool _remoteFetchInFlight = false;
+
   /// Plaintext passwords awaiting a successful server `putPeople` (server mode).
   final Map<String, String> _pendingServerPasswords = {};
 
@@ -200,6 +207,15 @@ class PeopleNotifier extends Notifier<PeopleState> {
     ref.listen(themeProvider, (_, _) => _syncPreferencesFromApp());
     ref.listen(localeProvider, (_, _) => _syncPreferencesFromApp());
     ref.listen(activePersonFilterProvider, (_, _) => _syncPreferencesFromApp());
+    // Hydration runs before the credential read answers, so the Firefly read
+    // it fires finds no service and gives up. Nothing used to schedule another,
+    // which is why a profile with no local people stayed empty however much the
+    // server held: the only launch that ever read it was one where auth had
+    // already resolved, and a first run is never that.
+    ref.listen(apiServiceProvider, (_, next) {
+      if (next == null || !state.isHydrated) return;
+      unawaited(_fetchRemote());
+    });
     ref.listen(serverSessionProvider, (previous, next) {
       final session = next.asData?.value;
       if (session == null || !session.isAuthenticated) return;
@@ -413,7 +429,8 @@ class PeopleNotifier extends Notifier<PeopleState> {
   }
 
   Future<void> _fetchRemote() async {
-    if (_isServerMode) return;
+    if (_isServerMode || _remoteFetchInFlight) return;
+    _remoteFetchInFlight = true;
     try {
       final service = ref.read(apiServiceProvider);
       if (service == null) return;
@@ -445,8 +462,18 @@ class PeopleNotifier extends Notifier<PeopleState> {
       if (!ref.mounted) return;
       state = state.copyWith(config: merged);
       await _prefs.setString(kPeopleConfigPreferenceKey, merged.encode());
-    } catch (_) {
-      // Offline / error: keep local.
+      _log.info('People read from Firefly: ${merged.people.length} person(s)');
+    } on Object catch (error, stackTrace) {
+      // Local prefs still hold the config, so being offline costs nothing.
+      // Saying nothing did cost something: a refused or malformed read looked
+      // exactly like having no connection yet.
+      _log.warning(
+        'Failed to read the people config from Firefly',
+        error,
+        stackTrace,
+      );
+    } finally {
+      _remoteFetchInFlight = false;
     }
   }
 
