@@ -26,6 +26,7 @@ import 'package:fireraccoon/providers/dashboard_stats_providers.dart';
 import 'package:fireraccoon/providers/people_providers.dart';
 import 'package:fireraccoon/providers/server_session_provider.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/store/legacy_rename_migration.dart';
 import 'package:fireraccoon/store/remote_server_client.dart';
 
 import '../helpers/fake_biometric_auth.dart';
@@ -336,6 +337,41 @@ void main() {
         'Remote',
       );
       expect(prefs.getString(kPeopleConfigPreferenceKey), contains('Remote'));
+    });
+
+    test('recovers a people config stored before the rename', () async {
+      final prefs = await freshPrefs();
+      final service = FakeFireflyService();
+      service.preferences[legacyPreferenceName(kPeopleConfigPreferenceKey)] = {
+        'version': 1,
+        'people': [
+          {'id': 'p1', 'name': 'Stranded', 'colorValue': 0xFF3B82F6},
+        ],
+        'accountOwnerships': <String, dynamic>{},
+      };
+      final container = await buildContainer(
+        prefs: prefs,
+        extraOverrides: [apiServiceProvider.overrideWithValue(service)],
+      );
+      addTearDown(container.dispose);
+      final subscription = container.listen(
+        peopleProvider,
+        (_, _) {},
+        fireImmediately: true,
+      );
+      addTearDown(subscription.close);
+      await waitHydrated(container);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(
+        container.read(peopleSettingsProvider).people.single.name,
+        'Stranded',
+      );
+      // Written back under the name in use, so the next launch reads it there.
+      expect(
+        service.preferences[kPeopleConfigPreferenceKey],
+        isA<Map<String, dynamic>>(),
+      );
     });
 
     test('a refused people read leaves the local config alone', () async {
