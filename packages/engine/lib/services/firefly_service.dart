@@ -30,11 +30,16 @@ abstract class FireflyService {
 
   /// Fetches all transactions in the window. [onFirstPage] fires with the
   /// newest page as soon as it arrives so callers can paint progressively.
+  ///
+  /// [onPageProgress] fires per page with the count so far and the total, which
+  /// is what lets a long walk report how far along it is rather than only that
+  /// it started.
   Future<List<Transaction>> getTransactions({
     DateTime? start,
     DateTime? end,
     String? type,
     void Function(List<Transaction> firstPage)? onFirstPage,
+    void Function(int loadedPages, int totalPages)? onPageProgress,
   });
   Future<TransactionPageResult> searchTransactionsPage(
     String query, {

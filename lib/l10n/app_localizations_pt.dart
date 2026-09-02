@@ -3738,4 +3738,42 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get backupRestoreWrongLedger =>
       'Esta cópia de segurança foi criada por outro utilizador do Firefly, por isso não pode ser restaurada aqui.';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return 'A restaurar $done de $total';
+  }
+
+  @override
+  String get backupTakeProtected => 'Criar cópia protegida';
+
+  @override
+  String get backupEncryptedBadge => 'Protegida por palavra-passe';
+
+  @override
+  String get backupPasswordNeeded =>
+      'Esta cópia de segurança está protegida por palavra-passe.';
+
+  @override
+  String get backupPasswordWrong =>
+      'Essa palavra-passe não abre esta cópia de segurança.';
+
+  @override
+  String get backupVerify => 'Verificar';
+
+  @override
+  String get backupVerifyIntact => 'Intacta, e corresponde ao registo';
+
+  @override
+  String backupVerifyDrifted(int creates, int updates, int deletes) {
+    return 'Intacta. O registo mudou: faltam $creates, $updates alteradas, $deletes acrescentadas desde então.';
+  }
+
+  @override
+  String backupVerifyBroken(int count, String first) {
+    return '$count problemas com esta cópia: $first';
+  }
+
+  @override
+  String get backupOpen => 'Abrir';
 }

@@ -6741,6 +6741,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This backup was taken from a different Firefly user, so it cannot be restored here.'**
   String get backupRestoreWrongLedger;
+
+  /// No description provided for @backupRestoring.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring {done} of {total}'**
+  String backupRestoring(int done, int total);
+
+  /// No description provided for @backupTakeProtected.
+  ///
+  /// In en, this message translates to:
+  /// **'Take a protected backup'**
+  String get backupTakeProtected;
+
+  /// No description provided for @backupEncryptedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Password protected'**
+  String get backupEncryptedBadge;
+
+  /// No description provided for @backupPasswordNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup is password protected.'**
+  String get backupPasswordNeeded;
+
+  /// No description provided for @backupPasswordWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'That password does not open this backup.'**
+  String get backupPasswordWrong;
+
+  /// No description provided for @backupVerify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get backupVerify;
+
+  /// No description provided for @backupVerifyIntact.
+  ///
+  /// In en, this message translates to:
+  /// **'Intact, and it matches the ledger'**
+  String get backupVerifyIntact;
+
+  /// No description provided for @backupVerifyDrifted.
+  ///
+  /// In en, this message translates to:
+  /// **'Intact. The ledger has moved on: {creates} missing, {updates} changed, {deletes} added since.'**
+  String backupVerifyDrifted(int creates, int updates, int deletes);
+
+  /// No description provided for @backupVerifyBroken.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} problems with this backup: {first}'**
+  String backupVerifyBroken(int count, String first);
+
+  /// No description provided for @backupOpen.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get backupOpen;
 }
 
 class _AppLocalizationsDelegate

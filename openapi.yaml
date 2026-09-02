@@ -1400,6 +1400,12 @@ x-mcp:
     delete_backup:
       description: Remove one backup and everything in it
       required: [backup_id]
+    verify_backup:
+      description: >
+        Check a backup is still what its manifest describes (parts present,
+        sizes unchanged, a sealed one opening with the password) and report how
+        far the ledger has moved since. Writes nothing.
+      required: [backup_id]
     restore_backup:
       description: >
         Put a backup back: recreate what the ledger lost, write back what

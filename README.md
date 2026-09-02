@@ -59,7 +59,8 @@ restarts unlock automatically; users only enter their account password.
   each), Comfortaa + Roboto Slab
 - **Locales** English, French, Swedish, Portuguese, Japanese, Chinese
 - **Backups** of the Firefly ledger, stamped with the moment they were taken,
-  restorable row by row after a plan you approve
+  optionally password protected, verifiable, and restorable row by row after a
+  plan you approve
 - **MCP server** accounts, transactions, budgets, projections, dashboard KPIs,
   backups and restores, and bank statement matching for LLM clients (desktop
   embeds it; mobile and web do not)

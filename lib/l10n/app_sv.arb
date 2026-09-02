@@ -1838,5 +1838,48 @@
       }
     }
   },
-  "backupRestoreWrongLedger": "Säkerhetskopian togs av en annan Firefly-användare och kan inte återställas här."
+  "backupRestoreWrongLedger": "Säkerhetskopian togs av en annan Firefly-användare och kan inte återställas här.",
+  "backupRestoring": "Återställer {done} av {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "backupTakeProtected": "Ta en skyddad säkerhetskopia",
+  "backupEncryptedBadge": "Lösenordsskyddad",
+  "backupPasswordNeeded": "Den här säkerhetskopian är lösenordsskyddad.",
+  "backupPasswordWrong": "Lösenordet öppnar inte den här säkerhetskopian.",
+  "backupVerify": "Kontrollera",
+  "backupVerifyIntact": "Hel, och stämmer med liggaren",
+  "backupVerifyDrifted": "Hel. Liggaren har ändrats: {creates} saknas, {updates} ändrade, {deletes} tillkomna sedan dess.",
+  "@backupVerifyDrifted": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupVerifyBroken": "{count} problem med säkerhetskopian: {first}",
+  "@backupVerifyBroken": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOpen": "Öppna"
 }

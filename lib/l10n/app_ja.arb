@@ -1913,5 +1913,48 @@
       }
     }
   },
-  "backupRestoreWrongLedger": "このバックアップは別の Firefly ユーザーが取ったものなので、ここには復元できません。"
+  "backupRestoreWrongLedger": "このバックアップは別の Firefly ユーザーが取ったものなので、ここには復元できません。",
+  "backupRestoring": "{total} 件中 {done} 件を復元中",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "backupTakeProtected": "保護されたバックアップを取る",
+  "backupEncryptedBadge": "パスワード保護",
+  "backupPasswordNeeded": "このバックアップはパスワードで保護されています。",
+  "backupPasswordWrong": "そのパスワードではこのバックアップを開けません。",
+  "backupVerify": "検証",
+  "backupVerifyIntact": "問題なし。台帳とも一致しています",
+  "backupVerifyDrifted": "問題なし。台帳は変わっています: 不足 {creates} 件、変更 {updates} 件、追加 {deletes} 件。",
+  "@backupVerifyDrifted": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupVerifyBroken": "このバックアップには {count} 件の問題があります: {first}",
+  "@backupVerifyBroken": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOpen": "開く"
 }

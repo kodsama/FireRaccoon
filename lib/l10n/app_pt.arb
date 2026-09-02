@@ -1838,5 +1838,48 @@
       }
     }
   },
-  "backupRestoreWrongLedger": "Esta cópia de segurança foi criada por outro utilizador do Firefly, por isso não pode ser restaurada aqui."
+  "backupRestoreWrongLedger": "Esta cópia de segurança foi criada por outro utilizador do Firefly, por isso não pode ser restaurada aqui.",
+  "backupRestoring": "A restaurar {done} de {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "backupTakeProtected": "Criar cópia protegida",
+  "backupEncryptedBadge": "Protegida por palavra-passe",
+  "backupPasswordNeeded": "Esta cópia de segurança está protegida por palavra-passe.",
+  "backupPasswordWrong": "Essa palavra-passe não abre esta cópia de segurança.",
+  "backupVerify": "Verificar",
+  "backupVerifyIntact": "Intacta, e corresponde ao registo",
+  "backupVerifyDrifted": "Intacta. O registo mudou: faltam {creates}, {updates} alteradas, {deletes} acrescentadas desde então.",
+  "@backupVerifyDrifted": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupVerifyBroken": "{count} problemas com esta cópia: {first}",
+  "@backupVerifyBroken": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOpen": "Abrir"
 }
