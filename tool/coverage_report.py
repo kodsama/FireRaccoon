@@ -64,6 +64,9 @@ PLATFORM_EXCLUDE = {
     "utils/backup_directory.dart",
     "utils/backup_directory_io.dart",
     "utils/backup_directory_stub.dart",
+    "store/legacy_support_directory.dart",
+    "store/legacy_support_directory_io.dart",
+    "store/legacy_support_directory_stub.dart",
 }
 
 APP_LOGIC_TOPS = {

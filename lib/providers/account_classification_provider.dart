@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
+import '../store/legacy_rename_migration.dart';
 import 'data_providers.dart';
 import 'theme_provider.dart';
 
@@ -125,9 +126,17 @@ class AccountClassificationNotifier
     try {
       final service = ref.read(apiServiceProvider);
       if (service == null) return;
-      final remote = await service.getPreference(
+      var remote = await service.getPreference(
         kAccountClassificationPreferenceKey,
       );
+      // An install from before the raccoon spelling was corrected mirrored the
+      // same map under the old name, and Firefly still holds it.
+      final fromBeforeTheRename = remote == null;
+      if (fromBeforeTheRename) {
+        remote = await service.getPreference(
+          legacyPreferenceName(kAccountClassificationPreferenceKey),
+        );
+      }
       if (remote != null) {
         final Map<String, dynamic> rawMap = remote is Map<String, dynamic>
             ? remote
@@ -139,6 +148,12 @@ class AccountClassificationNotifier
             map[key] = category;
           }
         });
+        if (fromBeforeTheRename) {
+          // Written back under the name in use, so the next launch is an
+          // ordinary one rather than another recovery.
+          await _persist(map);
+          return;
+        }
         state = map;
         await _prefs.setString(
           kAccountClassificationPreferenceKey,
