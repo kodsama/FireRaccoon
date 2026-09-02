@@ -1560,12 +1560,40 @@ class FireflyApiService implements FireflyService {
     }, context: {'transactionId': transactionId});
   }
 
+  /// Whether the token still reads the API at all.
+  ///
+  /// `/api/v1/about` needs the same credential as anything else and holds no
+  /// user data, so it answers the one question worth asking after a refusal:
+  /// was that about this request, or about the token.
+  Future<bool> _credentialStillReads() async {
+    try {
+      final response = await _send('GET', '/api/v1/about');
+      return response.statusCode == 200;
+    } on Object catch (error) {
+      _log.warning('Could not confirm the Firefly credential: $error');
+      return false;
+    }
+  }
+
   @override
   Future<dynamic> getPreference(String name) async {
     return _runLogged('getPreference', () async {
       final response = await _send('GET', '/api/v1/preferences/$name');
       if (response.statusCode == 404) {
         return null;
+      }
+      // 6.6.6 answers a preference name it has never stored with 401
+      // Unauthenticated rather than 404, so "never configured" arrives looking
+      // exactly like an expired token. Confirming the credential separates
+      // them: swallowing every 401 as unset would report a server nobody can
+      // reach any more as a first run.
+      if (response.statusCode == 401) {
+        if (await _credentialStillReads()) return null;
+        throw FireflyApiException(
+          'Failed to fetch preference $name: ${_status(response)}',
+          operation: 'getPreference',
+          statusCode: response.statusCode,
+        );
       }
       if (response.statusCode != 200) {
         throw Exception(
