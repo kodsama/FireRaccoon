@@ -17,6 +17,7 @@ export 'models/tag.dart';
 export 'models/transaction.dart';
 export 'models/transaction_page.dart';
 export 'logging/app_logger.dart';
+export 'services/backup_crypto.dart';
 export 'services/backup_service.dart';
 export 'services/restore_planner.dart';
 export 'services/restore_runner.dart';

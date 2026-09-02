@@ -431,8 +431,10 @@ class FireflyApiService implements FireflyService {
   Future<List<Transaction>> _fetchAllTransactionPages(
     String path, {
     void Function(List<Transaction> firstPage)? onFirstPage,
+    void Function(int loadedPages, int totalPages)? onPageProgress,
   }) async {
     final first = await _fetchTransactionPage(path, page: 1, limit: _pageSize);
+    onPageProgress?.call(1, first.totalPages);
     if (first.totalPages <= 1) return first.transactions;
     onFirstPage?.call(first.transactions);
 
@@ -440,6 +442,7 @@ class FireflyApiService implements FireflyService {
     final pages = List<List<Transaction>>.filled(first.totalPages, const []);
     pages[0] = first.transactions;
     var nextPage = 2;
+    var loaded = 1;
     Future<void> worker() async {
       while (true) {
         final page = nextPage;
@@ -451,6 +454,7 @@ class FireflyApiService implements FireflyService {
           limit: _pageSize,
         );
         pages[page - 1] = result.transactions;
+        onPageProgress?.call(++loaded, first.totalPages);
         // Concurrent workers can deliver several 500-row parses back to
         // back; yield so the UI thread can paint between them.
         await Future<void>.delayed(Duration.zero);
@@ -657,6 +661,7 @@ class FireflyApiService implements FireflyService {
     DateTime? end,
     String? type,
     void Function(List<Transaction> firstPage)? onFirstPage,
+    void Function(int loadedPages, int totalPages)? onPageProgress,
   }) async {
     final effectiveStart = start ?? DateTime.now().subtract(_defaultLookback);
     return _runLogged(
@@ -665,6 +670,7 @@ class FireflyApiService implements FireflyService {
         await _fetchAllTransactionPages(
           _transactionsPath(start: effectiveStart, end: end, type: type),
           onFirstPage: onFirstPage,
+          onPageProgress: onPageProgress,
         ),
         start: effectiveStart,
         end: end,

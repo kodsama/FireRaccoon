@@ -281,4 +281,127 @@ void main() {
     expect(find.text('No backups yet'), findsNothing);
     expect(find.textContaining('4 transactions, 1 accounts'), findsOneWidget);
   });
+
+  testWidgets('a running backup shows a bar, and stops showing one after', (
+    tester,
+  ) async {
+    final api = FakeFireflyService()
+      ..responseDelay = const Duration(milliseconds: 80);
+    await _pump(tester, store: _MemoryBackupStore(), api: api);
+
+    await tester.tap(find.text('Take a backup'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 20));
+
+    expect(find.byType(LinearProgressIndicator), findsOneWidget);
+    expect(find.textContaining('Reading'), findsOneWidget);
+
+    await tester.pumpAndSettle();
+    await _letToastPass(tester);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+  });
+
+  testWidgets('the label says what is running and how far along', (
+    tester,
+  ) async {
+    late BuildContext context;
+    await tester.pumpWidget(
+      buildLocalizedTestApp(
+        child: Builder(
+          builder: (ctx) {
+            context = ctx;
+            return const SizedBox.shrink();
+          },
+        ),
+      ),
+    );
+
+    expect(
+      backupActivityLabel(
+        context,
+        const BackupActivity(running: true, stage: 'transactions'),
+      ),
+      'Reading transactions…',
+    );
+    expect(
+      backupActivityLabel(
+        context,
+        const BackupActivity(running: true, stage: 'csv:rules', fraction: 0.42),
+      ),
+      contains('42%'),
+    );
+    expect(
+      backupActivityLabel(
+        context,
+        const BackupActivity(running: true, restoreStep: 3, restoreTotal: 12),
+      ),
+      'Restoring 3 of 12',
+    );
+  });
+
+  testWidgets('a protected backup asks for a password and seals itself', (
+    tester,
+  ) async {
+    final store = _MemoryBackupStore();
+    await _pump(tester, store: store);
+
+    await tester.tap(find.byTooltip('Take a protected backup'));
+    await tester.pumpAndSettle();
+
+    // Twice, because a password nobody can reproduce loses the backup.
+    final fields = find.byType(TextField);
+    expect(fields, findsNWidgets(2));
+    await tester.enterText(fields.first, 'Correct-horse9');
+    await tester.enterText(fields.last, 'Correct-horse9');
+    await tester.pump();
+    await tester.tap(find.byType(FilledButton).last);
+    await tester.pumpAndSettle();
+    await _letToastPass(tester);
+
+    final id = (await store.listBackupIds()).single;
+    expect(
+      isSealedBackupFile((await store.get(id, kBackupSnapshotFile))!),
+      isTrue,
+    );
+    expect(find.text('Password protected'), findsNothing);
+    expect(find.textContaining('Password protected'), findsOneWidget);
+  });
+
+  testWidgets('verifying a backup reports it matches the ledger', (
+    tester,
+  ) async {
+    final store = _MemoryBackupStore();
+    await _pump(tester, store: store);
+    await tester.tap(find.text('Take a backup'));
+    await tester.pumpAndSettle();
+    await _letToastPass(tester);
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Verify').last);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('matches the ledger'), findsOneWidget);
+    await _letToastPass(tester);
+  });
+
+  testWidgets('verifying reports a backup whose files changed', (tester) async {
+    final store = _MemoryBackupStore();
+    await _pump(tester, store: store);
+    await tester.tap(find.text('Take a backup'));
+    await tester.pumpAndSettle();
+    await _letToastPass(tester);
+    final id = (await store.listBackupIds()).single;
+    // Same length, different bytes: what a digest catches and a size does not.
+    final tags = (await store.get(id, 'csv/tags.csv'))!;
+    await store.put(id, 'csv/tags.csv', utf8.encode('x' * tags.length));
+
+    await tester.tap(find.byIcon(Icons.more_vert));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Verify').last);
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('problems with this backup'), findsOneWidget);
+    await _letToastPass(tester);
+  });
 }

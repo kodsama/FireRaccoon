@@ -578,4 +578,27 @@ void main() {
       expect(body['liability_direction'], 'credit');
     },
   );
+
+  test('counts its steps as it goes', () async {
+    final service = _recordingService();
+    final steps = <String>[];
+
+    await RestoreRunner(service.api).apply(
+      RestorePlan(
+        steps: [
+          _step(
+            type: 'categories',
+            action: RestoreAction.create,
+            id: '7',
+            row: const {'id': '7', 'name': 'Food'},
+          ),
+          _step(type: 'tags', action: RestoreAction.delete, id: 't1'),
+        ],
+        unrestorable: const [],
+      ),
+      onStep: (done, total) => steps.add('$done/$total'),
+    );
+
+    expect(steps, ['1/2', '2/2']);
+  });
 }

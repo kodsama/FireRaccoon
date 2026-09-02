@@ -3631,4 +3631,40 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get backupRestoreWrongLedger =>
       'このバックアップは別の Firefly ユーザーが取ったものなので、ここには復元できません。';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return '$total 件中 $done 件を復元中';
+  }
+
+  @override
+  String get backupTakeProtected => '保護されたバックアップを取る';
+
+  @override
+  String get backupEncryptedBadge => 'パスワード保護';
+
+  @override
+  String get backupPasswordNeeded => 'このバックアップはパスワードで保護されています。';
+
+  @override
+  String get backupPasswordWrong => 'そのパスワードではこのバックアップを開けません。';
+
+  @override
+  String get backupVerify => '検証';
+
+  @override
+  String get backupVerifyIntact => '問題なし。台帳とも一致しています';
+
+  @override
+  String backupVerifyDrifted(int creates, int updates, int deletes) {
+    return '問題なし。台帳は変わっています: 不足 $creates 件、変更 $updates 件、追加 $deletes 件。';
+  }
+
+  @override
+  String backupVerifyBroken(int count, String first) {
+    return 'このバックアップには $count 件の問題があります: $first';
+  }
+
+  @override
+  String get backupOpen => '開く';
 }

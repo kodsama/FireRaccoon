@@ -3721,4 +3721,40 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get backupRestoreWrongLedger =>
       'This backup was taken from a different Firefly user, so it cannot be restored here.';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return 'Restoring $done of $total';
+  }
+
+  @override
+  String get backupTakeProtected => 'Take a protected backup';
+
+  @override
+  String get backupEncryptedBadge => 'Password protected';
+
+  @override
+  String get backupPasswordNeeded => 'This backup is password protected.';
+
+  @override
+  String get backupPasswordWrong => 'That password does not open this backup.';
+
+  @override
+  String get backupVerify => 'Verify';
+
+  @override
+  String get backupVerifyIntact => 'Intact, and it matches the ledger';
+
+  @override
+  String backupVerifyDrifted(int creates, int updates, int deletes) {
+    return 'Intact. The ledger has moved on: $creates missing, $updates changed, $deletes added since.';
+  }
+
+  @override
+  String backupVerifyBroken(int count, String first) {
+    return '$count problems with this backup: $first';
+  }
+
+  @override
+  String get backupOpen => 'Open';
 }

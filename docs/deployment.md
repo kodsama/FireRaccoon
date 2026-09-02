@@ -285,7 +285,7 @@ overwriting the other. Inside are three things:
 
 | File | What it is |
 |---|---|
-| `manifest.json` | when, by which Firefly user, how many of each entity, and what failed |
+| `manifest.json` | when, by which Firefly user, how many of each entity, what failed, and a digest per file |
 | `snapshot.json` | the versioned JSON a restore reads back |
 | `csv/*.csv` | Firefly's own export of all nine data sets, the archival half |
 
@@ -294,6 +294,19 @@ app's own data; server mode seals them in `DATA_DIR` alongside the rest of its
 state, so every client of one server sees the same list. A standalone web build
 in local mode has nowhere to keep one and says so rather than offering a button
 that writes nothing.
+
+**A password** on a backup seals everything carrying ledger data: the snapshot
+and every CSV, AES-256-GCM under a PBKDF2 key derived from the password and a
+salt the manifest keeps. The manifest itself stays readable, so a list of
+backups is still a list; it holds counts and a moment rather than rows.
+Restoring, verifying or reading a file out of a sealed backup asks for the
+password, and nothing stores it. A backup nobody can produce the password for is
+a backup nobody can restore.
+
+**Verifying** checks a backup two ways and writes nothing: whether it is still
+what its manifest describes (every part present, sizes and digests unchanged, a
+sealed one opening with the password given), and then how far the ledger has
+moved since it was taken, counted by row.
 
 **Restoring** compares the backup against a fresh reading of the ledger and
 plans row by row: what the ledger lost is recreated, what differs is written

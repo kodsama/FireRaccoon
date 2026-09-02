@@ -50,26 +50,41 @@ class WrongLedgerException implements Exception {
   const WrongLedgerException();
 }
 
-/// What a backup is doing right now, for a screen that has to stay honest about
-/// a read that walks a whole ledger.
-class BackupProgress {
-  const BackupProgress({required this.running, this.stage});
+/// What a backup or a restore is doing right now, for a screen that has to stay
+/// honest about work that walks a whole ledger.
+class BackupActivity {
+  const BackupActivity({
+    required this.running,
+    this.stage,
+    this.fraction,
+    this.restoreStep,
+    this.restoreTotal,
+  });
 
-  static const idle = BackupProgress(running: false);
+  static const idle = BackupActivity(running: false);
 
   final bool running;
 
   /// The part being read, as [BackupService.create] reports it.
   final String? stage;
+
+  /// 0..1, or null while the work is not yet countable.
+  final double? fraction;
+
+  /// Rows written so far of the plan's total, while a restore runs.
+  final int? restoreStep;
+  final int? restoreTotal;
+
+  bool get isRestore => restoreTotal != null;
 }
 
 /// The backups this FireRaccoon holds.
 class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
   static final _log = AppLogger.scoped('providers.backups');
 
-  final _progress = ValueNotifier<BackupProgress>(BackupProgress.idle);
+  final _progress = ValueNotifier<BackupActivity>(BackupActivity.idle);
 
-  ValueListenable<BackupProgress> get progress => _progress;
+  ValueListenable<BackupActivity> get progress => _progress;
 
   @override
   Future<List<BackupManifest>> build() async {
@@ -83,16 +98,20 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
   /// Errors are thrown rather than folded into the state: the list of backups
   /// that already exist is still true, and a failed attempt is the caller's to
   /// report.
-  Future<BackupManifest> create() async {
+  Future<BackupManifest> create({String? password}) async {
     final service = ref.read(backupServiceProvider);
     if (service == null) {
       throw StateError('Backups are unavailable in this deployment');
     }
-    _progress.value = const BackupProgress(running: true);
+    _progress.value = const BackupActivity(running: true);
     try {
       final manifest = await service.create(
-        onStage: (stage) =>
-            _progress.value = BackupProgress(running: true, stage: stage),
+        password: password,
+        onProgress: (progress) => _progress.value = BackupActivity(
+          running: true,
+          stage: progress.stage,
+          fraction: progress.fraction,
+        ),
       );
       _log.info(
         'Backup ${manifest.id} written: ${manifest.totalBytes} bytes, '
@@ -101,7 +120,7 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
       state = AsyncData([manifest, ...state.value ?? const []]);
       return manifest;
     } finally {
-      _progress.value = BackupProgress.idle;
+      _progress.value = BackupActivity.idle;
     }
   }
 
@@ -117,10 +136,53 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
   }
 
   /// One file out of a backup, for handing it to something else.
-  Future<String?> file(String backupId, String fileName) async {
+  Future<String?> file(
+    String backupId,
+    String fileName, {
+    String? password,
+  }) async {
     final service = ref.read(backupServiceProvider);
     if (service == null) return null;
-    return service.file(backupId, fileName);
+    return service.file(backupId, fileName, password: password);
+  }
+
+  /// Whether a backup is still itself, and how far the ledger has moved from
+  /// it. Reads only.
+  Future<({BackupIntegrity integrity, RestorePlan? drift})> verify(
+    String backupId, {
+    String? password,
+  }) async {
+    final service = ref.read(backupServiceProvider);
+    final api = ref.read(apiServiceProvider);
+    if (service == null || api == null) {
+      throw StateError('Backups are unavailable in this deployment');
+    }
+    _progress.value = const BackupActivity(running: true, stage: 'verify');
+    try {
+      final integrity = await service.check(backupId, password: password);
+      if (!integrity.intact && integrity.readableFiles == 0) {
+        return (integrity: integrity, drift: null);
+      }
+      final snapshot = await service.snapshot(backupId, password: password);
+      if (snapshot == null) return (integrity: integrity, drift: null);
+      // Reading the ledger is the long half, and it reports itself, so a check
+      // of a large ledger moves the same bar a backup does.
+      final current = await DataExportService(api).export(
+        from: kFireflyLedgerStart,
+        to: kFireflyLedgerEnd,
+        onProgress: (stage, fraction) => _progress.value = BackupActivity(
+          running: true,
+          stage: stage,
+          fraction: fraction,
+        ),
+      );
+      return (
+        integrity: integrity,
+        drift: planRestore(backup: snapshot, current: current.toJson()),
+      );
+    } finally {
+      _progress.value = BackupActivity.idle;
+    }
   }
 
   /// What restoring [backupId] would change, without changing anything.
@@ -131,6 +193,7 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
   Future<RestorePlan> planRestoreOf(
     String backupId, {
     bool includeDeletes = false,
+    String? password,
   }) async {
     final service = ref.read(backupServiceProvider);
     final api = ref.read(apiServiceProvider);
@@ -138,7 +201,7 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
       throw StateError('Backups are unavailable in this deployment');
     }
     final manifest = await service.read(backupId);
-    final snapshot = await service.snapshot(backupId);
+    final snapshot = await service.snapshot(backupId, password: password);
     if (manifest == null || snapshot == null) {
       throw StateError('Backup $backupId has no snapshot to restore from');
     }
@@ -157,18 +220,36 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
   }
 
   /// Applies [plan], after taking a backup of what it is about to change.
-  Future<List<RestoreOutcome>> applyRestore(RestorePlan plan) async {
+  Future<List<RestoreOutcome>> applyRestore(
+    RestorePlan plan, {
+    String? password,
+  }) async {
     final api = ref.read(apiServiceProvider);
     if (api == null) {
       throw StateError('Not connected to Firefly III');
     }
-    await create();
-    final outcomes = await RestoreRunner(api).apply(plan);
-    _log.info(
-      'Restore applied: ${outcomes.where((o) => o.applied).length} of '
-      '${outcomes.length} steps',
-    );
-    return outcomes;
+    // Sealed the same way the backup being restored was, so the safety net is
+    // no more readable than what it protects.
+    await create(password: password);
+    _progress.value = const BackupActivity(running: true, restoreTotal: 0);
+    try {
+      final outcomes = await RestoreRunner(api).apply(
+        plan,
+        onStep: (done, total) => _progress.value = BackupActivity(
+          running: true,
+          fraction: total == 0 ? 1 : done / total,
+          restoreStep: done,
+          restoreTotal: total,
+        ),
+      );
+      _log.info(
+        'Restore applied: ${outcomes.where((o) => o.applied).length} of '
+        '${outcomes.length} steps',
+      );
+      return outcomes;
+    } finally {
+      _progress.value = BackupActivity.idle;
+    }
   }
 
   Future<void> refresh() async {

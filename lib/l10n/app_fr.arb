@@ -1838,5 +1838,48 @@
       }
     }
   },
-  "backupRestoreWrongLedger": "Cette sauvegarde vient d'un autre utilisateur Firefly, elle ne peut pas être restaurée ici."
+  "backupRestoreWrongLedger": "Cette sauvegarde vient d'un autre utilisateur Firefly, elle ne peut pas être restaurée ici.",
+  "backupRestoring": "Restauration de {done} sur {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "backupTakeProtected": "Créer une sauvegarde protégée",
+  "backupEncryptedBadge": "Protégée par mot de passe",
+  "backupPasswordNeeded": "Cette sauvegarde est protégée par un mot de passe.",
+  "backupPasswordWrong": "Ce mot de passe n'ouvre pas cette sauvegarde.",
+  "backupVerify": "Vérifier",
+  "backupVerifyIntact": "Intacte, et conforme au registre",
+  "backupVerifyDrifted": "Intacte. Le registre a changé : {creates} manquantes, {updates} modifiées, {deletes} ajoutées depuis.",
+  "@backupVerifyDrifted": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupVerifyBroken": "{count} problèmes avec cette sauvegarde : {first}",
+  "@backupVerifyBroken": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOpen": "Ouvrir"
 }

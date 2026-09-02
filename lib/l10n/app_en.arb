@@ -2093,5 +2093,48 @@
       }
     }
   },
-  "backupRestoreWrongLedger": "This backup was taken from a different Firefly user, so it cannot be restored here."
+  "backupRestoreWrongLedger": "This backup was taken from a different Firefly user, so it cannot be restored here.",
+  "backupRestoring": "Restoring {done} of {total}",
+  "@backupRestoring": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "backupTakeProtected": "Take a protected backup",
+  "backupEncryptedBadge": "Password protected",
+  "backupPasswordNeeded": "This backup is password protected.",
+  "backupPasswordWrong": "That password does not open this backup.",
+  "backupVerify": "Verify",
+  "backupVerifyIntact": "Intact, and it matches the ledger",
+  "backupVerifyDrifted": "Intact. The ledger has moved on: {creates} missing, {updates} changed, {deletes} added since.",
+  "@backupVerifyDrifted": {
+    "placeholders": {
+      "creates": {
+        "type": "int"
+      },
+      "updates": {
+        "type": "int"
+      },
+      "deletes": {
+        "type": "int"
+      }
+    }
+  },
+  "backupVerifyBroken": "{count} problems with this backup: {first}",
+  "@backupVerifyBroken": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "first": {
+        "type": "String"
+      }
+    }
+  },
+  "backupOpen": "Open"
 }

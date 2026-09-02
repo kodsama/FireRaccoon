@@ -3624,4 +3624,40 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupRestoreWrongLedger => '该备份由另一个 Firefly 用户创建，无法在此恢复。';
+
+  @override
+  String backupRestoring(int done, int total) {
+    return '正在恢复第 $done 条，共 $total 条';
+  }
+
+  @override
+  String get backupTakeProtected => '创建受保护的备份';
+
+  @override
+  String get backupEncryptedBadge => '已用密码保护';
+
+  @override
+  String get backupPasswordNeeded => '该备份受密码保护。';
+
+  @override
+  String get backupPasswordWrong => '该密码无法打开这个备份。';
+
+  @override
+  String get backupVerify => '校验';
+
+  @override
+  String get backupVerifyIntact => '完好，且与账本一致';
+
+  @override
+  String backupVerifyDrifted(int creates, int updates, int deletes) {
+    return '完好。账本已变动：缺少 $creates 条，改动 $updates 条，之后新增 $deletes 条。';
+  }
+
+  @override
+  String backupVerifyBroken(int count, String first) {
+    return '该备份有 $count 个问题：$first';
+  }
+
+  @override
+  String get backupOpen => '打开';
 }
