@@ -1,13 +1,16 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:fireraccoon_engine/models/account.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import 'data_providers.dart';
 import 'theme_provider.dart';
 
 const String kAccountClassificationPreferenceKey =
     'fireraccoon_account_classifications';
+
+final _log = AppLogger.scoped('providers.accountClassification');
 
 enum AccountCategory {
   asset,
@@ -83,8 +86,16 @@ class AccountClassificationNotifier
   @override
   Map<String, AccountCategory> build() {
     _prefs = ref.watch(sharedPreferencesProvider);
+    // Same as the people config: this build runs before the credential read
+    // answers, so the fetch it starts finds no service. Without a second
+    // chance once the connection appears, classifications held in Firefly
+    // never reached a fresh install.
+    ref.listen(apiServiceProvider, (_, next) {
+      if (next == null) return;
+      unawaited(_fetchRemote());
+    });
     _loadLocal();
-    _fetchRemote();
+    unawaited(_fetchRemote());
     return _readLocal();
   }
 
@@ -136,8 +147,14 @@ class AccountClassificationNotifier
           }),
         );
       }
-    } catch (_) {
-      // Fallback to local cache if offline or error
+    } on Object catch (error, stackTrace) {
+      // The local cache still answers, so being offline costs nothing. Saying
+      // nothing did: a refused read looked like having no connection yet.
+      _log.warning(
+        'Failed to read account classifications from Firefly',
+        error,
+        stackTrace,
+      );
     }
   }
 
