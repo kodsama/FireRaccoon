@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-09-03
+
+### Fixed
+
+- A subscription whose schedule falls after the 10th of the month could not be
+  edited at all. Firefly stamps its dates with the server's offset, so one due
+  on the 27th arrives as `2026-10-27T00:00:00+01:00` and was read as an instant
+  that is the 26th. That day was what the form showed, what the monthly
+  repetition took its day from, and what the next save would have written back,
+  so renaming a subscription sent a schedule nobody had touched, into an
+  update-only rule that caps a repetition day at 10. Dates now keep the calendar
+  fields the server wrote, in recurrences, bills, budget limits, piggy banks,
+  opening balances and transactions alike
+- Text in a field carrying a suggestions dropdown kept the previous frame
+  underneath the new one until a resize or a scroll cleared it. The dropdown
+  library never subscribed the field's render box to the link it holds, so the
+  dropdown's geometry could change without the field beneath ever being marked
+  dirty
+
 ## [0.3.1] - 2026-09-02
 
 ### Fixed
