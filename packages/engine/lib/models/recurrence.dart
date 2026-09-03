@@ -1,3 +1,5 @@
+import 'firefly_date.dart';
+
 enum RecurrenceTransactionType {
   withdrawal('withdrawal'),
   deposit('deposit'),
@@ -204,9 +206,9 @@ class Recurrence {
       type: RecurrenceTransactionType.fromApi(attrs['type'] as String?),
       title: attrs['title'] as String? ?? 'Unnamed',
       description: attrs['description'] as String?,
-      firstDate: _parseDate(attrs['first_date']) ?? DateTime.now(),
-      latestDate: _parseDate(attrs['latest_date']),
-      repeatUntil: _parseDate(attrs['repeat_until']),
+      firstDate: parseFireflyDate(attrs['first_date']) ?? DateTime.now(),
+      latestDate: parseFireflyDate(attrs['latest_date']),
+      repeatUntil: parseFireflyDate(attrs['repeat_until']),
       nrOfRepetitions: attrs['nr_of_repetitions'] as int?,
       applyRules: attrs['apply_rules'] as bool? ?? true,
       active: attrs['active'] as bool? ?? true,
@@ -221,11 +223,6 @@ class Recurrence {
           )
           .toList(),
     );
-  }
-
-  static DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    return DateTime.tryParse(value.toString());
   }
 }
 
