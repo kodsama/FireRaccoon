@@ -1,3 +1,5 @@
+import 'firefly_date.dart';
+
 enum BillRepeatFrequency {
   weekly('weekly'),
   monthly('monthly'),
@@ -63,9 +65,9 @@ class Bill {
       amountAvg: _parseAmount(attrs['amount_avg']),
       currencyCode: attrs['currency_code'] as String? ?? 'EUR',
       currencySymbol: attrs['currency_symbol'] as String? ?? '€',
-      date: _parseDate(attrs['date']) ?? DateTime.now(),
-      endDate: _parseDate(attrs['end_date']),
-      extensionDate: _parseDate(attrs['extension_date']),
+      date: parseFireflyDate(attrs['date']) ?? DateTime.now(),
+      endDate: parseFireflyDate(attrs['end_date']),
+      extensionDate: parseFireflyDate(attrs['extension_date']),
       repeatFrequency: BillRepeatFrequency.fromApi(
         attrs['repeat_freq'] as String?,
       ),
@@ -78,11 +80,6 @@ class Bill {
 
   static double _parseAmount(dynamic value) {
     return double.tryParse(value?.toString() ?? '0') ?? 0.0;
-  }
-
-  static DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    return DateTime.tryParse(value.toString());
   }
 }
 
