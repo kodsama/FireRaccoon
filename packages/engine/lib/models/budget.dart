@@ -1,3 +1,4 @@
+import 'firefly_date.dart';
 import '../utils/budget_period.dart';
 
 class Budget {
@@ -85,18 +86,13 @@ class BudgetLimit {
     return BudgetLimit(
       id: json['id'] as String,
       budgetId: attrs['budget_id']?.toString() ?? '',
-      start: _parseDate(attrs['start']) ?? DateTime.now(),
-      end: _parseDate(attrs['end']) ?? DateTime.now(),
+      start: parseFireflyDate(attrs['start']) ?? DateTime.now(),
+      end: parseFireflyDate(attrs['end']) ?? DateTime.now(),
       amount: double.tryParse(attrs['amount']?.toString() ?? '0') ?? 0.0,
       currencyCode: attrs['currency_code'] as String? ?? 'EUR',
       currencySymbol: attrs['currency_symbol'] as String? ?? '€',
       notes: attrs['notes'] as String?,
     );
-  }
-
-  static DateTime? _parseDate(dynamic value) {
-    if (value == null) return null;
-    return DateTime.tryParse(value.toString());
   }
 }
 
