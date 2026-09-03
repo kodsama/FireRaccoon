@@ -1,3 +1,5 @@
+import 'firefly_date.dart';
+
 class Transaction {
   final String id;
 
@@ -155,13 +157,7 @@ class Transaction {
       id: groupId,
       journalId: tx['transaction_journal_id']?.toString(),
       type: tx['type'] as String? ?? 'withdrawal',
-      // Firefly returns offset-aware timestamps; convert to local time so
-      // calendar-field reads (day grouping, future checks) match the user's
-      // local day instead of the UTC instant.
-      date: tx['date'] != null
-          ? (DateTime.tryParse(tx['date'].toString()) ?? DateTime.now())
-                .toLocal()
-          : DateTime.now(),
+      date: parseFireflyDate(tx['date']) ?? DateTime.now(),
       amount: double.tryParse(tx['amount']?.toString() ?? '0') ?? 0.0,
       description: tx['description'] as String? ?? 'No Description',
       sourceName: tx['source_name'] as String? ?? 'Unknown',
@@ -185,9 +181,7 @@ class Transaction {
       billName: (tx['bill_name'] ?? tx['subscription_name']) as String?,
       piggyBankId: tx['piggy_bank_id']?.toString(),
       piggyBankName: tx['piggy_bank_name'] as String?,
-      interestDate: tx['interest_date'] != null
-          ? DateTime.tryParse(tx['interest_date'].toString())
-          : null,
+      interestDate: parseFireflyDate(tx['interest_date']),
       groupTitle: groupTitle,
       reconciled: _parseBool(tx['reconciled']),
     );

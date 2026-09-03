@@ -1,3 +1,5 @@
+import 'firefly_date.dart';
+
 class Account {
   final String id;
   final String name;
@@ -89,9 +91,7 @@ class Account {
       openingBalance: double.tryParse(
         attrs['opening_balance']?.toString() ?? '',
       ),
-      openingBalanceDate: attrs['opening_balance_date'] != null
-          ? DateTime.tryParse(attrs['opening_balance_date'].toString())
-          : null,
+      openingBalanceDate: parseFireflyDate(attrs['opening_balance_date']),
       virtualBalance: double.tryParse(
         attrs['virtual_balance']?.toString() ?? '',
       ),

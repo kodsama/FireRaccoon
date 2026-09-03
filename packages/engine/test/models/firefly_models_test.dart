@@ -740,14 +740,14 @@ void main() {
       expect(tx.date.isUtc, isFalse);
     });
 
-    test('converts UTC timestamps to local time', () {
+    test('keeps the day Firefly stamped, whatever zone reads it', () {
       final tx = Transaction.fromJson({
         'id': '13',
         'attributes': {
           'transactions': [
             {
               'type': 'deposit',
-              'date': '2026-07-07T22:00:00.000Z',
+              'date': '2026-07-07T22:00:00+02:00',
               'amount': '10',
               'description': 'Late deposit',
               'source_name': 'Employer',
@@ -758,7 +758,9 @@ void main() {
         },
       });
 
-      expect(tx.date, DateTime.parse('2026-07-07T22:00:00.000Z').toLocal());
+      expect(tx.date.isUtc, isFalse);
+      expect((tx.date.year, tx.date.month, tx.date.day), (2026, 7, 7));
+      expect(tx.date.hour, 22);
     });
 
     test('copyWith clear flags drop linked metadata', () {
