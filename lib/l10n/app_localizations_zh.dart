@@ -3660,4 +3660,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get backupOpen => '打开';
+
+  @override
+  String get notConnectedTitle => '哎呀，还没有服务器';
+
+  @override
+  String get notConnectedBody =>
+      'FireRaccoon 尚未连接到 Firefly III，因此没有内容可显示。连接你的服务器后，账户就会出现在这里。';
+
+  @override
+  String get notConnectedAction => '打开设置';
+
+  @override
+  String get notConnectedTitleRaccoon => '哎呀，垃圾桶是空的';
+
+  @override
+  String get notConnectedBodyRaccoon =>
+      '还没有可翻找的东西。把 FireRaccoon 指向你的 Firefly III 服务器，好东西就会出现在这里。';
 }

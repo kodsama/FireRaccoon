@@ -14,6 +14,7 @@ import '../utils/locale_formatting.dart';
 import '../widgets/autocomplete_text_field.dart';
 import '../l10n/l10n_extensions.dart';
 import '../widgets/entity_list_layout.dart';
+import '../widgets/not_connected_view.dart';
 import '../widgets/prognosis_band_chart.dart';
 
 /// Deep-link alias — use [ProjectionScreen] / `/projection` in the app shell.
@@ -105,8 +106,10 @@ class _PrognosisViewState extends ConsumerState<PrognosisView>
     return accountsAsync.when(
       skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (error, _) =>
-          Center(child: Text(l10n.errorGeneric(error.toString()))),
+      error: (error, _) => LoadFailureView(
+        error: error,
+        message: l10n.errorGeneric(error.toString()),
+      ),
       data: (accounts) {
         final prognosis = ref.watch(accountPrognosisProvider);
         final visibleAccounts = _visibleAccounts(accounts, prognosis);
