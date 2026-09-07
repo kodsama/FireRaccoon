@@ -175,4 +175,10 @@ class FunL10n {
   String get projectedBalance =>
       _pick(l10n.projectedBalance, l10n.projectedBalanceRaccoon);
   String get piggyBank => _pick(l10n.piggyBank, l10n.piggyBankRaccoon);
+
+  // Nothing connected yet
+  String get notConnectedTitle =>
+      _pick(l10n.notConnectedTitle, l10n.notConnectedTitleRaccoon);
+  String get notConnectedBody =>
+      _pick(l10n.notConnectedBody, l10n.notConnectedBodyRaccoon);
 }

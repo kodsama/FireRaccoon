@@ -238,7 +238,7 @@ mixin _LinkedTransactionsState<T extends ConsumerStatefulWidget>
   bool _expanded = false;
   bool _loadingTx = false;
   List<Transaction>? _transactions;
-  String? _loadError;
+  Object? _loadError;
 
   Future<TransactionPageResult> fetchLinkedTransactions(FireflyService service);
 
@@ -290,7 +290,7 @@ mixin _LinkedTransactionsState<T extends ConsumerStatefulWidget>
         setState(() {
           _loadingTx = false;
           _transactions = null;
-          _loadError = context.l10n.errorLoadingData('$error');
+          _loadError = error;
         });
       }
     }
@@ -300,7 +300,7 @@ mixin _LinkedTransactionsState<T extends ConsumerStatefulWidget>
     return TransactionsExpandedPanel(
       loading: _loadingTx,
       transactions: _transactions,
-      errorMessage: _loadError,
+      loadError: _loadError,
       emptyLabel: context.l10n.noTransactionsYet,
       plannedOccurrences: plannedOccurrences(),
       onTransactionMutated: _loadTransactions,

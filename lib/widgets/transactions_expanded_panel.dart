@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import 'package:fireraccoon_engine/fireraccoon_engine.dart'
-    show signedListAmount;
+    show FireflyNotConnectedException, signedListAmount;
 
 import '../l10n/l10n_extensions.dart';
 import '../models/transaction.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
+import 'not_connected_view.dart';
 import 'transaction_entity_card.dart';
 import 'transaction_month_header.dart';
 
@@ -25,7 +26,11 @@ class TransactionsExpandedPanel extends ConsumerStatefulWidget {
   final bool loading;
   final List<Transaction>? transactions;
   final String emptyLabel;
-  final String? errorMessage;
+
+  /// Whatever the load threw, so the panel can tell a disconnected server
+  /// apart from a failure. Both callers built the same message from it, which
+  /// is now built here.
+  final Object? loadError;
   final String? filterAccount;
   final List<PlannedOccurrence> plannedOccurrences;
   final Future<void> Function()? onTransactionMutated;
@@ -54,7 +59,7 @@ class TransactionsExpandedPanel extends ConsumerStatefulWidget {
     required this.loading,
     required this.transactions,
     required this.emptyLabel,
-    this.errorMessage,
+    this.loadError,
     this.filterAccount,
     this.plannedOccurrences = const [],
     this.onTransactionMutated,
@@ -256,17 +261,19 @@ class _TransactionsExpandedPanelState
           ),
         ),
       );
-    } else if (widget.errorMessage != null) {
-      txBody = Padding(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: Text(
-            widget.errorMessage!,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: colors.danger, fontSize: 13),
-          ),
-        ),
-      );
+    } else if (widget.loadError != null) {
+      txBody = widget.loadError is FireflyNotConnectedException
+          ? const NotConnectedView(compact: true)
+          : Padding(
+              padding: const EdgeInsets.all(24),
+              child: Center(
+                child: Text(
+                  context.l10n.errorLoadingData('${widget.loadError}'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: colors.danger, fontSize: 13),
+                ),
+              ),
+            );
     } else if (posted.isEmpty &&
         future.isEmpty &&
         widget.plannedOccurrences.isEmpty) {

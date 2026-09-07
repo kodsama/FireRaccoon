@@ -6801,6 +6801,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get backupOpen;
+
+  /// Heading on the screen shown when no Firefly III server is connected
+  ///
+  /// In en, this message translates to:
+  /// **'Uh oh, no server yet'**
+  String get notConnectedTitle;
+
+  /// Explanation shown when no Firefly III server is connected
+  ///
+  /// In en, this message translates to:
+  /// **'FireRaccoon is not connected to Firefly III, so there is nothing to show yet. Connect your server and your accounts turn up here.'**
+  String get notConnectedBody;
+
+  /// Button that opens Settings from the not-connected screen
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get notConnectedAction;
+
+  /// Raccoon Mode heading when no Firefly III server is connected
+  ///
+  /// In en, this message translates to:
+  /// **'Uh oh, the bins are empty'**
+  String get notConnectedTitleRaccoon;
+
+  /// Raccoon Mode explanation when no Firefly III server is connected
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to rummage through yet. Point FireRaccoon at your Firefly III server and the good stuff turns up here.'**
+  String get notConnectedBodyRaccoon;
 }
 
 class _AppLocalizationsDelegate

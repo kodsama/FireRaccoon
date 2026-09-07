@@ -1956,5 +1956,10 @@
       }
     }
   },
-  "backupOpen": "開く"
+  "backupOpen": "開く",
+  "notConnectedTitle": "おっと、サーバーがまだありません",
+  "notConnectedBody": "FireRaccoon は Firefly III に接続していないため、表示できるものがありません。サーバーを接続すると、口座がここに表示されます。",
+  "notConnectedAction": "設定を開く",
+  "notConnectedTitleRaccoon": "おっと、ゴミ箱が空っぽです",
+  "notConnectedBodyRaccoon": "まだあさるものがありません。FireRaccoon を Firefly III サーバーに向ければ、お宝がここに現れます。"
 }
