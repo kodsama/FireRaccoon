@@ -112,6 +112,50 @@ void main() {
       expect(requests, 1);
     });
 
+    test('marks a request nothing answered as unreachable', () async {
+      final client = MockClient(
+        (_) async => throw http.ClientException('connection refused'),
+      );
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+        readMaxAttempts: 1,
+      );
+
+      await expectLater(
+        service.getPrimaryCurrency(),
+        throwsA(
+          isA<FireflyApiException>()
+              .having((e) => e.unreachable, 'unreachable', isTrue)
+              .having((e) => e.statusCode, 'statusCode', isNull),
+        ),
+      );
+    });
+
+    test('a refusal Firefly sent is not marked unreachable', () async {
+      // Both arrive with no status code attached, so anything reading a
+      // missing status as "nothing answered" calls a server that is up and
+      // refusing a server nobody can reach.
+      final client = MockClient((_) async => http.Response('nope', 404));
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await expectLater(
+        service.getPrimaryCurrency(),
+        throwsA(
+          isA<FireflyApiException>().having(
+            (e) => e.unreachable,
+            'unreachable',
+            isFalse,
+          ),
+        ),
+      );
+    });
+
     test('retries read requests on 5xx before succeeding', () async {
       var attempts = 0;
       final client = MockClient((_) async {
