@@ -458,6 +458,14 @@ Distribution is platform-specific:
 
 Code signing, notarization, and store submission are outside this guide.
 
+The macOS build is deliberately unsandboxed. `flutter_secure_storage` keeps the
+Firefly credentials in the login Keychain, and a sandboxed app is confined to its
+own keychain access group unless it carries `keychain-access-groups`, which only
+signs with a development certificate. Releases here are unsigned, so a sandboxed
+build finds an empty store on every launch and asks the person to connect a
+server again. Because an ad-hoc signature changes with every build, macOS asks
+once per build before letting the app read the item back.
+
 ## CI builds
 
 GitHub Actions (`.github/workflows/ci.yml`) runs on every push and pull request:
