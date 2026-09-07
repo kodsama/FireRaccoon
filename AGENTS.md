@@ -58,8 +58,8 @@ live in `CONTEXT.md`.
 
 | Tool | Purpose |
 |------|---------|
-| `get_capabilities` | Server version, tool catalog, and the write-gated list |
-| `check_connection` | Probe `/api/v1/about` |
+| `get_capabilities` | App and server version, tool catalog, the write-gated list, and live backend status |
+| `check_connection` | Whether Firefly III is connected, which server, which version, and how many users |
 | `get_current_user` | Authenticated Firefly user |
 | `get_primary_currency` | Instance default currency |
 | `set_primary_currency` | Change the default currency |

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'agent_keys_provider.dart';
+import 'app_info_provider.dart';
 import 'auth_provider.dart';
 import 'backup_providers.dart';
 import '../services/mcp_service.dart';
@@ -38,12 +39,16 @@ final mcpServiceProvider = Provider<McpService>((ref) {
           ? describeAgentKeyFailure(keys.error!)
           : null,
       backupsDirectory: ref.read(backupsDirectoryProvider),
+      // Null on the first pass and real once the platform answers, which is
+      // one restart of a server nothing has connected to yet.
+      appVersion: ref.read(packageInfoProvider).asData?.value.version,
     );
   }
 
   ref.listen(authProvider, (_, _) => apply(), fireImmediately: true);
   ref.listen(agentKeysProvider, (_, _) => apply());
   ref.listen(agentKeyPeopleProvider, (_, _) => apply());
+  ref.listen(packageInfoProvider, (_, _) => apply());
 
   return service;
 });
