@@ -26,6 +26,7 @@ export 'services/remote_backup_store.dart';
 export 'services/data_export_service.dart';
 export 'services/firefly_csv_export_service.dart';
 export 'services/firefly_api_exception.dart';
+export 'services/firefly_not_connected_exception.dart';
 export 'services/account_resolution.dart';
 export 'services/statement_matching.dart';
 export 'services/firefly_api_service.dart';

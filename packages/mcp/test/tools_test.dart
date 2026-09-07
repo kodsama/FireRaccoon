@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
+import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:test/test.dart';
 
@@ -18,15 +19,93 @@ McpTool _tool(String name, {MockClient? client}) =>
 void main() {
   group('connection target', () {
     test(
-      'an unconfigured target fails the tool rather than guessing',
+      'an unconfigured target reports the state rather than guessing',
       () async {
         final tool = buildTools(
           target: const FireflyTarget.unconfigured(),
         ).firstWhere((t) => t.name == 'run_projection');
 
-        expect(() => tool.run({}), throwsA(isA<StateError>()));
+        final result = await tool.run({});
+
+        // A described state, not a thrown failure. An agent that reads a
+        // socket error under `tool_error` retries, or tells the person their
+        // ledger is broken; `not_connected` is the one true thing to say.
+        expect(result['ok'], isFalse);
+        expect(result['code'], 'not_connected');
+        expect(result['connected'], isFalse);
+        expect(result['remedy'], contains('Settings'));
       },
     );
+
+    test('no tool throws at an agent when there is no connection', () async {
+      const describedCodes = {
+        // Wanted arguments it did not get, so it never reached the connection.
+        'bad_input',
+        // Backups, which need somewhere to keep one as well as a ledger.
+        'unavailable',
+        'not_connected',
+      };
+      for (final tool in buildTools(
+        target: const FireflyTarget.unconfigured(),
+      )) {
+        final result = await tool.run(const {});
+        expect(
+          result['ok'] == true || describedCodes.contains(result['code']),
+          isTrue,
+          reason: '${tool.name} answered ${result['code']}',
+        );
+      }
+    });
+
+    test('a Firefly that never answers is reported as unreachable', () async {
+      final tool = _tool(
+        'get_current_user',
+        client: MockClient((_) async => throw http.ClientException('refused')),
+      );
+
+      final result = await tool.run({});
+
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'backend_unreachable');
+      expect(result['connected'], isFalse);
+      expect(result['backend_url'], fireflyBaseUrl);
+    });
+
+    test('a sign-in page in front of Firefly is a refused token', () async {
+      // A proxy or SSO front door answers every path with a login page. The
+      // server is up and talking, so telling an agent it is unreachable sends
+      // whoever reads that off to check a network that is fine.
+      final tool = _tool(
+        'get_accounts',
+        client: MockClient(
+          (_) async => http.Response(
+            '<!DOCTYPE html><html><body>Sign in</body></html>',
+            401,
+            headers: {'content-type': 'text/html; charset=utf-8'},
+          ),
+        ),
+      );
+
+      final result = await tool.run({});
+
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'backend_unauthorized');
+      expect(result['connected'], isTrue);
+      expect(result['backend_url'], fireflyBaseUrl);
+      expect(result['remedy'], contains('personal access token'));
+    });
+
+    test('a refusal Firefly sent is not called unreachable', () async {
+      // A 404 leaves the API layer with no status code either, so anything
+      // reading a missing status as "nothing answered" reported a server that
+      // was up and talking as a server nobody could reach.
+      final tool = _tool('get_account', client: fireflyMockClient());
+
+      await expectLater(
+        tool.run({'account_id': '404'}),
+        throwsA(isA<Exception>()),
+      );
+    });
 
     test('arguments cannot redirect a tool at another Firefly', () async {
       final calls = <Uri>[];
@@ -294,6 +373,138 @@ void main() {
       expect(result['write_tools'], isA<List<Object?>>());
     });
 
+    test('reports the app version it was started with', () async {
+      final tool = buildTools(
+        target: _target,
+        httpClient: fireflyMockClient(),
+        appVersion: '0.3.2',
+      ).firstWhere((t) => t.name == 'get_capabilities');
+
+      final app = (await tool.run({}))['app'] as Map<String, Object?>;
+
+      expect(app['name'], 'FireRaccoon');
+      expect(app['version'], '0.3.2');
+      expect(app['mcp_version'], '1.0.0');
+    });
+
+    test('reports a live backend: where, which version, how many', () async {
+      final tool = _tool('get_capabilities', client: fireflyMockClient());
+
+      final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
+
+      expect(backend['configured'], isTrue);
+      expect(backend['connected'], isTrue);
+      expect(backend['url'], fireflyBaseUrl);
+      expect(backend['firefly_version'], '6.0.0');
+      expect(backend['firefly_api_version'], '2.1.0');
+      expect(backend['user_count'], 2);
+    });
+
+    test('says the backend is down rather than failing with it', () async {
+      // The tool an agent calls first has to keep answering when the thing it
+      // describes is unreachable, or there is nothing left to learn the state
+      // from.
+      final tool = _tool(
+        'get_capabilities',
+        client: MockClient((_) async => throw http.ClientException('refused')),
+      );
+
+      final result = await tool.run({});
+      final backend = result['backend'] as Map<String, Object?>;
+
+      expect(result['ok'], isTrue);
+      expect(result['tools'], isNotEmpty);
+      expect(backend['connected'], isFalse);
+      expect(backend['url'], fireflyBaseUrl);
+      expect(backend['reason'], contains('did not answer'));
+    });
+
+    test('an unconfigured server says so, and points at Settings', () async {
+      final tool = buildTools(
+        target: const FireflyTarget.unconfigured(),
+      ).firstWhere((t) => t.name == 'get_capabilities');
+
+      final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
+
+      expect(backend['configured'], isFalse);
+      expect(backend['connected'], isFalse);
+      expect(backend['url'], isNull);
+      expect(backend['reason'], contains('Settings'));
+    });
+
+    test('a user count is omitted where the token may not ask', () async {
+      // /api/v1/users is owner-only. A viewer being refused it says nothing
+      // about the connection, so the rest of the status still stands.
+      final tool = _tool(
+        'get_capabilities',
+        client: fireflyMockClient(usersReadable: false),
+      );
+
+      final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
+
+      expect(backend['connected'], isTrue);
+      expect(backend['user_count'], isNull);
+      expect(backend['firefly_version'], '6.0.0');
+    });
+
+    test('a proxy answering 200 with junk narrows the status', () async {
+      // The connection is proved by the 200 and nothing else can be read from
+      // it. get_capabilities is the one call that has to keep answering while
+      // everything else is going wrong, so it reports less rather than throws.
+      final tool = _tool(
+        'get_capabilities',
+        client: MockClient((_) async => jsonHttpResponse('not json at all')),
+      );
+
+      final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
+
+      expect(backend['connected'], isTrue);
+      expect(backend['firefly_version'], isNull);
+      expect(backend['user'], isNull);
+      expect(backend['user_count'], isNull);
+    });
+
+    test('a user in a shape nobody expected is left out', () async {
+      final tool = _tool(
+        'get_capabilities',
+        client: MockClient((request) async {
+          if (request.url.path == '/api/v1/about/user') {
+            return jsonHttpResponse({
+              'data': {'id': 1, 'attributes': 'nonsense'},
+            });
+          }
+          return jsonHttpResponse({'version': '6.0.0'});
+        }),
+      );
+
+      final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
+
+      expect(backend['connected'], isTrue);
+      expect(backend['user'], isNull);
+    });
+
+    test('users are counted by hand when there is no total', () async {
+      final tool = _tool(
+        'get_capabilities',
+        client: MockClient((request) async {
+          if (request.url.path == '/api/v1/users') {
+            return jsonHttpResponse({
+              'data': [
+                {'id': '1'},
+                {'id': '2'},
+                {'id': '3'},
+              ],
+            });
+          }
+          return jsonHttpResponse({'version': '6.0.0'});
+        }),
+      );
+
+      final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
+
+      expect(backend['user_count'], 3);
+    });
+
     test('advertises agent keys as the credential', () async {
       final tool = _tool('get_capabilities');
 
@@ -371,7 +582,7 @@ void main() {
   });
 
   group('check_connection', () {
-    test('bad_input when the server has no Firefly connection', () async {
+    test('not_connected when the server has no Firefly connection', () async {
       final tool = buildTools(
         target: const FireflyTarget.unconfigured(),
         httpClient: fireflyMockClient(),
@@ -380,25 +591,50 @@ void main() {
       final result = await tool.run({});
 
       expect(result['ok'], isFalse);
-      expect(result['code'], 'bad_input');
+      expect(result['code'], 'not_connected');
+      expect(result['configured'], isFalse);
+      expect(result['url'], isNull);
     });
 
-    test('connected on 200', () async {
+    test('connected on 200, and says where and how many', () async {
       final tool = _tool('check_connection', client: fireflyMockClient());
       final result = await tool.run({});
       expect(result['ok'], isTrue);
       expect(result['connected'], isTrue);
+      expect(result['url'], fireflyBaseUrl);
+      expect(result['firefly_version'], '6.0.0');
+      expect(result['user_count'], 2);
+      expect(
+        (result['user'] as Map<String, Object?>)['email'],
+        'admin@local.test',
+      );
     });
 
-    test('not connected on non-200', () async {
+    test('a rejected token is reported as reaching Firefly', () async {
+      // 401 on /about means the server answered. Calling that "not connected"
+      // sent people off to check a network that was fine.
       final tool = _tool(
         'check_connection',
         client: fireflyMockClient(aboutOk: false),
       );
       final result = await tool.run({});
       expect(result['ok'], isFalse);
+      expect(result['code'], 'backend_unauthorized');
+      expect(result['connected'], isTrue);
+      expect(result['authorized'], isFalse);
+      expect(result['error'], contains('rejected the token'));
+    });
+
+    test('a Firefly that never answers is not connected', () async {
+      final tool = _tool(
+        'check_connection',
+        client: MockClient((_) async => throw http.ClientException('refused')),
+      );
+      final result = await tool.run({});
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'backend_unreachable');
       expect(result['connected'], isFalse);
-      expect(result['error'], isNotNull);
+      expect(result['url'], fireflyBaseUrl);
     });
 
     test('strips a trailing slash from the target base URL', () async {
