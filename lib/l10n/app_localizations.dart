@@ -6867,6 +6867,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This raccoon knows where everything is, but the lid will not budge. Unlock your keychain and it will have another go.'**
   String get credentialsLockedBodyRaccoon;
+
+  /// Badge shown next to a server reached over plain http
+  ///
+  /// In en, this message translates to:
+  /// **'Not encrypted'**
+  String get insecureConnectionBadge;
+
+  /// Warning shown when the allow-http switch is turned on
+  ///
+  /// In en, this message translates to:
+  /// **'Your token and every answer travel in the clear over http://. Anyone on the network between here and your server can read them. Use https:// unless you understand the risk.'**
+  String get insecureConnectionWarning;
+
+  /// Tooltip on the lock shown for an https connection
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted connection (https)'**
+  String get secureConnectionTooltip;
 }
 
 class _AppLocalizationsDelegate

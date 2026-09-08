@@ -3696,4 +3696,14 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get credentialsLockedBodyRaccoon =>
       '这只浣熊知道东西在哪儿，可盖子打不开。解锁你的钥匙串，它会再试一次。';
+
+  @override
+  String get insecureConnectionBadge => '未加密';
+
+  @override
+  String get insecureConnectionWarning =>
+      '你的令牌和所有响应都通过 http:// 明文传输。你与服务器之间网络上的任何人都能读取。除非你清楚风险，否则请使用 https://。';
+
+  @override
+  String get secureConnectionTooltip => '加密连接 (https)';
 }

@@ -3794,4 +3794,14 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get credentialsLockedBodyRaccoon =>
       'This raccoon knows where everything is, but the lid will not budge. Unlock your keychain and it will have another go.';
+
+  @override
+  String get insecureConnectionBadge => 'Not encrypted';
+
+  @override
+  String get insecureConnectionWarning =>
+      'Your token and every answer travel in the clear over http://. Anyone on the network between here and your server can read them. Use https:// unless you understand the risk.';
+
+  @override
+  String get secureConnectionTooltip => 'Encrypted connection (https)';
 }
