@@ -3793,4 +3793,24 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get notConnectedBodyRaccoon =>
       'Ainda não há nada para remexer. Aponte o FireRaccoon ao seu servidor Firefly III e as coisas boas aparecem aqui.';
+
+  @override
+  String get credentialsLockedTitle => 'À espera do seu porta-chaves';
+
+  @override
+  String get credentialsLockedBody =>
+      'A sua ligação está guardada, mas o porta-chaves do sistema não a devolve enquanto estiver bloqueado. Desbloqueie-o e tente novamente.';
+
+  @override
+  String get credentialsLockedAction => 'Tentar novamente';
+
+  @override
+  String get credentialsLockedRetrying => 'A tentar novamente...';
+
+  @override
+  String get credentialsLockedTitleRaccoon => 'O esconderijo está trancado';
+
+  @override
+  String get credentialsLockedBodyRaccoon =>
+      'Este guaxinim sabe onde está tudo, mas a tampa não cede. Desbloqueie o porta-chaves e ele tenta outra vez.';
 }

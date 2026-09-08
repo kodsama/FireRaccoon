@@ -3774,4 +3774,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notConnectedBodyRaccoon =>
       'Nothing to rummage through yet. Point FireRaccoon at your Firefly III server and the good stuff turns up here.';
+
+  @override
+  String get credentialsLockedTitle => 'Waiting on your keychain';
+
+  @override
+  String get credentialsLockedBody =>
+      'Your connection is saved, but the system keychain will not hand it back until it is unlocked. Unlock it, then ask again.';
+
+  @override
+  String get credentialsLockedAction => 'Try again';
+
+  @override
+  String get credentialsLockedRetrying => 'Asking again...';
+
+  @override
+  String get credentialsLockedTitleRaccoon => 'The stash is locked';
+
+  @override
+  String get credentialsLockedBodyRaccoon =>
+      'This raccoon knows where everything is, but the lid will not budge. Unlock your keychain and it will have another go.';
 }

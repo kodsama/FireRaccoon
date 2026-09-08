@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:fireraccoon/providers/auth_provider.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/store/credential_store_locked_exception.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/static_auth_notifier.dart';
@@ -759,8 +760,10 @@ void main() {
       final value = container.read(accountsProvider);
       expect(value.hasError, isTrue);
       // "Open Settings and connect your server" is the wrong instruction when
-      // the server is configured and the keychain simply would not answer.
-      expect(value.error.toString(), contains('keychain'));
+      // the server is configured and the store simply would not answer, so the
+      // two states are separate types and the screens tell them apart.
+      expect(value.error, isA<CredentialStoreLockedException>());
+      expect(value.error, isNot(isA<FireflyNotConnectedException>()));
     });
 
     test(

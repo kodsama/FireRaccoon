@@ -1,4 +1,6 @@
+import 'package:fireraccoon/providers/auth_provider.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:fireraccoon/store/credential_store_locked_exception.dart';
 import 'package:fireraccoon/widgets/not_connected_view.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
@@ -54,10 +56,64 @@ void main() {
     expect(find.byType(NotConnectedView), findsNothing);
   });
 
+  testWidgets('a locked keychain is a state, not an error', (tester) async {
+    await pump(
+      tester,
+      const LoadFailureView(
+        error: CredentialStoreLockedException(),
+        message: 'Error loading data: something went wrong',
+      ),
+    );
+
+    expect(find.text('Waiting on your keychain'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+    // The connection is saved and still there, so nothing here should read as
+    // a lost setup or a crash.
+    expect(find.textContaining('Error loading data'), findsNothing);
+    expect(find.byType(NotConnectedView), findsNothing);
+  });
+
+  testWidgets('asking again reads the credentials once more', (tester) async {
+    SharedPreferences.setMockInitialValues({'funMode': 'none'});
+    final prefs = await SharedPreferences.getInstance();
+    var reads = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          authProvider.overrideWith(() => _CountingAuthNotifier(() => reads++)),
+        ],
+        child: buildLocalizedTestApp(child: const CredentialsLockedView()),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Try again'));
+    await tester.pump();
+
+    // Without this the only thing that ever looks again is the connection
+    // poll, so someone who has just unlocked the keychain sits and waits.
+    expect(reads, 1);
+  });
+
   testWidgets('Raccoon Mode gets its own copy', (tester) async {
     await pump(tester, const NotConnectedView(), funMode: 'raccoon');
 
     expect(find.text('Uh oh, the bins are empty'), findsOneWidget);
     expect(find.text('Uh oh, no server yet'), findsNothing);
   });
+}
+
+/// Counts the re-reads the locked view asks for, without a keychain.
+class _CountingAuthNotifier extends AuthNotifier {
+  _CountingAuthNotifier(this.onRead);
+
+  final void Function() onRead;
+
+  @override
+  AuthSettings build() =>
+      AuthSettings(isHydrated: true, storageUnavailable: true);
+
+  @override
+  Future<void> retryCredentialRead() async => onRead();
 }

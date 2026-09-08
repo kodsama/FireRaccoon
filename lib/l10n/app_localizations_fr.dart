@@ -3807,4 +3807,24 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get notConnectedBodyRaccoon =>
       'Rien à fouiller pour l\'instant. Branchez FireRaccoon sur votre serveur Firefly III et les bonnes choses arriveront ici.';
+
+  @override
+  String get credentialsLockedTitle => 'En attente de votre trousseau';
+
+  @override
+  String get credentialsLockedBody =>
+      'Votre connexion est enregistrée, mais le trousseau du système ne la rendra pas tant qu\'il est verrouillé. Déverrouillez-le, puis réessayez.';
+
+  @override
+  String get credentialsLockedAction => 'Réessayer';
+
+  @override
+  String get credentialsLockedRetrying => 'Nouvelle tentative...';
+
+  @override
+  String get credentialsLockedTitleRaccoon => 'Le magot est verrouillé';
+
+  @override
+  String get credentialsLockedBodyRaccoon =>
+      'Ce raton laveur sait où tout se trouve, mais le couvercle ne bouge pas. Déverrouillez votre trousseau et il réessaiera.';
 }
