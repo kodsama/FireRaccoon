@@ -4,6 +4,7 @@ import 'package:fireraccoon/store/cosmos_login.dart';
 import 'package:fireraccoon/store/cosmos_session.dart';
 import 'package:fireraccoon/store/cosmos_session_store.dart';
 import 'package:fireraccoon/widgets/cosmos_sso_section.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -17,7 +18,7 @@ class _BrokenLogin implements CosmosLogin {
   bool get isSupported => true;
 
   @override
-  Future<CosmosSession?> signIn(Uri routeUrl) async =>
+  Future<CosmosSession?> signIn(BuildContext context, Uri routeUrl) async =>
       throw const CosmosLoginUnavailable('no window server');
 }
 
@@ -32,7 +33,7 @@ class _FakeLogin implements CosmosLogin {
   final bool isSupported;
 
   @override
-  Future<CosmosSession?> signIn(Uri routeUrl) async {
+  Future<CosmosSession?> signIn(BuildContext context, Uri routeUrl) async {
     openedUrl = routeUrl;
     return session;
   }

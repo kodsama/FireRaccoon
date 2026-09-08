@@ -188,6 +188,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) {
+          Future<void> runTest() async {
+            setState(() {
+              isTesting = true;
+              testSuccess = false;
+            });
+            final result = await ref
+                .read(authProvider.notifier)
+                .testConnection(
+                  urlController.text,
+                  tokenController.text,
+                  allowInsecure,
+                );
+            if (!context.mounted) return;
+            setState(() {
+              isTesting = false;
+              testSuccess = result.ok;
+              testResult = result;
+            });
+          }
+
           return AlertDialog(
             title: Text(l10n.fireflyConnectionTitle),
             content: SingleChildScrollView(
@@ -282,24 +302,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         onPressed: isTesting
                             ? null
                             : () async {
-                                setState(() {
-                                  isTesting = true;
-                                  testSuccess = false;
-                                });
-                                final result = await ref
-                                    .read(authProvider.notifier)
-                                    .testConnection(
-                                      urlController.text,
-                                      tokenController.text,
-                                      allowInsecure,
-                                    );
-                                if (context.mounted) {
-                                  setState(() {
-                                    isTesting = false;
-                                    testSuccess = result.ok;
-                                    testResult = result;
-                                  });
-                                }
+                                await runTest();
                               },
                         icon: isTesting
                             ? const SizedBox(
@@ -326,8 +329,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                 ConnectionFailure.cosmosLoginRequired
                             ? CosmosSignInButton(
                                 serverUrl: urlController.text,
-                                onSignedIn: () =>
-                                    setState(() => testResult = null),
+                                // Signing in is only ever done so the
+                                // connection works, so the answer to whether
+                                // it does now is what someone is waiting for.
+                                onSignedIn: runTest,
                               )
                             : null,
                       ),

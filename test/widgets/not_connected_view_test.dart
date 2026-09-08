@@ -1,4 +1,5 @@
 import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/firefly_connection_provider.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
 import 'package:fireraccoon/store/credential_store_locked_exception.dart';
 import 'package:fireraccoon/widgets/not_connected_view.dart';
@@ -41,6 +42,35 @@ void main() {
     // The whole point: none of the exception prose reaches the screen.
     expect(find.textContaining('Error loading data'), findsNothing);
     expect(find.textContaining('Exception'), findsNothing);
+  });
+
+  testWidgets('a server the app cannot reach is said to be, not blamed on the '
+      'call that noticed', (tester) async {
+    // A 404 from a request that never had a working connection behind it
+    // describes the symptom. The disconnected server is the reason, and it is
+    // the one worth saying.
+    SharedPreferences.setMockInitialValues({'funMode': 'none'});
+    final prefs = await SharedPreferences.getInstance();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          fireflyConnectionProvider.overrideWith(
+            () => _FixedConnection(FireflyConnectionStatus.unreachable),
+          ),
+        ],
+        child: buildLocalizedTestApp(
+          child: LoadFailureView(
+            error: Exception('Failed to load transactions: 404'),
+            message: 'Error loading data: 404',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.byType(NotConnectedView), findsOneWidget);
+    expect(find.textContaining('404'), findsNothing);
   });
 
   testWidgets('a real failure still shows its message', (tester) async {
@@ -116,4 +146,14 @@ class _CountingAuthNotifier extends AuthNotifier {
 
   @override
   Future<void> retryCredentialRead() async => onRead();
+}
+
+/// A connection whose state the test decides.
+class _FixedConnection extends FireflyConnectionNotifier {
+  _FixedConnection(this.status);
+
+  final FireflyConnectionStatus status;
+
+  @override
+  FireflyConnectionStatus build() => status;
 }

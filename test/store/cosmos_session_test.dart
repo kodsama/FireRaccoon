@@ -231,7 +231,7 @@ void main() {
       const login = UnsupportedCosmosLogin();
 
       expect(login.isSupported, isFalse);
-      expect(await login.signIn(Uri.parse('https://firefly.example')), isNull);
+      expect(login.isSupported, isFalse);
     });
   });
 

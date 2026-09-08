@@ -21,6 +21,7 @@ import '../utils/dashboard_period.dart';
 import '../utils/dashboard_stats.dart';
 import '../utils/display_labels.dart';
 import '../widgets/firefly_refresh_button.dart';
+import '../widgets/loading_body.dart';
 import '../widgets/not_connected_view.dart';
 import '../widgets/simple_charts.dart';
 import '../widgets/fun_decorated_surface.dart';
@@ -241,10 +242,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) => LoadFailureView(
-        error: error,
-        message: l10n.errorLoadingData(error.toString()),
-      ),
+      error: (error, _) => transactionsAsync.isLoading
+          ? const LoadingBody()
+          : LoadFailureView(
+              error: error,
+              message: l10n.errorLoadingData(error.toString()),
+            ),
       data: (transactions) {
         final period = _periodContext(filters, l10n, format);
         final comparisonPeriodLabel = period.comparisonPeriodLabel;
@@ -597,10 +600,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) => LoadFailureView(
-        error: error,
-        message: l10n.errorGeneric(error.toString()),
-      ),
+      error: (error, _) => accountsAsync.isLoading
+          ? const LoadingBody()
+          : LoadFailureView(
+              error: error,
+              message: l10n.errorGeneric(error.toString()),
+            ),
       data: (accounts) {
         final transactions = transactionsAsync.value ?? [];
         final budgets = budgetsAsync.value ?? [];
@@ -774,10 +779,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: CircularProgressIndicator(),
         ),
       ),
-      error: (error, _) => LoadFailureView(
-        error: error,
-        message: l10n.errorGeneric(error.toString()),
-      ),
+      error: (error, _) => accountsAsync.isLoading
+          ? const LoadingBody()
+          : LoadFailureView(
+              error: error,
+              message: l10n.errorGeneric(error.toString()),
+            ),
       data: (accounts) {
         final transactions = transactionsAsync.value ?? [];
         final periodKey = filters.periodKey;

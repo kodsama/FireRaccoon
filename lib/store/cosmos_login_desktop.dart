@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:desktop_webview_window/desktop_webview_window.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 import 'cosmos_login.dart';
 import 'cosmos_session.dart';
@@ -26,7 +27,7 @@ class DesktopCosmosLogin implements CosmosLogin {
       !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
 
   @override
-  Future<CosmosSession?> signIn(Uri routeUrl) async {
+  Future<CosmosSession?> signIn(BuildContext context, Uri routeUrl) async {
     if (!await WebviewWindow.isWebviewAvailable()) {
       _log.warning('No system web view available for Cosmos sign-in');
       return null;
