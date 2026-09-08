@@ -4,15 +4,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../l10n/l10n_extensions.dart';
+import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
+import '../store/credential_store_locked_exception.dart';
 import '../theme/app_theme.dart';
 import 'fun_decorated_surface.dart';
 
 /// What a screen shows when a load failed.
 ///
-/// Having no server connected is not a failure, so it does not get a failure's
-/// treatment: it comes with its own screen, and [message] is only for the
-/// things that really did go wrong.
+/// Two of the ways a load can fail are not failures at all: no server has been
+/// connected yet, and the credential store has relocked. Neither gets a
+/// failure's treatment. [message] is only for the things that really did go
+/// wrong.
 class LoadFailureView extends StatelessWidget {
   const LoadFailureView({
     super.key,
@@ -29,6 +32,9 @@ class LoadFailureView extends StatelessWidget {
   Widget build(BuildContext context) {
     if (error is FireflyNotConnectedException) {
       return NotConnectedView(compact: compact);
+    }
+    if (error is CredentialStoreLockedException) {
+      return CredentialsLockedView(compact: compact);
     }
     return Center(
       child: Padding(
@@ -53,8 +59,102 @@ class NotConnectedView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.colors;
     final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
+    return SadRaccoonMessage(
+      compact: compact,
+      badge: Icons.power_off_outlined,
+      title: fun.notConnectedTitle,
+      body: fun.notConnectedBody,
+      action: FilledButton.icon(
+        onPressed: () => context.go('/settings'),
+        icon: const Icon(Icons.settings_outlined, size: 18),
+        label: Text(context.l10n.notConnectedAction),
+      ),
+    );
+  }
+}
+
+/// What a screen shows while the credential store will not open.
+///
+/// The connection is saved and still there; the keychain has simply relocked or
+/// its prompt went unanswered. The connection poll already asks again on its
+/// own, and the button is for someone who has just unlocked it and does not
+/// want to wait for the next poll.
+class CredentialsLockedView extends ConsumerStatefulWidget {
+  const CredentialsLockedView({super.key, this.compact = false});
+
+  final bool compact;
+
+  @override
+  ConsumerState<CredentialsLockedView> createState() =>
+      _CredentialsLockedViewState();
+}
+
+class _CredentialsLockedViewState extends ConsumerState<CredentialsLockedView> {
+  bool _asking = false;
+
+  Future<void> _askAgain() async {
+    if (_asking) return;
+    setState(() => _asking = true);
+    try {
+      await ref.read(authProvider.notifier).retryCredentialRead();
+    } finally {
+      // The read can outlive the screen it was started from: a keychain that
+      // answers puts the data back and this view is gone before the await
+      // returns.
+      if (mounted) setState(() => _asking = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
+    return SadRaccoonMessage(
+      compact: widget.compact,
+      badge: Icons.lock_outline,
+      title: fun.credentialsLockedTitle,
+      body: fun.credentialsLockedBody,
+      action: FilledButton.icon(
+        onPressed: _asking ? null : _askAgain,
+        icon: _asking
+            ? const SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.lock_open_outlined, size: 18),
+        label: Text(
+          _asking
+              ? l10n.credentialsLockedRetrying
+              : l10n.credentialsLockedAction,
+        ),
+      ),
+    );
+  }
+}
+
+/// The shared shape of both states: dimmed raccoon, a badge, what happened,
+/// and the one thing to do about it.
+class SadRaccoonMessage extends StatelessWidget {
+  const SadRaccoonMessage({
+    super.key,
+    required this.badge,
+    required this.title,
+    required this.body,
+    required this.action,
+    this.compact = false,
+  });
+
+  final IconData badge;
+  final String title;
+  final String body;
+  final Widget action;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
     final logoSize = compact ? 72.0 : 112.0;
 
     return Center(
@@ -68,10 +168,10 @@ class NotConnectedView extends ConsumerWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              _SadRaccoon(size: logoSize),
+              _SadRaccoon(size: logoSize, badge: badge),
               SizedBox(height: compact ? 16 : 24),
               Text(
-                fun.notConnectedTitle,
+                title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: compact ? 17 : 20,
@@ -81,7 +181,7 @@ class NotConnectedView extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                fun.notConnectedBody,
+                body,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: compact ? 13 : 14,
@@ -90,11 +190,7 @@ class NotConnectedView extends ConsumerWidget {
                 ),
               ),
               SizedBox(height: compact ? 16 : 24),
-              FilledButton.icon(
-                onPressed: () => context.go('/settings'),
-                icon: const Icon(Icons.settings_outlined, size: 18),
-                label: Text(context.l10n.notConnectedAction),
-              ),
+              action,
             ],
           ),
         ),
@@ -103,11 +199,12 @@ class NotConnectedView extends ConsumerWidget {
   }
 }
 
-/// The logo, greyed out and knocked sideways, with a severed plug over it.
+/// The logo, greyed out and knocked sideways, with a badge over it.
 class _SadRaccoon extends StatelessWidget {
-  const _SadRaccoon({required this.size});
+  const _SadRaccoon({required this.size, required this.badge});
 
   final double size;
+  final IconData badge;
 
   /// Luminance weights, so the raccoon reads as drained rather than tinted.
   static const _greyscale = ColorFilter.matrix(<double>[
@@ -147,11 +244,7 @@ class _SadRaccoon extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: colors.border),
               ),
-              child: Icon(
-                Icons.power_off_outlined,
-                size: size * 0.22,
-                color: colors.text3,
-              ),
+              child: Icon(badge, size: size * 0.22, color: colors.text3),
             ),
           ),
         ],

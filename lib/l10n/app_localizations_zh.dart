@@ -3677,4 +3677,23 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get notConnectedBodyRaccoon =>
       '还没有可翻找的东西。把 FireRaccoon 指向你的 Firefly III 服务器，好东西就会出现在这里。';
+
+  @override
+  String get credentialsLockedTitle => '正在等待你的钥匙串';
+
+  @override
+  String get credentialsLockedBody => '你的连接已保存，但系统钥匙串在解锁前不会交出它。解锁后再试一次。';
+
+  @override
+  String get credentialsLockedAction => '再试一次';
+
+  @override
+  String get credentialsLockedRetrying => '正在重试...';
+
+  @override
+  String get credentialsLockedTitleRaccoon => '藏宝处锁上了';
+
+  @override
+  String get credentialsLockedBodyRaccoon =>
+      '这只浣熊知道东西在哪儿，可盖子打不开。解锁你的钥匙串，它会再试一次。';
 }

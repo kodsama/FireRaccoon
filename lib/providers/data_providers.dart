@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import '../store/credential_store_locked_exception.dart';
 import '../utils/web_backend_proxy.dart';
 import 'auth_provider.dart';
 
@@ -32,10 +33,9 @@ Future<FireflyService> requireFireflyService(Ref ref, String providerName) {
   }
   if (auth.storageUnavailable) {
     _log.warning('$providerName blocked: credential storage would not answer');
-    throw Exception(
-      'Could not read your saved credentials. Unlock your keychain, then '
-      'refresh.',
-    );
+    // Typed like the disconnected state, and for the same reason: a relocked
+    // keychain is something to ask about, not an error to report.
+    throw const CredentialStoreLockedException();
   }
   _log.warning('$providerName requested while Firefly is disconnected');
   // Typed, so the screens can show the disconnected state instead of putting

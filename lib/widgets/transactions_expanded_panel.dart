@@ -9,6 +9,7 @@ import '../l10n/l10n_extensions.dart';
 import '../models/transaction.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
+import '../store/credential_store_locked_exception.dart';
 import 'not_connected_view.dart';
 import 'transaction_entity_card.dart';
 import 'transaction_month_header.dart';
@@ -264,6 +265,8 @@ class _TransactionsExpandedPanelState
     } else if (widget.loadError != null) {
       txBody = widget.loadError is FireflyNotConnectedException
           ? const NotConnectedView(compact: true)
+          : widget.loadError is CredentialStoreLockedException
+          ? const CredentialsLockedView(compact: true)
           : Padding(
               padding: const EdgeInsets.all(24),
               child: Center(

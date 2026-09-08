@@ -3778,4 +3778,24 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get notConnectedBodyRaccoon =>
       'Inget att rota i ännu. Peka FireRaccoon mot din Firefly III-server så dyker godsakerna upp här.';
+
+  @override
+  String get credentialsLockedTitle => 'Väntar på din nyckelring';
+
+  @override
+  String get credentialsLockedBody =>
+      'Din anslutning är sparad, men systemets nyckelring lämnar inte ut den förrän den är upplåst. Lås upp den och försök igen.';
+
+  @override
+  String get credentialsLockedAction => 'Försök igen';
+
+  @override
+  String get credentialsLockedRetrying => 'Försöker igen...';
+
+  @override
+  String get credentialsLockedTitleRaccoon => 'Gömstället är låst';
+
+  @override
+  String get credentialsLockedBodyRaccoon =>
+      'Den här tvättbjörnen vet var allt finns, men locket rör sig inte. Lås upp din nyckelring så gör den ett nytt försök.';
 }
