@@ -1,8 +1,14 @@
+import 'package:fireraccoon/providers/auth_provider.dart';
 import 'package:fireraccoon/providers/cosmos_session_provider.dart';
 import 'package:fireraccoon/store/cosmos_session.dart';
 import 'package:fireraccoon/store/cosmos_session_store.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
+import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 /// Keeps the session in memory, so the notifier can be driven without a
 /// keychain, and records what it was asked to do.
@@ -30,6 +36,14 @@ class _MemoryStore extends CosmosSessionStore {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(
+      {},
+    );
+  });
+
   final session = CosmosSession(
     host: 'firefly.example',
     cookie: 'jwt-value',
@@ -87,6 +101,46 @@ void main() {
 
     expect(container.read(cosmosSessionProvider), isNull);
     expect(store.cleared, 1);
+  });
+
+  test('the connection test carries the session', () async {
+    // The test button is the one thing whose whole job is to say whether the
+    // connection works. Without the cookie it kept getting Cosmos's sign-in
+    // page and reporting "not the Firefly III API", however signed in you
+    // were.
+    final store = _MemoryStore(saved: session);
+    String? sentCookie;
+    final container = ProviderContainer(
+      overrides: [
+        cosmosSessionStoreProvider.overrideWithValue(store),
+        authProvider.overrideWith(
+          () => AuthNotifier(
+            storage: const FlutterSecureStorage(),
+            debugEnvLoader: () async => const {},
+            httpClient: MockClient((request) async {
+              sentCookie = request.headers['Cookie'];
+              return http.Response(
+                '{"data":{"version":"6.0.0"}}',
+                200,
+                headers: {'content-type': 'application/json'},
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.listen(cosmosSessionProvider, (_, _) {});
+    for (var i = 0; i < 10; i++) {
+      await Future<void>.delayed(Duration.zero);
+      if (container.read(cosmosSessionProvider) != null) break;
+    }
+
+    await container
+        .read(authProvider.notifier)
+        .testConnection('https://firefly.example', 'tok', false);
+
+    expect(sentCookie, 'jwttoken=jwt-value');
   });
 
   test('an expiry drops it, and only when there was one', () async {
