@@ -1892,5 +1892,8 @@
   "credentialsLockedAction": "Tentar novamente",
   "credentialsLockedRetrying": "A tentar novamente...",
   "credentialsLockedTitleRaccoon": "O esconderijo está trancado",
-  "credentialsLockedBodyRaccoon": "Este guaxinim sabe onde está tudo, mas a tampa não cede. Desbloqueie o porta-chaves e ele tenta outra vez."
+  "credentialsLockedBodyRaccoon": "Este guaxinim sabe onde está tudo, mas a tampa não cede. Desbloqueie o porta-chaves e ele tenta outra vez.",
+  "insecureConnectionBadge": "Sem encriptação",
+  "insecureConnectionWarning": "O seu token e todas as respostas viajam sem encriptação por http://. Qualquer pessoa na rede entre si e o servidor pode lê-los. Use https:// a menos que compreenda o risco.",
+  "secureConnectionTooltip": "Ligação encriptada (https)"
 }

@@ -2180,5 +2180,17 @@
   "credentialsLockedBodyRaccoon": "This raccoon knows where everything is, but the lid will not budge. Unlock your keychain and it will have another go.",
   "@credentialsLockedBodyRaccoon": {
     "description": "Raccoon Mode explanation when the credential store is locked"
+  },
+  "insecureConnectionBadge": "Not encrypted",
+  "@insecureConnectionBadge": {
+    "description": "Badge shown next to a server reached over plain http"
+  },
+  "insecureConnectionWarning": "Your token and every answer travel in the clear over http://. Anyone on the network between here and your server can read them. Use https:// unless you understand the risk.",
+  "@insecureConnectionWarning": {
+    "description": "Warning shown when the allow-http switch is turned on"
+  },
+  "secureConnectionTooltip": "Encrypted connection (https)",
+  "@secureConnectionTooltip": {
+    "description": "Tooltip on the lock shown for an https connection"
   }
 }

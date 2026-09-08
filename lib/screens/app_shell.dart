@@ -18,6 +18,8 @@ import '../providers/transactions_warmup_provider.dart';
 import '../providers/write_ahead_provider.dart';
 import '../l10n/l10n_extensions.dart';
 import '../utils/locale_formatting.dart';
+import '../providers/auth_provider.dart';
+import '../widgets/insecure_connection_notice.dart';
 import '../widgets/view_mode_switch.dart';
 import '../widgets/person_selector_widget.dart';
 import '../widgets/fun_decorated_surface.dart';
@@ -217,6 +219,7 @@ class _Sidebar extends ConsumerWidget {
       FireflyConnectionStatus.checking => l10n.fireflyConnectionChecking,
       _ => l10n.fireflyDisconnected,
     };
+    final serverUrl = ref.watch(authProvider).serverUrl;
     final connectionColor = switch (connectionStatus) {
       FireflyConnectionStatus.connected => colors.sidebarMuted,
       FireflyConnectionStatus.checking => colors.text3,
@@ -691,13 +694,31 @@ class _Sidebar extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            Text(
-                              connectionLabel,
-                              style: TextStyle(
-                                fontFamily: 'Comfortaa',
-                                fontSize: 11,
-                                color: connectionColor,
-                              ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Flexible so a long status never pushes the
+                                // lock off the edge: the lock is the part that
+                                // has to stay visible.
+                                Flexible(
+                                  child: Text(
+                                    connectionLabel,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Comfortaa',
+                                      fontSize: 11,
+                                      color: connectionColor,
+                                    ),
+                                  ),
+                                ),
+                                // Only once there is a server to describe.
+                                // Before that the lock would be answering a
+                                // question nobody has asked yet.
+                                if (serverUrl.isNotEmpty) ...[
+                                  const SizedBox(width: 5),
+                                  TransportLockIcon(url: serverUrl),
+                                ],
+                              ],
                             ),
                           ],
                         ),

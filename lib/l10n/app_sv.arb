@@ -1892,5 +1892,8 @@
   "credentialsLockedAction": "Försök igen",
   "credentialsLockedRetrying": "Försöker igen...",
   "credentialsLockedTitleRaccoon": "Gömstället är låst",
-  "credentialsLockedBodyRaccoon": "Den här tvättbjörnen vet var allt finns, men locket rör sig inte. Lås upp din nyckelring så gör den ett nytt försök."
+  "credentialsLockedBodyRaccoon": "Den här tvättbjörnen vet var allt finns, men locket rör sig inte. Lås upp din nyckelring så gör den ett nytt försök.",
+  "insecureConnectionBadge": "Okrypterad",
+  "insecureConnectionWarning": "Din token och alla svar går i klartext över http://. Vem som helst på nätverket mellan dig och servern kan läsa dem. Använd https:// om du inte förstår risken.",
+  "secureConnectionTooltip": "Krypterad anslutning (https)"
 }
