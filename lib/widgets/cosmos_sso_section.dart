@@ -130,3 +130,85 @@ class _CosmosSsoSectionState extends ConsumerState<CosmosSsoSection> {
     );
   }
 }
+
+/// Starts the Cosmos sign-in from wherever it is needed, such as the connection
+/// dialog that has just met a Cosmos sign-in page.
+class CosmosSignInButton extends ConsumerStatefulWidget {
+  const CosmosSignInButton({
+    super.key,
+    required this.serverUrl,
+    this.onSignedIn,
+    this.login,
+  });
+
+  final String serverUrl;
+  final VoidCallback? onSignedIn;
+
+  /// Injected by tests. Left null in the app so the platform decides.
+  final CosmosLogin? login;
+
+  @override
+  ConsumerState<CosmosSignInButton> createState() => _CosmosSignInButtonState();
+}
+
+class _CosmosSignInButtonState extends ConsumerState<CosmosSignInButton> {
+  bool _signingIn = false;
+  String? _failure;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final login = widget.login ?? resolveCosmosLogin();
+    final routeUrl = Uri.tryParse(widget.serverUrl);
+    if (routeUrl == null || routeUrl.host.isEmpty || !login.isSupported) {
+      return const SizedBox.shrink();
+    }
+
+    final button = FilledButton.icon(
+      onPressed: _signingIn
+          ? null
+          : () async {
+              setState(() {
+                _signingIn = true;
+                _failure = null;
+              });
+              try {
+                final session = await login.signIn(routeUrl);
+                if (session == null) return;
+                await ref
+                    .read(cosmosSessionProvider.notifier)
+                    .signedIn(session);
+                widget.onSignedIn?.call();
+              } on Object catch (error) {
+                // A window that never opened is not a decision the person
+                // made, so it has to be said rather than swallowed.
+                if (mounted) setState(() => _failure = '$error');
+              } finally {
+                if (mounted) setState(() => _signingIn = false);
+              }
+            },
+      icon: _signingIn
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.shield_outlined, size: 18),
+      label: Text(l10n.cosmosSsoSignInAction),
+    );
+
+    final failure = _failure;
+    if (failure == null) return button;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        button,
+        const SizedBox(height: 8),
+        Text(
+          failure,
+          style: TextStyle(fontSize: 12, color: context.colors.text),
+        ),
+      ],
+    );
+  }
+}

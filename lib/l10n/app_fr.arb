@@ -1904,5 +1904,7 @@
   "cosmosSsoUnsupported": "La connexion à Cosmos n'est pas disponible sur cette plateforme",
   "cosmosSsoWebNote": "Votre navigateur porte déjà la session Cosmos",
   "cosmosSsoExplainer": "Connectez-vous si votre serveur Firefly III se trouve derrière une route Cosmos Cloud qui exige une authentification. Le jeton Firefly reste utilisé pour Firefly lui-même.",
-  "cosmosSsoCancelled": "La connexion a été fermée avant la fin"
+  "cosmosSsoCancelled": "La connexion a été fermée avant la fin",
+  "connectionFailedCosmos": "Ce serveur se trouve derrière une authentification Cosmos Cloud. Connectez-vous à Cosmos, puis réessayez.",
+  "cosmosSsoSignInAction": "Se connecter à Cosmos"
 }

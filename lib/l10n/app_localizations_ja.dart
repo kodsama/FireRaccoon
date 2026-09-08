@@ -3744,4 +3744,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get cosmosSsoCancelled => 'サインインは完了する前に閉じられました';
+
+  @override
+  String get connectionFailedCosmos =>
+      'そのサーバーは Cosmos Cloud のサインインの背後にあります。Cosmos にサインインしてから、もう一度お試しください。';
+
+  @override
+  String get cosmosSsoSignInAction => 'Cosmos にサインイン';
 }

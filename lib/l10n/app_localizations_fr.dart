@@ -3869,4 +3869,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get cosmosSsoCancelled => 'La connexion a été fermée avant la fin';
+
+  @override
+  String get connectionFailedCosmos =>
+      'Ce serveur se trouve derrière une authentification Cosmos Cloud. Connectez-vous à Cosmos, puis réessayez.';
+
+  @override
+  String get cosmosSsoSignInAction => 'Se connecter à Cosmos';
 }

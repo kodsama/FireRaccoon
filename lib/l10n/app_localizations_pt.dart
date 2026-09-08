@@ -3856,4 +3856,11 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get cosmosSsoCancelled =>
       'O início de sessão foi fechado antes de terminar';
+
+  @override
+  String get connectionFailedCosmos =>
+      'Esse servidor está atrás de uma autenticação do Cosmos Cloud. Inicie sessão no Cosmos e teste novamente.';
+
+  @override
+  String get cosmosSsoSignInAction => 'Iniciar sessão no Cosmos';
 }
