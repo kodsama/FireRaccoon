@@ -35,6 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   failed at that point, so the disconnected state now says what it is, shows
   what to do about it, and offers a way to Settings. Raccoon Mode has its own
   words for it
+- A locked credential store was reported as an error rather than asked about.
+  The connection was saved and still there; the keychain had simply relocked,
+  its prompt had gone unanswered, or the session behind it had timed out. The
+  screens now say what is waiting and offer to ask again, for anyone who has
+  just unlocked it and does not want to wait for the next connection poll
 - A refusal Firefly sent was reported as a server nobody could reach. Both
   arrive with no status code attached, so anything reading a missing status as
   "nothing answered" called a 404 from a server that was up and talking a
