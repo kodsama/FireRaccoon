@@ -23,6 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the point of them. The user count needs an owner's token, so a viewer gets the
   rest of the status and no count
 
+- A plain http server is refused unless it was deliberately chosen. The
+  connection test already refused one, but a settings import, an OAuth sign-in
+  and the debug `.env` fallback all reached the credential store without going
+  near it, so an unencrypted server could be saved three ways the rule never
+  saw. The scheme is the only thing consulted: where a host resolves says
+  nothing about whether the bytes are encrypted
+- The connection carries a lock wherever it is reported, closed and green over
+  https and open and red over http, and the server in Settings is badged for as
+  long as it is unencrypted. Turning the switch on says what it costs at the
+  moment of turning it on
+
 ### Fixed
 
 - The installed macOS app could not read the connection it had saved. The
