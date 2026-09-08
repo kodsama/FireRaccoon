@@ -3776,4 +3776,21 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get backupOpen => 'Abrir';
+
+  @override
+  String get notConnectedTitle => 'Ups, ainda sem servidor';
+
+  @override
+  String get notConnectedBody =>
+      'O FireRaccoon não está ligado ao Firefly III, por isso não há nada para mostrar. Ligue o seu servidor e as suas contas aparecem aqui.';
+
+  @override
+  String get notConnectedAction => 'Abrir definições';
+
+  @override
+  String get notConnectedTitleRaccoon => 'Ups, os caixotes estão vazios';
+
+  @override
+  String get notConnectedBodyRaccoon =>
+      'Ainda não há nada para remexer. Aponte o FireRaccoon ao seu servidor Firefly III e as coisas boas aparecem aqui.';
 }

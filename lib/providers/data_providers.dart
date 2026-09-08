@@ -38,9 +38,9 @@ Future<FireflyService> requireFireflyService(Ref ref, String providerName) {
     );
   }
   _log.warning('$providerName requested while Firefly is disconnected');
-  throw Exception(
-    'Not connected to Firefly III. Open Settings and connect your server.',
-  );
+  // Typed, so the screens can show the disconnected state instead of putting
+  // an exception message in front of someone mid-setup.
+  throw const FireflyNotConnectedException();
 }
 
 // Build-time tuning knobs (pass via --dart-define when needed).

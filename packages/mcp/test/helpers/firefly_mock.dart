@@ -34,6 +34,21 @@ Map<String, Object?> userBody() => {
   },
 };
 
+/// Owner-only in Firefly, so the count is read from the pagination total
+/// rather than from the page that came back.
+Map<String, Object?> usersBody() => {
+  'data': [
+    {
+      'id': '1',
+      'type': 'users',
+      'attributes': {'email': 'admin@local.test'},
+    },
+  ],
+  'meta': {
+    'pagination': {'total': 2},
+  },
+};
+
 Map<String, Object?> assetAccountsBody({String balance = '2500.00'}) => {
   'data': [
     {
@@ -303,6 +318,7 @@ Map<String, Object?> transactionEnvelope(Map<String, Object?> item) => {
 
 MockClient fireflyMockClient({
   bool aboutOk = true,
+  bool usersReadable = true,
   bool collidingNames = false,
   bool heavySpending = false,
   Map<String, Map<String, Object?>> transactionOverrides = const {},
@@ -366,12 +382,21 @@ MockClient fireflyMockClient({
     }
 
     if (path == '/api/v1/about') {
+      // The envelope Firefly III actually answers with. A proxy in front of it
+      // sometimes flattens this, which is why the reader accepts both.
       return jsonHttpResponse({
-        'version': '6.0.0',
+        'data': {'version': '6.0.0', 'api_version': '2.1.0', 'os': 'Linux'},
       }, status: aboutOk ? 200 : 401);
     }
     if (path == '/api/v1/about/user') {
       return jsonHttpResponse(userBody());
+    }
+    if (path == '/api/v1/users') {
+      // Owner-only in Firefly III, so a viewer's token gets a 403 here while
+      // everything else it asks for still works.
+      return usersReadable
+          ? jsonHttpResponse(usersBody())
+          : jsonHttpResponse({'message': 'forbidden'}, status: 403);
     }
     if (path.startsWith('/api/v1/data/export/')) {
       final dataset = request.url.pathSegments.last;

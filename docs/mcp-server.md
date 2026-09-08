@@ -115,8 +115,8 @@ are described under [Importing a statement](#importing-a-statement).
 |------|-------------|--------|
 | `find_account` | Resolve raw bank text to an account, one string or a batch, ranked with the reason each candidate matched |  |
 | `match_statement` | Pair statement rows against recorded split legs, with the arithmetic behind every verdict |  |
-| `get_capabilities` | Server version, tool catalog, the write-gated list, and the person behind the presented key |  |
-| `check_connection` | Ping Firefly III (`/api/v1/about`) |  |
+| `get_capabilities` | App and server version, tool catalog, the write-gated list, the person behind the presented key, and live backend status |  |
+| `check_connection` | Whether Firefly III is connected, which server, which version, and how many users |  |
 | `get_current_user` | Authenticated Firefly user profile |  |
 | `get_primary_currency` | Instance default currency |  |
 | `set_primary_currency` | Change the default currency | yes |
@@ -184,6 +184,28 @@ schema versions. Its `identity` block names the person the presented key belongs
 to, so an agent that has been running a while does not have to have kept the
 `initialize` response. It is null when the server was started without a key,
 which is only the case for an unauthenticated stdio run.
+
+Its `backend` block is read live, so it also answers whether Firefly III is
+reachable, at which URL, on which version, and how many users it holds. That
+last count needs an owner's token; a viewer gets `user_count: null` and the rest
+of the status stands.
+
+## When Firefly III is not connected
+
+Having no server connected is a state, not a failure, and every tool reports it
+as one rather than throwing. A tool that needed Firefly and had nowhere to ask
+answers `ok: false` with a `code` and a `remedy`:
+
+| `code` | What happened |
+|--------|---------------|
+| `not_connected` | No server is configured. Nobody has finished setting up. |
+| `backend_unreachable` | A server is configured and did not answer. |
+| `backend_unauthorized` | Firefly III answered and refused the token. |
+
+The distinction is worth keeping: an agent told a socket failed retries or
+concludes the ledger is broken, when the real answer is that there is no ledger
+yet. `check_connection` and `get_capabilities` return the same codes, and both
+keep answering while the backend is down.
 
 ## Importing a statement
 

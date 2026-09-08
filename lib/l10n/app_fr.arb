@@ -1881,5 +1881,10 @@
       }
     }
   },
-  "backupOpen": "Ouvrir"
+  "backupOpen": "Ouvrir",
+  "notConnectedTitle": "Oups, aucun serveur pour le moment",
+  "notConnectedBody": "FireRaccoon n'est pas connecté à Firefly III, il n'y a donc rien à afficher. Connectez votre serveur et vos comptes apparaîtront ici.",
+  "notConnectedAction": "Ouvrir les paramètres",
+  "notConnectedTitleRaccoon": "Oups, les poubelles sont vides",
+  "notConnectedBodyRaccoon": "Rien à fouiller pour l'instant. Branchez FireRaccoon sur votre serveur Firefly III et les bonnes choses arriveront ici."
 }

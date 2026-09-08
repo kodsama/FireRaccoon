@@ -1,6 +1,6 @@
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fireraccoon/models/transaction.dart';
 import 'package:fireraccoon/widgets/transactions_expanded_panel.dart';
 
 import '../helpers/screen_test_app.dart';
@@ -29,7 +29,7 @@ void main() {
     List<Transaction>? future,
     Future<void> Function()? onRefresh,
     bool loading = false,
-    String? errorMessage,
+    Object? loadError,
   }) async {
     configureLargeScreen(tester);
     addTearDown(tester.view.resetPhysicalSize);
@@ -42,7 +42,7 @@ void main() {
               transactions: posted,
               futureTransactions: future,
               emptyLabel: 'Nothing here',
-              errorMessage: errorMessage,
+              loadError: loadError,
               onRefresh: onRefresh,
             ),
           ),
@@ -104,15 +104,28 @@ void main() {
     await pump(
       tester,
       posted: null,
-      errorMessage: 'Could not reach Firefly',
+      loadError: Exception('Could not reach Firefly'),
       onRefresh: () async => calls++,
     );
 
-    expect(find.text('Could not reach Firefly'), findsOneWidget);
+    expect(find.textContaining('Could not reach Firefly'), findsOneWidget);
     await tester.tap(find.byTooltip('Refresh'));
     await tester.pumpAndSettle();
 
     expect(calls, 1);
+  });
+
+  testWidgets('a panel with no server connected says so kindly', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      posted: null,
+      loadError: const FireflyNotConnectedException(),
+    );
+
+    expect(find.text('Uh oh, no server yet'), findsOneWidget);
+    expect(find.textContaining('Error loading data'), findsNothing);
   });
 
   testWidgets('no refresh callback means no button', (tester) async {
