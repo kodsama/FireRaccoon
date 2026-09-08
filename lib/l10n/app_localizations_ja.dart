@@ -3684,4 +3684,24 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get notConnectedBodyRaccoon =>
       'まだあさるものがありません。FireRaccoon を Firefly III サーバーに向ければ、お宝がここに現れます。';
+
+  @override
+  String get credentialsLockedTitle => 'キーチェーンを待っています';
+
+  @override
+  String get credentialsLockedBody =>
+      '接続は保存されていますが、システムのキーチェーンがロックされているため取り出せません。ロックを解除してから、もう一度お試しください。';
+
+  @override
+  String get credentialsLockedAction => 'もう一度試す';
+
+  @override
+  String get credentialsLockedRetrying => '再試行しています...';
+
+  @override
+  String get credentialsLockedTitleRaccoon => '隠し場所が閉まっています';
+
+  @override
+  String get credentialsLockedBodyRaccoon =>
+      'このアライグマは場所を知っていますが、ふたが開きません。キーチェーンのロックを解除すれば、もう一度挑戦します。';
 }
