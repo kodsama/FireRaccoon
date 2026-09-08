@@ -19,6 +19,7 @@ import '../providers/write_ahead_provider.dart';
 import '../providers/undo_history_provider.dart';
 import '../services/mcp_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/insecure_connection_notice.dart';
 import '../widgets/theme_style_picker.dart';
 import '../widgets/autocomplete_text_field.dart';
 import '../widgets/small_loading_indicator.dart';
@@ -29,6 +30,7 @@ import '../widgets/mcp_settings_section.dart';
 import '../widgets/people_settings_section.dart';
 import '../widgets/settings_backup_section.dart';
 import '../widgets/side_menu_settings_section.dart';
+import '../utils/transport_security.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
 
@@ -211,6 +213,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       }),
                     ),
                   ),
+                  if (allowInsecure) const InsecureConnectionWarning(),
                   const SizedBox(height: 16),
                   Tooltip(
                     message: l10n.authenticationMethod,
@@ -935,10 +938,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   child: ListTile(
                     leading: const Icon(Icons.link),
                     title: Text(l10n.serverUrl),
-                    subtitle: Text(
-                      ref.watch(authProvider).serverUrl.isEmpty
-                          ? l10n.notConnected
-                          : ref.watch(authProvider).serverUrl,
+                    subtitle: Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            ref.watch(authProvider).serverUrl.isEmpty
+                                ? l10n.notConnected
+                                : ref.watch(authProvider).serverUrl,
+                          ),
+                        ),
+                        // Shown for as long as the connection is unencrypted,
+                        // not just when it was chosen. A warning that only
+                        // appears at setup is one nobody sees again.
+                        if (isUnencryptedUrl(ref.watch(authProvider).serverUrl))
+                          const Padding(
+                            padding: EdgeInsets.only(left: 8),
+                            child: InsecureConnectionBadge(),
+                          ),
+                      ],
                     ),
                     trailing: const Icon(Icons.edit),
                     onTap: () => _showAuthDialog(context, ref),

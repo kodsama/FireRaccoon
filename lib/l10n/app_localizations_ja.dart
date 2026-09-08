@@ -3704,4 +3704,14 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get credentialsLockedBodyRaccoon =>
       'このアライグマは場所を知っていますが、ふたが開きません。キーチェーンのロックを解除すれば、もう一度挑戦します。';
+
+  @override
+  String get insecureConnectionBadge => '暗号化なし';
+
+  @override
+  String get insecureConnectionWarning =>
+      'トークンとすべての応答が http:// で平文のまま流れます。あなたとサーバーの間のネットワーク上の誰もが読み取れます。リスクを理解している場合を除き、https:// を使ってください。';
+
+  @override
+  String get secureConnectionTooltip => '暗号化された接続 (https)';
 }

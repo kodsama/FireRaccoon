@@ -3813,4 +3813,14 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get credentialsLockedBodyRaccoon =>
       'Este guaxinim sabe onde está tudo, mas a tampa não cede. Desbloqueie o porta-chaves e ele tenta outra vez.';
+
+  @override
+  String get insecureConnectionBadge => 'Sem encriptação';
+
+  @override
+  String get insecureConnectionWarning =>
+      'O seu token e todas as respostas viajam sem encriptação por http://. Qualquer pessoa na rede entre si e o servidor pode lê-los. Use https:// a menos que compreenda o risco.';
+
+  @override
+  String get secureConnectionTooltip => 'Ligação encriptada (https)';
 }

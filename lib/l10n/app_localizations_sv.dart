@@ -3798,4 +3798,14 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get credentialsLockedBodyRaccoon =>
       'Den här tvättbjörnen vet var allt finns, men locket rör sig inte. Lås upp din nyckelring så gör den ett nytt försök.';
+
+  @override
+  String get insecureConnectionBadge => 'Okrypterad';
+
+  @override
+  String get insecureConnectionWarning =>
+      'Din token och alla svar går i klartext över http://. Vem som helst på nätverket mellan dig och servern kan läsa dem. Använd https:// om du inte förstår risken.';
+
+  @override
+  String get secureConnectionTooltip => 'Krypterad anslutning (https)';
 }
