@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math' show min;
 
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
@@ -73,6 +74,46 @@ Map<String, Object?> _badInput(String message) => {
   'error': message,
 };
 
+/// Answer for a tool that needed Firefly and had no server to ask.
+///
+/// Distinct from a tool failure on purpose. An agent that reads `tool_error`
+/// with a socket message underneath tends to retry, or to tell the person their
+/// data is corrupt; `not_connected` says the one true thing, which is that
+/// nobody has connected a server yet.
+Map<String, Object?> _notConnected(FireflyNotConnectedException error) => {
+  'ok': false,
+  'code': 'not_connected',
+  'connected': false,
+  'error': '$error',
+  'remedy':
+      'Connect a Firefly III server in FireRaccoon Settings, or start the '
+      'server with FIRERACCOON_URL and FIRERACCOON_API_KEY.',
+};
+
+/// Answer for a Firefly server that is configured but did not answer.
+Map<String, Object?> _unreachable(FireflyApiException error, String url) => {
+  'ok': false,
+  'code': 'backend_unreachable',
+  'connected': false,
+  'backend_url': url,
+  'error': '$error',
+  'remedy':
+      'FireRaccoon knows where Firefly III is but could not reach it. Check '
+      'the server is running and the URL resolves from this machine.',
+};
+
+/// Answer for a Firefly server that answered by refusing the credential.
+Map<String, Object?> _unauthorized(FireflyApiException error, String url) => {
+  'ok': false,
+  'code': 'backend_unauthorized',
+  'connected': true,
+  'backend_url': url,
+  'error': '$error',
+  'remedy':
+      'Firefly III answered but rejected the token. Reissue the personal '
+      'access token and reconnect in FireRaccoon Settings.',
+};
+
 Map<String, Object?> _notFound(String message) => {
   'ok': false,
   'code': 'not_found',
@@ -121,6 +162,58 @@ const List<String> _accountUpdateFields = [
   'interest',
   'interest_period',
 ];
+
+Map<String, Object?> _decodeBody(String body) {
+  try {
+    final decoded = jsonDecode(body);
+    return decoded is Map ? decoded.cast<String, Object?>() : const {};
+  } on FormatException {
+    return const {};
+  }
+}
+
+/// What Firefly III says about itself. The `data` envelope is what the API
+/// returns; the flat form is what a proxy in front of it sometimes hands back.
+///
+/// Every field here is read with a type test rather than a cast. This runs
+/// inside the status probe, which is the one call that has to keep answering
+/// while everything else is going wrong, so an unexpected shape has to narrow
+/// what it reports rather than throw.
+Map<String, Object?> _aboutJson(String body) {
+  final decoded = _decodeBody(body);
+  final data = decoded['data'] is Map
+      ? (decoded['data']! as Map).cast<String, Object?>()
+      : decoded;
+  return {
+    'firefly_version': data['version'],
+    'firefly_api_version': data['api_version'],
+    'firefly_os': data['os'],
+  };
+}
+
+Map<String, Object?>? _currentUserJson(http.Response? response) {
+  if (response == null || response.statusCode != 200) return null;
+  final data = _decodeBody(response.body)['data'];
+  if (data is! Map) return null;
+  final attributes = data['attributes'];
+  if (data['id'] is! String || attributes is! Map) return null;
+  final user = FireflyUser.fromJson(data.cast<String, dynamic>());
+  return {'id': user.id, 'email': user.email, 'display_name': user.displayName};
+}
+
+/// How many users the Firefly instance holds, or null where this token may not
+/// ask. `/api/v1/users` is owner-only, and a viewer being refused it says
+/// nothing about the connection.
+int? _userCount(http.Response? response) {
+  if (response == null || response.statusCode != 200) return null;
+  final decoded = _decodeBody(response.body);
+  final meta = decoded['meta'];
+  final pagination = meta is Map ? meta['pagination'] : null;
+  final total = pagination is Map ? pagination['total'] : null;
+  if (total is num) return total.toInt();
+  final data = decoded['data'];
+  return data is List ? data.length : null;
+}
 
 Map<String, Object?> _accountJson(Account account) => {
   'id': account.id,
@@ -1203,10 +1296,11 @@ List<McpTool> buildTools({
   http.Client? httpClient,
   AgentIdentity? identity,
   BackupStore? backups,
+  String? appVersion,
 }) {
   FireflyService service() {
     if (!target.isConfigured) {
-      throw StateError(
+      throw const FireflyNotConnectedException(
         'No Firefly connection: start the server with FIRERACCOON_URL and '
         'FIRERACCOON_API_KEY, or run it from the FireRaccoon desktop app.',
       );
@@ -1223,17 +1317,83 @@ List<McpTool> buildTools({
   BackupService? backupService() =>
       backups == null ? null : BackupService(service(), backups);
 
-  Future<bool> checkAbout() async {
-    final client = httpClient ?? http.Client();
+  /// One authenticated GET against the configured Firefly, or null when the
+  /// server could not be reached at all.
+  Future<http.Response?> fetch(http.Client client, String path) async {
     try {
-      final response = await client.get(
-        Uri.parse('${target.normalizedBaseUrl}/api/v1/about'),
+      return await client.get(
+        Uri.parse('${target.normalizedBaseUrl}$path'),
         headers: {
           'Authorization': 'Bearer ${target.bearer}',
           'Accept': 'application/json',
         },
       );
-      return response.statusCode == 200;
+    } on Object {
+      return null;
+    }
+  }
+
+  /// Live answer to "are we connected, to what, and as whom".
+  ///
+  /// Never throws. This is the call an agent makes to find out whether the rest
+  /// of the catalog can work at all, so a server that is down has to come back
+  /// as a reported state rather than as the failure it would be anywhere else.
+  Future<Map<String, Object?>> backendStatus() async {
+    if (!target.isConfigured) {
+      return {
+        'configured': false,
+        'connected': false,
+        'url': null,
+        'reason':
+            'No Firefly III connection. Connect a server in FireRaccoon '
+            'Settings, or start this server with FIRERACCOON_URL and '
+            'FIRERACCOON_API_KEY.',
+      };
+    }
+    final url = target.normalizedBaseUrl;
+    final client = httpClient ?? http.Client();
+    try {
+      final about = await fetch(client, '/api/v1/about');
+      if (about == null) {
+        return {
+          'configured': true,
+          'connected': false,
+          'url': url,
+          'reason': 'Firefly III at $url did not answer.',
+        };
+      }
+      if (about.statusCode == 401 || about.statusCode == 403) {
+        return {
+          'configured': true,
+          'connected': true,
+          'authorized': false,
+          'url': url,
+          'reason':
+              'Firefly III at $url rejected the token (${about.statusCode}).',
+        };
+      }
+      if (about.statusCode != 200) {
+        return {
+          'configured': true,
+          'connected': false,
+          'url': url,
+          'reason': 'Firefly III at $url answered ${about.statusCode}.',
+        };
+      }
+      // Both are extra colour on a connection already proved by /about, so a
+      // refusal here narrows what is reported rather than sinking the whole
+      // status: /api/v1/users is owner-only and 403s for everybody else.
+      final user = await fetch(client, '/api/v1/about/user');
+      final users = await fetch(client, '/api/v1/users');
+      return {
+        'configured': true,
+        'connected': true,
+        'authorized': true,
+        'url': url,
+        ..._aboutJson(about.body),
+        'user': _currentUserJson(user),
+        'user_count': _userCount(users),
+      };
     } finally {
       if (httpClient == null) client.close();
     }
@@ -1609,11 +1769,25 @@ List<McpTool> buildTools({
     McpTool(
       name: 'get_capabilities',
       description:
-          'Return FireRaccoon MCP server capabilities, tool names, and version.',
+          'Return FireRaccoon MCP server capabilities, tool names, app version, '
+          'and live backend status: whether Firefly III is connected, which '
+          'server, which version, and how many users it holds. Call this first; '
+          'a disconnected backend is reported here rather than surfacing as a '
+          'failure from every other tool.',
       inputSchema: const {'type': 'object', 'properties': {}},
       run: (_) async => {
         'ok': true,
         'version': _mcpVersion,
+        'app': {
+          'name': 'FireRaccoon',
+          // Null off the desktop app and the packaged server, which are the
+          // only two hosts that know their own release.
+          'version': appVersion,
+          'mcp_version': _mcpVersion,
+        },
+        // Live, so an agent learns the connection is down from the tool it was
+        // going to call anyway.
+        'backend': await backendStatus(),
         'tools': [...toolNames]..sort(),
         // Sorted so this and the schema's list compare by membership, not by
         // the order two hand-maintained lists happen to be in.
@@ -1644,18 +1818,23 @@ List<McpTool> buildTools({
     McpTool(
       name: 'check_connection',
       description:
-          'Verify that the configured Firefly III connection answers /api/v1/about.',
+          'Report whether Firefly III is connected, which server, which '
+          'version, and how many users it holds.',
       inputSchema: const {'type': 'object', 'properties': {}},
       run: (_) async {
-        if (!target.isConfigured) {
-          return _badInput('No Firefly connection configured for this server');
-        }
-        final connected = await checkAbout();
+        final status = await backendStatus();
+        final connected = status['connected'] == true;
+        final authorized = status['authorized'] != false;
         return {
-          'ok': connected,
-          'connected': connected,
-          if (!connected)
-            'error': 'Firefly III returned non-200 for /api/v1/about',
+          'ok': connected && authorized,
+          if (!target.isConfigured)
+            'code': 'not_connected'
+          else if (!connected)
+            'code': 'backend_unreachable'
+          else if (!authorized)
+            'code': 'backend_unauthorized',
+          ...status,
+          if (status['reason'] != null) 'error': status['reason'],
         };
       },
     ),
@@ -4375,5 +4554,35 @@ List<McpTool> buildTools({
     ),
   ];
   toolNames.addAll(tools.map((tool) => tool.name));
-  return tools;
+  return [for (final tool in tools) _guarded(tool, target)];
 }
+
+/// Wraps a tool so a missing or unreachable Firefly comes back as a described
+/// state instead of an exception.
+///
+/// Done once here rather than in every tool body: there are more than sixty of
+/// them, and the one that forgot would be the one an agent hit while the server
+/// was down.
+McpTool _guarded(McpTool tool, FireflyTarget target) => McpTool(
+  name: tool.name,
+  description: tool.description,
+  inputSchema: tool.inputSchema,
+  writes: tool.writes,
+  run: (args) async {
+    try {
+      return await tool.run(args);
+    } on FireflyNotConnectedException catch (error) {
+      return _notConnected(error);
+    } on FireflyApiException catch (error) {
+      final url = target.normalizedBaseUrl;
+      // Only the transport knows the difference between a server that never
+      // answered and one that answered by refusing, so both flags are read
+      // rather than inferred from a missing status.
+      if (error.unreachable) return _unreachable(error, url);
+      if (error.statusCode == 401 || error.statusCode == 403) {
+        return _unauthorized(error, url);
+      }
+      rethrow;
+    }
+  },
+);

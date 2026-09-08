@@ -2136,5 +2136,25 @@
       }
     }
   },
-  "backupOpen": "Open"
+  "backupOpen": "Open",
+  "notConnectedTitle": "Uh oh, no server yet",
+  "@notConnectedTitle": {
+    "description": "Heading on the screen shown when no Firefly III server is connected"
+  },
+  "notConnectedBody": "FireRaccoon is not connected to Firefly III, so there is nothing to show yet. Connect your server and your accounts turn up here.",
+  "@notConnectedBody": {
+    "description": "Explanation shown when no Firefly III server is connected"
+  },
+  "notConnectedAction": "Open settings",
+  "@notConnectedAction": {
+    "description": "Button that opens Settings from the not-connected screen"
+  },
+  "notConnectedTitleRaccoon": "Uh oh, the bins are empty",
+  "@notConnectedTitleRaccoon": {
+    "description": "Raccoon Mode heading when no Firefly III server is connected"
+  },
+  "notConnectedBodyRaccoon": "Nothing to rummage through yet. Point FireRaccoon at your Firefly III server and the good stuff turns up here.",
+  "@notConnectedBodyRaccoon": {
+    "description": "Raccoon Mode explanation when no Firefly III server is connected"
+  }
 }

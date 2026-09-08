@@ -3667,4 +3667,21 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get backupOpen => '開く';
+
+  @override
+  String get notConnectedTitle => 'おっと、サーバーがまだありません';
+
+  @override
+  String get notConnectedBody =>
+      'FireRaccoon は Firefly III に接続していないため、表示できるものがありません。サーバーを接続すると、口座がここに表示されます。';
+
+  @override
+  String get notConnectedAction => '設定を開く';
+
+  @override
+  String get notConnectedTitleRaccoon => 'おっと、ゴミ箱が空っぽです';
+
+  @override
+  String get notConnectedBodyRaccoon =>
+      'まだあさるものがありません。FireRaccoon を Firefly III サーバーに向ければ、お宝がここに現れます。';
 }

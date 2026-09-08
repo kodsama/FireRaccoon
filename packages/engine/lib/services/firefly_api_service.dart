@@ -383,8 +383,13 @@ class FireflyApiService implements FireflyService {
       }
     }
 
-    // The loop only falls through when the final attempt threw.
-    Error.throwWithStackTrace(lastError!, lastStackTrace!);
+    // The loop only falls through when the final attempt threw, and a refusal
+    // Firefly actually sent was rethrown above, so whatever is left here never
+    // reached a server.
+    Error.throwWithStackTrace(
+      FireflyApiException('$lastError', cause: lastError, unreachable: true),
+      lastStackTrace!,
+    );
   }
 
   Future<TransactionPageResult> _fetchTransactionPage(

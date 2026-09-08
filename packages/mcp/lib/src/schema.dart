@@ -1,6 +1,10 @@
 import 'tools.dart';
 
 const mcpSchemaVersion = '1.0.0';
+
+/// Reported as the app version by a standalone server, which has no Flutter
+/// bundle to ask. The desktop app passes its own release instead.
+const mcpPackageVersion = mcpSchemaVersion;
 const mcpProtocolVersion = '2025-06-18';
 
 /// Machine-readable MCP catalog for agent discovery (`fireraccoon_mcp schema`).

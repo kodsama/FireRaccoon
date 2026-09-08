@@ -3757,4 +3757,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupOpen => 'Open';
+
+  @override
+  String get notConnectedTitle => 'Uh oh, no server yet';
+
+  @override
+  String get notConnectedBody =>
+      'FireRaccoon is not connected to Firefly III, so there is nothing to show yet. Connect your server and your accounts turn up here.';
+
+  @override
+  String get notConnectedAction => 'Open settings';
+
+  @override
+  String get notConnectedTitleRaccoon => 'Uh oh, the bins are empty';
+
+  @override
+  String get notConnectedBodyRaccoon =>
+      'Nothing to rummage through yet. Point FireRaccoon at your Firefly III server and the good stuff turns up here.';
 }
