@@ -313,9 +313,7 @@ class PaginatedTransactionsNotifier
       if (service == null) {
         if (!ref.read(authProvider).isHydrated) return;
         _log.warning('Paginated fetch failed: api service unavailable');
-        throw Exception(
-          'Not connected to Firefly III. Open Settings and connect your server.',
-        );
+        throw const FireflyNotConnectedException();
       }
 
       final TransactionPageResult result;

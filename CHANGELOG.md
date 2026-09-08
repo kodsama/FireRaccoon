@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-08
+
+### Added
+
+- MCP reports the state of the Firefly connection instead of failing with it.
+  A tool that needed Firefly and had nowhere to ask used to throw, and the
+  socket error underneath reached the agent as an opaque `tool_error`: read
+  that way an agent retries, or concludes the ledger is broken, when the answer
+  is that nobody has connected a server yet. Tools now answer `not_connected`,
+  `backend_unreachable` or `backend_unauthorized`, each with what would fix it
+- `get_capabilities` and `check_connection` report which server is connected,
+  which Firefly version it runs, which app release is asking, and how many users
+  the instance holds. Both keep answering while the backend is down, which is
+  the point of them. The user count needs an owner's token, so a viewer gets the
+  rest of the status and no count
+
+- A plain http server is refused unless it was deliberately chosen. The
+  connection test already refused one, but a settings import, an OAuth sign-in
+  and the debug `.env` fallback all reached the credential store without going
+  near it, so an unencrypted server could be saved three ways the rule never
+  saw. The scheme is the only thing consulted: where a host resolves says
+  nothing about whether the bytes are encrypted
+- The connection carries a lock wherever it is reported, closed and green over
+  https and open and red over http, and the server in Settings is badged for as
+  long as it is unencrypted. Turning the switch on says what it costs at the
+  moment of turning it on
+
+### Fixed
+
+- The installed macOS app could not read the connection it had saved. The
+  release entitlements sandboxed it, and a sandboxed app is confined to its own
+  keychain access group unless it carries `keychain-access-groups`, which only
+  signs with a development certificate. Every launch found an empty store and
+  asked for a server that had already been connected
+- Screens no longer put `Error loading data: Exception: Not connected to
+  Firefly III` in front of someone who has not finished setting up. Nothing has
+  failed at that point, so the disconnected state now says what it is, shows
+  what to do about it, and offers a way to Settings. Raccoon Mode has its own
+  words for it
+- A locked credential store was reported as an error rather than asked about.
+  The connection was saved and still there; the keychain had simply relocked,
+  its prompt had gone unanswered, or the session behind it had timed out. The
+  screens now say what is waiting and offer to ask again, for anyone who has
+  just unlocked it and does not want to wait for the next connection poll
+- A refusal Firefly sent was reported as a server nobody could reach. Both
+  arrive with no status code attached, so anything reading a missing status as
+  "nothing answered" called a 404 from a server that was up and talking a
+  network failure
+
 ## [0.3.2] - 2026-09-03
 
 ### Fixed

@@ -1881,5 +1881,19 @@
       }
     }
   },
-  "backupOpen": "Abrir"
+  "backupOpen": "Abrir",
+  "notConnectedTitle": "Ups, ainda sem servidor",
+  "notConnectedBody": "O FireRaccoon não está ligado ao Firefly III, por isso não há nada para mostrar. Ligue o seu servidor e as suas contas aparecem aqui.",
+  "notConnectedAction": "Abrir definições",
+  "notConnectedTitleRaccoon": "Ups, os caixotes estão vazios",
+  "notConnectedBodyRaccoon": "Ainda não há nada para remexer. Aponte o FireRaccoon ao seu servidor Firefly III e as coisas boas aparecem aqui.",
+  "credentialsLockedTitle": "À espera do seu porta-chaves",
+  "credentialsLockedBody": "A sua ligação está guardada, mas o porta-chaves do sistema não a devolve enquanto estiver bloqueado. Desbloqueie-o e tente novamente.",
+  "credentialsLockedAction": "Tentar novamente",
+  "credentialsLockedRetrying": "A tentar novamente...",
+  "credentialsLockedTitleRaccoon": "O esconderijo está trancado",
+  "credentialsLockedBodyRaccoon": "Este guaxinim sabe onde está tudo, mas a tampa não cede. Desbloqueie o porta-chaves e ele tenta outra vez.",
+  "insecureConnectionBadge": "Sem encriptação",
+  "insecureConnectionWarning": "O seu token e todas as respostas viajam sem encriptação por http://. Qualquer pessoa na rede entre si e o servidor pode lê-los. Use https:// a menos que compreenda o risco.",
+  "secureConnectionTooltip": "Ligação encriptada (https)"
 }

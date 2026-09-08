@@ -3757,4 +3757,51 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backupOpen => 'Open';
+
+  @override
+  String get notConnectedTitle => 'Uh oh, no server yet';
+
+  @override
+  String get notConnectedBody =>
+      'FireRaccoon is not connected to Firefly III, so there is nothing to show yet. Connect your server and your accounts turn up here.';
+
+  @override
+  String get notConnectedAction => 'Open settings';
+
+  @override
+  String get notConnectedTitleRaccoon => 'Uh oh, the bins are empty';
+
+  @override
+  String get notConnectedBodyRaccoon =>
+      'Nothing to rummage through yet. Point FireRaccoon at your Firefly III server and the good stuff turns up here.';
+
+  @override
+  String get credentialsLockedTitle => 'Waiting on your keychain';
+
+  @override
+  String get credentialsLockedBody =>
+      'Your connection is saved, but the system keychain will not hand it back until it is unlocked. Unlock it, then ask again.';
+
+  @override
+  String get credentialsLockedAction => 'Try again';
+
+  @override
+  String get credentialsLockedRetrying => 'Asking again...';
+
+  @override
+  String get credentialsLockedTitleRaccoon => 'The stash is locked';
+
+  @override
+  String get credentialsLockedBodyRaccoon =>
+      'This raccoon knows where everything is, but the lid will not budge. Unlock your keychain and it will have another go.';
+
+  @override
+  String get insecureConnectionBadge => 'Not encrypted';
+
+  @override
+  String get insecureConnectionWarning =>
+      'Your token and every answer travel in the clear over http://. Anyone on the network between here and your server can read them. Use https:// unless you understand the risk.';
+
+  @override
+  String get secureConnectionTooltip => 'Encrypted connection (https)';
 }

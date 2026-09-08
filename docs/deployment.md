@@ -57,6 +57,13 @@ All GUI installers are **unsigned**. Store / notarized distribution needs secret
 blocks the macOS DMG on other machines, unsigned IPAs cannot install on devices,
 Windows SmartScreen warns, and Android packages stay debug-key signed.
 
+On Linux the Firefly credentials go to the Secret Service through libsecret, so
+a host without it, or without a running keyring, has nowhere to keep them. The
+`.deb` and `.rpm` both declare the dependency. An AppImage declares none by
+design and relies on the host, which is fine on a normal desktop and is the one
+format that can be installed somewhere secure storage will not work; the app
+reports that as an unreadable store rather than as an empty one.
+
 Packaging configs: `distribute_options.yaml`, `windows/packaging/exe/`,
 `linux/packaging/{appimage,deb,rpm}/`, `packaging/windows/product.wxs`,
 `packaging/linux/`.
@@ -457,6 +464,14 @@ Distribution is platform-specific:
 | iOS | `flutter build ios --release` (requires Xcode signing for devices) |
 
 Code signing, notarization, and store submission are outside this guide.
+
+The macOS build is deliberately unsandboxed. `flutter_secure_storage` keeps the
+Firefly credentials in the login Keychain, and a sandboxed app is confined to its
+own keychain access group unless it carries `keychain-access-groups`, which only
+signs with a development certificate. Releases here are unsigned, so a sandboxed
+build finds an empty store on every launch and asks the person to connect a
+server again. Because an ad-hoc signature changes with every build, macOS asks
+once per build before letting the app read the item back.
 
 ## CI builds
 

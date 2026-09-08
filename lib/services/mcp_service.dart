@@ -70,6 +70,7 @@ class McpService extends ChangeNotifier {
     required List<AgentKeyPerson> people,
     String? agentKeysError,
     String? backupsDirectory,
+    String? appVersion,
     int basePort = 8787,
   }) {
     final next = (_queue ?? Future<void>.value()).then(
@@ -80,6 +81,7 @@ class McpService extends ChangeNotifier {
         people: people,
         agentKeysError: agentKeysError,
         backupsDirectory: backupsDirectory,
+        appVersion: appVersion,
         basePort: basePort,
       ),
     );
@@ -95,6 +97,7 @@ class McpService extends ChangeNotifier {
     required List<AgentKeyPerson> people,
     required String? agentKeysError,
     required String? backupsDirectory,
+    required String? appVersion,
     required int basePort,
   }) async {
     final active = [
@@ -106,6 +109,7 @@ class McpService extends ChangeNotifier {
       fireflyToken: fireflyToken,
       agentKeys: active,
       people: people,
+      appVersion: appVersion,
     );
     if (next == _fingerprint && _isolate != null) {
       _log.finer('MCP sync ignored: nothing the isolate captured changed');
@@ -161,6 +165,7 @@ class McpService extends ChangeNotifier {
           active,
           people,
           backupsDirectory,
+          appVersion,
         ),
         debugName: 'fireraccoon-mcp-server',
         // A healthy isolate never finishes: the listening socket keeps its event
@@ -294,13 +299,15 @@ class McpService extends ChangeNotifier {
     required String fireflyToken,
     required List<AgentKey> agentKeys,
     required List<AgentKeyPerson> people,
+    required String? appVersion,
   }) {
     final keyPart = (agentKeys.map((key) => key.hash).toList()..sort()).join(
       ',',
     );
     final peoplePart = (people.map((p) => '${p.id}:${p.role}').toList()..sort())
         .join(',');
-    return '$fireflyUrl|${fireflyToken.hashCode}|$keyPart|$peoplePart';
+    return '$fireflyUrl|${fireflyToken.hashCode}|$keyPart|$peoplePart'
+        '|$appVersion';
   }
 
   @override
@@ -321,6 +328,7 @@ class McpIsolateConfig {
     this.agentKeys,
     this.people,
     this.backupsDirectory,
+    this.appVersion,
   );
 
   final SendPort send;
@@ -334,6 +342,10 @@ class McpIsolateConfig {
   /// missing, so an agent is told backups are unavailable here instead of
   /// concluding FireRaccoon does not take them.
   final String? backupsDirectory;
+
+  /// The release an agent is talking to, reported by `get_capabilities`. Null
+  /// until the platform answers with it, which is before anything can connect.
+  final String? appVersion;
 }
 
 Future<void> _serverEntry(McpIsolateConfig cfg) async {
@@ -367,6 +379,7 @@ Future<void> _serverEntry(McpIsolateConfig cfg) async {
       backups: backupsDirectory == null
           ? null
           : FileBackupStore(backupsDirectory),
+      appVersion: cfg.appVersion,
     ),
     onActivity: reportUse,
   );

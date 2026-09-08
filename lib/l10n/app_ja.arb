@@ -1956,5 +1956,19 @@
       }
     }
   },
-  "backupOpen": "開く"
+  "backupOpen": "開く",
+  "notConnectedTitle": "おっと、サーバーがまだありません",
+  "notConnectedBody": "FireRaccoon は Firefly III に接続していないため、表示できるものがありません。サーバーを接続すると、口座がここに表示されます。",
+  "notConnectedAction": "設定を開く",
+  "notConnectedTitleRaccoon": "おっと、ゴミ箱が空っぽです",
+  "notConnectedBodyRaccoon": "まだあさるものがありません。FireRaccoon を Firefly III サーバーに向ければ、お宝がここに現れます。",
+  "credentialsLockedTitle": "キーチェーンを待っています",
+  "credentialsLockedBody": "接続は保存されていますが、システムのキーチェーンがロックされているため取り出せません。ロックを解除してから、もう一度お試しください。",
+  "credentialsLockedAction": "もう一度試す",
+  "credentialsLockedRetrying": "再試行しています...",
+  "credentialsLockedTitleRaccoon": "隠し場所が閉まっています",
+  "credentialsLockedBodyRaccoon": "このアライグマは場所を知っていますが、ふたが開きません。キーチェーンのロックを解除すれば、もう一度挑戦します。",
+  "insecureConnectionBadge": "暗号化なし",
+  "insecureConnectionWarning": "トークンとすべての応答が http:// で平文のまま流れます。あなたとサーバーの間のネットワーク上の誰もが読み取れます。リスクを理解している場合を除き、https:// を使ってください。",
+  "secureConnectionTooltip": "暗号化された接続 (https)"
 }

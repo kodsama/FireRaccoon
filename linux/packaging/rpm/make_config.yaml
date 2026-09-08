@@ -14,3 +14,10 @@ categories:
   - Finance
 group: Applications/Office
 summary: Firefly III client with on-device balance projections
+# The .deb has always named these; the .rpm never did, so a minimal host could
+# install a build whose secure storage has nothing to talk to and whose window
+# never opens. flutter_secure_storage reaches the Secret Service through
+# libsecret, and Flutter Linux links against system GTK3 at runtime.
+requires:
+  - gtk3
+  - libsecret

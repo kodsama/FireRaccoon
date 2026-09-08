@@ -2,8 +2,13 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>com.apple.security.app-sandbox</key>
-	<true/>
+	<!-- Unsandboxed, for the same reason DebugProfile is. flutter_secure_storage
+	     needs the login Keychain, and a sandboxed app is confined to its own
+	     keychain access group unless it carries keychain-access-groups, which
+	     only signs with a development certificate. Releases here are unsigned
+	     and local builds are ad-hoc signed, so a sandboxed release could never
+	     read back the Firefly credentials it had just written: every launch
+	     found an empty store and asked the person to connect a server again. -->
 	<key>com.apple.security.network.client</key>
 	<true/>
 	<key>com.apple.security.network.server</key>

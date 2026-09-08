@@ -70,7 +70,7 @@ mixin _AccountTransactionsPreview<T extends ConsumerStatefulWidget>
   List<Transaction>? upcoming;
 
   bool loadingTx = false;
-  String? loadError;
+  Object? loadError;
 
   /// The account whose rows to preview.
   Account get previewAccount;
@@ -137,7 +137,7 @@ mixin _AccountTransactionsPreview<T extends ConsumerStatefulWidget>
           loadingTx = false;
           posted = null;
           upcoming = null;
-          loadError = context.l10n.errorLoadingData('$error');
+          loadError = error;
         });
       }
     }
@@ -421,7 +421,7 @@ class _AccountEntityCardState extends ConsumerState<AccountEntityCard>
         transactions: posted,
         futureTransactions: upcoming,
         onRefresh: loadTransactions,
-        errorMessage: loadError,
+        loadError: loadError,
         emptyLabel: widget.emptyTransactionsLabel,
         filterAccount: acc.name,
         onTransactionMutated: loadTransactions,
@@ -707,7 +707,7 @@ class _AccountEntityCompactRowState
         transactions: posted,
         futureTransactions: upcoming,
         onRefresh: loadTransactions,
-        errorMessage: loadError,
+        loadError: loadError,
         emptyLabel: widget.emptyTransactionsLabel,
         filterAccount: acc.name,
         onTransactionMutated: loadTransactions,
@@ -1065,7 +1065,7 @@ class _AccountEntityTightRowState extends ConsumerState<AccountEntityTightRow>
         transactions: posted,
         futureTransactions: upcoming,
         onRefresh: loadTransactions,
-        errorMessage: loadError,
+        loadError: loadError,
         emptyLabel: widget.emptyTransactionsLabel,
         filterAccount: acc.name,
         onTransactionMutated: loadTransactions,

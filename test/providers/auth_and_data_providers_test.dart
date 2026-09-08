@@ -8,7 +8,9 @@ import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/utils/transport_security.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/store/credential_store_locked_exception.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/static_auth_notifier.dart';
@@ -537,6 +539,67 @@ void main() {
       expect(container.read(authProvider).isValid, isFalse);
     });
 
+    test('a plain http server is refused unless it was chosen', () async {
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(storage: testStorage(), debugEnvLoader: _noEnv),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await expectLater(
+        container
+            .read(authProvider.notifier)
+            .saveSettings('http://firefly.test', 'secret', false),
+        throwsA(isA<InsecureTransportRefused>()),
+      );
+      expect(container.read(authProvider).isValid, isFalse);
+    });
+
+    test('a settings import cannot smuggle http past the rule', () async {
+      // The connection test refuses http, but an import never goes near it,
+      // so a bundle carrying an http server used to be applied unchallenged.
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(storage: testStorage(), debugEnvLoader: _noEnv),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await expectLater(
+        container
+            .read(authProvider.notifier)
+            .applyImportedCredentials(
+              serverUrl: 'http://firefly.test',
+              apiToken: 'secret',
+            ),
+        throwsA(isA<InsecureTransportRefused>()),
+      );
+      expect(container.read(authProvider).serverUrl, isEmpty);
+    });
+
+    test('a plain http server is kept once it was chosen', () async {
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(storage: testStorage(), debugEnvLoader: _noEnv),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      await container
+          .read(authProvider.notifier)
+          .saveSettings('http://firefly.test', 'secret', true);
+
+      expect(container.read(authProvider).serverUrl, 'http://firefly.test');
+      expect(container.read(authProvider).allowInsecure, isTrue);
+    });
+
     test(
       'falls back to debug .env credentials when storage is empty',
       () async {
@@ -566,6 +629,120 @@ void main() {
         expect(settings.allowInsecure, isTrue);
       },
     );
+
+    test('the .env fallback obeys the same http rule', () async {
+      // A development fallback that quietly allows what the app refuses
+      // everywhere else is how an http address gets tested for weeks and then
+      // fails on the first real install.
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(
+              storage: testStorage(),
+              debugEnvLoader: () async => {
+                'FIREFLY_URL': 'http://env.example.com',
+                'FIREFLY_TOKEN': 'env-token',
+              },
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(Duration.zero);
+        if (container.read(authProvider).isHydrated) break;
+      }
+
+      final settings = container.read(authProvider);
+      expect(settings.serverUrl, isEmpty);
+      expect(settings.apiToken, isEmpty);
+    });
+
+    test('the .env fallback may name http once it says so', () async {
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(
+              storage: testStorage(),
+              debugEnvLoader: () async => {
+                'FIREFLY_URL': 'http://env.example.com',
+                'FIREFLY_TOKEN': 'env-token',
+                'FIREFLY_ALLOW_INSECURE': 'true',
+              },
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(Duration.zero);
+        if (container.read(authProvider).isHydrated) break;
+      }
+
+      final settings = container.read(authProvider);
+      expect(settings.serverUrl, 'http://env.example.com');
+      expect(settings.allowInsecure, isTrue);
+    });
+
+    test('the .env fallback fills only what storage was missing', () async {
+      final storage = testStorage();
+      await storage.write(key: 'serverUrl', value: 'https://stored.example');
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(
+              storage: storage,
+              debugEnvLoader: () async => {
+                'FIREFLY_URL': 'https://env.example.com',
+                'FIREFLY_TOKEN': 'env-token',
+              },
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(Duration.zero);
+        if (container.read(authProvider).isHydrated) break;
+      }
+
+      final settings = container.read(authProvider);
+      // The stored server stands; only the token it had no answer for is
+      // filled in.
+      expect(settings.serverUrl, 'https://stored.example');
+      expect(settings.apiToken, 'env-token');
+    });
+
+    test('a stored token is not replaced by the .env one', () async {
+      final storage = testStorage();
+      await storage.write(key: 'apiToken', value: 'stored-token');
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(
+              storage: storage,
+              debugEnvLoader: () async => {
+                'FIREFLY_URL': 'https://env.example.com',
+                'FIREFLY_TOKEN': 'env-token',
+              },
+            ),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(Duration.zero);
+        if (container.read(authProvider).isHydrated) break;
+      }
+
+      final settings = container.read(authProvider);
+      expect(settings.apiToken, 'stored-token');
+      expect(settings.serverUrl, 'https://env.example.com');
+    });
 
     test('prefers stored credentials over the .env fallback', () async {
       final storage = testStorage();
@@ -759,8 +936,10 @@ void main() {
       final value = container.read(accountsProvider);
       expect(value.hasError, isTrue);
       // "Open Settings and connect your server" is the wrong instruction when
-      // the server is configured and the keychain simply would not answer.
-      expect(value.error.toString(), contains('keychain'));
+      // the server is configured and the store simply would not answer, so the
+      // two states are separate types and the screens tell them apart.
+      expect(value.error, isA<CredentialStoreLockedException>());
+      expect(value.error, isNot(isA<FireflyNotConnectedException>()));
     });
 
     test(

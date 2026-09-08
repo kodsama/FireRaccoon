@@ -1881,5 +1881,19 @@
       }
     }
   },
-  "backupOpen": "Ouvrir"
+  "backupOpen": "Ouvrir",
+  "notConnectedTitle": "Oups, aucun serveur pour le moment",
+  "notConnectedBody": "FireRaccoon n'est pas connecté à Firefly III, il n'y a donc rien à afficher. Connectez votre serveur et vos comptes apparaîtront ici.",
+  "notConnectedAction": "Ouvrir les paramètres",
+  "notConnectedTitleRaccoon": "Oups, les poubelles sont vides",
+  "notConnectedBodyRaccoon": "Rien à fouiller pour l'instant. Branchez FireRaccoon sur votre serveur Firefly III et les bonnes choses arriveront ici.",
+  "credentialsLockedTitle": "En attente de votre trousseau",
+  "credentialsLockedBody": "Votre connexion est enregistrée, mais le trousseau du système ne la rendra pas tant qu'il est verrouillé. Déverrouillez-le, puis réessayez.",
+  "credentialsLockedAction": "Réessayer",
+  "credentialsLockedRetrying": "Nouvelle tentative...",
+  "credentialsLockedTitleRaccoon": "Le magot est verrouillé",
+  "credentialsLockedBodyRaccoon": "Ce raton laveur sait où tout se trouve, mais le couvercle ne bouge pas. Déverrouillez votre trousseau et il réessaiera.",
+  "insecureConnectionBadge": "Non chiffré",
+  "insecureConnectionWarning": "Votre jeton et toutes les réponses circulent en clair via http://. N'importe qui sur le réseau entre vous et votre serveur peut les lire. Utilisez https:// sauf si vous mesurez le risque.",
+  "secureConnectionTooltip": "Connexion chiffrée (https)"
 }

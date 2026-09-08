@@ -891,6 +891,104 @@ void main() {
       expect(calls.where((u) => u.path.endsWith('/transactions')), isEmpty);
     });
 
+    test('create_transaction refuses a leg with no description', () async {
+      // A leg with no description of its own and no group description to
+      // inherit reaches Firefly as a blank row nobody can read back.
+      final calls = <Uri>[];
+      final result =
+          await _tool(
+            'create_transaction',
+            client: fireflyMockClient(record: calls),
+          ).run({
+            'type': 'withdrawal',
+            'date': '2026-09-01',
+            'amount': 100,
+            'splits': [
+              {'amount': 60, 'description': 'One'},
+              {'amount': 40},
+            ],
+          });
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('splits[1].description'));
+      expect(calls.where((u) => u.path.endsWith('/transactions')), isEmpty);
+    });
+
+    test('create_transaction refuses splits that are not a list', () async {
+      final calls = <Uri>[];
+      final result =
+          await _tool(
+            'create_transaction',
+            client: fireflyMockClient(record: calls),
+          ).run({
+            'type': 'withdrawal',
+            'date': '2026-09-01',
+            'amount': 100,
+            'description': 'Mortgage',
+            'splits': {'amount': 100},
+          });
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('splits must be a list'));
+      expect(calls.where((u) => u.path.endsWith('/transactions')), isEmpty);
+    });
+
+    test('create_transaction refuses a leg that is not an object', () async {
+      final calls = <Uri>[];
+      final result =
+          await _tool(
+            'create_transaction',
+            client: fireflyMockClient(record: calls),
+          ).run({
+            'type': 'withdrawal',
+            'date': '2026-09-01',
+            'amount': 100,
+            'description': 'Mortgage',
+            'splits': [
+              {'amount': 60, 'description': 'One'},
+              'forty',
+            ],
+          });
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('splits[1] must be an object'));
+      expect(calls.where((u) => u.path.endsWith('/transactions')), isEmpty);
+    });
+
+    test('create_transaction carries the tags a leg sets itself', () async {
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'create_transaction',
+            client: fireflyMockClient(recordBodies: bodies),
+          ).run({
+            'type': 'withdrawal',
+            'date': '2026-09-01',
+            'amount': 100,
+            'description': 'Card bill',
+            'source_id': '5',
+            'tags': ['group'],
+            'splits': [
+              {
+                'amount': 60,
+                'description': 'Groceries',
+                'tags': ['food'],
+              },
+              {'amount': 40, 'description': 'Fuel'},
+            ],
+          });
+
+      expect(result['ok'], isTrue);
+      final legs =
+          ((jsonDecode(bodies.single) as Map<String, Object?>)['transactions']
+                  as List)
+              .cast<Map<String, Object?>>();
+      // A leg that states its own tags keeps them; one that says nothing
+      // inherits the group's.
+      expect(legs.first['tags'], ['food']);
+      expect(legs.last['tags'], ['group']);
+    });
+
     test('delete_transaction deletes the group', () async {
       final result = await _tool(
         'delete_transaction',

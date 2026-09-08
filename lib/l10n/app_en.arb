@@ -2136,5 +2136,61 @@
       }
     }
   },
-  "backupOpen": "Open"
+  "backupOpen": "Open",
+  "notConnectedTitle": "Uh oh, no server yet",
+  "@notConnectedTitle": {
+    "description": "Heading on the screen shown when no Firefly III server is connected"
+  },
+  "notConnectedBody": "FireRaccoon is not connected to Firefly III, so there is nothing to show yet. Connect your server and your accounts turn up here.",
+  "@notConnectedBody": {
+    "description": "Explanation shown when no Firefly III server is connected"
+  },
+  "notConnectedAction": "Open settings",
+  "@notConnectedAction": {
+    "description": "Button that opens Settings from the not-connected screen"
+  },
+  "notConnectedTitleRaccoon": "Uh oh, the bins are empty",
+  "@notConnectedTitleRaccoon": {
+    "description": "Raccoon Mode heading when no Firefly III server is connected"
+  },
+  "notConnectedBodyRaccoon": "Nothing to rummage through yet. Point FireRaccoon at your Firefly III server and the good stuff turns up here.",
+  "@notConnectedBodyRaccoon": {
+    "description": "Raccoon Mode explanation when no Firefly III server is connected"
+  },
+  "credentialsLockedTitle": "Waiting on your keychain",
+  "@credentialsLockedTitle": {
+    "description": "Heading shown when the platform credential store is locked"
+  },
+  "credentialsLockedBody": "Your connection is saved, but the system keychain will not hand it back until it is unlocked. Unlock it, then ask again.",
+  "@credentialsLockedBody": {
+    "description": "Explanation shown when the platform credential store is locked"
+  },
+  "credentialsLockedAction": "Try again",
+  "@credentialsLockedAction": {
+    "description": "Button that asks the credential store again"
+  },
+  "credentialsLockedRetrying": "Asking again...",
+  "@credentialsLockedRetrying": {
+    "description": "Label on the retry button while the read is in flight"
+  },
+  "credentialsLockedTitleRaccoon": "The stash is locked",
+  "@credentialsLockedTitleRaccoon": {
+    "description": "Raccoon Mode heading when the credential store is locked"
+  },
+  "credentialsLockedBodyRaccoon": "This raccoon knows where everything is, but the lid will not budge. Unlock your keychain and it will have another go.",
+  "@credentialsLockedBodyRaccoon": {
+    "description": "Raccoon Mode explanation when the credential store is locked"
+  },
+  "insecureConnectionBadge": "Not encrypted",
+  "@insecureConnectionBadge": {
+    "description": "Badge shown next to a server reached over plain http"
+  },
+  "insecureConnectionWarning": "Your token and every answer travel in the clear over http://. Anyone on the network between here and your server can read them. Use https:// unless you understand the risk.",
+  "@insecureConnectionWarning": {
+    "description": "Warning shown when the allow-http switch is turned on"
+  },
+  "secureConnectionTooltip": "Encrypted connection (https)",
+  "@secureConnectionTooltip": {
+    "description": "Tooltip on the lock shown for an https connection"
+  }
 }

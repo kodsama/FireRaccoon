@@ -163,6 +163,7 @@ class _FixedMcpService extends McpService {
     required List<AgentKeyPerson> people,
     String? agentKeysError,
     String? backupsDirectory,
+    String? appVersion,
     int basePort = 8787,
   }) async {}
 }
@@ -265,6 +266,7 @@ class _LateBindingMcpService extends McpService {
     required List<AgentKeyPerson> people,
     String? agentKeysError,
     String? backupsDirectory,
+    String? appVersion,
     int basePort = 8787,
   }) async {}
 }

@@ -1308,10 +1308,15 @@ x-mcp:
       - restore_backup
   tools:
     get_capabilities:
-      description: Server capabilities and tool catalog
+      description: >
+        Server capabilities, tool catalog, app version, and live backend
+        status: whether Firefly III is connected, which server, which version,
+        and how many users it holds.
       inputSchema: { type: object, properties: {} }
     check_connection:
-      description: Verify /api/v1/about on the configured connection
+      description: >
+        Whether Firefly III is connected, which server, which version, and how
+        many users it holds.
       inputSchema: { type: object, properties: {} }
     get_current_user:
       description: Fetch authenticated user

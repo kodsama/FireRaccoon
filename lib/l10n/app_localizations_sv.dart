@@ -3761,4 +3761,51 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get backupOpen => 'Öppna';
+
+  @override
+  String get notConnectedTitle => 'Oj, ingen server ännu';
+
+  @override
+  String get notConnectedBody =>
+      'FireRaccoon är inte ansluten till Firefly III, så det finns inget att visa. Anslut din server så dyker dina konton upp här.';
+
+  @override
+  String get notConnectedAction => 'Öppna inställningar';
+
+  @override
+  String get notConnectedTitleRaccoon => 'Oj, soptunnorna är tomma';
+
+  @override
+  String get notConnectedBodyRaccoon =>
+      'Inget att rota i ännu. Peka FireRaccoon mot din Firefly III-server så dyker godsakerna upp här.';
+
+  @override
+  String get credentialsLockedTitle => 'Väntar på din nyckelring';
+
+  @override
+  String get credentialsLockedBody =>
+      'Din anslutning är sparad, men systemets nyckelring lämnar inte ut den förrän den är upplåst. Lås upp den och försök igen.';
+
+  @override
+  String get credentialsLockedAction => 'Försök igen';
+
+  @override
+  String get credentialsLockedRetrying => 'Försöker igen...';
+
+  @override
+  String get credentialsLockedTitleRaccoon => 'Gömstället är låst';
+
+  @override
+  String get credentialsLockedBodyRaccoon =>
+      'Den här tvättbjörnen vet var allt finns, men locket rör sig inte. Lås upp din nyckelring så gör den ett nytt försök.';
+
+  @override
+  String get insecureConnectionBadge => 'Okrypterad';
+
+  @override
+  String get insecureConnectionWarning =>
+      'Din token och alla svar går i klartext över http://. Vem som helst på nätverket mellan dig och servern kan läsa dem. Använd https:// om du inte förstår risken.';
+
+  @override
+  String get secureConnectionTooltip => 'Krypterad anslutning (https)';
 }

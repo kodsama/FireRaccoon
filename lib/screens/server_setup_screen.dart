@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../providers/server_session_provider.dart';
+import '../widgets/insecure_connection_notice.dart';
 
 /// First-boot admin setup for Docker / server mode.
 class ServerSetupScreen extends ConsumerStatefulWidget {
@@ -139,6 +140,7 @@ class _ServerSetupScreenState extends ConsumerState<ServerSetupScreen> {
                     value: _allowInsecure,
                     onChanged: (v) => setState(() => _allowInsecure = v),
                   ),
+                  if (_allowInsecure) const InsecureConnectionWarning(),
                   if (_error != null) ...[
                     const SizedBox(height: 8),
                     Text(

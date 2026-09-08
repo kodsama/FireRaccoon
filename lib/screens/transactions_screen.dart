@@ -25,6 +25,7 @@ import '../widgets/account_balance_check_panel.dart';
 import '../widgets/account_filter_dialog.dart';
 import '../widgets/entity_screen_header.dart';
 import '../widgets/firefly_refresh_button.dart';
+import '../widgets/not_connected_view.dart';
 import '../widgets/small_loading_indicator.dart';
 import '../widgets/selection_check_control.dart';
 import '../widgets/transaction_edit_panel.dart';
@@ -592,7 +593,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
         ),
         error: (error, stackTrace) => Scaffold(
           backgroundColor: colors.pageBg,
-          body: Center(child: Text(l10n.errorGeneric(error.toString()))),
+          body: LoadFailureView(
+            error: error,
+            message: l10n.errorGeneric(error.toString()),
+          ),
         ),
         data: (transactions) => _buildTransactionsScaffold(
           allTransactions: transactions,

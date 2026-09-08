@@ -3790,4 +3790,51 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get backupOpen => 'Ouvrir';
+
+  @override
+  String get notConnectedTitle => 'Oups, aucun serveur pour le moment';
+
+  @override
+  String get notConnectedBody =>
+      'FireRaccoon n\'est pas connecté à Firefly III, il n\'y a donc rien à afficher. Connectez votre serveur et vos comptes apparaîtront ici.';
+
+  @override
+  String get notConnectedAction => 'Ouvrir les paramètres';
+
+  @override
+  String get notConnectedTitleRaccoon => 'Oups, les poubelles sont vides';
+
+  @override
+  String get notConnectedBodyRaccoon =>
+      'Rien à fouiller pour l\'instant. Branchez FireRaccoon sur votre serveur Firefly III et les bonnes choses arriveront ici.';
+
+  @override
+  String get credentialsLockedTitle => 'En attente de votre trousseau';
+
+  @override
+  String get credentialsLockedBody =>
+      'Votre connexion est enregistrée, mais le trousseau du système ne la rendra pas tant qu\'il est verrouillé. Déverrouillez-le, puis réessayez.';
+
+  @override
+  String get credentialsLockedAction => 'Réessayer';
+
+  @override
+  String get credentialsLockedRetrying => 'Nouvelle tentative...';
+
+  @override
+  String get credentialsLockedTitleRaccoon => 'Le magot est verrouillé';
+
+  @override
+  String get credentialsLockedBodyRaccoon =>
+      'Ce raton laveur sait où tout se trouve, mais le couvercle ne bouge pas. Déverrouillez votre trousseau et il réessaiera.';
+
+  @override
+  String get insecureConnectionBadge => 'Non chiffré';
+
+  @override
+  String get insecureConnectionWarning =>
+      'Votre jeton et toutes les réponses circulent en clair via http://. N\'importe qui sur le réseau entre vous et votre serveur peut les lire. Utilisez https:// sauf si vous mesurez le risque.';
+
+  @override
+  String get secureConnectionTooltip => 'Connexion chiffrée (https)';
 }

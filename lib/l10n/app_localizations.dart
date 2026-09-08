@@ -6801,6 +6801,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open'**
   String get backupOpen;
+
+  /// Heading on the screen shown when no Firefly III server is connected
+  ///
+  /// In en, this message translates to:
+  /// **'Uh oh, no server yet'**
+  String get notConnectedTitle;
+
+  /// Explanation shown when no Firefly III server is connected
+  ///
+  /// In en, this message translates to:
+  /// **'FireRaccoon is not connected to Firefly III, so there is nothing to show yet. Connect your server and your accounts turn up here.'**
+  String get notConnectedBody;
+
+  /// Button that opens Settings from the not-connected screen
+  ///
+  /// In en, this message translates to:
+  /// **'Open settings'**
+  String get notConnectedAction;
+
+  /// Raccoon Mode heading when no Firefly III server is connected
+  ///
+  /// In en, this message translates to:
+  /// **'Uh oh, the bins are empty'**
+  String get notConnectedTitleRaccoon;
+
+  /// Raccoon Mode explanation when no Firefly III server is connected
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing to rummage through yet. Point FireRaccoon at your Firefly III server and the good stuff turns up here.'**
+  String get notConnectedBodyRaccoon;
+
+  /// Heading shown when the platform credential store is locked
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting on your keychain'**
+  String get credentialsLockedTitle;
+
+  /// Explanation shown when the platform credential store is locked
+  ///
+  /// In en, this message translates to:
+  /// **'Your connection is saved, but the system keychain will not hand it back until it is unlocked. Unlock it, then ask again.'**
+  String get credentialsLockedBody;
+
+  /// Button that asks the credential store again
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get credentialsLockedAction;
+
+  /// Label on the retry button while the read is in flight
+  ///
+  /// In en, this message translates to:
+  /// **'Asking again...'**
+  String get credentialsLockedRetrying;
+
+  /// Raccoon Mode heading when the credential store is locked
+  ///
+  /// In en, this message translates to:
+  /// **'The stash is locked'**
+  String get credentialsLockedTitleRaccoon;
+
+  /// Raccoon Mode explanation when the credential store is locked
+  ///
+  /// In en, this message translates to:
+  /// **'This raccoon knows where everything is, but the lid will not budge. Unlock your keychain and it will have another go.'**
+  String get credentialsLockedBodyRaccoon;
+
+  /// Badge shown next to a server reached over plain http
+  ///
+  /// In en, this message translates to:
+  /// **'Not encrypted'**
+  String get insecureConnectionBadge;
+
+  /// Warning shown when the allow-http switch is turned on
+  ///
+  /// In en, this message translates to:
+  /// **'Your token and every answer travel in the clear over http://. Anyone on the network between here and your server can read them. Use https:// unless you understand the risk.'**
+  String get insecureConnectionWarning;
+
+  /// Tooltip on the lock shown for an https connection
+  ///
+  /// In en, this message translates to:
+  /// **'Encrypted connection (https)'**
+  String get secureConnectionTooltip;
 }
 
 class _AppLocalizationsDelegate
