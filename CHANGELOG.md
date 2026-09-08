@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-08
+
+### Added
+
+- MCP reports the state of the Firefly connection instead of failing with it.
+  A tool that needed Firefly and had nowhere to ask used to throw, and the
+  socket error underneath reached the agent as an opaque `tool_error`: read
+  that way an agent retries, or concludes the ledger is broken, when the answer
+  is that nobody has connected a server yet. Tools now answer `not_connected`,
+  `backend_unreachable` or `backend_unauthorized`, each with what would fix it
+- `get_capabilities` and `check_connection` report which server is connected,
+  which Firefly version it runs, which app release is asking, and how many users
+  the instance holds. Both keep answering while the backend is down, which is
+  the point of them. The user count needs an owner's token, so a viewer gets the
+  rest of the status and no count
+
+### Fixed
+
+- The installed macOS app could not read the connection it had saved. The
+  release entitlements sandboxed it, and a sandboxed app is confined to its own
+  keychain access group unless it carries `keychain-access-groups`, which only
+  signs with a development certificate. Every launch found an empty store and
+  asked for a server that had already been connected
+- Screens no longer put `Error loading data: Exception: Not connected to
+  Firefly III` in front of someone who has not finished setting up. Nothing has
+  failed at that point, so the disconnected state now says what it is, shows
+  what to do about it, and offers a way to Settings. Raccoon Mode has its own
+  words for it
+- A refusal Firefly sent was reported as a server nobody could reach. Both
+  arrive with no status code attached, so anything reading a missing status as
+  "nothing answered" called a 404 from a server that was up and talking a
+  network failure
+
 ## [0.3.2] - 2026-09-03
 
 ### Fixed
