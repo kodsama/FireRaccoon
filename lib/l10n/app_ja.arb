@@ -1967,5 +1967,8 @@
   "credentialsLockedAction": "もう一度試す",
   "credentialsLockedRetrying": "再試行しています...",
   "credentialsLockedTitleRaccoon": "隠し場所が閉まっています",
-  "credentialsLockedBodyRaccoon": "このアライグマは場所を知っていますが、ふたが開きません。キーチェーンのロックを解除すれば、もう一度挑戦します。"
+  "credentialsLockedBodyRaccoon": "このアライグマは場所を知っていますが、ふたが開きません。キーチェーンのロックを解除すれば、もう一度挑戦します。",
+  "insecureConnectionBadge": "暗号化なし",
+  "insecureConnectionWarning": "トークンとすべての応答が http:// で平文のまま流れます。あなたとサーバーの間のネットワーク上の誰もが読み取れます。リスクを理解している場合を除き、https:// を使ってください。",
+  "secureConnectionTooltip": "暗号化された接続 (https)"
 }

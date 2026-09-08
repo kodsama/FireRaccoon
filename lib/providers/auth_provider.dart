@@ -10,6 +10,7 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
+import '../utils/transport_security.dart';
 import '../utils/debug_env_credentials.dart';
 import '../utils/web_backend_proxy.dart';
 
@@ -254,6 +255,22 @@ class AuthNotifier extends Notifier<AuthSettings> {
     if (env == null || env.isEmpty) return partial;
 
     final envInsecure = env['FIREFLY_ALLOW_INSECURE'];
+    final envUrl = partial.serverUrl.isEmpty
+        ? env['FIREFLY_URL'] ?? ''
+        : partial.serverUrl;
+    final envAllowsInsecure = envInsecure != null
+        ? envInsecure == 'true'
+        : partial.allowInsecure;
+    // The same rule as every other way a URL arrives. A development fallback
+    // that quietly allows what the app refuses everywhere else is how an http
+    // address gets tested for weeks and then fails on the first real install.
+    if (!envAllowsInsecure && isUnencryptedUrl(envUrl)) {
+      _log.warning(
+        'Ignored the debug .env fallback: it names a plain http:// server '
+        'without FIREFLY_ALLOW_INSECURE=true',
+      );
+      return partial;
+    }
     _log.info('Applied debug .env credential fallback');
     return AuthSettings(
       serverUrl: partial.serverUrl.isEmpty
@@ -290,6 +307,10 @@ class AuthNotifier extends Notifier<AuthSettings> {
     AuthMode authMode = AuthMode.token,
     bool allowInsecure = false,
   }) async {
+    // Every saved connection funnels through here, so this is where the rule
+    // holds: the connection test refuses http too, but a settings import and an
+    // OAuth sign-in never go near it.
+    requireEncryptedTransport(serverUrl, allowInsecure: allowInsecure);
     // Apply in memory first so the session works even if persistence fails.
     state = AuthSettings(
       serverUrl: serverUrl,
@@ -443,6 +464,7 @@ class AuthNotifier extends Notifier<AuthSettings> {
 
     final token = client.credentials.accessToken;
 
+    requireEncryptedTransport(baseUrl, allowInsecure: insecure);
     await _storage.write(key: 'serverUrl', value: baseUrl);
     await _storage.write(key: 'apiToken', value: token);
     await _storage.write(key: 'authMode', value: 'oauth2');
