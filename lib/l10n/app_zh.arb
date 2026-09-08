@@ -1904,5 +1904,7 @@
   "cosmosSsoUnsupported": "此平台不支持登录 Cosmos",
   "cosmosSsoWebNote": "你的浏览器已经携带 Cosmos 会话",
   "cosmosSsoExplainer": "当你的 Firefly III 服务器位于需要登录的 Cosmos Cloud 路由之后时登录。Firefly 本身仍使用 Firefly 令牌。",
-  "cosmosSsoCancelled": "登录在完成前被关闭"
+  "cosmosSsoCancelled": "登录在完成前被关闭",
+  "connectionFailedCosmos": "该服务器位于 Cosmos Cloud 登录之后。请先登录 Cosmos，然后重新测试。",
+  "cosmosSsoSignInAction": "登录 Cosmos"
 }

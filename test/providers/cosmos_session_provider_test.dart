@@ -143,6 +143,72 @@ void main() {
     expect(sentCookie, 'jwttoken=jwt-value');
   });
 
+  test('a Cosmos sign-in page is named, not called a wrong address', () async {
+    // Followed, the 302 lands on the login page as a perfectly successful 200
+    // and reads as "not the Firefly III API", which sends someone off to
+    // correct an address that was right.
+    final container = ProviderContainer(
+      overrides: [
+        cosmosSessionStoreProvider.overrideWithValue(_MemoryStore()),
+        authProvider.overrideWith(
+          () => AuthNotifier(
+            storage: const FlutterSecureStorage(),
+            debugEnvLoader: () async => const {},
+            httpClient: MockClient(
+              (_) async => http.Response(
+                '',
+                302,
+                headers: {
+                  'location':
+                      'https://cosmos.example/cosmos-ui/openid'
+                      '?client_id=__route_Firefly-III',
+                },
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final result = await container
+        .read(authProvider.notifier)
+        .testConnection('https://firefly.example', 'tok', false);
+
+    expect(result.ok, isFalse);
+    expect(result.failure, ConnectionFailure.cosmosLoginRequired);
+  });
+
+  test('an ordinary web page is still a wrong address', () async {
+    // Only a redirect to Cosmos means "sign in". A UI host answering with its
+    // own page is the address being wrong, and must keep saying so.
+    final container = ProviderContainer(
+      overrides: [
+        cosmosSessionStoreProvider.overrideWithValue(_MemoryStore()),
+        authProvider.overrideWith(
+          () => AuthNotifier(
+            storage: const FlutterSecureStorage(),
+            debugEnvLoader: () async => const {},
+            httpClient: MockClient(
+              (_) async => http.Response(
+                '<!DOCTYPE html><html><body>hello</body></html>',
+                200,
+                headers: {'content-type': 'text/html'},
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final result = await container
+        .read(authProvider.notifier)
+        .testConnection('https://firefly.example', 'tok', false);
+
+    expect(result.failure, ConnectionFailure.notFirefly);
+  });
+
   test('an expiry drops it, and only when there was one', () async {
     final store = _MemoryStore();
     final container = containerWith(store);

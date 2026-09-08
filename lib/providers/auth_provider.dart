@@ -102,6 +102,11 @@ enum ConnectionFailure {
   /// a user interface address or a sign-in page does.
   notFirefly,
 
+  /// A Cosmos Cloud route stands in front of it and nobody has signed in. Told
+  /// apart from [notFirefly] because the address is right and the fix is a
+  /// sign-in, not a correction.
+  cosmosLoginRequired,
+
   /// It answered with a server error.
   serverError,
 }
@@ -394,15 +399,27 @@ class AuthNotifier extends Notifier<AuthSettings> {
     // indicator, and a single transient blip must not flap it to unreachable.
     for (var attempt = 1; attempt <= 2; attempt++) {
       try {
-        final response = await _testClient()
-            .get(
-              Uri.parse('$requestBaseUrl/api/v1/about'),
-              headers: {
-                'Authorization': 'Bearer $token',
-                'Accept': 'application/json',
-              },
-            )
-            .timeout(const Duration(seconds: 10));
+        // Redirects are not followed, so a Cosmos route's 302 to its sign-in
+        // is visible here. Followed, it lands on the login page as a perfectly
+        // successful 200 and reads as "not the Firefly III API", which sends
+        // someone off to correct an address that was right.
+        final probe = http.Request(
+          'GET',
+          Uri.parse('$requestBaseUrl/api/v1/about'),
+        )..followRedirects = false;
+        probe.headers.addAll({
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        });
+        final response = await http.Response.fromStream(
+          await _testClient().send(probe),
+        ).timeout(const Duration(seconds: 10));
+        if (isCosmosLoginRedirect(response.statusCode, response.headers)) {
+          _log.warning('Connection test met a Cosmos sign-in');
+          return const ConnectionTestResult.failed(
+            ConnectionFailure.cosmosLoginRequired,
+          );
+        }
         if (response.statusCode == 200) {
           if (_answeredAsFirefly(response)) {
             return const ConnectionTestResult.ok();

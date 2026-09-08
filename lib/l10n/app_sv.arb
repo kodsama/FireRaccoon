@@ -1904,5 +1904,7 @@
   "cosmosSsoUnsupported": "Inloggning på Cosmos finns inte på den här plattformen",
   "cosmosSsoWebNote": "Din webbläsare bär redan Cosmos-sessionen",
   "cosmosSsoExplainer": "Logga in när din Firefly III-server ligger bakom en Cosmos Cloud-rutt som kräver inloggning. Firefly-token används fortfarande för Firefly självt.",
-  "cosmosSsoCancelled": "Inloggningen stängdes innan den blev klar"
+  "cosmosSsoCancelled": "Inloggningen stängdes innan den blev klar",
+  "connectionFailedCosmos": "Den servern ligger bakom en Cosmos Cloud-inloggning. Logga in på Cosmos och testa igen.",
+  "cosmosSsoSignInAction": "Logga in på Cosmos"
 }

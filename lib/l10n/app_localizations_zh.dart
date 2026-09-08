@@ -3736,4 +3736,11 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cosmosSsoCancelled => '登录在完成前被关闭';
+
+  @override
+  String get connectionFailedCosmos =>
+      '该服务器位于 Cosmos Cloud 登录之后。请先登录 Cosmos，然后重新测试。';
+
+  @override
+  String get cosmosSsoSignInAction => '登录 Cosmos';
 }

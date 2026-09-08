@@ -1979,5 +1979,7 @@
   "cosmosSsoUnsupported": "このプラットフォームでは Cosmos へのサインインは利用できません",
   "cosmosSsoWebNote": "ブラウザーがすでに Cosmos のセッションを保持しています",
   "cosmosSsoExplainer": "Firefly III サーバーがログインを求める Cosmos Cloud のルートの背後にある場合にサインインします。Firefly 自体には引き続き Firefly のトークンを使います。",
-  "cosmosSsoCancelled": "サインインは完了する前に閉じられました"
+  "cosmosSsoCancelled": "サインインは完了する前に閉じられました",
+  "connectionFailedCosmos": "そのサーバーは Cosmos Cloud のサインインの背後にあります。Cosmos にサインインしてから、もう一度お試しください。",
+  "cosmosSsoSignInAction": "Cosmos にサインイン"
 }

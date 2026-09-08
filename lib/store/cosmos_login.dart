@@ -29,3 +29,17 @@ class UnsupportedCosmosLogin implements CosmosLogin {
   @override
   Future<CosmosSession?> signIn(Uri routeUrl) async => null;
 }
+
+/// Raised when the sign-in window could not be opened at all.
+///
+/// Distinct from a person closing it: nothing was shown, so there is nothing
+/// for them to have decided, and the app has to say so rather than resetting
+/// the button and looking like it ignored the click.
+class CosmosLoginUnavailable implements Exception {
+  const CosmosLoginUnavailable(this.reason);
+
+  final String reason;
+
+  @override
+  String toString() => 'The Cosmos sign-in window would not open: $reason';
+}

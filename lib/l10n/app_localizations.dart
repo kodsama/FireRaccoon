@@ -6939,6 +6939,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign-in was closed before it finished'**
   String get cosmosSsoCancelled;
+
+  /// Shown when the connection test met a Cosmos sign-in page
+  ///
+  /// In en, this message translates to:
+  /// **'That server sits behind a Cosmos Cloud sign-in. Sign in to Cosmos, then test again.'**
+  String get connectionFailedCosmos;
+
+  /// Button in the connection dialog that starts the Cosmos sign-in
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to Cosmos'**
+  String get cosmosSsoSignInAction;
 }
 
 class _AppLocalizationsDelegate

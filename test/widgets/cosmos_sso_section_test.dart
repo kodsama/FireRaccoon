@@ -10,6 +10,17 @@ import 'package:flutter_test/flutter_test.dart';
 import '../helpers/localized_test_app.dart';
 import '../helpers/static_auth_notifier.dart';
 
+/// A web view whose window will not open, which used to leave the button
+/// resetting itself and nothing else happening.
+class _BrokenLogin implements CosmosLogin {
+  @override
+  bool get isSupported => true;
+
+  @override
+  Future<CosmosSession?> signIn(Uri routeUrl) async =>
+      throw const CosmosLoginUnavailable('no window server');
+}
+
 /// Stands in for the platform web view, and records what it was asked to open.
 class _FakeLogin implements CosmosLogin {
   _FakeLogin({this.session, this.isSupported = true});
@@ -138,6 +149,30 @@ void main() {
       find.text('Signing in to Cosmos is not available on this platform'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('a window that will not open is said out loud', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          cosmosSessionStoreProvider.overrideWithValue(_MemoryStore()),
+        ],
+        child: buildLocalizedTestApp(
+          child: CosmosSignInButton(
+            serverUrl: 'https://firefly.example',
+            login: _BrokenLogin(),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Sign in to Cosmos'));
+    await tester.pumpAndSettle();
+
+    // Silence here reads as the app ignoring the click, which is what sent
+    // someone looking for a sign-in page that was never going to appear.
+    expect(find.textContaining('would not open'), findsOneWidget);
   });
 
   testWidgets('nothing is shown before a server is configured', (tester) async {

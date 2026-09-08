@@ -3839,4 +3839,11 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get cosmosSsoCancelled => 'Inloggningen stängdes innan den blev klar';
+
+  @override
+  String get connectionFailedCosmos =>
+      'Den servern ligger bakom en Cosmos Cloud-inloggning. Logga in på Cosmos och testa igen.';
+
+  @override
+  String get cosmosSsoSignInAction => 'Logga in på Cosmos';
 }

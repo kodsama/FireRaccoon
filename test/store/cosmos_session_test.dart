@@ -66,6 +66,43 @@ void main() {
     });
   });
 
+  group('when the sign-in is finished', () {
+    // Cosmos sets jwttoken before MFA is satisfied and checks MFAState
+    // separately, so the cookie appearing is not the finish line. Taking it
+    // early saved a session Cosmos would refuse, and closed the window while
+    // the person was still being asked for a second factor.
+    bool finished(Uri landedOn, Uri routeUrl) =>
+        landedOn.host.toLowerCase() == routeUrl.host.toLowerCase();
+
+    final route = Uri.parse('https://cash.example');
+
+    test('not while still on the identity provider', () {
+      expect(
+        finished(Uri.parse('https://cosmos.example/cosmos-ui/login'), route),
+        isFalse,
+      );
+      expect(
+        finished(Uri.parse('https://cosmos.example/cosmos-ui/openid'), route),
+        isFalse,
+      );
+    });
+
+    test('yes once it comes back to the route it started from', () {
+      // Only Cosmos's own detect-callback brings it back here, and that runs
+      // after the whole login.
+      expect(
+        finished(
+          Uri.parse(
+            'https://cash.example/cosmos/oauth2/detect-callback?code=x',
+          ),
+          route,
+        ),
+        isTrue,
+      );
+      expect(finished(Uri.parse('https://cash.example/'), route), isTrue);
+    });
+  });
+
   group('CosmosSessionClient', () {
     test('sends the cookie to the protected host', () async {
       String? sent;
@@ -143,7 +180,9 @@ void main() {
             '',
             302,
             headers: {
-              'location': 'https://cosmos.example/cosmos-ui/openid?x=1',
+              'location':
+                  'https://cosmos.example/cosmos-ui/openid'
+                  '?client_id=__route_Firefly-III',
             },
           ),
         ),
@@ -200,7 +239,8 @@ void main() {
     test('only a redirect to a Cosmos login path counts', () {
       expect(
         isCosmosLoginRedirect(302, {
-          'location': 'https://c.example/cosmos-ui/openid',
+          'location':
+              'https://c.example/cosmos-ui/openid?client_id=__route_App',
         }),
         isTrue,
       );
@@ -216,10 +256,34 @@ void main() {
         isCosmosLoginRedirect(302, {'location': 'https://f.example/elsewhere'}),
         isFalse,
       );
+      // Matched on the path, not anywhere in the string. This decides whether
+      // someone is told to sign in or told their address is wrong, so a URL
+      // that merely mentions the text must not be taken for a Cosmos gate.
+      expect(
+        isCosmosLoginRedirect(302, {
+          'location': 'https://f.example/go?next=/cosmos-ui/openid',
+        }),
+        isFalse,
+      );
+      // The OpenID form has to carry the auto-provisioned route client.
+      expect(
+        isCosmosLoginRedirect(302, {
+          'location': 'https://c.example/cosmos-ui/openid?client_id=other',
+        }),
+        isFalse,
+      );
+      expect(
+        isCosmosLoginRedirect(302, {
+          'location':
+              'https://c.example/cosmos-ui/openid?client_id=__route_Firefly-III',
+        }),
+        isTrue,
+      );
       expect(isCosmosLoginRedirect(302, const {}), isFalse);
       expect(
         isCosmosLoginRedirect(200, {
-          'location': 'https://c.example/cosmos-ui/openid',
+          'location':
+              'https://c.example/cosmos-ui/openid?client_id=__route_App',
         }),
         isFalse,
       );

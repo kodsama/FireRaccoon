@@ -3836,4 +3836,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cosmosSsoCancelled => 'Sign-in was closed before it finished';
+
+  @override
+  String get connectionFailedCosmos =>
+      'That server sits behind a Cosmos Cloud sign-in. Sign in to Cosmos, then test again.';
+
+  @override
+  String get cosmosSsoSignInAction => 'Sign in to Cosmos';
 }

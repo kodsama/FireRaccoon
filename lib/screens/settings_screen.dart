@@ -19,6 +19,7 @@ import '../providers/write_ahead_provider.dart';
 import '../providers/undo_history_provider.dart';
 import '../services/mcp_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/connection_test_banner.dart';
 import '../widgets/cosmos_sso_section.dart';
 import '../widgets/insecure_connection_notice.dart';
 import '../widgets/theme_style_picker.dart';
@@ -31,7 +32,6 @@ import '../widgets/mcp_settings_section.dart';
 import '../widgets/people_settings_section.dart';
 import '../widgets/settings_backup_section.dart';
 import '../widgets/side_menu_settings_section.dart';
-import '../utils/readable_on.dart';
 import '../utils/transport_security.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
@@ -159,6 +159,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ConnectionFailure.insecureRefused => l10n.connectionFailedInsecure,
       ConnectionFailure.unauthorized => l10n.connectionFailedUnauthorized,
       ConnectionFailure.notFirefly => l10n.connectionFailedNotFirefly,
+      ConnectionFailure.cosmosLoginRequired => l10n.connectionFailedCosmos,
       ConnectionFailure.unreachable => l10n.connectionFailedUnreachable,
       ConnectionFailure.serverError || null => l10n.connectionFailed,
     };
@@ -178,6 +179,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     bool obscureToken = true;
     bool isTesting = false;
     bool testSuccess = false;
+    // Held rather than shown in a snack bar: this dialog is modal, and its own
+    // scrim paints over anything the Scaffold puts underneath it, which left
+    // the message dimmed to the point of being unreadable.
+    ConnectionTestResult? testResult;
 
     showDialog(
       context: context,
@@ -292,35 +297,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                   setState(() {
                                     isTesting = false;
                                     testSuccess = result.ok;
+                                    testResult = result;
                                   });
-                                  final banner = result.ok
-                                      ? context.colors.success
-                                      : context.colors.danger;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        result.ok
-                                            ? l10n.connectionSuccessful
-                                            : _connectionFailureText(
-                                                l10n,
-                                                result,
-                                              ),
-                                        // The theme's own content colour is
-                                        // dark, which on a dark red banner in
-                                        // dark mode left the message
-                                        // unreadable. Picked from the
-                                        // background rather than fixed,
-                                        // because a palette is free to make
-                                        // either of these light: Raccoon Mode
-                                        // renders danger as a mid grey.
-                                        style: TextStyle(
-                                          color: onColor(banner),
-                                        ),
-                                      ),
-                                      backgroundColor: banner,
-                                      duration: const Duration(seconds: 8),
-                                    ),
-                                  );
                                 }
                               },
                         icon: isTesting
@@ -335,6 +313,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         label: Text(l10n.testConnection),
                       ),
                     ),
+                    if (testResult != null)
+                      ConnectionTestBanner(
+                        ok: testResult!.ok,
+                        message: testResult!.ok
+                            ? l10n.connectionSuccessful
+                            : _connectionFailureText(l10n, testResult!),
+                        // The one failure the person can act on without
+                        // leaving the dialog.
+                        action:
+                            testResult!.failure ==
+                                ConnectionFailure.cosmosLoginRequired
+                            ? CosmosSignInButton(
+                                serverUrl: urlController.text,
+                                onSignedIn: () =>
+                                    setState(() => testResult = null),
+                              )
+                            : null,
+                      ),
                   ] else
                     Tooltip(
                       message: l10n.oauthClientId,

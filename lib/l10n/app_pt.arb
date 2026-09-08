@@ -1904,5 +1904,7 @@
   "cosmosSsoUnsupported": "Iniciar sessão no Cosmos não está disponível nesta plataforma",
   "cosmosSsoWebNote": "O seu navegador já transporta a sessão Cosmos",
   "cosmosSsoExplainer": "Inicie sessão quando o seu servidor Firefly III estiver atrás de uma rota Cosmos Cloud que exige autenticação. O token do Firefly continua a ser usado para o próprio Firefly.",
-  "cosmosSsoCancelled": "O início de sessão foi fechado antes de terminar"
+  "cosmosSsoCancelled": "O início de sessão foi fechado antes de terminar",
+  "connectionFailedCosmos": "Esse servidor está atrás de uma autenticação do Cosmos Cloud. Inicie sessão no Cosmos e teste novamente.",
+  "cosmosSsoSignInAction": "Iniciar sessão no Cosmos"
 }
