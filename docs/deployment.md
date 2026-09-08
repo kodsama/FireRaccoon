@@ -57,6 +57,13 @@ All GUI installers are **unsigned**. Store / notarized distribution needs secret
 blocks the macOS DMG on other machines, unsigned IPAs cannot install on devices,
 Windows SmartScreen warns, and Android packages stay debug-key signed.
 
+On Linux the Firefly credentials go to the Secret Service through libsecret, so
+a host without it, or without a running keyring, has nowhere to keep them. The
+`.deb` and `.rpm` both declare the dependency. An AppImage declares none by
+design and relies on the host, which is fine on a normal desktop and is the one
+format that can be installed somewhere secure storage will not work; the app
+reports that as an unreadable store rather than as an empty one.
+
 Packaging configs: `distribute_options.yaml`, `windows/packaging/exe/`,
 `linux/packaging/{appimage,deb,rpm}/`, `packaging/windows/product.wxs`,
 `packaging/linux/`.
