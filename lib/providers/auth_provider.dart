@@ -10,6 +10,8 @@ import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
+import '../store/cosmos_session_client.dart';
+import 'cosmos_session_provider.dart';
 import '../utils/transport_security.dart';
 import '../utils/debug_env_credentials.dart';
 import '../utils/web_backend_proxy.dart';
@@ -131,6 +133,19 @@ class AuthNotifier extends Notifier<AuthSettings> {
 
   final FlutterSecureStorage _storage;
   final http.Client _httpClient;
+
+  /// The client the connection test uses.
+  ///
+  /// Wrapped so a server behind a Cosmos route is tested the way it will
+  /// actually be used. Without this, signing in to Cosmos changed nothing for
+  /// the one button whose whole job is to say whether the connection works:
+  /// the test kept getting the sign-in page and reporting "not the Firefly
+  /// III API".
+  http.Client _testClient() => CosmosSessionClient(
+    inner: _httpClient,
+    session: () => ref.read(cosmosSessionProvider),
+    onSessionExpired: () => ref.read(cosmosSessionProvider.notifier).expired(),
+  );
   final DebugEnvLoader _debugEnvLoader;
   final Duration _readTimeout;
   final _log = AppLogger.scoped('providers.auth');
@@ -379,7 +394,7 @@ class AuthNotifier extends Notifier<AuthSettings> {
     // indicator, and a single transient blip must not flap it to unreachable.
     for (var attempt = 1; attempt <= 2; attempt++) {
       try {
-        final response = await _httpClient
+        final response = await _testClient()
             .get(
               Uri.parse('$requestBaseUrl/api/v1/about'),
               headers: {

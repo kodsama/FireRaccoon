@@ -31,6 +31,7 @@ import '../widgets/mcp_settings_section.dart';
 import '../widgets/people_settings_section.dart';
 import '../widgets/settings_backup_section.dart';
 import '../widgets/side_menu_settings_section.dart';
+import '../utils/readable_on.dart';
 import '../utils/transport_security.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
@@ -292,6 +293,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                     isTesting = false;
                                     testSuccess = result.ok;
                                   });
+                                  final banner = result.ok
+                                      ? context.colors.success
+                                      : context.colors.danger;
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
@@ -301,10 +305,19 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                                                 l10n,
                                                 result,
                                               ),
+                                        // The theme's own content colour is
+                                        // dark, which on a dark red banner in
+                                        // dark mode left the message
+                                        // unreadable. Picked from the
+                                        // background rather than fixed,
+                                        // because a palette is free to make
+                                        // either of these light: Raccoon Mode
+                                        // renders danger as a mid grey.
+                                        style: TextStyle(
+                                          color: onColor(banner),
+                                        ),
                                       ),
-                                      backgroundColor: result.ok
-                                          ? context.colors.success
-                                          : context.colors.danger,
+                                      backgroundColor: banner,
                                       duration: const Duration(seconds: 8),
                                     ),
                                   );
@@ -926,9 +939,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SideMenuSettingsSection(),
         if (ref.watch(canManageFireflyConnectionProvider)) ...[
           const SizedBox(height: 24),
-          Text(
-            l10n.backendConnection,
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Text(
+                l10n.backendConnection,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              // Only once there is a server to describe. Before that the lock
+              // would be answering a question nobody has asked yet.
+              if (ref.watch(authProvider).serverUrl.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                TransportLockIcon(
+                  url: ref.watch(authProvider).serverUrl,
+                  size: 15,
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 16),
           Card(
