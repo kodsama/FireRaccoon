@@ -3808,4 +3808,35 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get secureConnectionTooltip => 'Krypterad anslutning (https)';
+
+  @override
+  String get cosmosSsoTitle => 'Cosmos SSO';
+
+  @override
+  String get cosmosSsoNotSignedIn => 'Inte inloggad';
+
+  @override
+  String cosmosSsoSignedIn(String host) {
+    return 'Inloggad på $host';
+  }
+
+  @override
+  String get cosmosSsoSignIn => 'Logga in';
+
+  @override
+  String get cosmosSsoSignOut => 'Logga ut';
+
+  @override
+  String get cosmosSsoUnsupported =>
+      'Inloggning på Cosmos finns inte på den här plattformen';
+
+  @override
+  String get cosmosSsoWebNote => 'Din webbläsare bär redan Cosmos-sessionen';
+
+  @override
+  String get cosmosSsoExplainer =>
+      'Logga in när din Firefly III-server ligger bakom en Cosmos Cloud-rutt som kräver inloggning. Firefly-token används fortfarande för Firefly självt.';
+
+  @override
+  String get cosmosSsoCancelled => 'Inloggningen stängdes innan den blev klar';
 }

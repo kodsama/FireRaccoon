@@ -3706,4 +3706,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get secureConnectionTooltip => '加密连接 (https)';
+
+  @override
+  String get cosmosSsoTitle => 'Cosmos SSO';
+
+  @override
+  String get cosmosSsoNotSignedIn => '未登录';
+
+  @override
+  String cosmosSsoSignedIn(String host) {
+    return '已登录 $host';
+  }
+
+  @override
+  String get cosmosSsoSignIn => '登录';
+
+  @override
+  String get cosmosSsoSignOut => '退出登录';
+
+  @override
+  String get cosmosSsoUnsupported => '此平台不支持登录 Cosmos';
+
+  @override
+  String get cosmosSsoWebNote => '你的浏览器已经携带 Cosmos 会话';
+
+  @override
+  String get cosmosSsoExplainer =>
+      '当你的 Firefly III 服务器位于需要登录的 Cosmos Cloud 路由之后时登录。Firefly 本身仍使用 Firefly 令牌。';
+
+  @override
+  String get cosmosSsoCancelled => '登录在完成前被关闭';
 }

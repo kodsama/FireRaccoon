@@ -1970,5 +1970,14 @@
   "credentialsLockedBodyRaccoon": "このアライグマは場所を知っていますが、ふたが開きません。キーチェーンのロックを解除すれば、もう一度挑戦します。",
   "insecureConnectionBadge": "暗号化なし",
   "insecureConnectionWarning": "トークンとすべての応答が http:// で平文のまま流れます。あなたとサーバーの間のネットワーク上の誰もが読み取れます。リスクを理解している場合を除き、https:// を使ってください。",
-  "secureConnectionTooltip": "暗号化された接続 (https)"
+  "secureConnectionTooltip": "暗号化された接続 (https)",
+  "cosmosSsoTitle": "Cosmos SSO",
+  "cosmosSsoNotSignedIn": "未サインイン",
+  "cosmosSsoSignedIn": "{host} にサインイン中",
+  "cosmosSsoSignIn": "サインイン",
+  "cosmosSsoSignOut": "サインアウト",
+  "cosmosSsoUnsupported": "このプラットフォームでは Cosmos へのサインインは利用できません",
+  "cosmosSsoWebNote": "ブラウザーがすでに Cosmos のセッションを保持しています",
+  "cosmosSsoExplainer": "Firefly III サーバーがログインを求める Cosmos Cloud のルートの背後にある場合にサインインします。Firefly 自体には引き続き Firefly のトークンを使います。",
+  "cosmosSsoCancelled": "サインインは完了する前に閉じられました"
 }

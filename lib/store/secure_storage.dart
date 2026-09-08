@@ -83,6 +83,12 @@ class ConsolidatedSecureStorage extends FlutterSecureStorage {
   /// migration built on it cannot read anything at all. Anything missing from
   /// this list is left where it is rather than lost, and its owner keeps
   /// reading it as before.
+  /// The list itself, so a test can hold a new key to the requirement that it
+  /// be folded in. A key missing from here stays stranded outside the one item
+  /// and raises its own keychain prompt for the life of the install.
+  @visibleForTesting
+  static List<String> get legacyKeysForTest => _legacyKeys;
+
   static const List<String> _legacyKeys = [
     // Firefly connection.
     'serverUrl',
@@ -97,8 +103,9 @@ class ConsolidatedSecureStorage extends FlutterSecureStorage {
     'app_users_v1',
     'app_users_session_id',
     'app_users_last_user_id',
-    // Agent keys and view preferences.
+    // Agent keys, the Cosmos route session, and view preferences.
     'agent_keys_v1',
+    'cosmos_session_v1',
     'globalViewMode',
     'tightRowsColumns',
   ];

@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Sign in to a Cosmos Cloud route that stands in front of Firefly III. Cosmos
+  gates a protected route on one cookie, `jwttoken`, which only its own
+  `/cosmos/oauth2/detect-callback` mints at the end of an interactive login, so
+  signing in opens the route in a web view and reads that cookie back out. The
+  Firefly token is unaffected and still travels in `Authorization`, which the
+  Cosmos proxy leaves alone. The cookie is kept in the same keychain item as
+  the Firefly credentials, sent only to the route host it was minted for, and
+  dropped as soon as Cosmos stops accepting it
+- Android, iOS, macOS and Windows use `flutter_inappwebview`; Linux has no
+  implementation there and uses the webkit2gtk window the Linux build already
+  links. On the web there is nothing to do, because the browser carries the
+  cookie itself
+
+### Fixed
+
+- The Linux packages never declared the web view they have always linked, so a
+  `.deb` or `.rpm` could install on a host where the app would not start
+
 ## [0.4.0] - 2026-09-08
 
 ### Added

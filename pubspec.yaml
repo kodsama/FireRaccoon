@@ -53,6 +53,13 @@ dependencies:
   flutter_secure_storage: ^11.0.0
   crypto: ^3.0.7
   flutter_web_auth_2: ^5.0.3
+  # Cosmos gates a route on a cookie its own callback mints, so signing in
+  # means running the flow in a web view and reading that cookie back out.
+  # inappwebview covers Android, iOS, macOS and Windows; Linux has no
+  # implementation there and uses desktop_webview_window, which the Linux
+  # build already links through flutter_web_auth_2.
+  flutter_inappwebview: ^6.1.5
+  desktop_webview_window: ^0.3.0
   flutter_web_auth_2_platform_interface: ^5.0.0
   oauth2: ^2.0.5
   confetti: ^0.8.0

@@ -2192,5 +2192,46 @@
   "secureConnectionTooltip": "Encrypted connection (https)",
   "@secureConnectionTooltip": {
     "description": "Tooltip on the lock shown for an https connection"
+  },
+  "cosmosSsoTitle": "Cosmos SSO",
+  "@cosmosSsoTitle": {
+    "description": "Heading of the Cosmos SSO section in Settings"
+  },
+  "cosmosSsoNotSignedIn": "Not signed in",
+  "@cosmosSsoNotSignedIn": {
+    "description": "Shown when there is no Cosmos session"
+  },
+  "cosmosSsoSignedIn": "Signed in to {host}",
+  "@cosmosSsoSignedIn": {
+    "description": "Shown with the host a Cosmos session belongs to",
+    "placeholders": {
+      "host": {
+        "type": "String"
+      }
+    }
+  },
+  "cosmosSsoSignIn": "Sign in",
+  "@cosmosSsoSignIn": {
+    "description": "Button that starts the Cosmos sign-in"
+  },
+  "cosmosSsoSignOut": "Sign out",
+  "@cosmosSsoSignOut": {
+    "description": "Button that drops the Cosmos session"
+  },
+  "cosmosSsoUnsupported": "Signing in to Cosmos is not available on this platform",
+  "@cosmosSsoUnsupported": {
+    "description": "Shown where no web view can run the Cosmos flow"
+  },
+  "cosmosSsoWebNote": "Your browser already carries the Cosmos session",
+  "@cosmosSsoWebNote": {
+    "description": "Shown on web, where the browser holds the cookie"
+  },
+  "cosmosSsoExplainer": "Sign in when your Firefly III server sits behind a Cosmos Cloud route that requires a login. The Firefly token is still used for Firefly itself.",
+  "@cosmosSsoExplainer": {
+    "description": "Explains when Cosmos SSO is needed"
+  },
+  "cosmosSsoCancelled": "Sign-in was closed before it finished",
+  "@cosmosSsoCancelled": {
+    "description": "Shown when the sign-in window was closed early"
   }
 }
