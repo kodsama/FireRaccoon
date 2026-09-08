@@ -3823,4 +3823,37 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get secureConnectionTooltip => 'Ligação encriptada (https)';
+
+  @override
+  String get cosmosSsoTitle => 'SSO Cosmos';
+
+  @override
+  String get cosmosSsoNotSignedIn => 'Sem sessão iniciada';
+
+  @override
+  String cosmosSsoSignedIn(String host) {
+    return 'Sessão iniciada em $host';
+  }
+
+  @override
+  String get cosmosSsoSignIn => 'Iniciar sessão';
+
+  @override
+  String get cosmosSsoSignOut => 'Terminar sessão';
+
+  @override
+  String get cosmosSsoUnsupported =>
+      'Iniciar sessão no Cosmos não está disponível nesta plataforma';
+
+  @override
+  String get cosmosSsoWebNote =>
+      'O seu navegador já transporta a sessão Cosmos';
+
+  @override
+  String get cosmosSsoExplainer =>
+      'Inicie sessão quando o seu servidor Firefly III estiver atrás de uma rota Cosmos Cloud que exige autenticação. O token do Firefly continua a ser usado para o próprio Firefly.';
+
+  @override
+  String get cosmosSsoCancelled =>
+      'O início de sessão foi fechado antes de terminar';
 }

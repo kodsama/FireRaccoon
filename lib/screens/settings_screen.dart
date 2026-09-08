@@ -19,6 +19,7 @@ import '../providers/write_ahead_provider.dart';
 import '../providers/undo_history_provider.dart';
 import '../services/mcp_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/cosmos_sso_section.dart';
 import '../widgets/insecure_connection_notice.dart';
 import '../widgets/theme_style_picker.dart';
 import '../widgets/autocomplete_text_field.dart';
@@ -1024,6 +1025,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Card(child: McpSettingsSection()),
         ],
         const SizedBox(height: 24),
+        const CosmosSsoSection(),
         Text(
           l10n.recentProblems,
           style: Theme.of(context).textTheme.titleMedium,

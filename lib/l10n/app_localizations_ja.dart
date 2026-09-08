@@ -3714,4 +3714,34 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get secureConnectionTooltip => '暗号化された接続 (https)';
+
+  @override
+  String get cosmosSsoTitle => 'Cosmos SSO';
+
+  @override
+  String get cosmosSsoNotSignedIn => '未サインイン';
+
+  @override
+  String cosmosSsoSignedIn(String host) {
+    return '$host にサインイン中';
+  }
+
+  @override
+  String get cosmosSsoSignIn => 'サインイン';
+
+  @override
+  String get cosmosSsoSignOut => 'サインアウト';
+
+  @override
+  String get cosmosSsoUnsupported => 'このプラットフォームでは Cosmos へのサインインは利用できません';
+
+  @override
+  String get cosmosSsoWebNote => 'ブラウザーがすでに Cosmos のセッションを保持しています';
+
+  @override
+  String get cosmosSsoExplainer =>
+      'Firefly III サーバーがログインを求める Cosmos Cloud のルートの背後にある場合にサインインします。Firefly 自体には引き続き Firefly のトークンを使います。';
+
+  @override
+  String get cosmosSsoCancelled => 'サインインは完了する前に閉じられました';
 }

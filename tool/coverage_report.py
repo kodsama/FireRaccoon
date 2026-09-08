@@ -67,6 +67,13 @@ PLATFORM_EXCLUDE = {
     "store/legacy_support_directory.dart",
     "store/legacy_support_directory_io.dart",
     "store/legacy_support_directory_stub.dart",
+    # Cosmos sign-in drives a native web view and reads a cookie back out of
+    # it. Neither runs under flutter test, and a fake that stood in for the
+    # platform would be asserting against itself. The interface, the session,
+    # the store, the client and the settings section are all covered; these two
+    # are the bindings underneath them.
+    "store/cosmos_login_webview.dart",
+    "store/cosmos_login_desktop.dart",
 }
 
 APP_LOGIC_TOPS = {
