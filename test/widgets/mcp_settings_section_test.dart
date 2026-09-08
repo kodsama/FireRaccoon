@@ -164,6 +164,7 @@ class _FixedMcpService extends McpService {
     String? agentKeysError,
     String? backupsDirectory,
     String? appVersion,
+    String? proxyCookie,
     int basePort = 8787,
   }) async {}
 }
@@ -267,6 +268,7 @@ class _LateBindingMcpService extends McpService {
     String? agentKeysError,
     String? backupsDirectory,
     String? appVersion,
+    String? proxyCookie,
     int basePort = 8787,
   }) async {}
 }

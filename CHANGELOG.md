@@ -21,9 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation there and uses the webkit2gtk window the Linux build already
   links. On the web there is nothing to do, because the browser carries the
   cookie itself
+- The embedded MCP server carries the session the app holds, so an agent
+  reaches a gated route through the same door. It never signs in itself, since
+  that needs a person. `get_capabilities` reports whether a session is held, and
+  a probe that meets the sign-in page says so rather than calling a running
+  server unreachable
 
 ### Fixed
 
+- A load that failed while the server was unreachable reported whatever the call
+  happened to throw. A 404 from a request that never had a working connection
+  behind it describes the symptom; the disconnected server is the reason, and it
+  is the one shown now
+- A screen kept last time's failure on show while it was already asking again,
+  which reads as stuck. Retrying shows the loading indicator
+- Signing in to Cosmos left the connection untested until someone pressed the
+  button again. Signing in is only ever done so the connection works, so the
+  answer is what comes back
 - The Linux packages never declared the web view they have always linked, so a
   `.deb` or `.rpm` could install on a host where the app would not start
 

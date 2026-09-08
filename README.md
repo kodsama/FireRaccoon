@@ -116,7 +116,8 @@ paste into Create ServApp):
 | App + Firefly III + MariaDB | [cosmos-compose.fireraccoon-firefly-stack.json](docs/examples/cosmos-compose.fireraccoon-firefly-stack.json) |
 
 Replace `CHANGE_ME_*` secrets on full stacks. Guide:
-[Cosmos Cloud](docs/cosmos-cloud.md).
+[Cosmos Cloud](docs/cosmos-cloud.md). A route behind a Cosmos login is reached
+by signing in under Settings, which the embedded MCP server then shares.
 
 ## MCP
 

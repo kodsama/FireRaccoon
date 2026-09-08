@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart';
+
 import 'cosmos_session.dart';
 
 /// Signs in to Cosmos and comes back with the route's session cookie.
@@ -14,8 +16,13 @@ abstract interface class CosmosLogin {
   bool get isSupported;
 
   /// Opens [routeUrl] and returns the session Cosmos set, or null when the
-  /// person closed the window without finishing.
-  Future<CosmosSession?> signIn(Uri routeUrl);
+  /// person closed it without finishing.
+  ///
+  /// Takes a context because the flow is hosted inside the app on every
+  /// platform that can: a window of its own brought a native toolbar that
+  /// crashes in its own layout pass, and a second NSWindow whose closing told
+  /// AppKit the app was done.
+  Future<CosmosSession?> signIn(BuildContext context, Uri routeUrl);
 }
 
 /// The answer on a platform with no web view, and on web, where the browser
@@ -27,7 +34,8 @@ class UnsupportedCosmosLogin implements CosmosLogin {
   bool get isSupported => false;
 
   @override
-  Future<CosmosSession?> signIn(Uri routeUrl) async => null;
+  Future<CosmosSession?> signIn(BuildContext context, Uri routeUrl) async =>
+      null;
 }
 
 /// Raised when the sign-in window could not be opened at all.

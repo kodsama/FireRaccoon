@@ -30,7 +30,7 @@ class _CosmosSsoSectionState extends ConsumerState<CosmosSsoSection> {
     final login = widget.login ?? resolveCosmosLogin();
     setState(() => _signingIn = true);
     try {
-      final session = await login.signIn(routeUrl);
+      final session = await login.signIn(context, routeUrl);
       if (session == null) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -173,7 +173,7 @@ class _CosmosSignInButtonState extends ConsumerState<CosmosSignInButton> {
                 _failure = null;
               });
               try {
-                final session = await login.signIn(routeUrl);
+                final session = await login.signIn(context, routeUrl);
                 if (session == null) return;
                 await ref
                     .read(cosmosSessionProvider.notifier)

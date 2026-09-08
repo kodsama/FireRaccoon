@@ -505,6 +505,70 @@ void main() {
       expect(backend['user_count'], 3);
     });
 
+    test('a route standing in front of Firefly is named as such', () async {
+      // A gated route answers the probe with its sign-in redirect. Reported as
+      // unreachable, an agent goes looking for a server that is running fine.
+      final tool = _tool(
+        'get_capabilities',
+        client: MockClient(
+          (_) async => http.Response(
+            '',
+            302,
+            headers: {
+              'location':
+                  'https://cosmos.example/cosmos-ui/openid'
+                  '?client_id=__route_Firefly-III',
+            },
+          ),
+        ),
+      );
+
+      final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
+
+      expect(backend['connected'], isTrue);
+      expect(backend['authorized'], isFalse);
+      expect(backend['proxy'], 'cosmos');
+      expect(backend['reason'], contains('Sign in to Cosmos'));
+    });
+
+    test('says whether it holds a session for such a route', () async {
+      final without = buildTools(
+        target: _target,
+        httpClient: fireflyMockClient(),
+      ).firstWhere((t) => t.name == 'get_capabilities');
+      final with_ = buildTools(
+        target: const FireflyTarget(
+          baseUrl: fireflyBaseUrl,
+          bearer: fireflyToken,
+          proxyCookie: 'jwttoken=abc',
+        ),
+        httpClient: fireflyMockClient(),
+      ).firstWhere((t) => t.name == 'get_capabilities');
+
+      expect(((await without.run({}))['app'] as Map)['proxy_session'], isFalse);
+      expect(((await with_.run({}))['app'] as Map)['proxy_session'], isTrue);
+    });
+
+    test('the session is sent with the request, not just advertised', () async {
+      final seen = <String?>[];
+      final tool = buildTools(
+        target: const FireflyTarget(
+          baseUrl: fireflyBaseUrl,
+          bearer: fireflyToken,
+          proxyCookie: 'jwttoken=abc',
+        ),
+        httpClient: MockClient((request) async {
+          seen.add(request.headers['Cookie']);
+          return jsonHttpResponse(userBody());
+        }),
+      ).firstWhere((t) => t.name == 'get_current_user');
+
+      await tool.run({});
+
+      expect(seen, isNotEmpty);
+      expect(seen.every((c) => c == 'jwttoken=abc'), isTrue);
+    });
+
     test('advertises agent keys as the credential', () async {
       final tool = _tool('get_capabilities');
 
