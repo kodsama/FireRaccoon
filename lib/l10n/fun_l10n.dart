@@ -181,4 +181,8 @@ class FunL10n {
       _pick(l10n.notConnectedTitle, l10n.notConnectedTitleRaccoon);
   String get notConnectedBody =>
       _pick(l10n.notConnectedBody, l10n.notConnectedBodyRaccoon);
+  String get credentialsLockedTitle =>
+      _pick(l10n.credentialsLockedTitle, l10n.credentialsLockedTitleRaccoon);
+  String get credentialsLockedBody =>
+      _pick(l10n.credentialsLockedBody, l10n.credentialsLockedBodyRaccoon);
 }

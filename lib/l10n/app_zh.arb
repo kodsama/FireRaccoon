@@ -1886,5 +1886,11 @@
   "notConnectedBody": "FireRaccoon 尚未连接到 Firefly III，因此没有内容可显示。连接你的服务器后，账户就会出现在这里。",
   "notConnectedAction": "打开设置",
   "notConnectedTitleRaccoon": "哎呀，垃圾桶是空的",
-  "notConnectedBodyRaccoon": "还没有可翻找的东西。把 FireRaccoon 指向你的 Firefly III 服务器，好东西就会出现在这里。"
+  "notConnectedBodyRaccoon": "还没有可翻找的东西。把 FireRaccoon 指向你的 Firefly III 服务器，好东西就会出现在这里。",
+  "credentialsLockedTitle": "正在等待你的钥匙串",
+  "credentialsLockedBody": "你的连接已保存，但系统钥匙串在解锁前不会交出它。解锁后再试一次。",
+  "credentialsLockedAction": "再试一次",
+  "credentialsLockedRetrying": "正在重试...",
+  "credentialsLockedTitleRaccoon": "藏宝处锁上了",
+  "credentialsLockedBodyRaccoon": "这只浣熊知道东西在哪儿，可盖子打不开。解锁你的钥匙串，它会再试一次。"
 }
