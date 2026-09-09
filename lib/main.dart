@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'deployment/deployment_providers.dart';
 import 'l10n/app_localizations.dart';
+import 'providers/app_retry_policy.dart';
 import 'providers/locale_provider.dart';
 import 'providers/mcp_provider.dart';
 import 'providers/server_session_provider.dart';
@@ -43,6 +44,7 @@ Future<void> main() async {
 
   runApp(
     ProviderScope(
+      retry: fireflyProviderRetry,
       overrides: [
         sharedPreferencesProvider.overrideWithValue(prefs),
         deploymentConfigProvider.overrideWithValue(deployment),
