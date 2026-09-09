@@ -1896,6 +1896,8 @@
   "insecureConnectionBadge": "Sem encriptação",
   "insecureConnectionWarning": "O seu token e todas as respostas viajam sem encriptação por http://. Qualquer pessoa na rede entre si e o servidor pode lê-los. Use https:// a menos que compreenda o risco.",
   "secureConnectionTooltip": "Ligação encriptada (https)",
+  "connectionRetryAction": "Tentar de novo",
+  "connectionRetrying": "A verificar...",
   "noRouteTitle": "Esse endereço não é a tua contabilidade",
   "noRouteBody": "Algo responde no endereço do teu servidor, mas não encaminhou o pedido para o Firefly III. Verifica o endereço nas definições e se o Firefly III está a correr por trás.",
   "noRouteTitleRaccoon": "Caixote errado",

@@ -3807,6 +3807,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get secureConnectionTooltip => 'Encrypted connection (https)';
 
   @override
+  String get connectionRetryAction => 'Try again';
+
+  @override
+  String get connectionRetrying => 'Checking...';
+
+  @override
   String get noRouteTitle => 'That address is not your ledger';
 
   @override

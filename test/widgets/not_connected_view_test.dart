@@ -18,12 +18,20 @@ void main() {
     WidgetTester tester,
     Widget child, {
     String? funMode,
+    // Settled by default. Left checking, the retry button reads "Checking..."
+    // and is disabled, which is right on screen and useless to assert against.
+    FireflyConnectionStatus status = FireflyConnectionStatus.unreachable,
   }) async {
     SharedPreferences.setMockInitialValues({'funMode': funMode ?? 'none'});
     final prefs = await SharedPreferences.getInstance();
     await tester.pumpWidget(
       ProviderScope(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          fireflyConnectionProvider.overrideWith(
+            () => _FixedConnection(status),
+          ),
+        ],
         child: buildLocalizedTestApp(child: child),
       ),
     );
@@ -41,6 +49,7 @@ void main() {
 
     expect(find.text('Uh oh, no server yet'), findsOneWidget);
     expect(find.text('Open settings'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
     // The whole point: none of the exception prose reaches the screen.
     expect(find.textContaining('Error loading data'), findsNothing);
     expect(find.textContaining('Exception'), findsNothing);
@@ -82,6 +91,8 @@ void main() {
         error: Exception('boom'),
         message: 'Error loading data: boom',
       ),
+      // Connected, so nothing about the connection can explain this one.
+      status: FireflyConnectionStatus.connected,
     );
 
     expect(find.text('Error loading data: boom'), findsOneWidget);
@@ -184,8 +195,41 @@ void main() {
 
     expect(find.text('That address is not your ledger'), findsOneWidget);
     expect(find.text('Open settings'), findsOneWidget);
+    // The poll gets there on its own within half a minute, which is a long
+    // time to look at a message about a server you have just fixed.
+    expect(find.text('Try again'), findsOneWidget);
     expect(find.byType(CosmosGateView), findsNothing);
     expect(find.textContaining('404'), findsNothing);
+  });
+
+  testWidgets('trying again asks the connection rather than waiting', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({'funMode': 'none'});
+    final prefs = await SharedPreferences.getInstance();
+    var refreshes = 0;
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          fireflyConnectionProvider.overrideWith(
+            () => _CountingConnection(() => refreshes++),
+          ),
+        ],
+        child: buildLocalizedTestApp(
+          child: LoadFailureView(
+            error: NoRouteToFireflyException('cash.example'),
+            message: 'Error loading data: 404',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    await tester.tap(find.text('Try again'));
+    await tester.pump();
+
+    expect(refreshes, 1);
   });
 
   testWidgets('the address wins over a gate waiting on a sign-in', (
@@ -257,6 +301,19 @@ class _FixedAuth extends AuthNotifier {
 
   @override
   AuthSettings build() => settings;
+}
+
+/// Counts the re-checks a state screen asks for.
+class _CountingConnection extends FireflyConnectionNotifier {
+  _CountingConnection(this.onRefresh);
+
+  final void Function() onRefresh;
+
+  @override
+  FireflyConnectionStatus build() => FireflyConnectionStatus.unreachable;
+
+  @override
+  void refresh() => onRefresh();
 }
 
 /// A connection whose state the test decides.

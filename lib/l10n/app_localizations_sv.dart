@@ -3811,6 +3811,12 @@ class AppLocalizationsSv extends AppLocalizations {
   String get secureConnectionTooltip => 'Krypterad anslutning (https)';
 
   @override
+  String get connectionRetryAction => 'Försök igen';
+
+  @override
+  String get connectionRetrying => 'Kontrollerar...';
+
+  @override
   String get noRouteTitle => 'Den adressen är inte din bokföring';
 
   @override

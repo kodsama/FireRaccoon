@@ -1896,6 +1896,8 @@
   "insecureConnectionBadge": "Okrypterad",
   "insecureConnectionWarning": "Din token och alla svar går i klartext över http://. Vem som helst på nätverket mellan dig och servern kan läsa dem. Använd https:// om du inte förstår risken.",
   "secureConnectionTooltip": "Krypterad anslutning (https)",
+  "connectionRetryAction": "Försök igen",
+  "connectionRetrying": "Kontrollerar...",
   "noRouteTitle": "Den adressen är inte din bokföring",
   "noRouteBody": "Något svarar på din serveradress, men det skickade inte förfrågan vidare till Firefly III. Kontrollera adressen i inställningarna, och att Firefly III körs bakom den.",
   "noRouteTitleRaccoon": "Fel tunna",

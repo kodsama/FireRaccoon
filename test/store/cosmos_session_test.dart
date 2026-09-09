@@ -282,6 +282,111 @@ void main() {
       expect(rejected, isZero);
     });
 
+    test('a Cosmos gate is seen rather than followed', () async {
+      // The client underneath follows redirects by default, and a Cosmos gate
+      // is a redirect. Followed, the only thing that ever came back was the
+      // sign-in page as a perfectly successful 200, so the app reported a
+      // wrong address for a server waiting to be signed in to.
+      final requested = <Uri>[];
+      final client = CosmosSessionClient(
+        inner: MockClient((request) async {
+          requested.add(request.url);
+          if (request.url.host == 'firefly.example') {
+            return http.Response(
+              '',
+              302,
+              headers: {
+                'location':
+                    'https://cosmos.example/cosmos-ui/openid'
+                    '?client_id=__route_Firefly-III',
+              },
+            );
+          }
+          return http.Response('<html>sign in</html>', 200);
+        }),
+        session: _session,
+      );
+
+      await expectLater(
+        client.get(Uri.parse('https://firefly.example/api/v1/about')),
+        throwsA(isA<CosmosSignInRequiredException>()),
+      );
+      // Stopped at the gate: the sign-in page was never fetched.
+      expect(requested, [Uri.parse('https://firefly.example/api/v1/about')]);
+    });
+
+    test('an ordinary redirect is still followed', () async {
+      final requested = <Uri>[];
+      final client = CosmosSessionClient(
+        inner: MockClient((request) async {
+          requested.add(request.url);
+          if (request.url.path == '/api/v1/about') {
+            return http.Response(
+              '',
+              301,
+              headers: {'location': '/api/v1/about/'},
+            );
+          }
+          return http.Response('{}', 200);
+        }),
+        session: _session,
+      );
+
+      final response = await client.get(
+        Uri.parse('https://firefly.example/api/v1/about'),
+      );
+
+      expect(response.statusCode, 200);
+      expect(requested.last.path, '/api/v1/about/');
+    });
+
+    test('credentials do not travel across a redirect to another host', () async {
+      // Following one with the headers intact would hand the Firefly token and
+      // the route cookie to whatever host the answer pointed at.
+      final headers = <Map<String, String>>[];
+      final client = CosmosSessionClient(
+        inner: MockClient((request) async {
+          headers.add(Map.of(request.headers));
+          if (request.url.host == 'firefly.example') {
+            return http.Response(
+              '',
+              302,
+              headers: {'location': 'https://elsewhere.example/somewhere'},
+            );
+          }
+          return http.Response('{}', 200);
+        }),
+        session: _session,
+      );
+
+      await client.get(
+        Uri.parse('https://firefly.example/api/v1/about'),
+        headers: {'Authorization': 'Bearer firefly-token'},
+      );
+
+      expect(headers.first['Cookie'], 'jwttoken=jwt-value');
+      expect(headers.last.containsKey('Authorization'), isFalse);
+      expect(headers.last.containsKey('Cookie'), isFalse);
+    });
+
+    test('a redirect loop ends rather than hanging the request', () async {
+      var hops = 0;
+      final client = CosmosSessionClient(
+        inner: MockClient((request) async {
+          hops++;
+          return http.Response('', 302, headers: {'location': '/round/$hops'});
+        }),
+        session: _session,
+      );
+
+      final response = await client.get(
+        Uri.parse('https://firefly.example/api/v1/about'),
+      );
+
+      expect(response.statusCode, 302);
+      expect(hops, 6);
+    });
+
     test('an ordinary answer is not mistaken for a shut door', () async {
       var rejected = 0;
       final client = CosmosSessionClient(
@@ -505,7 +610,8 @@ void main() {
     });
 
     test('a window that would not open says why', () {
-      // ignore: prefer_const_constructors — the point is to run the code.
+      // Not const, so the constructor is actually run.
+      // ignore: prefer_const_constructors
       final unavailable = CosmosLoginUnavailable('no window server');
 
       expect(unavailable.reason, 'no window server');

@@ -1896,6 +1896,8 @@
   "insecureConnectionBadge": "未加密",
   "insecureConnectionWarning": "你的令牌和所有响应都通过 http:// 明文传输。你与服务器之间网络上的任何人都能读取。除非你清楚风险，否则请使用 https://。",
   "secureConnectionTooltip": "加密连接 (https)",
+  "connectionRetryAction": "重试",
+  "connectionRetrying": "正在检查...",
   "noRouteTitle": "该地址不是你的账本",
   "noRouteBody": "你的服务器地址有响应，但它没有把请求转给 Firefly III。请在设置中检查地址，并确认 Firefly III 仍在其后运行。",
   "noRouteTitleRaccoon": "垃圾桶不对",

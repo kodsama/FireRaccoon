@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:fireraccoon/providers/auth_provider.dart';
 import 'package:fireraccoon/providers/cosmos_gate_provider.dart';
+import 'package:fireraccoon/providers/firefly_reconnect_provider.dart';
 import 'package:fireraccoon/utils/transport_security.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
 import 'package:fireraccoon/store/credential_store_locked_exception.dart';
@@ -28,6 +29,20 @@ class _FixedGate extends CosmosGateNotifier {
 
   @override
   CosmosGate build() => gate;
+}
+
+/// Fails until the test says otherwise, so a reload can be told from a stale
+/// error left on screen.
+class _FlakyAccountsService extends FakeFireflyService {
+  _FlakyAccountsService(this.failing);
+
+  final bool Function() failing;
+
+  @override
+  Future<List<Account>> getAccounts({List<String>? types}) async {
+    if (failing()) throw FireflyApiException('away', unreachable: true);
+    return const [];
+  }
 }
 
 /// Counts what reached the network, so a state that should stop a load can be
@@ -995,6 +1010,38 @@ void main() {
         isA<FireflyNotConnectedException>(),
       );
     });
+
+    test(
+      'a load that failed is run again when the connection returns',
+      () async {
+        // The sidebar going back to connected while the page still shows the
+        // failure it hit without a server is the state this exists to end.
+        var fail = true;
+        final container = ProviderContainer(
+          overrides: [
+            apiServiceProvider.overrideWithValue(
+              _FlakyAccountsService(() => fail),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        final sub = container.listen(accountsProvider, (_, _) {});
+        addTearDown(sub.close);
+        for (var i = 0; i < 20; i++) {
+          await Future<void>.delayed(Duration.zero);
+        }
+        expect(container.read(accountsProvider).hasError, isTrue);
+
+        fail = false;
+        container.read(fireflyReconnectProvider.notifier).reconnected();
+        for (var i = 0; i < 20; i++) {
+          await Future<void>.delayed(Duration.zero);
+        }
+
+        expect(container.read(accountsProvider).hasError, isFalse);
+        expect(container.read(accountsProvider).requireValue, isEmpty);
+      },
+    );
 
     test('an unreadable keychain is named as the reason', () async {
       final container = ProviderContainer(

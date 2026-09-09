@@ -3709,6 +3709,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get secureConnectionTooltip => '加密连接 (https)';
 
   @override
+  String get connectionRetryAction => '重试';
+
+  @override
+  String get connectionRetrying => '正在检查...';
+
+  @override
   String get noRouteTitle => '该地址不是你的账本';
 
   @override

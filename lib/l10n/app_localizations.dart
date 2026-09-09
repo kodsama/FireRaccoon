@@ -6886,6 +6886,18 @@ abstract class AppLocalizations {
   /// **'Encrypted connection (https)'**
   String get secureConnectionTooltip;
 
+  /// Button that re-checks the Firefly III connection from a state screen
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get connectionRetryAction;
+
+  /// Label on the retry button while the connection check is in flight
+  ///
+  /// In en, this message translates to:
+  /// **'Checking...'**
+  String get connectionRetrying;
+
   /// Heading shown when the server address answers but does not route to Firefly III
   ///
   /// In en, this message translates to:

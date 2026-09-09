@@ -3840,6 +3840,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get secureConnectionTooltip => 'Connexion chiffrée (https)';
 
   @override
+  String get connectionRetryAction => 'Réessayer';
+
+  @override
+  String get connectionRetrying => 'Vérification...';
+
+  @override
   String get noRouteTitle => 'Cette adresse n\'est pas votre comptabilité';
 
   @override

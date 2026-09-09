@@ -3826,6 +3826,12 @@ class AppLocalizationsPt extends AppLocalizations {
   String get secureConnectionTooltip => 'Ligação encriptada (https)';
 
   @override
+  String get connectionRetryAction => 'Tentar de novo';
+
+  @override
+  String get connectionRetrying => 'A verificar...';
+
+  @override
   String get noRouteTitle => 'Esse endereço não é a tua contabilidade';
 
   @override

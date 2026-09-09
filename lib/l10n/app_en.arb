@@ -2193,6 +2193,14 @@
   "@secureConnectionTooltip": {
     "description": "Tooltip on the lock shown for an https connection"
   },
+  "connectionRetryAction": "Try again",
+  "@connectionRetryAction": {
+    "description": "Button that re-checks the Firefly III connection from a state screen"
+  },
+  "connectionRetrying": "Checking...",
+  "@connectionRetrying": {
+    "description": "Label on the retry button while the connection check is in flight"
+  },
   "noRouteTitle": "That address is not your ledger",
   "@noRouteTitle": {
     "description": "Heading shown when the server address answers but does not route to Firefly III"

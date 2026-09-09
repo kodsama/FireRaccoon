@@ -1896,6 +1896,8 @@
   "insecureConnectionBadge": "Non chiffré",
   "insecureConnectionWarning": "Votre jeton et toutes les réponses circulent en clair via http://. N'importe qui sur le réseau entre vous et votre serveur peut les lire. Utilisez https:// sauf si vous mesurez le risque.",
   "secureConnectionTooltip": "Connexion chiffrée (https)",
+  "connectionRetryAction": "Réessayer",
+  "connectionRetrying": "Vérification...",
   "noRouteTitle": "Cette adresse n'est pas votre comptabilité",
   "noRouteBody": "Quelque chose répond à l'adresse de votre serveur, mais la requête n'a pas été transmise à Firefly III. Vérifiez l'adresse dans les réglages, et que Firefly III tourne bien derrière.",
   "noRouteTitleRaccoon": "Mauvaise poubelle",

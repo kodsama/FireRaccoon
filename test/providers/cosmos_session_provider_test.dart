@@ -1,4 +1,5 @@
 import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/cosmos_gate_provider.dart';
 import 'package:fireraccoon/providers/cosmos_session_provider.dart';
 import 'package:fireraccoon/store/cosmos_session.dart';
 import 'package:fireraccoon/store/cosmos_session_store.dart';
@@ -9,6 +10,8 @@ import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+
+import '../helpers/static_auth_notifier.dart';
 
 /// Keeps the session in memory, so the notifier can be driven without a
 /// keychain, and records what it was asked to do.
@@ -207,6 +210,93 @@ void main() {
         .testConnection('https://firefly.example', 'tok', false);
 
     expect(result.failure, ConnectionFailure.notFirefly);
+  });
+
+  test('a refused address is not carried over to a corrected one', () async {
+    // Correcting an address that Cosmos had refused left every request
+    // blocked on a sign-in for the old host, so nothing was ever sent that
+    // could prove the new one works.
+    final container = ProviderContainer(
+      overrides: [
+        cosmosSessionStoreProvider.overrideWithValue(_MemoryStore()),
+        authProvider.overrideWith(
+          () => StaticAuthNotifier(
+            AuthSettings(serverUrl: 'https://wrong.example', apiToken: 'tok'),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final auth = container.read(authProvider.notifier);
+    container
+        .read(cosmosGateProvider.notifier)
+        .rejected(Uri.parse('https://wrong.example/api/v1/about'));
+    await pumpEventQueue(times: 10);
+    expect(container.read(cosmosGateProvider), CosmosGate.signInRequired);
+
+    auth.state = AuthSettings(
+      serverUrl: 'https://wrong.example',
+      apiToken: 'tok2',
+      isHydrated: true,
+    );
+    // Only the address matters: a reissued token for the same server says
+    // nothing about the door in front of it.
+    expect(container.read(cosmosGateProvider), CosmosGate.signInRequired);
+
+    auth.state = AuthSettings(
+      serverUrl: 'https://right.example',
+      apiToken: 'tok2',
+      isHydrated: true,
+    );
+
+    expect(container.read(cosmosGateProvider), CosmosGate.open);
+  });
+
+  test('a rolled-forward cookie is kept, in memory and in the store', () async {
+    final store = _MemoryStore(saved: session);
+    final container = containerWith(store);
+    container.listen(cosmosSessionProvider, (_, _) {});
+    await pumpEventQueue(times: 10);
+
+    await container
+        .read(cosmosSessionProvider.notifier)
+        .rolledForward('fresh-value');
+
+    // The host stays what it was: Cosmos replaced the token, not the route.
+    expect(container.read(cosmosSessionProvider)!.cookie, 'fresh-value');
+    expect(container.read(cosmosSessionProvider)!.host, 'firefly.example');
+    // Kept, or the fortnight starts over from the sign-in on the next launch.
+    expect(store.saved!.cookie, 'fresh-value');
+  });
+
+  test('there is nothing to roll forward without a session', () async {
+    final store = _MemoryStore();
+    final container = containerWith(store);
+    container.listen(cosmosSessionProvider, (_, _) {});
+    await pumpEventQueue(times: 10);
+
+    await container
+        .read(cosmosSessionProvider.notifier)
+        .rolledForward('fresh-value');
+
+    expect(container.read(cosmosSessionProvider), isNull);
+    expect(store.saved, isNull);
+  });
+
+  test('the same cookie again is not written back', () async {
+    final store = _MemoryStore(saved: session);
+    final container = containerWith(store);
+    container.listen(cosmosSessionProvider, (_, _) {});
+    await pumpEventQueue(times: 10);
+    final before = container.read(cosmosSessionProvider);
+
+    await container
+        .read(cosmosSessionProvider.notifier)
+        .rolledForward('jwt-value');
+
+    // Identical, so no keychain write and no rebuild of everything that
+    // watches this for the sake of a cookie that did not change.
+    expect(container.read(cosmosSessionProvider), same(before));
   });
 
   test('an expiry drops it, and only when there was one', () async {

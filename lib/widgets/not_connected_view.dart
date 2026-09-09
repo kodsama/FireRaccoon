@@ -70,6 +70,61 @@ class LoadFailureView extends ConsumerWidget {
   }
 }
 
+/// Checks the connection again, from a screen that is showing why there isn't
+/// one.
+///
+/// The poll gets there on its own within half a minute, which is a long time to
+/// sit looking at a message about a server you have just fixed.
+class ConnectionRetryButton extends ConsumerWidget {
+  const ConnectionRetryButton({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = context.l10n;
+    final checking =
+        ref.watch(fireflyConnectionProvider) ==
+        FireflyConnectionStatus.checking;
+    return FilledButton.icon(
+      onPressed: checking
+          ? null
+          : () => ref.read(fireflyConnectionProvider.notifier).refresh(),
+      icon: checking
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.refresh, size: 18),
+      label: Text(
+        checking ? l10n.connectionRetrying : l10n.connectionRetryAction,
+      ),
+    );
+  }
+}
+
+/// A retry beside the way to Settings, for the states where either might be
+/// what someone needs.
+class _RetryAndSettings extends StatelessWidget {
+  const _RetryAndSettings();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        const ConnectionRetryButton(),
+        TextButton.icon(
+          onPressed: () => context.go('/settings'),
+          icon: const Icon(Icons.settings_outlined, size: 18),
+          label: Text(context.l10n.notConnectedAction),
+        ),
+      ],
+    );
+  }
+}
+
 /// What a screen shows when no Firefly III server is connected.
 ///
 /// Not an error screen. Nothing failed, and the exception text that used to
@@ -90,11 +145,7 @@ class NotConnectedView extends ConsumerWidget {
       badge: Icons.power_off_outlined,
       title: fun.notConnectedTitle,
       body: fun.notConnectedBody,
-      action: FilledButton.icon(
-        onPressed: () => context.go('/settings'),
-        icon: const Icon(Icons.settings_outlined, size: 18),
-        label: Text(context.l10n.notConnectedAction),
-      ),
+      action: const _RetryAndSettings(),
     );
   }
 }
@@ -117,11 +168,7 @@ class NoRouteView extends ConsumerWidget {
       badge: Icons.wrong_location_outlined,
       title: fun.noRouteTitle,
       body: fun.noRouteBody,
-      action: FilledButton.icon(
-        onPressed: () => context.go('/settings'),
-        icon: const Icon(Icons.settings_outlined, size: 18),
-        label: Text(context.l10n.notConnectedAction),
-      ),
+      action: const _RetryAndSettings(),
     );
   }
 }

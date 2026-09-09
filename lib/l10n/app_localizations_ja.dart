@@ -3717,6 +3717,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get secureConnectionTooltip => '暗号化された接続 (https)';
 
   @override
+  String get connectionRetryAction => '再試行';
+
+  @override
+  String get connectionRetrying => '確認しています...';
+
+  @override
   String get noRouteTitle => 'そのアドレスは家計簿ではありません';
 
   @override

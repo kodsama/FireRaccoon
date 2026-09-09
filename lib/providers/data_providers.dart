@@ -10,6 +10,7 @@ import '../utils/web_backend_proxy.dart';
 import 'auth_provider.dart';
 import 'cosmos_gate_provider.dart';
 import 'cosmos_session_provider.dart';
+import 'firefly_reconnect_provider.dart';
 
 final _log = AppLogger.scoped('providers.data');
 
@@ -27,6 +28,8 @@ final _log = AppLogger.scoped('providers.data');
 Future<FireflyService> requireFireflyService(Ref ref, String providerName) {
   final service = ref.watch(apiServiceProvider);
   if (service != null) {
+    // Rebuilds this, and so re-runs the load, when the connection comes back.
+    ref.watch(fireflyReconnectProvider);
     switch (ref.watch(cosmosGateProvider)) {
       case CosmosGate.renewing:
         // Nothing completes this, and the renewal rebuilds the provider when
