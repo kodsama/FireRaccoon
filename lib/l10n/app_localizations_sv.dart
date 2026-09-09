@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -3808,4 +3809,58 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get secureConnectionTooltip => 'Krypterad anslutning (https)';
+
+  @override
+  String get cosmosSsoTitle => 'Cosmos SSO';
+
+  @override
+  String get cosmosSsoNotSignedIn => 'Inte inloggad';
+
+  @override
+  String cosmosSsoSignedIn(String host) {
+    return 'Inloggad på $host';
+  }
+
+  @override
+  String get cosmosSsoSignIn => 'Logga in';
+
+  @override
+  String get cosmosSsoSignOut => 'Logga ut';
+
+  @override
+  String get cosmosSsoUnsupported =>
+      'Inloggning på Cosmos finns inte på den här plattformen';
+
+  @override
+  String get cosmosSsoWebNote => 'Din webbläsare bär redan Cosmos-sessionen';
+
+  @override
+  String get cosmosSsoExplainer =>
+      'Logga in när din Firefly III-server ligger bakom en Cosmos Cloud-rutt som kräver inloggning. Firefly-token används fortfarande för Firefly självt.';
+
+  @override
+  String get cosmosSsoCancelled => 'Inloggningen stängdes innan den blev klar';
+
+  @override
+  String get connectionFailedCosmos =>
+      'Den servern ligger bakom en Cosmos Cloud-inloggning. Logga in på Cosmos och testa igen.';
+
+  @override
+  String get cosmosSsoSignInAction => 'Logga in på Cosmos';
+
+  @override
+  String get mcpBasePortLabel => 'Startport';
+
+  @override
+  String mcpBasePortHelp(int count) {
+    return 'Servern tar första lediga porten härifrån och provar $count. Ändra den om något annat redan upptar intervallet.';
+  }
+
+  @override
+  String mcpBasePortInvalid(int min, int max) {
+    return 'Ange en port mellan $min och $max';
+  }
+
+  @override
+  String get mcpBasePortReset => 'Återställ till standard';
 }

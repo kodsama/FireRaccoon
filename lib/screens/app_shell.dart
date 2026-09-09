@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:confetti/confetti.dart';
+
 import '../theme/app_theme.dart';
 import '../providers/firefly_connection_provider.dart';
 import '../providers/theme_provider.dart';
@@ -78,9 +79,9 @@ class _RefreshableBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return RefreshIndicator(
       onRefresh: () {
-        final account = GoRouterState.of(
-          context,
-        ).uri.queryParameters['account'];
+        final account = GoRouterState.of(context)
+            .uri
+            .queryParameters['account'];
         return refreshFireflyData(ref, focusAccount: account);
       },
       child: child,
@@ -283,9 +284,9 @@ class _Sidebar extends ConsumerWidget {
             // Re-selecting the current section re-fetches Firefly data so
             // edits made outside the app show up without a full restart.
             if (isActive) {
-              final account = GoRouterState.of(
-                context,
-              ).uri.queryParameters['account'];
+              final account = GoRouterState.of(context)
+                  .uri
+                  .queryParameters['account'];
               unawaited(refreshFireflyData(ref, focusAccount: account));
             } else {
               context.go(routePath);

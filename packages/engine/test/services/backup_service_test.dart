@@ -561,11 +561,9 @@ void main() {
       final store = _MemoryBackupStore();
       final service = BackupService(_serviceWith(_ledger()), store);
       final manifest = await service.create(password: 'a good password');
-      final json =
-          jsonDecode(
-                utf8.decode(store.backups[manifest.id]![kBackupManifestFile]!),
-              )
-              as Map<String, Object?>;
+      final json = jsonDecode(
+        utf8.decode(store.backups[manifest.id]![kBackupManifestFile]!),
+      ) as Map<String, Object?>;
       json.remove('encryption');
       store.backups[manifest.id]![kBackupManifestFile] = utf8.encode(
         jsonEncode(json),
@@ -637,11 +635,9 @@ void main() {
       final store = _MemoryBackupStore();
       final service = BackupService(_serviceWith(_ledger()), store);
       final manifest = await service.create();
-      final json =
-          jsonDecode(
-                utf8.decode(store.backups[manifest.id]![kBackupManifestFile]!),
-              )
-              as Map<String, Object?>;
+      final json = jsonDecode(
+        utf8.decode(store.backups[manifest.id]![kBackupManifestFile]!),
+      ) as Map<String, Object?>;
       for (final entry in (json['entries']! as List)) {
         (entry as Map).remove('sha256');
       }

@@ -58,30 +58,27 @@ void main() {
   setUp(() => sent = []);
 
   group('fetchAgentKeys', () {
-    test(
-      'gets /api/agent-keys with the session header and json accept',
-      () async {
-        final client = clientFor(
-          (_) => okJson({
-            'ok': true,
-            'keys': [publicKey(), publicKey(id: 'key-2', active: false)],
-          }),
-          sessionToken: 'sess-1',
-        );
+    test('gets /api/agent-keys with the session header and json accept', () async {
+      final client = clientFor(
+        (_) => okJson({
+          'ok': true,
+          'keys': [publicKey(), publicKey(id: 'key-2', active: false)],
+        }),
+        sessionToken: 'sess-1',
+      );
 
-        final keys = await client.fetchAgentKeys();
+      final keys = await client.fetchAgentKeys();
 
-        expect(sent.single.method, 'GET');
-        expect(sent.single.url.path, '/api/agent-keys');
-        expect(sent.single.headers['x-fireraccoon-session'], 'sess-1');
-        expect(sent.single.headers['accept'], 'application/json');
-        // A GET carries no body, so declaring a JSON content-type would be a lie
-        // some reverse proxies reject.
-        expect(sent.single.headers['content-type'], isNull);
-        expect(keys.map((key) => key['id']), ['key-1', 'key-2']);
-        expect(keys.first, isA<Map<String, dynamic>>());
-      },
-    );
+      expect(sent.single.method, 'GET');
+      expect(sent.single.url.path, '/api/agent-keys');
+      expect(sent.single.headers['x-fireraccoon-session'], 'sess-1');
+      expect(sent.single.headers['accept'], 'application/json');
+      // A GET carries no body, so declaring a JSON content-type would be a lie
+      // some reverse proxies reject.
+      expect(sent.single.headers['content-type'], isNull);
+      expect(keys.map((key) => key['id']), ['key-1', 'key-2']);
+      expect(keys.first, isA<Map<String, dynamic>>());
+    });
 
     test('omits the session header when no token is set', () async {
       final client = clientFor((_) => okJson({'ok': true, 'keys': const []}));

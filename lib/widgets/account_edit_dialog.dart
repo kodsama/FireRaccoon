@@ -633,8 +633,7 @@ class _AccountEditDialogState extends ConsumerState<AccountEditDialog>
                               initialValue: _selectedCategory,
                               decoration: const InputDecoration(
                                 labelText: 'Custom Classification',
-                                helperText:
-                                    'Determines which section this account appears in',
+                                helperText: 'Determines which section this account appears in',
                                 border: OutlineInputBorder(),
                               ),
                               items: const [
@@ -769,8 +768,7 @@ class _AccountEditDialogState extends ConsumerState<AccountEditDialog>
                                   ),
                               decoration: const InputDecoration(
                                 labelText: 'Virtual Balance',
-                                helperText:
-                                    'Custom balance overlay used in calculations',
+                                helperText: 'Custom balance overlay used in calculations',
                                 border: OutlineInputBorder(),
                               ),
                             ),

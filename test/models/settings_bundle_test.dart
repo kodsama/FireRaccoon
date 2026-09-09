@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/password_cost.dart';
+
 import 'package:fireraccoon/models/people_models.dart';
 import 'package:fireraccoon/models/settings_bundle.dart';
 import 'package:fireraccoon/utils/password_policy.dart';
@@ -91,9 +92,8 @@ void main() {
     'round-trip unlock restores token, hashes, and password-login',
     () async {
       final hashed = await hashTestPassword(passphrase);
-      final sealed = await sampleBundle(
-        hashed: hashed,
-      ).encodeSealed(passphrase);
+      final sealed = await sampleBundle(hashed: hashed)
+          .encodeSealed(passphrase);
       final restored = await SettingsBundle.decode(
         sealed,
         passphrase: passphrase,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
 import '../utils/locale_formatting.dart';
@@ -405,9 +406,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
           : context.l10n.failedToUpdateReconciliation(
               '${failedOriginals.length}/$attempted',
             );
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(message)));
     }
   }
 
@@ -530,9 +530,8 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       );
 
       if (created == true && mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(l10n.transactionCreated)));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(l10n.transactionCreated)));
       }
     } catch (e) {
       if (mounted) {

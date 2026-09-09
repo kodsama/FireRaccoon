@@ -56,8 +56,7 @@ class PayeesScreen extends ConsumerWidget {
               children: [
                 EntityScreenHeader(
                   title: 'Payees',
-                  subtitle:
-                      'Manage merchants, stores, and payees (destination accounts).',
+                  subtitle: 'Manage merchants, stores, and payees (destination accounts).',
                   createLabel: 'New Payee',
                   onCreate: () =>
                       showPayeeFormDialog(context: context, ref: ref),

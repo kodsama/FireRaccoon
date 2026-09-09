@@ -1895,5 +1895,20 @@
   "credentialsLockedBodyRaccoon": "这只浣熊知道东西在哪儿，可盖子打不开。解锁你的钥匙串，它会再试一次。",
   "insecureConnectionBadge": "未加密",
   "insecureConnectionWarning": "你的令牌和所有响应都通过 http:// 明文传输。你与服务器之间网络上的任何人都能读取。除非你清楚风险，否则请使用 https://。",
-  "secureConnectionTooltip": "加密连接 (https)"
+  "secureConnectionTooltip": "加密连接 (https)",
+  "cosmosSsoTitle": "Cosmos SSO",
+  "cosmosSsoNotSignedIn": "未登录",
+  "cosmosSsoSignedIn": "已登录 {host}",
+  "cosmosSsoSignIn": "登录",
+  "cosmosSsoSignOut": "退出登录",
+  "cosmosSsoUnsupported": "此平台不支持登录 Cosmos",
+  "cosmosSsoWebNote": "你的浏览器已经携带 Cosmos 会话",
+  "cosmosSsoExplainer": "当你的 Firefly III 服务器位于需要登录的 Cosmos Cloud 路由之后时登录。Firefly 本身仍使用 Firefly 令牌。",
+  "cosmosSsoCancelled": "登录在完成前被关闭",
+  "connectionFailedCosmos": "该服务器位于 Cosmos Cloud 登录之后。请先登录 Cosmos，然后重新测试。",
+  "cosmosSsoSignInAction": "登录 Cosmos",
+  "mcpBasePortLabel": "起始端口",
+  "mcpBasePortHelp": "服务器从这里开始尝试 {count} 个端口，使用第一个空闲的。如果该范围已被占用，请更改。",
+  "mcpBasePortInvalid": "请输入 {min} 到 {max} 之间的端口",
+  "mcpBasePortReset": "恢复默认"
 }

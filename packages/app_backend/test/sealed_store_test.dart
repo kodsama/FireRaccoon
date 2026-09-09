@@ -7,6 +7,7 @@ import 'package:shelf/shelf.dart';
 import 'package:test/test.dart';
 
 import 'helpers/test_store.dart';
+
 import 'package:path/path.dart' as path;
 
 void main() {
@@ -414,11 +415,9 @@ void main() {
       fireflyToken: 'ff-token-secret',
     );
 
-    final header =
-        jsonDecode(
-              await File(path.join(tmp.path, 'store.header')).readAsString(),
-            )
-            as Map<String, dynamic>;
+    final header = jsonDecode(
+      await File(path.join(tmp.path, 'store.header')).readAsString(),
+    ) as Map<String, dynamic>;
     expect(header['iterations'], 900);
 
     // Reopened with the production default, which must be ignored in favour of

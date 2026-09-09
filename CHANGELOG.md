@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-09
+
+### Added
+
+- Sign in to a Cosmos Cloud route that stands in front of Firefly III. Cosmos
+  gates a protected route on one cookie, `jwttoken`, which only its own
+  `/cosmos/oauth2/detect-callback` mints at the end of an interactive login, so
+  signing in opens the route in a web view and reads that cookie back out. The
+  Firefly token is unaffected and still travels in `Authorization`, which the
+  Cosmos proxy leaves alone. The cookie is kept in the same keychain item as
+  the Firefly credentials, sent only to the route host it was minted for, and
+  dropped as soon as Cosmos stops accepting it
+- Android, iOS, macOS and Windows use `flutter_inappwebview`; Linux has no
+  implementation there and uses the webkit2gtk window the Linux build already
+  links. On the web there is nothing to do, because the browser carries the
+  cookie itself
+- Every package is at its latest, and the SDK floor moves to Dart 3.13 to let
+  three of them get there: `very_good_analysis` 11, whose stricter lint set the
+  code already passes, `mockito` 5.8 and `build_runner` 2.16. CI builds on
+  Flutter 3.47.2
+- The MCP server's port range can be moved. It already walked ten ports from
+  8787 and took the first that bound, so a taken port never needed attention,
+  but the walk always started in the same place and had nowhere to go if
+  something owned the whole range. Settings takes the starting port
+- Each package resolves its own dev dependencies in CI and in the pre-commit
+  hook. Only the app and `app_backend` were ever resolved, and the engine and
+  MCP packages analysed at all because `package:test` happened to reach the root
+  config through the app's own dev chain. Changing that chain took it away and
+  turned a clean tree into 3706 errors
+- The Android build moves to AGP 8.13. AGP 9 removed
+  `getDefaultProguardFile('proguard-android.txt')`, which the web view plugin
+  still calls, so the build failed while evaluating that plugin before any of
+  this code was compiled. The plugin's 6.2 line fixes it and fails to compile
+  on macOS instead, in every prerelease so far, so the plugin is held to 6.1 as
+  a family and the toolchain gives way rather than the platform
+- The embedded MCP server carries the session the app holds, so an agent
+  reaches a gated route through the same door. It never signs in itself, since
+  that needs a person. `get_capabilities` reports whether a session is held, and
+  a probe that meets the sign-in page says so rather than calling a running
+  server unreachable
+
+### Fixed
+
+- A load that failed while the server was unreachable reported whatever the call
+  happened to throw. A 404 from a request that never had a working connection
+  behind it describes the symptom; the disconnected server is the reason, and it
+  is the one shown now
+- A screen kept last time's failure on show while it was already asking again,
+  which reads as stuck. Retrying shows the loading indicator
+- Signing in to Cosmos left the connection untested until someone pressed the
+  button again. Signing in is only ever done so the connection works, so the
+  answer is what comes back
+- The Linux packages never declared the web view they have always linked, so a
+  `.deb` or `.rpm` could install on a host where the app would not start
+
 ## [0.4.0] - 2026-09-08
 
 ### Added

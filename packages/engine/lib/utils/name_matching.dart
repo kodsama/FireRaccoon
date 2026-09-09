@@ -93,9 +93,10 @@ String foldLatin(String raw) {
 /// it, keeps it: `Kebab` folds to `kebab`, not to the empty string that
 /// prefix-matches the whole ledger.
 String foldAccountName(String raw) {
-  var tokens = foldLatin(
-    raw,
-  ).split(_whitespace).where((token) => token.isNotEmpty).toList();
+  var tokens = foldLatin(raw)
+      .split(_whitespace)
+      .where((token) => token.isNotEmpty)
+      .toList();
   if (tokens.length > 1 && kLegalSuffixes.contains(tokens.first)) {
     tokens = _strippedUnlessTooShort(tokens, tokens.sublist(1));
   }

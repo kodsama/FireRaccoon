@@ -28,6 +28,11 @@ dart format --output=none --set-exit-if-changed $SRC_DIRS \
   || fail "code is not formatted — run 'dart format $SRC_DIRS'"
 
 section "3/5  analyze"
+# Each package resolves its own dev_dependencies. The root config carries none
+# of them, and relying on one leaking in through the app's own dev chain broke
+# the moment that chain changed.
+( cd packages/engine && dart pub get ) || fail "engine pub get failed"
+( cd packages/mcp && dart pub get ) || fail "mcp pub get failed"
 ( cd packages/app_backend && dart pub get ) || fail "app_backend pub get failed"
 dart analyze packages/engine packages/mcp packages/app_backend \
   || fail "dart analyze reported issues"

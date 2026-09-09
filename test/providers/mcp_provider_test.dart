@@ -8,6 +8,9 @@ import 'package:fireraccoon/providers/auth_provider.dart';
 import 'package:fireraccoon/providers/mcp_provider.dart';
 import 'package:fireraccoon/services/mcp_service.dart';
 import 'package:fireraccoon/providers/people_providers.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../helpers/static_auth_notifier.dart';
 import '../helpers/static_people_notifier.dart';
 
@@ -16,8 +19,13 @@ void main() {
 
   late Map<String, String> secureStorage;
 
-  setUp(() {
+  late SharedPreferences prefs;
+
+  setUp(() async {
     secureStorage = {};
+    // The service reads the starting port, which is a stored preference.
+    SharedPreferences.setMockInitialValues({});
+    prefs = await SharedPreferences.getInstance();
     FlutterSecureStoragePlatform.instance = TestFlutterSecureStoragePlatform(
       secureStorage,
     );
@@ -31,6 +39,7 @@ void main() {
   test('an unreadable key store reaches the service as an error', () async {
     final container = ProviderContainer(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
         authProvider.overrideWith(
           () => StaticAuthNotifier(
             AuthSettings(serverUrl: 'http://localhost:8080', apiToken: 'token'),
@@ -57,6 +66,7 @@ void main() {
   test('mcpServiceProvider creates and disposes McpService', () {
     final container = ProviderContainer(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
         authProvider.overrideWith(() => StaticAuthNotifier(AuthSettings())),
       ],
     );
@@ -70,6 +80,7 @@ void main() {
   test('mcpServiceProvider starts when auth becomes valid', () async {
     final container = ProviderContainer(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
         authProvider.overrideWith(() => StaticAuthNotifier(AuthSettings())),
       ],
     );
@@ -88,6 +99,7 @@ void main() {
   test('mcpServiceProvider routes reported usage into the key store', () async {
     final container = ProviderContainer(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
         authProvider.overrideWith(
           () => StaticAuthNotifier(
             AuthSettings(
@@ -122,6 +134,7 @@ void main() {
   test('mcpServiceProvider stops when auth becomes invalid', () async {
     final container = ProviderContainer(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
         authProvider.overrideWith(
           () => StaticAuthNotifier(
             AuthSettings(

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:fireraccoon/models/people_models.dart';
 import 'package:fireraccoon/providers/agent_keys_provider.dart';
 import 'package:fireraccoon/providers/mcp_provider.dart';
+import 'package:fireraccoon/providers/theme_provider.dart';
 import 'package:fireraccoon/providers/people_providers.dart';
 import 'package:fireraccoon/services/mcp_service.dart';
 import 'package:fireraccoon/theme/app_theme.dart';
@@ -13,6 +14,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/test/test_flutter_secure_storage_platform.dart';
 import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +23,15 @@ import '../helpers/dialog_test_helpers.dart';
 import '../helpers/localized_test_app.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/static_people_notifier.dart';
+
+/// The label field inside the key prompt.
+///
+/// The section itself carries a text field for the starting port, so a bare
+/// byType finder matches whichever the tree hands back first.
+final _labelField = find.descendant(
+  of: find.byType(Dialog),
+  matching: find.byType(TextField),
+);
 
 /// Records what the section put on the clipboard.
 final _clipboard = <String>[];
@@ -59,9 +70,14 @@ Future<void> _pumpSection(
     people: const [],
   );
 
+  // The section offers the starting port, which is a stored preference.
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+
   await tester.pumpWidget(
     ProviderScope(
       overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
         peopleProvider.overrideWith(
           () => StaticPeopleNotifier(people ?? [testPerson('p1', 'Ada')]),
         ),
@@ -82,7 +98,7 @@ Future<void> _pumpSection(
 Future<String> _createKey(WidgetTester tester, String label) async {
   await tester.tap(find.text('Create key'));
   await settleIgnoringOverflow(tester);
-  await tester.enterText(find.byType(TextField), label);
+  await tester.enterText(_labelField, label);
   await tester.tap(find.widgetWithText(FilledButton, 'Create'));
   await settleIgnoringOverflow(tester);
 
@@ -164,6 +180,7 @@ class _FixedMcpService extends McpService {
     String? agentKeysError,
     String? backupsDirectory,
     String? appVersion,
+    String? proxyCookie,
     int basePort = 8787,
   }) async {}
 }
@@ -267,6 +284,7 @@ class _LateBindingMcpService extends McpService {
     String? agentKeysError,
     String? backupsDirectory,
     String? appVersion,
+    String? proxyCookie,
     int basePort = 8787,
   }) async {}
 }
@@ -358,7 +376,7 @@ void main() {
 
       await tester.tap(find.text('Create key'));
       await settleIgnoringOverflow(tester);
-      await tester.enterText(find.byType(TextField), 'Claude Desktop');
+      await tester.enterText(_labelField, 'Claude Desktop');
       await tester.tap(find.widgetWithText(FilledButton, 'Create'));
       await settleIgnoringOverflow(tester);
 
@@ -412,12 +430,12 @@ void main() {
 
       await tester.tap(find.text('Create key'));
       await settleIgnoringOverflow(tester);
-      await tester.enterText(find.byType(TextField), '   ');
+      await tester.enterText(_labelField, '   ');
       await tester.tap(find.widgetWithText(FilledButton, 'Create'));
       await settleIgnoringOverflow(tester);
 
       // Still on the prompt, nothing issued.
-      expect(find.byType(TextField), findsOneWidget);
+      expect(_labelField, findsOneWidget);
       await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
       await settleIgnoringOverflow(tester);
       expect(find.text('No agent keys yet'), findsOneWidget);
@@ -544,9 +562,9 @@ void main() {
   });
 
   test('mcpConnectionSnippet fills the key in so nothing needs editing', () {
-    final snippet =
-        jsonDecode(mcpConnectionSnippet(port: 9123, agentKey: 'frcn_alpha'))
-            as Map<String, Object?>;
+    final snippet = jsonDecode(
+      mcpConnectionSnippet(port: 9123, agentKey: 'frcn_alpha'),
+    ) as Map<String, Object?>;
 
     expect(snippet['transport'], 'tcp');
     expect(snippet['host'], '127.0.0.1');
@@ -726,7 +744,7 @@ void main() {
 
       await tester.tap(find.text('Create key'));
       await settleIgnoringOverflow(tester);
-      await tester.enterText(find.byType(TextField), 'Claude Desktop');
+      await tester.enterText(_labelField, 'Claude Desktop');
       await tester.tap(find.widgetWithText(FilledButton, 'Create'));
       await settleIgnoringOverflow(tester);
 
@@ -766,7 +784,7 @@ void main() {
 
       await tester.tap(find.text('Create key'));
       await settleIgnoringOverflow(tester);
-      await tester.enterText(find.byType(TextField), 'Claude Desktop');
+      await tester.enterText(_labelField, 'Claude Desktop');
       await tester.tap(find.widgetWithText(FilledButton, 'Create'));
       await settleIgnoringOverflow(tester);
 
@@ -909,7 +927,7 @@ void main() {
 
       await tester.tap(find.text('Create key'));
       await settleIgnoringOverflow(tester);
-      await tester.enterText(find.byType(TextField), 'Keyboard agent');
+      await tester.enterText(_labelField, 'Keyboard agent');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await settleIgnoringOverflow(tester);
 

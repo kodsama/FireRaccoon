@@ -12,6 +12,7 @@ Welcome to the FireRaccoon docs. Start here if you are setting up, deploying, or
 | [Cosmos Cloud](cosmos-cloud.md) | Cosmos-Compose ServApp next to Firefly III |
 | [Architecture](architecture.md) | Project layout, state management, routing, and packages |
 | [Development](development.md) | Tests, linting, localization, and CI |
+| [Parallel development](parallel-development.md) | One worktree per branch, and what does not run twice at once |
 | [MCP server](mcp-server.md) | Model Context Protocol tools for LLM clients |
 | [Design specification](design-spec.md) | UI tokens, screens, and visual fidelity reference |
 

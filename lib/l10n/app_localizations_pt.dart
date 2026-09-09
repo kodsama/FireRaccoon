@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -3823,4 +3824,60 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get secureConnectionTooltip => 'Ligação encriptada (https)';
+
+  @override
+  String get cosmosSsoTitle => 'SSO Cosmos';
+
+  @override
+  String get cosmosSsoNotSignedIn => 'Sem sessão iniciada';
+
+  @override
+  String cosmosSsoSignedIn(String host) {
+    return 'Sessão iniciada em $host';
+  }
+
+  @override
+  String get cosmosSsoSignIn => 'Iniciar sessão';
+
+  @override
+  String get cosmosSsoSignOut => 'Terminar sessão';
+
+  @override
+  String get cosmosSsoUnsupported =>
+      'Iniciar sessão no Cosmos não está disponível nesta plataforma';
+
+  @override
+  String get cosmosSsoWebNote =>
+      'O seu navegador já transporta a sessão Cosmos';
+
+  @override
+  String get cosmosSsoExplainer =>
+      'Inicie sessão quando o seu servidor Firefly III estiver atrás de uma rota Cosmos Cloud que exige autenticação. O token do Firefly continua a ser usado para o próprio Firefly.';
+
+  @override
+  String get cosmosSsoCancelled =>
+      'O início de sessão foi fechado antes de terminar';
+
+  @override
+  String get connectionFailedCosmos =>
+      'Esse servidor está atrás de uma autenticação do Cosmos Cloud. Inicie sessão no Cosmos e teste novamente.';
+
+  @override
+  String get cosmosSsoSignInAction => 'Iniciar sessão no Cosmos';
+
+  @override
+  String get mcpBasePortLabel => 'Porta inicial';
+
+  @override
+  String mcpBasePortHelp(int count) {
+    return 'O servidor usa a primeira porta livre a partir daqui, tentando $count. Altere-a se algo já ocupar este intervalo.';
+  }
+
+  @override
+  String mcpBasePortInvalid(int min, int max) {
+    return 'Introduza uma porta entre $min e $max';
+  }
+
+  @override
+  String get mcpBasePortReset => 'Repor predefinição';
 }

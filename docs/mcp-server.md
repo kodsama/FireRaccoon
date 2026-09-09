@@ -207,6 +207,20 @@ concludes the ledger is broken, when the real answer is that there is no ledger
 yet. `check_connection` and `get_capabilities` return the same codes, and both
 keep answering while the backend is down.
 
+## When a Cosmos Cloud route stands in front of Firefly III
+
+A protected Cosmos route is gated on one cookie, `jwttoken`, which only its own
+`/cosmos/oauth2/detect-callback` mints at the end of an interactive login. The
+proxy strips that cookie before forwarding, and leaves `Authorization` alone, so
+the Firefly token still does its own job behind it.
+
+MCP carries whatever session the app holds. It does not sign in: the login needs
+a person, and it happens once in the app under **Settings → Cosmos SSO**.
+`get_capabilities` reports `app.proxy_session` so an agent can see whether this
+server has one, and a probe that meets the sign-in page comes back
+`connected: true, authorized: false, proxy: cosmos` rather than as an unreachable
+server, because the server is running fine and the missing thing is a session.
+
 ## Importing a statement
 
 Two tools carry a bank import, and neither writes. They report what they found

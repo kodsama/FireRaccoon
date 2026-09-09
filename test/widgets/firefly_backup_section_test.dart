@@ -229,9 +229,9 @@ void main() {
     await _letToastPass(tester);
     // The ledger loses a row after the backup was taken.
     final id = (await store.listBackupIds()).single;
-    final snapshot =
-        jsonDecode(utf8.decode((await store.get(id, kBackupSnapshotFile))!))
-            as Map<String, Object?>;
+    final snapshot = jsonDecode(
+      utf8.decode((await store.get(id, kBackupSnapshotFile))!),
+    ) as Map<String, Object?>;
     (snapshot['categories']! as List).add({'id': '7', 'name': 'Food'});
     await store.put(id, kBackupSnapshotFile, utf8.encode(jsonEncode(snapshot)));
 

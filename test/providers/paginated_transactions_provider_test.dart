@@ -7,6 +7,7 @@ import 'package:fireraccoon/providers/data_providers.dart';
 import 'package:fireraccoon/providers/paginated_transactions_provider.dart';
 import 'package:fireraccoon/providers/transaction_page_size_provider.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
+
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/paginated_test_helpers.dart';
 import '../helpers/static_auth_notifier.dart';

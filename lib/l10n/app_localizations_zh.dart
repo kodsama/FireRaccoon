@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -3706,4 +3707,57 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get secureConnectionTooltip => '加密连接 (https)';
+
+  @override
+  String get cosmosSsoTitle => 'Cosmos SSO';
+
+  @override
+  String get cosmosSsoNotSignedIn => '未登录';
+
+  @override
+  String cosmosSsoSignedIn(String host) {
+    return '已登录 $host';
+  }
+
+  @override
+  String get cosmosSsoSignIn => '登录';
+
+  @override
+  String get cosmosSsoSignOut => '退出登录';
+
+  @override
+  String get cosmosSsoUnsupported => '此平台不支持登录 Cosmos';
+
+  @override
+  String get cosmosSsoWebNote => '你的浏览器已经携带 Cosmos 会话';
+
+  @override
+  String get cosmosSsoExplainer =>
+      '当你的 Firefly III 服务器位于需要登录的 Cosmos Cloud 路由之后时登录。Firefly 本身仍使用 Firefly 令牌。';
+
+  @override
+  String get cosmosSsoCancelled => '登录在完成前被关闭';
+
+  @override
+  String get connectionFailedCosmos =>
+      '该服务器位于 Cosmos Cloud 登录之后。请先登录 Cosmos，然后重新测试。';
+
+  @override
+  String get cosmosSsoSignInAction => '登录 Cosmos';
+
+  @override
+  String get mcpBasePortLabel => '起始端口';
+
+  @override
+  String mcpBasePortHelp(int count) {
+    return '服务器从这里开始尝试 $count 个端口，使用第一个空闲的。如果该范围已被占用，请更改。';
+  }
+
+  @override
+  String mcpBasePortInvalid(int min, int max) {
+    return '请输入 $min 到 $max 之间的端口';
+  }
+
+  @override
+  String get mcpBasePortReset => '恢复默认';
 }

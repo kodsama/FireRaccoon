@@ -1895,5 +1895,20 @@
   "credentialsLockedBodyRaccoon": "Ce raton laveur sait où tout se trouve, mais le couvercle ne bouge pas. Déverrouillez votre trousseau et il réessaiera.",
   "insecureConnectionBadge": "Non chiffré",
   "insecureConnectionWarning": "Votre jeton et toutes les réponses circulent en clair via http://. N'importe qui sur le réseau entre vous et votre serveur peut les lire. Utilisez https:// sauf si vous mesurez le risque.",
-  "secureConnectionTooltip": "Connexion chiffrée (https)"
+  "secureConnectionTooltip": "Connexion chiffrée (https)",
+  "cosmosSsoTitle": "SSO Cosmos",
+  "cosmosSsoNotSignedIn": "Non connecté",
+  "cosmosSsoSignedIn": "Connecté à {host}",
+  "cosmosSsoSignIn": "Se connecter",
+  "cosmosSsoSignOut": "Se déconnecter",
+  "cosmosSsoUnsupported": "La connexion à Cosmos n'est pas disponible sur cette plateforme",
+  "cosmosSsoWebNote": "Votre navigateur porte déjà la session Cosmos",
+  "cosmosSsoExplainer": "Connectez-vous si votre serveur Firefly III se trouve derrière une route Cosmos Cloud qui exige une authentification. Le jeton Firefly reste utilisé pour Firefly lui-même.",
+  "cosmosSsoCancelled": "La connexion a été fermée avant la fin",
+  "connectionFailedCosmos": "Ce serveur se trouve derrière une authentification Cosmos Cloud. Connectez-vous à Cosmos, puis réessayez.",
+  "cosmosSsoSignInAction": "Se connecter à Cosmos",
+  "mcpBasePortLabel": "Port de départ",
+  "mcpBasePortHelp": "Le serveur prend le premier port libre à partir d'ici, en essayant {count}. Changez-le si quelque chose occupe déjà cette plage.",
+  "mcpBasePortInvalid": "Entrez un port entre {min} et {max}",
+  "mcpBasePortReset": "Rétablir la valeur par défaut"
 }

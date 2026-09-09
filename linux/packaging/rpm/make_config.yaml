@@ -21,3 +21,5 @@ summary: Firefly III client with on-device balance projections
 requires:
   - gtk3
   - libsecret
+  - webkit2gtk4.1
+  - libsoup3

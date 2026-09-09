@@ -1895,5 +1895,20 @@
   "credentialsLockedBodyRaccoon": "Este guaxinim sabe onde está tudo, mas a tampa não cede. Desbloqueie o porta-chaves e ele tenta outra vez.",
   "insecureConnectionBadge": "Sem encriptação",
   "insecureConnectionWarning": "O seu token e todas as respostas viajam sem encriptação por http://. Qualquer pessoa na rede entre si e o servidor pode lê-los. Use https:// a menos que compreenda o risco.",
-  "secureConnectionTooltip": "Ligação encriptada (https)"
+  "secureConnectionTooltip": "Ligação encriptada (https)",
+  "cosmosSsoTitle": "SSO Cosmos",
+  "cosmosSsoNotSignedIn": "Sem sessão iniciada",
+  "cosmosSsoSignedIn": "Sessão iniciada em {host}",
+  "cosmosSsoSignIn": "Iniciar sessão",
+  "cosmosSsoSignOut": "Terminar sessão",
+  "cosmosSsoUnsupported": "Iniciar sessão no Cosmos não está disponível nesta plataforma",
+  "cosmosSsoWebNote": "O seu navegador já transporta a sessão Cosmos",
+  "cosmosSsoExplainer": "Inicie sessão quando o seu servidor Firefly III estiver atrás de uma rota Cosmos Cloud que exige autenticação. O token do Firefly continua a ser usado para o próprio Firefly.",
+  "cosmosSsoCancelled": "O início de sessão foi fechado antes de terminar",
+  "connectionFailedCosmos": "Esse servidor está atrás de uma autenticação do Cosmos Cloud. Inicie sessão no Cosmos e teste novamente.",
+  "cosmosSsoSignInAction": "Iniciar sessão no Cosmos",
+  "mcpBasePortLabel": "Porta inicial",
+  "mcpBasePortHelp": "O servidor usa a primeira porta livre a partir daqui, tentando {count}. Altere-a se algo já ocupar este intervalo.",
+  "mcpBasePortInvalid": "Introduza uma porta entre {min} e {max}",
+  "mcpBasePortReset": "Repor predefinição"
 }

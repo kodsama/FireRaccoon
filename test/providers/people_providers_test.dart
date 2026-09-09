@@ -10,6 +10,7 @@ import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage
 import 'package:flutter_test/flutter_test.dart';
 
 import '../helpers/password_cost.dart';
+
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -147,50 +148,47 @@ void main() {
       expect(again.avatarValue, 'raccoon_2');
     });
 
-    test(
-      'sets account ownership and calculates effective account balances',
-      () async {
-        final container = await buildContainer();
-        addTearDown(container.dispose);
-        await waitHydrated(container);
+    test('sets account ownership and calculates effective account balances', () async {
+      final container = await buildContainer();
+      addTearDown(container.dispose);
+      await waitHydrated(container);
 
-        final notifier = container.read(peopleProvider.notifier);
-        await notifier.addPerson(name: 'Alex', colorValue: 0xFF3B82F6);
-        await notifier.addPerson(name: 'Sam', colorValue: 0xFF10B981);
+      final notifier = container.read(peopleProvider.notifier);
+      await notifier.addPerson(name: 'Alex', colorValue: 0xFF3B82F6);
+      await notifier.addPerson(name: 'Sam', colorValue: 0xFF10B981);
 
-        final people = container.read(peopleProvider).people;
-        expect(
-          people.length,
-          2,
-          reason:
-              'Expected exactly 2 people, got: ${people.map((p) => p.name).toList()}',
-        );
-        final alexId = people.firstWhere((p) => p.name == 'Alex').id;
-        final samId = people.firstWhere((p) => p.name == 'Sam').id;
+      final people = container.read(peopleProvider).people;
+      expect(
+        people.length,
+        2,
+        reason:
+            'Expected exactly 2 people, got: ${people.map((p) => p.name).toList()}',
+      );
+      final alexId = people.firstWhere((p) => p.name == 'Alex').id;
+      final samId = people.firstWhere((p) => p.name == 'Sam').id;
 
-        await notifier.setAccountOwners(
-          'loan_1',
-          customShares: {alexId: 0.8, samId: 0.2},
-        );
+      await notifier.setAccountOwners(
+        'loan_1',
+        customShares: {alexId: 0.8, samId: 0.2},
+      );
 
-        final config = container.read(peopleSettingsProvider);
-        expect(config.getOwnershipRatio('loan_1', alexId), 0.8);
-        expect(config.getOwnershipRatio('loan_1', samId), 0.2);
+      final config = container.read(peopleSettingsProvider);
+      expect(config.getOwnershipRatio('loan_1', alexId), 0.8);
+      expect(config.getOwnershipRatio('loan_1', samId), 0.2);
 
-        final loanAccount = Account(
-          id: 'loan_1',
-          name: 'Mortgage',
-          type: 'liability',
-          role: 'defaultAsset',
-          currentBalance: -200000.0,
-          currencySymbol: '€',
-          currencyCode: 'EUR',
-        );
+      final loanAccount = Account(
+        id: 'loan_1',
+        name: 'Mortgage',
+        type: 'liability',
+        role: 'defaultAsset',
+        currentBalance: -200000.0,
+        currencySymbol: '€',
+        currencyCode: 'EUR',
+      );
 
-        expect(config.getEffectiveBalance(loanAccount, alexId), -160000.0);
-        expect(config.getEffectiveBalance(loanAccount, samId), -40000.0);
-      },
-    );
+      expect(config.getEffectiveBalance(loanAccount, alexId), -160000.0);
+      expect(config.getEffectiveBalance(loanAccount, samId), -40000.0);
+    });
 
     test(
       'updates and removes people while normalizing remaining shares',

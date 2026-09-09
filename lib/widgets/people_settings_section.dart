@@ -81,9 +81,8 @@ Future<Uint8List?> _pickAndCropAvatar(BuildContext context) async {
       _ when error.contains('5 MB') => l10n.avatarTooLarge,
       _ => l10n.avatarInvalidFormat,
     };
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
     return null;
   }
 
@@ -402,9 +401,8 @@ void showAddEditPersonDialog(
                             boxShadow: isSelected
                                 ? [
                                     BoxShadow(
-                                      color: Color(
-                                        colorVal,
-                                      ).withValues(alpha: 0.5),
+                                      color: Color(colorVal)
+                                          .withValues(alpha: 0.5),
                                       blurRadius: 6,
                                     ),
                                   ]
@@ -971,9 +969,8 @@ class PeopleSettingsSection extends ConsumerWidget {
           leading: const Icon(LucideIcons.users, size: 20),
           title: Text(
             l10n.peopleAndOwnership,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontSize: 16),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontSize: 16),
           ),
           subtitle: Text(l10n.peopleAndOwnershipSubtitle),
           children: [

@@ -38,9 +38,8 @@ FIREFLY_TOKEN=abc123
 
     test('reads an existing .env file', () async {
       final path = '${tempDir.path}/.env';
-      File(
-        path,
-      ).writeAsStringSync('FIREFLY_URL=https://x.test\nFIREFLY_TOKEN=t');
+      File(path)
+          .writeAsStringSync('FIREFLY_URL=https://x.test\nFIREFLY_TOKEN=t');
 
       expect(await readDebugEnvFile(path), {
         'FIREFLY_URL': 'https://x.test',
