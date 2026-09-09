@@ -34,6 +34,11 @@ jobs:
       - name: Resolve dependencies
         run: |
           flutter pub get
+          # Each package resolves its own dev_dependencies. The root config
+          # carries none of them, and relying on one leaking in through the
+          # app's own dev chain broke the moment that chain changed.
+          ( cd packages/engine && dart pub get )
+          ( cd packages/mcp && dart pub get )
           ( cd packages/app_backend && dart pub get )
 
       - name: Format check

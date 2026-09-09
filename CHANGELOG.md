@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   three of them get there: `very_good_analysis` 11, whose stricter lint set the
   code already passes, `mockito` 5.8 and `build_runner` 2.16. CI builds on
   Flutter 3.47.2
+- Each package resolves its own dev dependencies in CI and in the pre-commit
+  hook. Only the app and `app_backend` were ever resolved, and the engine and
+  MCP packages analysed at all because `package:test` happened to reach the root
+  config through the app's own dev chain. Changing that chain took it away and
+  turned a clean tree into 3706 errors
 - The Android build moves to AGP 8.13. AGP 9 removed
   `getDefaultProguardFile('proguard-android.txt')`, which the web view plugin
   still calls, so the build failed while evaluating that plugin before any of
