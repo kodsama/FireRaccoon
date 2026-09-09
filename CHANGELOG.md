@@ -27,6 +27,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   three of them get there: `very_good_analysis` 11, whose stricter lint set the
   code already passes, `mockito` 5.8 and `build_runner` 2.16. CI builds on
   Flutter 3.47.2
+- The MCP server's port range can be moved. It already walked ten ports from
+  8787 and took the first that bound, so a taken port never needed attention,
+  but the walk always started in the same place and had nowhere to go if
+  something owned the whole range. Settings takes the starting port
 - Each package resolves its own dev dependencies in CI and in the pre-commit
   hook. Only the app and `app_backend` were ever resolved, and the engine and
   MCP packages analysed at all because `package:test` happened to reach the root
