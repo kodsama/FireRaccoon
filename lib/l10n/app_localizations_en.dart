@@ -3844,4 +3844,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cosmosSsoSignInAction => 'Sign in to Cosmos';
+
+  @override
+  String get mcpBasePortLabel => 'Starting port';
+
+  @override
+  String mcpBasePortHelp(int count) {
+    return 'The server binds the first free port from here, trying $count. Change it when something else already holds this range.';
+  }
+
+  @override
+  String mcpBasePortInvalid(int min, int max) {
+    return 'Enter a port between $min and $max';
+  }
+
+  @override
+  String get mcpBasePortReset => 'Reset to default';
 }

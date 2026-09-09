@@ -3877,4 +3877,20 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get cosmosSsoSignInAction => 'Se connecter à Cosmos';
+
+  @override
+  String get mcpBasePortLabel => 'Port de départ';
+
+  @override
+  String mcpBasePortHelp(int count) {
+    return 'Le serveur prend le premier port libre à partir d\'ici, en essayant $count. Changez-le si quelque chose occupe déjà cette plage.';
+  }
+
+  @override
+  String mcpBasePortInvalid(int min, int max) {
+    return 'Entrez un port entre $min et $max';
+  }
+
+  @override
+  String get mcpBasePortReset => 'Rétablir la valeur par défaut';
 }

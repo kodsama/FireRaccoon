@@ -1906,5 +1906,9 @@
   "cosmosSsoExplainer": "Inicie sessão quando o seu servidor Firefly III estiver atrás de uma rota Cosmos Cloud que exige autenticação. O token do Firefly continua a ser usado para o próprio Firefly.",
   "cosmosSsoCancelled": "O início de sessão foi fechado antes de terminar",
   "connectionFailedCosmos": "Esse servidor está atrás de uma autenticação do Cosmos Cloud. Inicie sessão no Cosmos e teste novamente.",
-  "cosmosSsoSignInAction": "Iniciar sessão no Cosmos"
+  "cosmosSsoSignInAction": "Iniciar sessão no Cosmos",
+  "mcpBasePortLabel": "Porta inicial",
+  "mcpBasePortHelp": "O servidor usa a primeira porta livre a partir daqui, tentando {count}. Altere-a se algo já ocupar este intervalo.",
+  "mcpBasePortInvalid": "Introduza uma porta entre {min} e {max}",
+  "mcpBasePortReset": "Repor predefinição"
 }

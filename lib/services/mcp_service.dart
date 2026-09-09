@@ -53,6 +53,11 @@ class McpService extends ChangeNotifier {
   Completer<void>? _exited;
   bool _stopping = false;
 
+  /// Set the moment this is disposed, and checked by anything that notifies
+  /// after an await. A shutdown in flight when the app tears down would
+  /// otherwise come back to a ChangeNotifier that refuses to be notified.
+  bool _disposed = false;
+
   /// Brings the server in line with [agentKeys] and [people].
   ///
   /// Restarts the isolate when anything it captured has changed, and is a no-op
@@ -113,6 +118,7 @@ class McpService extends ChangeNotifier {
       people: people,
       appVersion: appVersion,
       proxyCookie: proxyCookie,
+      basePort: basePort,
     );
     if (next == _fingerprint && _isolate != null) {
       _log.finer('MCP sync ignored: nothing the isolate captured changed');
@@ -127,7 +133,7 @@ class McpService extends ChangeNotifier {
       _error = 'Firefly credentials not configured';
       _needsAgentKey = false;
       _log.warning('MCP start aborted: Firefly credentials missing');
-      notifyListeners();
+      _notify();
       return;
     }
     if (agentKeysError != null) {
@@ -137,7 +143,7 @@ class McpService extends ChangeNotifier {
       _error = agentKeysError;
       _needsAgentKey = false;
       _log.severe('MCP start aborted: agent keys unreadable: $agentKeysError');
-      notifyListeners();
+      _notify();
       return;
     }
     if (active.isEmpty) {
@@ -145,7 +151,7 @@ class McpService extends ChangeNotifier {
       _error = null;
       _needsAgentKey = true;
       _log.info('MCP server idle: no agent keys issued');
-      notifyListeners();
+      _notify();
       return;
     }
 
@@ -185,8 +191,14 @@ class McpService extends ChangeNotifier {
     } on Object catch (e) {
       _log.severe('Failed to spawn MCP isolate', e);
       _error = '$e';
-      notifyListeners();
+      _notify();
     }
+  }
+
+  /// Notifies unless this has been disposed while something was awaiting.
+  void _notify() {
+    if (_disposed) return;
+    notifyListeners();
   }
 
   Future<void> stop() async {
@@ -194,7 +206,7 @@ class McpService extends ChangeNotifier {
     await _shutdown();
     _fingerprint = null;
     _needsAgentKey = false;
-    notifyListeners();
+    _notify();
   }
 
   /// Asks the worker to close its socket, then kills it.
@@ -261,7 +273,7 @@ class McpService extends ChangeNotifier {
       _control = message['control'] as SendPort?;
       _error = null;
       _log.info('MCP server ready on port $_port');
-      notifyListeners();
+      _notify();
     } else if (message['usedKeyId'] is String) {
       final at = DateTime.tryParse(message['usedAt'] as String? ?? '');
       if (at == null) return;
@@ -271,7 +283,7 @@ class McpService extends ChangeNotifier {
       _error = message['error'] as String;
       _port = null;
       _log.severe('MCP isolate reported startup failure: $_error');
-      notifyListeners();
+      _notify();
     }
   }
 
@@ -295,7 +307,7 @@ class McpService extends ChangeNotifier {
     _error ??= reason;
     _fingerprint = null;
     _log.severe('MCP isolate down: ${_error ?? reason}');
-    notifyListeners();
+    _notify();
   }
 
   static String _fingerprintOf({
@@ -305,6 +317,7 @@ class McpService extends ChangeNotifier {
     required List<AgentKeyPerson> people,
     required String? appVersion,
     required String? proxyCookie,
+    required int basePort,
   }) {
     final keyPart = (agentKeys.map((key) => key.hash).toList()..sort()).join(
       ',',
@@ -312,13 +325,14 @@ class McpService extends ChangeNotifier {
     final peoplePart = (people.map((p) => '${p.id}:${p.role}').toList()..sort())
         .join(',');
     return '$fireflyUrl|${fireflyToken.hashCode}|$keyPart|$peoplePart'
-        '|$appVersion|${proxyCookie.hashCode}';
+        '|$appVersion|${proxyCookie.hashCode}|$basePort';
   }
 
   @override
   void dispose() {
     // Tear down without notifying: listeners are gone by definition here, and
     // ChangeNotifier rejects a notify after dispose.
+    _disposed = true;
     _teardown();
     super.dispose();
   }

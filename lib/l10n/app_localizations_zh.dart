@@ -3744,4 +3744,20 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get cosmosSsoSignInAction => '登录 Cosmos';
+
+  @override
+  String get mcpBasePortLabel => '起始端口';
+
+  @override
+  String mcpBasePortHelp(int count) {
+    return '服务器从这里开始尝试 $count 个端口，使用第一个空闲的。如果该范围已被占用，请更改。';
+  }
+
+  @override
+  String mcpBasePortInvalid(int min, int max) {
+    return '请输入 $min 到 $max 之间的端口';
+  }
+
+  @override
+  String get mcpBasePortReset => '恢复默认';
 }

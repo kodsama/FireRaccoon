@@ -10,6 +10,7 @@ import '../l10n/l10n_extensions.dart';
 import '../providers/agent_keys_provider.dart';
 import '../providers/mcp_provider.dart';
 import '../store/agent_key_store.dart';
+import 'mcp_port_field.dart';
 import '../services/mcp_service.dart';
 import '../theme/app_theme.dart';
 import '../utils/app_feedback.dart';
@@ -351,6 +352,7 @@ class _ConnectionDetails extends ConsumerWidget {
               port == null ? l10n.mcpNotRunning : '$_host:$port',
             ),
             _detailRow(theme, l10n.mcpTransportLabel, l10n.mcpTransportTcp),
+            const McpPortField(),
             _detailRow(
               theme,
               l10n.mcpAuthParameter,

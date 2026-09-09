@@ -5,12 +5,20 @@ import 'app_info_provider.dart';
 import 'auth_provider.dart';
 import 'backup_providers.dart';
 import 'cosmos_session_provider.dart';
+import 'mcp_port_provider.dart';
 import '../services/mcp_service.dart';
 import '../store/agent_key_store.dart';
 
 final mcpServiceProvider = Provider<McpService>((ref) {
   final service = McpService();
-  ref.onDispose(service.dispose);
+  // Tearing the container down disposes the service and can still fire the
+  // listeners below, and apply() would then stop a service that is already
+  // gone, which a ChangeNotifier asserts on.
+  var disposed = false;
+  ref.onDispose(() {
+    disposed = true;
+    service.dispose();
+  });
 
   // Usage stamps only move lastUsedAt, which the restart fingerprint ignores,
   // so recording one cannot bounce the server it came from.
@@ -22,7 +30,7 @@ final mcpServiceProvider = Provider<McpService>((ref) {
   // re-synced whenever the connection, the keys, or the people behind them
   // change. sync() restarts only when something it captured actually moved.
   void apply() {
-    if (!mcpDesktopSupported) return;
+    if (disposed || !mcpDesktopSupported) return;
     final auth = ref.read(authProvider);
     if (!auth.isValid) {
       service.stop();
@@ -46,6 +54,7 @@ final mcpServiceProvider = Provider<McpService>((ref) {
       // The session belongs to the app, and an agent reaching a gated route
       // needs the same one rather than a sign-in of its own.
       proxyCookie: ref.read(cosmosSessionProvider)?.cookieHeader,
+      basePort: ref.read(mcpBasePortProvider),
     );
   }
 
@@ -54,6 +63,7 @@ final mcpServiceProvider = Provider<McpService>((ref) {
   ref.listen(agentKeyPeopleProvider, (_, _) => apply());
   ref.listen(packageInfoProvider, (_, _) => apply());
   ref.listen(cosmosSessionProvider, (_, _) => apply());
+  ref.listen(mcpBasePortProvider, (_, _) => apply());
 
   return service;
 });
