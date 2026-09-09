@@ -164,6 +164,7 @@ class _FixedMcpService extends McpService {
     String? agentKeysError,
     String? backupsDirectory,
     String? appVersion,
+    String? proxyCookie,
     int basePort = 8787,
   }) async {}
 }
@@ -267,6 +268,7 @@ class _LateBindingMcpService extends McpService {
     String? agentKeysError,
     String? backupsDirectory,
     String? appVersion,
+    String? proxyCookie,
     int basePort = 8787,
   }) async {}
 }
@@ -544,9 +546,9 @@ void main() {
   });
 
   test('mcpConnectionSnippet fills the key in so nothing needs editing', () {
-    final snippet =
-        jsonDecode(mcpConnectionSnippet(port: 9123, agentKey: 'frcn_alpha'))
-            as Map<String, Object?>;
+    final snippet = jsonDecode(
+      mcpConnectionSnippet(port: 9123, agentKey: 'frcn_alpha'),
+    ) as Map<String, Object?>;
 
     expect(snippet['transport'], 'tcp');
     expect(snippet['host'], '127.0.0.1');

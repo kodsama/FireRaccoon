@@ -112,9 +112,8 @@ Future<void> duplicateTransactionEntity(
     await refreshTransactionLists(ref, filterAccount, upsert: duplicated);
     await onMutated?.call();
     if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.transactionDuplicated)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.transactionDuplicated)));
     }
   } catch (e) {
     if (context.mounted) {
@@ -196,9 +195,8 @@ Future<void> saveTransactionEntity(
         );
     await refreshTransactionLists(ref, filterAccount, upsert: saved);
     if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.transactionSaved)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.transactionSaved)));
     }
   } catch (e, stackTrace) {
     if (context.mounted) {
@@ -253,9 +251,8 @@ Future<void> deleteTransactionEntity(
     );
     await onMutated?.call();
     if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.transactionDeleted)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.transactionDeleted)));
     }
   } catch (e) {
     if (context.mounted) {

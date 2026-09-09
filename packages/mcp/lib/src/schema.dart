@@ -82,7 +82,8 @@ Map<String, Object?> buildMcpSchema({FireflyTarget? target}) {
 
 /// Tool names exposed by [buildTools], sorted for stable comparisons.
 List<String> mcpToolNames() {
-  return buildTools(
-    target: const FireflyTarget.unconfigured(),
-  ).map((tool) => tool.name).toList()..sort();
+  return buildTools(target: const FireflyTarget.unconfigured())
+      .map((tool) => tool.name)
+      .toList()
+    ..sort();
 }

@@ -315,9 +315,9 @@ void main() {
     test('refuses a backup taken from another ledger', () async {
       final client = fireflyMockClient();
       final id = await takeBackup(client);
-      final manifest =
-          jsonDecode(utf8.decode((await store.get(id, kBackupManifestFile))!))
-              as Map<String, Object?>;
+      final manifest = jsonDecode(
+        utf8.decode((await store.get(id, kBackupManifestFile))!),
+      ) as Map<String, Object?>;
       manifest['owner'] = {'id': '99', 'email': 'someone@else.test'};
       await store.put(
         id,
@@ -362,9 +362,9 @@ void main() {
       final client = fireflyMockClient();
       final id = await takeBackup(client);
       // The ledger loses a transaction after the backup was taken.
-      final snapshot =
-          jsonDecode(utf8.decode((await store.get(id, kBackupSnapshotFile))!))
-              as Map<String, Object?>;
+      final snapshot = jsonDecode(
+        utf8.decode((await store.get(id, kBackupSnapshotFile))!),
+      ) as Map<String, Object?>;
       (snapshot['transactions']! as List).add({
         'id': '99',
         'group_title': null,
@@ -402,9 +402,9 @@ void main() {
     test('a long plan is reported to a ceiling, counted whole', () async {
       final client = fireflyMockClient();
       final id = await takeBackup(client);
-      final snapshot =
-          jsonDecode(utf8.decode((await store.get(id, kBackupSnapshotFile))!))
-              as Map<String, Object?>;
+      final snapshot = jsonDecode(
+        utf8.decode((await store.get(id, kBackupSnapshotFile))!),
+      ) as Map<String, Object?>;
       for (var i = 0; i < 5; i++) {
         (snapshot['transactions']! as List).add({
           'id': 'lost-$i',
@@ -452,9 +452,9 @@ void main() {
     test('a step Firefly refuses is reported, not swallowed', () async {
       final client = fireflyMockClient(failingWrites: {'/api/v1/transactions'});
       final id = await takeBackup(client);
-      final snapshot =
-          jsonDecode(utf8.decode((await store.get(id, kBackupSnapshotFile))!))
-              as Map<String, Object?>;
+      final snapshot = jsonDecode(
+        utf8.decode((await store.get(id, kBackupSnapshotFile))!),
+      ) as Map<String, Object?>;
       (snapshot['transactions']! as List).add({
         'id': '99',
         'splits': [

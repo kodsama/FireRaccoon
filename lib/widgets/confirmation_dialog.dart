@@ -1,5 +1,7 @@
 import 'dart:math';
+
 import 'package:flutter/material.dart';
+
 import '../l10n/l10n_extensions.dart';
 import '../theme/app_theme.dart';
 import 'autocomplete_text_field.dart';

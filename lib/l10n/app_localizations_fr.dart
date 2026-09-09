@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -3837,4 +3838,43 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get secureConnectionTooltip => 'Connexion chiffrée (https)';
+
+  @override
+  String get cosmosSsoTitle => 'SSO Cosmos';
+
+  @override
+  String get cosmosSsoNotSignedIn => 'Non connecté';
+
+  @override
+  String cosmosSsoSignedIn(String host) {
+    return 'Connecté à $host';
+  }
+
+  @override
+  String get cosmosSsoSignIn => 'Se connecter';
+
+  @override
+  String get cosmosSsoSignOut => 'Se déconnecter';
+
+  @override
+  String get cosmosSsoUnsupported =>
+      'La connexion à Cosmos n\'est pas disponible sur cette plateforme';
+
+  @override
+  String get cosmosSsoWebNote =>
+      'Votre navigateur porte déjà la session Cosmos';
+
+  @override
+  String get cosmosSsoExplainer =>
+      'Connectez-vous si votre serveur Firefly III se trouve derrière une route Cosmos Cloud qui exige une authentification. Le jeton Firefly reste utilisé pour Firefly lui-même.';
+
+  @override
+  String get cosmosSsoCancelled => 'La connexion a été fermée avant la fin';
+
+  @override
+  String get connectionFailedCosmos =>
+      'Ce serveur se trouve derrière une authentification Cosmos Cloud. Connectez-vous à Cosmos, puis réessayez.';
+
+  @override
+  String get cosmosSsoSignInAction => 'Se connecter à Cosmos';
 }

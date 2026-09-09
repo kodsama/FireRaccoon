@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:fireraccoon/providers/auth_provider.dart';
 import 'package:fireraccoon/providers/firefly_connection_provider.dart';
+
 import '../helpers/static_auth_notifier.dart';
 
 void main() {

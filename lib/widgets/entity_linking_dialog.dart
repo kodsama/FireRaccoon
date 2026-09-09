@@ -257,9 +257,8 @@ class __EntityLinkingDialogState extends ConsumerState<_EntityLinkingDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to apply link: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to apply link: $e')));
       }
     }
   }

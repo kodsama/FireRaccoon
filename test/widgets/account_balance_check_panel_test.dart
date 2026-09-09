@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fireraccoon/utils/locale_formatting.dart';
 import 'package:fireraccoon/widgets/account_balance_check_panel.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+
 import '../helpers/screen_test_app.dart';
 
 Account _paymentAccount() {

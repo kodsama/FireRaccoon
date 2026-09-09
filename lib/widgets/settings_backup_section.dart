@@ -73,9 +73,8 @@ class SettingsBackupSection extends ConsumerWidget {
     await jsonStoreWrite(path, contents);
 
     if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.settingsExportedTo(path))));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l10n.settingsExportedTo(path))));
 
     await SharePlus.instance.share(
       ShareParams(

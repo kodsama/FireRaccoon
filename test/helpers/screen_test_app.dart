@@ -16,6 +16,7 @@ import 'package:fireraccoon/providers/view_mode_provider.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:fireraccoon/theme/app_colors.dart';
 import 'package:fireraccoon/theme/app_theme.dart';
+
 import '../helpers/static_auth_notifier.dart';
 import '../helpers/fixed_accounts_notifier.dart';
 import '../helpers/fixed_transactions_notifier.dart';

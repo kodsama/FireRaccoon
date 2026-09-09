@@ -36,6 +36,17 @@ void main() {
     expect(secure, isNot(insecure));
   });
 
+  testWidgets('the lock is sized where a heading needs it smaller', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      const TransportLockIcon(url: 'https://firefly.test', size: 15),
+    );
+
+    expect(tester.widget<Icon>(find.byType(Icon)).size, 15);
+  });
+
   testWidgets('the badge names the risk it is flagging', (tester) async {
     await pump(tester, const InsecureConnectionBadge());
 

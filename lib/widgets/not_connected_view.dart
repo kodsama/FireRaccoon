@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../l10n/l10n_extensions.dart';
 import '../providers/auth_provider.dart';
+import '../providers/firefly_connection_provider.dart';
 import '../providers/theme_provider.dart';
 import '../store/credential_store_locked_exception.dart';
 import '../theme/app_theme.dart';
@@ -16,7 +17,7 @@ import 'fun_decorated_surface.dart';
 /// connected yet, and the credential store has relocked. Neither gets a
 /// failure's treatment. [message] is only for the things that really did go
 /// wrong.
-class LoadFailureView extends StatelessWidget {
+class LoadFailureView extends ConsumerWidget {
   const LoadFailureView({
     super.key,
     required this.error,
@@ -29,12 +30,20 @@ class LoadFailureView extends StatelessWidget {
   final bool compact;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     if (error is FireflyNotConnectedException) {
       return NotConnectedView(compact: compact);
     }
     if (error is CredentialStoreLockedException) {
       return CredentialsLockedView(compact: compact);
+    }
+    // Whatever the call happened to throw, a server the app cannot reach is
+    // the reason, and it is the one worth saying. A 404 from a request that
+    // never had a working connection behind it describes the symptom.
+    final status = ref.watch(fireflyConnectionProvider);
+    if (status == FireflyConnectionStatus.disconnected ||
+        status == FireflyConnectionStatus.unreachable) {
+      return NotConnectedView(compact: compact);
     }
     return Center(
       child: Padding(

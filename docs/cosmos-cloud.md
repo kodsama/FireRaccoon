@@ -160,6 +160,28 @@ If the browser blocks API calls, enable CORS on Firefly for the FireRaccoon
 origin (see [Firefly connection](firefly-connection.md)) or put both under one
 hostname with an `/api` path proxy ([Deployment](deployment.md)).
 
+## Putting Firefly III behind a Cosmos login
+
+A Cosmos route with authentication on gates every request on its own `jwttoken`
+cookie, so a client that only holds a Firefly token reaches the sign-in page
+instead of the API. FireRaccoon signs in to that route under **Settings → Cosmos
+SSO**: it opens the route in a web view, Cosmos runs its own authorization-code
+exchange with the `__route_<name>` client it provisions per route, and the
+cookie it sets at the end is kept in the same keychain item as the Firefly
+credentials.
+
+Nothing needs configuring in Cosmos. The route client already accepts the
+callback it uses, and Cosmos strips `jwttoken` before forwarding, so Firefly
+never sees it and the personal access token keeps working unchanged.
+
+The session is sent only to the host it was minted for, and dropped the moment
+Cosmos turns a request away. The embedded MCP server carries the same session,
+so an agent reaches the ledger through the same gate; it never signs in itself,
+because that needs a person.
+
+Testing a connection to such a route reports it as a sign-in rather than a wrong
+address, and offers the sign-in from there.
+
 ## Updates
 
 With `cosmos-auto-update: "true"`, Cosmos can refresh when a new image tag is

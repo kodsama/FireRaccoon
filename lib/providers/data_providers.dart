@@ -2,9 +2,13 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:http/http.dart' as http;
+
+import '../store/cosmos_session_client.dart';
 import '../store/credential_store_locked_exception.dart';
 import '../utils/web_backend_proxy.dart';
 import 'auth_provider.dart';
+import 'cosmos_session_provider.dart';
 
 final _log = AppLogger.scoped('providers.data');
 
@@ -65,12 +69,24 @@ final apiServiceProvider = Provider<FireflyService?>((ref) {
       'readRetryBaseDelayMs=${readRetryBaseDelayMs ?? 200}, '
       'readRetryJitterMs=${readRetryJitterMs ?? 0}',
     );
+    // Watched, not read: signing in to Cosmos has to rebuild the service so
+    // the next request carries the cookie rather than waiting for something
+    // else to invalidate the provider.
+    ref.watch(cosmosSessionProvider);
     return FireflyApiService(
       serverUrl: resolveBackendUrlForHttp(authSettings.serverUrl),
       apiToken: authSettings.apiToken,
       readMaxAttempts: readMaxAttempts ?? 3,
       readRetryBaseDelayMs: readRetryBaseDelayMs ?? 200,
       readRetryJitterMs: readRetryJitterMs ?? 0,
+      // Only wraps when there is a session to carry, so a connection that
+      // never goes through Cosmos is left exactly as it was.
+      client: CosmosSessionClient(
+        inner: http.Client(),
+        session: () => ref.read(cosmosSessionProvider),
+        onSessionExpired: () =>
+            ref.read(cosmosSessionProvider.notifier).expired(),
+      ),
     );
   } else {
     _log.finer('API service unavailable because auth settings are invalid');

@@ -24,11 +24,10 @@ class BalloonPainter extends CustomPainter {
       ),
       Paint()
         ..shader =
-            const RadialGradient(
-              colors: [Color(0xFFF472B6), Color(0xFFDB2777)],
-            ).createShader(
-              Rect.fromCircle(center: center, radius: size.width * 0.3),
-            ),
+            const RadialGradient(colors: [Color(0xFFF472B6), Color(0xFFDB2777)])
+                .createShader(
+                  Rect.fromCircle(center: center, radius: size.width * 0.3),
+                ),
     );
     canvas.drawLine(
       Offset(size.width * 0.5, size.height * 0.68),

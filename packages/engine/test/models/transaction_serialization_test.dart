@@ -179,39 +179,36 @@ void main() {
   });
 
   group('Transaction update serialization', () {
-    test(
-      'omits financial fields for reconciled transactions when isUpdate is true',
-      () {
-        final transaction = Transaction(
-          id: '97083',
-          type: 'transfer',
-          date: DateTime(2026, 7, 22),
-          amount: 10000.0,
-          description: 'Transfer',
-          sourceId: '9101',
-          sourceName: 'Wallet SEK',
-          destinationId: '9102',
-          destinationName: 'Personal Current',
-          categoryName: '',
-          currencySymbol: 'kr',
-          currencyCode: 'SEK',
-          reconciled: true,
-        );
+    test('omits financial fields for reconciled transactions when isUpdate is true', () {
+      final transaction = Transaction(
+        id: '97083',
+        type: 'transfer',
+        date: DateTime(2026, 7, 22),
+        amount: 10000.0,
+        description: 'Transfer',
+        sourceId: '9101',
+        sourceName: 'Wallet SEK',
+        destinationId: '9102',
+        destinationName: 'Personal Current',
+        categoryName: '',
+        currencySymbol: 'kr',
+        currencyCode: 'SEK',
+        reconciled: true,
+      );
 
-        final payload = transaction.toApiPayload(isUpdate: true);
-        final split =
-            (payload['transactions'] as List).first as Map<String, dynamic>;
+      final payload = transaction.toApiPayload(isUpdate: true);
+      final split =
+          (payload['transactions'] as List).first as Map<String, dynamic>;
 
-        expect(split['reconciled'], isTrue);
-        expect(split['description'], 'Transfer');
-        expect(split.containsKey('amount'), isFalse);
-        expect(split.containsKey('currency_code'), isFalse);
-        expect(split.containsKey('source_id'), isFalse);
-        expect(split.containsKey('source_name'), isFalse);
-        expect(split.containsKey('destination_id'), isFalse);
-        expect(split.containsKey('destination_name'), isFalse);
-      },
-    );
+      expect(split['reconciled'], isTrue);
+      expect(split['description'], 'Transfer');
+      expect(split.containsKey('amount'), isFalse);
+      expect(split.containsKey('currency_code'), isFalse);
+      expect(split.containsKey('source_id'), isFalse);
+      expect(split.containsKey('source_name'), isFalse);
+      expect(split.containsKey('destination_id'), isFalse);
+      expect(split.containsKey('destination_name'), isFalse);
+    });
 
     test('includes financial fields for unreconciled transaction updates', () {
       final transaction = Transaction(
@@ -241,35 +238,32 @@ void main() {
       expect(split['destination_id'], '9102');
     });
 
-    test(
-      'includes financial fields for reconciled transactions on creation (isUpdate: false)',
-      () {
-        final transaction = Transaction(
-          id: '97083',
-          type: 'transfer',
-          date: DateTime(2026, 7, 22),
-          amount: 10000.0,
-          description: 'Transfer',
-          sourceId: '9101',
-          sourceName: 'Wallet SEK',
-          destinationId: '9102',
-          destinationName: 'Personal Current',
-          categoryName: '',
-          currencySymbol: 'kr',
-          currencyCode: 'SEK',
-          reconciled: true,
-        );
+    test('includes financial fields for reconciled transactions on creation (isUpdate: false)', () {
+      final transaction = Transaction(
+        id: '97083',
+        type: 'transfer',
+        date: DateTime(2026, 7, 22),
+        amount: 10000.0,
+        description: 'Transfer',
+        sourceId: '9101',
+        sourceName: 'Wallet SEK',
+        destinationId: '9102',
+        destinationName: 'Personal Current',
+        categoryName: '',
+        currencySymbol: 'kr',
+        currencyCode: 'SEK',
+        reconciled: true,
+      );
 
-        final payload = transaction.toApiPayload(isUpdate: false);
-        final split =
-            (payload['transactions'] as List).first as Map<String, dynamic>;
+      final payload = transaction.toApiPayload(isUpdate: false);
+      final split =
+          (payload['transactions'] as List).first as Map<String, dynamic>;
 
-        expect(split['reconciled'], isTrue);
-        expect(split['amount'], '10000.00');
-        expect(split['currency_code'], 'SEK');
-        expect(split['source_id'], '9101');
-        expect(split['destination_id'], '9102');
-      },
-    );
+      expect(split['reconciled'], isTrue);
+      expect(split['amount'], '10000.00');
+      expect(split['currency_code'], 'SEK');
+      expect(split['source_id'], '9101');
+      expect(split['destination_id'], '9102');
+    });
   });
 }

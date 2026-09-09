@@ -21,9 +21,8 @@ void main() {
     test(
       'an unconfigured target reports the state rather than guessing',
       () async {
-        final tool = buildTools(
-          target: const FireflyTarget.unconfigured(),
-        ).firstWhere((t) => t.name == 'run_projection');
+        final tool = buildTools(target: const FireflyTarget.unconfigured())
+            .firstWhere((t) => t.name == 'run_projection');
 
         final result = await tool.run({});
 
@@ -323,27 +322,24 @@ void main() {
   });
 
   group('transaction bookkeeping fields', () {
-    test(
-      'a transaction carries the fields needed to match and copy it',
-      () async {
-        final tool = _tool('get_transaction', client: fireflyMockClient());
+    test('a transaction carries the fields needed to match and copy it', () async {
+      final tool = _tool('get_transaction', client: fireflyMockClient());
 
-        final transaction =
-            (await tool.run({'transaction_id': '1'}))['transaction']
-                as Map<String, Object?>;
+      final transaction =
+          (await tool.run({'transaction_id': '1'}))['transaction']
+              as Map<String, Object?>;
 
-        // Reconciling a statement needs the payee account ids, because a payee in
-        // Firefly is an account and its own transaction list is the candidate
-        // history. Copying one needs to show what the copy inherits.
-        expect(transaction['source_id'], '5');
-        expect(transaction['destination_id'], '9');
-        expect(transaction['budget_name'], 'Housekeeping');
-        expect(transaction['bill_name'], 'Weekly shop');
-        expect(transaction['tags'], ['groceries', 'shared']);
-        expect(transaction['notes'], contains('ICA SUPERMARKET'));
-        expect(transaction['split_count'], 1);
-      },
-    );
+      // Reconciling a statement needs the payee account ids, because a payee in
+      // Firefly is an account and its own transaction list is the candidate
+      // history. Copying one needs to show what the copy inherits.
+      expect(transaction['source_id'], '5');
+      expect(transaction['destination_id'], '9');
+      expect(transaction['budget_name'], 'Housekeeping');
+      expect(transaction['bill_name'], 'Weekly shop');
+      expect(transaction['tags'], ['groceries', 'shared']);
+      expect(transaction['notes'], contains('ICA SUPERMARKET'));
+      expect(transaction['split_count'], 1);
+    });
 
     test('the same fields appear in a transaction listing', () async {
       final tool = _tool('get_transactions', client: fireflyMockClient());
@@ -361,9 +357,8 @@ void main() {
 
   group('get_capabilities', () {
     test('answers without a Firefly connection', () async {
-      final tool = buildTools(
-        target: const FireflyTarget.unconfigured(),
-      ).firstWhere((t) => t.name == 'get_capabilities');
+      final tool = buildTools(target: const FireflyTarget.unconfigured())
+          .firstWhere((t) => t.name == 'get_capabilities');
 
       final result = await tool.run({});
 
@@ -420,9 +415,8 @@ void main() {
     });
 
     test('an unconfigured server says so, and points at Settings', () async {
-      final tool = buildTools(
-        target: const FireflyTarget.unconfigured(),
-      ).firstWhere((t) => t.name == 'get_capabilities');
+      final tool = buildTools(target: const FireflyTarget.unconfigured())
+          .firstWhere((t) => t.name == 'get_capabilities');
 
       final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
 
@@ -503,6 +497,70 @@ void main() {
       final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
 
       expect(backend['user_count'], 3);
+    });
+
+    test('a route standing in front of Firefly is named as such', () async {
+      // A gated route answers the probe with its sign-in redirect. Reported as
+      // unreachable, an agent goes looking for a server that is running fine.
+      final tool = _tool(
+        'get_capabilities',
+        client: MockClient(
+          (_) async => http.Response(
+            '',
+            302,
+            headers: {
+              'location':
+                  'https://cosmos.example/cosmos-ui/openid'
+                  '?client_id=__route_Firefly-III',
+            },
+          ),
+        ),
+      );
+
+      final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
+
+      expect(backend['connected'], isTrue);
+      expect(backend['authorized'], isFalse);
+      expect(backend['proxy'], 'cosmos');
+      expect(backend['reason'], contains('Sign in to Cosmos'));
+    });
+
+    test('says whether it holds a session for such a route', () async {
+      final without = buildTools(
+        target: _target,
+        httpClient: fireflyMockClient(),
+      ).firstWhere((t) => t.name == 'get_capabilities');
+      final with_ = buildTools(
+        target: const FireflyTarget(
+          baseUrl: fireflyBaseUrl,
+          bearer: fireflyToken,
+          proxyCookie: 'jwttoken=abc',
+        ),
+        httpClient: fireflyMockClient(),
+      ).firstWhere((t) => t.name == 'get_capabilities');
+
+      expect(((await without.run({}))['app'] as Map)['proxy_session'], isFalse);
+      expect(((await with_.run({}))['app'] as Map)['proxy_session'], isTrue);
+    });
+
+    test('the session is sent with the request, not just advertised', () async {
+      final seen = <String?>[];
+      final tool = buildTools(
+        target: const FireflyTarget(
+          baseUrl: fireflyBaseUrl,
+          bearer: fireflyToken,
+          proxyCookie: 'jwttoken=abc',
+        ),
+        httpClient: MockClient((request) async {
+          seen.add(request.headers['Cookie']);
+          return jsonHttpResponse(userBody());
+        }),
+      ).firstWhere((t) => t.name == 'get_current_user');
+
+      await tool.run({});
+
+      expect(seen, isNotEmpty);
+      expect(seen.every((c) => c == 'jwttoken=abc'), isTrue);
     });
 
     test('advertises agent keys as the credential', () async {

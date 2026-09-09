@@ -549,31 +549,28 @@ void main() {
       expect(secondContainer.read(peopleProvider).requiresLoginGate, isFalse);
     });
 
-    test(
-      'requirePasswordLogin forces a fresh login even with a remembered session',
-      () async {
-        final firstContainer = await buildContainer();
-        await waitHydrated(firstContainer);
-        await addAdmin(firstContainer);
-        final missing = await firstContainer
-            .read(peopleProvider.notifier)
-            .setRequirePasswordLogin(true);
-        expect(missing, isEmpty);
-        firstContainer.dispose();
+    test('requirePasswordLogin forces a fresh login even with a remembered session', () async {
+      final firstContainer = await buildContainer();
+      await waitHydrated(firstContainer);
+      await addAdmin(firstContainer);
+      final missing = await firstContainer
+          .read(peopleProvider.notifier)
+          .setRequirePasswordLogin(true);
+      expect(missing, isEmpty);
+      firstContainer.dispose();
 
-        final secondContainer = await buildContainer();
-        addTearDown(secondContainer.dispose);
-        await waitHydrated(secondContainer);
+      final secondContainer = await buildContainer();
+      addTearDown(secondContainer.dispose);
+      await waitHydrated(secondContainer);
 
-        expect(secondContainer.read(peopleProvider).currentPerson, isNull);
-        expect(secondContainer.read(peopleProvider).requiresLoginGate, isTrue);
+      expect(secondContainer.read(peopleProvider).currentPerson, isNull);
+      expect(secondContainer.read(peopleProvider).requiresLoginGate, isTrue);
 
-        final person = await secondContainer
-            .read(peopleProvider.notifier)
-            .login('alex', _kStrongPassword);
-        expect(person, isNotNull);
-      },
-    );
+      final person = await secondContainer
+          .read(peopleProvider.notifier)
+          .login('alex', _kStrongPassword);
+      expect(person, isNotNull);
+    });
 
     test(
       'setRequirePasswordLogin is blocked when people are missing passwords',
