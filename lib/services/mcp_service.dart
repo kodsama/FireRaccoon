@@ -409,6 +409,7 @@ Future<void> _serverEntry(McpIsolateConfig cfg) async {
           : FileBackupStore(backupsDirectory),
       appVersion: cfg.appVersion,
     ),
+    appVersion: cfg.appVersion,
     onActivity: reportUse,
   );
   final authenticator = SnapshotAuthenticator(

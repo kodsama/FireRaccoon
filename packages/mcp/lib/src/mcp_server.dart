@@ -13,6 +13,7 @@ class McpServer {
     required this.tools,
     this.name = 'fireraccoon',
     this.version = '1.0.0',
+    this.appVersion,
     this.protocolVersion = '2025-06-18',
     this.onActivity,
   });
@@ -33,6 +34,14 @@ class McpServer {
 
   /// Advertised server version.
   final String version;
+
+  /// The FireRaccoon release this server is part of, when the host knows it.
+  ///
+  /// Reported at `initialize`, before any tool has been called, because a
+  /// model that does not know which app it is driving guesses: it invents
+  /// features from another release, or blames the ledger for something this
+  /// version simply does not do.
+  final String? appVersion;
 
   /// Protocol revision used when the client doesn't request one.
   final String protocolVersion;
@@ -64,10 +73,24 @@ class McpServer {
           'capabilities': {
             'tools': {'listChanged': false},
           },
-          'serverInfo': {'name': name, 'version': version},
+          'serverInfo': {
+            'name': name,
+            'title': 'FireRaccoon',
+            // The app's release when the host knows it, because that is the
+            // version a person reads off the About screen and quotes in a bug
+            // report. The server's own version is reported beside it rather
+            // than in its place.
+            'version': appVersion ?? version,
+          },
+          'instructions': _instructions,
           // Tools are shared across connections, so the session's own account
           // is reported here rather than through a tool call.
           'fireraccoon': {
+            'app': {
+              'name': 'FireRaccoon',
+              'version': appVersion,
+              'mcp_version': version,
+            },
             'account': identity?.toJson(),
             'write_access': identity?.canWrite ?? false,
           },
@@ -95,6 +118,20 @@ class McpServer {
       default:
         return _err(id, -32601, 'Method not found: $method');
     }
+  }
+
+  /// What a model needs before its first call, in the one place every client
+  /// reads without being asked.
+  String get _instructions {
+    final release = appVersion == null ? '' : ' $appVersion';
+    return 'These tools belong to FireRaccoon$release, a client for the '
+        'Firefly III personal-finance ledger. They read and write that '
+        'ledger, not FireRaccoon itself. Call get_capabilities first: it '
+        'names this app and its version, lists every tool and which of them '
+        'write, and reports live whether the ledger is reachable and as whom. '
+        'A backend that is missing, unreachable, or behind a proxy sign-in is '
+        'reported as a described state by every tool rather than raised as a '
+        'failure, so read the code field before concluding anything is broken.';
   }
 
   Future<Map<String, Object?>> _call(

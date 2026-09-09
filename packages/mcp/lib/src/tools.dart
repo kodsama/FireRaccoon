@@ -4,51 +4,12 @@ import 'dart:math' show min;
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:http/http.dart' as http;
 
-/// Whether a response is a Cosmos Cloud route turning the caller away to sign
-/// in.
-///
-/// Recognised by the two paths Cosmos itself builds, matched on the path rather
-/// than anywhere in the string, and the OpenID form must carry the
-/// auto-provisioned `__route_` client. This decides whether an agent is told to
-/// sign in or told the server is down, so a substring match would send it after
-/// the wrong thing.
-bool isProxyLoginRedirect(int statusCode, Map<String, String> headers) {
-  if (statusCode < 300 || statusCode >= 400) return false;
-  final location = headers['location'] ?? headers['Location'] ?? '';
-  if (location.isEmpty) return false;
-  final target = Uri.tryParse(location);
-  if (target == null) return false;
-  if (target.path == '/cosmos-ui/login') return true;
-  if (target.path != '/cosmos-ui/openid') return false;
-  return (target.queryParameters['client_id'] ?? '').startsWith('__route_');
-}
+import 'proxy_gate.dart';
 
-/// Adds the reverse-proxy session to every request bound for the target.
-http.Client _proxyClient(http.Client? inner, FireflyTarget target) {
-  final base = inner ?? http.Client();
-  final cookie = target.proxyCookie;
-  if (cookie == null || cookie.isEmpty) return base;
-  return _CookieClient(base, cookie);
-}
-
-class _CookieClient extends http.BaseClient {
-  _CookieClient(this._inner, this._cookie);
-
-  final http.Client _inner;
-  final String _cookie;
-
-  @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) {
-    final existing = request.headers['Cookie'] ?? request.headers['cookie'];
-    request.headers['Cookie'] = existing == null || existing.isEmpty
-        ? _cookie
-        : '$existing; $_cookie';
-    return _inner.send(request);
-  }
-
-  @override
-  void close() => _inner.close();
-}
+/// Adds the reverse-proxy session to every request bound for the target, and
+/// turns the proxy's own refusals into a state a tool can describe.
+http.Client _proxyClient(http.Client? inner, FireflyTarget target) =>
+    ProxyGateClient(inner ?? http.Client(), target.proxyCookie);
 
 /// One MCP tool: name, description, JSON Schema, and executor.
 class McpTool {
@@ -146,6 +107,45 @@ Map<String, Object?> _unreachable(FireflyApiException error, String url) => {
   'remedy':
       'FireRaccoon knows where Firefly III is but could not reach it. Check '
       'the server is running and the URL resolves from this machine.',
+};
+
+/// Answer for a reverse proxy that would not pass the request to Firefly.
+///
+/// Told apart from unreachable on purpose: the server is up and the token is
+/// fine, and the one thing that fixes this is a person signing in to the proxy
+/// in the app. An agent told the backend is down goes looking for a server to
+/// restart.
+Map<String, Object?> _proxySignInRequired(
+  ProxySignInRequiredException error,
+  String url,
+) => {
+  'ok': false,
+  'code': 'proxy_sign_in_required',
+  'connected': false,
+  'backend_url': url,
+  'proxy': 'cosmos',
+  'error': '$error',
+  'remedy':
+      'A Cosmos Cloud route stands in front of Firefly III and has no session '
+      'for this server. Open FireRaccoon, sign in under Cosmos SSO in '
+      'Settings, and call this again; MCP carries the session the app holds.',
+};
+
+/// Answer for an address that answers without routing to Firefly III.
+///
+/// Told apart from a sign-in on purpose: no credential fixes this and no
+/// session creates the route, so an agent offered a sign-in here goes round a
+/// loop that cannot help.
+Map<String, Object?> _proxyNoRoute(ProxyNoRouteException error, String url) => {
+  'ok': false,
+  'code': 'proxy_no_route',
+  'connected': false,
+  'backend_url': url,
+  'error': '$error',
+  'remedy':
+      'Something answers at that address but does not pass requests to '
+      'Firefly III. Check the URL in FireRaccoon Settings, and that Firefly '
+      'III is running behind whatever reverse proxy stands in front of it.',
 };
 
 /// Answer for a Firefly server that answered by refusing the credential.
@@ -1426,14 +1426,31 @@ List<McpTool> buildTools({
       if (isProxyLoginRedirect(about.statusCode, about.headers)) {
         return {
           'configured': true,
-          'connected': true,
+          'connected': false,
           'authorized': false,
+          'code': 'proxy_sign_in_required',
           'url': url,
           'proxy': 'cosmos',
           'reason':
               'A Cosmos Cloud route stands in front of $url and this server '
               'has no session for it. Sign in to Cosmos in the FireRaccoon '
               'app; MCP carries the session the app holds.',
+        };
+      }
+      // A proxy that wants a credential redirects. One that answers with its
+      // own plain-text 404 has no route to Firefly at all, so no sign-in
+      // helps and the address is the thing to look at.
+      if (isProxyNotRouted(about.statusCode, about.headers, about.body)) {
+        return {
+          'configured': true,
+          'connected': false,
+          'authorized': false,
+          'code': 'proxy_no_route',
+          'url': url,
+          'reason':
+              'Something answers at $url but did not route the request to '
+              'Firefly III. Check the URL, and that Firefly III is running '
+              'behind whatever proxy stands in front of it.',
         };
       }
       if (about.statusCode == 401 || about.statusCode == 403) {
@@ -1904,7 +1921,12 @@ List<McpTool> buildTools({
         final authorized = status['authorized'] != false;
         return {
           'ok': connected && authorized,
-          if (!target.isConfigured)
+          // A state that already named itself keeps that name: collapsing a
+          // proxy that wants a sign-in into "unreachable" is what sent agents
+          // off to restart a server that was running.
+          if (status['code'] != null)
+            'code': status['code']
+          else if (!target.isConfigured)
             'code': 'not_connected'
           else if (!connected)
             'code': 'backend_unreachable'
@@ -4642,6 +4664,10 @@ McpTool _guarded(McpTool tool, FireflyTarget target) => McpTool(
       return await tool.run(args);
     } on FireflyNotConnectedException catch (error) {
       return _notConnected(error);
+    } on ProxySignInRequiredException catch (error) {
+      return _proxySignInRequired(error, target.normalizedBaseUrl);
+    } on ProxyNoRouteException catch (error) {
+      return _proxyNoRoute(error, target.normalizedBaseUrl);
     } on FireflyApiException catch (error) {
       final url = target.normalizedBaseUrl;
       // Only the transport knows the difference between a server that never

@@ -68,6 +68,7 @@ Future<void> main(List<String> args) async {
         identity: caller,
         appVersion: mcpPackageVersion,
       ),
+      appVersion: mcpPackageVersion,
     );
   }
 

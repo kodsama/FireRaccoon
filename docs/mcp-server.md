@@ -104,7 +104,16 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 }
 ```
 
-`params.api_key` and `params.authentication.token` are accepted as well. Every other method is refused until a key resolves. The `initialize` result carries a `fireraccoon` block naming the account the key resolved to and whether it has write access.
+`params.api_key` and `params.authentication.token` are accepted as well. Every other method is refused until a key resolves.
+
+The `initialize` result says which app this is before any tool has been called.
+`serverInfo` carries the title `FireRaccoon` and the app's release, `instructions`
+explains that these tools drive a Firefly III ledger rather than FireRaccoon
+itself and that a missing backend is a described state rather than a failure,
+and the `fireraccoon` block carries `app` (name, release, MCP server version)
+alongside the account the key resolved to and whether it has write access. The
+release is null only where the host does not know its own, which is anything
+other than the desktop app and the packaged server.
 
 ## Available tools
 
@@ -201,6 +210,8 @@ answers `ok: false` with a `code` and a `remedy`:
 | `not_connected` | No server is configured. Nobody has finished setting up. |
 | `backend_unreachable` | A server is configured and did not answer. |
 | `backend_unauthorized` | Firefly III answered and refused the token. |
+| `proxy_sign_in_required` | A reverse proxy in front of Firefly III wants a session. The server is up and the token is fine; a person has to sign in. |
+| `proxy_no_route` | Something answers at the address but does not pass requests to Firefly III. No credential fixes this: the address is wrong, or Firefly III is not running behind it. |
 
 The distinction is worth keeping: an agent told a socket failed retries or
 concludes the ledger is broken, when the real answer is that there is no ledger
@@ -215,11 +226,20 @@ proxy strips that cookie before forwarding, and leaves `Authorization` alone, so
 the Firefly token still does its own job behind it.
 
 MCP carries whatever session the app holds. It does not sign in: the login needs
-a person, and it happens once in the app under **Settings → Cosmos SSO**.
+a person, and it happens in the app under **Settings → Backend connection →
+Cosmos SSO**. The app renews an expired route session on its own, so an agent
+that meets a shut door usually finds it open again on the next call.
+
 `get_capabilities` reports `app.proxy_session` so an agent can see whether this
-server has one, and a probe that meets the sign-in page comes back
-`connected: true, authorized: false, proxy: cosmos` rather than as an unreachable
-server, because the server is running fine and the missing thing is a session.
+server has one. A request Cosmos wants a session for comes back
+`proxy_sign_in_required` with `connected: false, proxy: cosmos`, not as an
+unreachable server: the server is running fine and the missing thing is a
+session, so restarting anything is the wrong move.
+
+A plain-text `404 page not found` is a different state, `proxy_no_route`. That
+is Go's own not-found, which Cosmos falls through to for a host it has no route
+for, so no session helps and the address is what to look at. Reported as a
+sign-in it would send an agent after a credential that changes nothing.
 
 ## Importing a statement
 

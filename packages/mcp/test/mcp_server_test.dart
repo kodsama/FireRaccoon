@@ -2,13 +2,14 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 import 'package:test/test.dart';
 
-McpServer _server() => McpServer(
+McpServer _server({String? appVersion}) => McpServer(
   tools: buildTools(
     target: const FireflyTarget(
       baseUrl: 'http://localhost:8080',
       bearer: 'test-token',
     ),
   ),
+  appVersion: appVersion,
 );
 
 const _admin = AgentIdentity(
@@ -54,6 +55,40 @@ void main() {
       (result['serverInfo'] as Map<String, Object?>)['name'],
       'fireraccoon',
     );
+  });
+
+  test('initialize says which app this is and which release', () async {
+    // The first thing a client reads. A model that does not know which app it
+    // is driving invents features from another release and blames the ledger
+    // for what this version does not do.
+    final response = await _server(appVersion: '0.5.0')
+        .handle(_req(1, 'initialize', {'protocolVersion': '2025-06-18'}));
+    final result = response!['result'] as Map<String, Object?>;
+    final serverInfo = result['serverInfo'] as Map<String, Object?>;
+    final app =
+        (result['fireraccoon'] as Map<String, Object?>)['app']
+            as Map<String, Object?>;
+
+    expect(serverInfo['title'], 'FireRaccoon');
+    expect(serverInfo['version'], '0.5.0');
+    expect(app['name'], 'FireRaccoon');
+    expect(app['version'], '0.5.0');
+    // The server's own version stays reported beside the app's rather than in
+    // its place, so neither has to be guessed from the other.
+    expect(app['mcp_version'], '1.0.0');
+    expect(result['instructions'], contains('FireRaccoon 0.5.0'));
+    expect(result['instructions'], contains('get_capabilities'));
+  });
+
+  test('a host that does not know its release still names the app', () async {
+    final response = await _server().handle(_req(1, 'initialize'));
+    final result = response!['result'] as Map<String, Object?>;
+
+    expect(
+      (result['serverInfo'] as Map<String, Object?>)['title'],
+      'FireRaccoon',
+    );
+    expect(result['instructions'], contains('FireRaccoon,'));
   });
 
   test('initialize reports the session account and its write access', () async {

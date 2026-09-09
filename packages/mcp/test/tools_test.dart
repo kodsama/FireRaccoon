@@ -519,8 +519,12 @@ void main() {
 
       final backend = (await tool.run({}))['backend'] as Map<String, Object?>;
 
-      expect(backend['connected'], isTrue);
+      // Not connected: `connected` says whether Firefly III was reached, and
+      // a request that stopped at the proxy reached nothing. The code is what
+      // carries the difference between this and a server that is down.
+      expect(backend['connected'], isFalse);
       expect(backend['authorized'], isFalse);
+      expect(backend['code'], 'proxy_sign_in_required');
       expect(backend['proxy'], 'cosmos');
       expect(backend['reason'], contains('Sign in to Cosmos'));
     });
