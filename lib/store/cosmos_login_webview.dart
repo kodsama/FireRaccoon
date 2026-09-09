@@ -10,11 +10,17 @@ import 'cosmos_session.dart';
 class WebviewCosmosLogin implements CosmosLogin {
   const WebviewCosmosLogin();
 
-  /// Web is the one exception, and not for want of an implementation: a
-  /// browser already holds the cookie and sends it with every request, so
-  /// there is nothing for the app to capture or keep.
   @override
-  bool get isSupported => !kIsWeb;
+  bool get isSupported {
+    if (kIsWeb) return false;
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android ||
+      TargetPlatform.iOS ||
+      TargetPlatform.macOS ||
+      TargetPlatform.windows => true,
+      _ => false,
+    };
+  }
 
   @override
   Future<CosmosSession?> signIn(BuildContext context, Uri routeUrl) async {
