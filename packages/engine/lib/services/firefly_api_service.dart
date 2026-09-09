@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
+
 import 'package:http/http.dart' as http;
+
 import '../logging/app_logger.dart';
 import '../models/account.dart';
 import '../models/bill.dart';
@@ -572,17 +574,13 @@ class FireflyApiService implements FireflyService {
     DateTime? start,
     DateTime? end,
   }) async {
-    return _runLogged(
-      'getTransactionsPage',
-      () async {
-        return await _fetchTransactionPage(
-          _transactionsPath(start: start, end: end),
-          page: page,
-          limit: limit,
-        );
-      },
-      context: {'page': page, 'limit': limit, 'start': start, 'end': end},
-    );
+    return _runLogged('getTransactionsPage', () async {
+      return await _fetchTransactionPage(
+        _transactionsPath(start: start, end: end),
+        page: page,
+        limit: limit,
+      );
+    }, context: {'page': page, 'limit': limit, 'start': start, 'end': end});
   }
 
   @override

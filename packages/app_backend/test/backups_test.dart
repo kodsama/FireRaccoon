@@ -77,9 +77,8 @@ void main() {
       );
       expect(await store.listBackupIds(), ['b1']);
       // What lands on disk is ciphertext, not the ledger someone backed up.
-      final onDisk = File(
-        '${tmp.path}/backups/b1/manifest.json.enc',
-      ).readAsStringSync();
+      final onDisk = File('${tmp.path}/backups/b1/manifest.json.enc')
+          .readAsStringSync();
       expect(onDisk, isNot(contains('"id":"b1"')));
     });
 

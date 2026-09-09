@@ -8,6 +8,7 @@ import 'package:fireraccoon/providers/auth_provider.dart';
 import 'package:fireraccoon/providers/mcp_provider.dart';
 import 'package:fireraccoon/services/mcp_service.dart';
 import 'package:fireraccoon/providers/people_providers.dart';
+
 import '../helpers/static_auth_notifier.dart';
 import '../helpers/static_people_notifier.dart';
 

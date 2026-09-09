@@ -21,7 +21,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 version: 0.4.0+1
 
 environment:
-  sdk: '>=3.12.0 <4.0.0'
+  sdk: '>=3.13.0 <4.0.0'
 
 # Dependencies specify other packages that your package needs in order to work.
 # To automatically upgrade your package dependencies to the latest versions
@@ -79,9 +79,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
-  very_good_analysis: ^10.3.0  # 11 needs Dart 3.13; the stable SDK is 3.12.2
-  mockito: ^5.7.0  # 5.8 needs meta 1.18.3; the SDK pins meta 1.18.0
-  build_runner: ^2.15.1  # 2.16 needs an analyzer newer than the SDK pins
+  very_good_analysis: ^11.0.0
+  mockito: ^5.8.1
+  build_runner: ^2.16.1
   flutter_secure_storage_platform_interface: ^2.0.1
 
 # For information on the generic Dart part of this file, see the

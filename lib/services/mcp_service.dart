@@ -8,14 +8,13 @@ import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 
 import '../l10n/app_localizations.dart';
 
-typedef IsolateSpawner =
-    Future<Isolate> Function(
-      void Function(McpIsolateConfig) entry,
-      McpIsolateConfig message, {
-      String? debugName,
-      SendPort? onExit,
-      SendPort? onError,
-    });
+typedef IsolateSpawner = Future<Isolate> Function(
+  void Function(McpIsolateConfig) entry,
+  McpIsolateConfig message, {
+  String? debugName,
+  SendPort? onExit,
+  SendPort? onError,
+});
 
 /// Runs the MCP server on localhost TCP in a worker isolate.
 ///

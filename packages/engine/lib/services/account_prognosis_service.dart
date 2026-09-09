@@ -43,12 +43,10 @@ class AccountPrognosisService {
       PrognosisHorizon.endOfNextMonth,
     );
     final horizonEnd = prognosisHorizonEnd(reference, options.horizon);
-    final rangeStart = prognosisStartOfDay(
-      reference,
-    ).add(const Duration(days: 1));
-    final flowHorizonEnd = prognosisStartOfDay(
-      horizonEnd,
-    ).add(const Duration(days: 1));
+    final rangeStart = prognosisStartOfDay(reference)
+        .add(const Duration(days: 1));
+    final flowHorizonEnd = prognosisStartOfDay(horizonEnd)
+        .add(const Duration(days: 1));
 
     if (options.mode == PrognosisViewMode.projected) {
       return _computeProjected(
@@ -671,9 +669,10 @@ Map<String, double> _accountMonthlyNets(
     if (transaction.date.isBefore(minDate)) minDate = transaction.date;
     if (transaction.date.isAfter(maxDate)) maxDate = transaction.date;
   }
-  final spanDays = prognosisStartOfDay(
-    maxDate,
-  ).difference(prognosisStartOfDay(minDate)).inDays.clamp(30, 365);
+  final spanDays = prognosisStartOfDay(maxDate)
+      .difference(prognosisStartOfDay(minDate))
+      .inDays
+      .clamp(30, 365);
   final monthFactor = spanDays / 30.0;
 
   for (final transaction in transactions) {

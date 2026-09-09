@@ -303,11 +303,9 @@ void main() {
       await container.read(backupsProvider.future);
       final notifier = container.read(backupsProvider.notifier);
       final manifest = await notifier.create();
-      final json =
-          jsonDecode(
-                utf8.decode(store.backups[manifest.id]![kBackupManifestFile]!),
-              )
-              as Map<String, Object?>;
+      final json = jsonDecode(
+        utf8.decode(store.backups[manifest.id]![kBackupManifestFile]!),
+      ) as Map<String, Object?>;
       json['owner'] = {'id': '99', 'email': 'someone@else.test'};
       store.backups[manifest.id]![kBackupManifestFile] = utf8.encode(
         jsonEncode(json),

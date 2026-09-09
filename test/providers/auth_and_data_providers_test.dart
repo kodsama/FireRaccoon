@@ -12,6 +12,7 @@ import 'package:fireraccoon/utils/transport_security.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
 import 'package:fireraccoon/store/credential_store_locked_exception.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/static_auth_notifier.dart';
 import '../helpers/test_data.dart';
@@ -1153,62 +1154,59 @@ void main() {
       expect(container.read(apiServiceProvider), isNotNull);
     });
 
-    test(
-      'AccountsNotifier applyTransactionDelta updates account balance immediately',
-      () async {
-        final fake = FakeFireflyService(
-          accounts: sampleAccounts,
-          transactions: sampleTransactions,
-        );
-        final container = ProviderContainer(
-          overrides: [apiServiceProvider.overrideWithValue(fake)],
-        );
-        addTearDown(container.dispose);
+    test('AccountsNotifier applyTransactionDelta updates account balance immediately', () async {
+      final fake = FakeFireflyService(
+        accounts: sampleAccounts,
+        transactions: sampleTransactions,
+      );
+      final container = ProviderContainer(
+        overrides: [apiServiceProvider.overrideWithValue(fake)],
+      );
+      addTearDown(container.dispose);
 
-        await container.read(accountsProvider.future);
-        await container.read(transactionsProvider.future);
-        final initialChecking = container
-            .read(accountsProvider)
-            .value!
-            .firstWhere((a) => a.name == 'Checking');
-        expect(initialChecking.currentBalance, 2500.0);
+      await container.read(accountsProvider.future);
+      await container.read(transactionsProvider.future);
+      final initialChecking = container
+          .read(accountsProvider)
+          .value!
+          .firstWhere((a) => a.name == 'Checking');
+      expect(initialChecking.currentBalance, 2500.0);
 
-        final newExpense = Transaction(
-          id: 'new_tx_1',
-          date: DateTime.now(),
-          description: 'Coffee',
-          amount: 5.0,
-          type: 'withdrawal',
-          sourceId: '1',
-          sourceName: 'Checking',
-          destinationId: '99',
-          destinationName: 'Coffee Shop',
-          categoryName: '',
-          currencySymbol: '€',
-          currencyCode: 'EUR',
-        );
+      final newExpense = Transaction(
+        id: 'new_tx_1',
+        date: DateTime.now(),
+        description: 'Coffee',
+        amount: 5.0,
+        type: 'withdrawal',
+        sourceId: '1',
+        sourceName: 'Checking',
+        destinationId: '99',
+        destinationName: 'Coffee Shop',
+        categoryName: '',
+        currencySymbol: '€',
+        currencyCode: 'EUR',
+      );
 
-        container
-            .read(accountsProvider.notifier)
-            .applyTransactionDelta(upsert: newExpense);
-        final updatedChecking = container
-            .read(accountsProvider)
-            .value!
-            .firstWhere((a) => a.name == 'Checking');
-        expect(updatedChecking.currentBalance, 2495.0);
+      container
+          .read(accountsProvider.notifier)
+          .applyTransactionDelta(upsert: newExpense);
+      final updatedChecking = container
+          .read(accountsProvider)
+          .value!
+          .firstWhere((a) => a.name == 'Checking');
+      expect(updatedChecking.currentBalance, 2495.0);
 
-        final existing = sampleTransactions.first;
-        container
-            .read(accountsProvider.notifier)
-            .applyTransactionDelta(
-              upsert: existing.copyWith(amount: existing.amount + 10),
-            );
-        container
-            .read(accountsProvider.notifier)
-            .applyTransactionDelta(remove: existing);
-        expect(container.read(accountsProvider).value, isNotEmpty);
-      },
-    );
+      final existing = sampleTransactions.first;
+      container
+          .read(accountsProvider.notifier)
+          .applyTransactionDelta(
+            upsert: existing.copyWith(amount: existing.amount + 10),
+          );
+      container
+          .read(accountsProvider.notifier)
+          .applyTransactionDelta(remove: existing);
+      expect(container.read(accountsProvider).value, isNotEmpty);
+    });
 
     test('TransactionsNotifier remove during loading schedules a refresh', () {
       final fake = _DelayedTransactionsService();

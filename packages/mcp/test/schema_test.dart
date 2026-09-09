@@ -11,9 +11,8 @@ void main() {
   });
 
   test('schema tool names match get_capabilities output', () async {
-    final tool = buildTools(
-      target: const FireflyTarget.unconfigured(),
-    ).firstWhere((t) => t.name == 'get_capabilities');
+    final tool = buildTools(target: const FireflyTarget.unconfigured())
+        .firstWhere((t) => t.name == 'get_capabilities');
     final result = await tool.run({});
     final names =
         ((result['tools'] as List<Object?>).map((name) => '$name').toList()
@@ -61,9 +60,8 @@ void main() {
   test(
     'get_capabilities advertises the same write tools as the schema',
     () async {
-      final tool = buildTools(
-        target: const FireflyTarget.unconfigured(),
-      ).firstWhere((t) => t.name == 'get_capabilities');
+      final tool = buildTools(target: const FireflyTarget.unconfigured())
+          .firstWhere((t) => t.name == 'get_capabilities');
       final result = await tool.run({});
 
       expect(

@@ -164,9 +164,8 @@ Future<void> openNewTransactionFlow(
 
     if (created == true && context.mounted) {
       _log.info('Transaction create flow completed successfully');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.transactionCreated)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(l10n.transactionCreated)));
     }
   } catch (e) {
     // coverage:ignore-start
@@ -192,9 +191,8 @@ Future<void> openCreateAccountDialog(
       _log.info('Liability created successfully');
     }
     if (created == true && context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.liabilityCreated)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(context.l10n.liabilityCreated)));
     }
     return;
   }
@@ -209,9 +207,8 @@ Future<void> openCreateAccountDialog(
     _log.info('Account created successfully (accountType=$accountType)');
   }
   if (created == true && context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.accountCreated)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(context.l10n.accountCreated)));
   }
   // coverage:ignore-end
 }
@@ -223,9 +220,8 @@ Future<void> openCreateBudgetDialog(BuildContext context, WidgetRef ref) async {
     _log.info('Budget created successfully');
   }
   if (created == true && context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.budgetCreated)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(context.l10n.budgetCreated)));
   }
 }
 
@@ -274,8 +270,7 @@ Future<void> openCreatePiggyBankDialog(
     _log.info('Piggy bank created successfully');
   }
   if (created == true && context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.piggyBankCreated)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(context.l10n.piggyBankCreated)));
   }
 }

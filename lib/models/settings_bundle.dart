@@ -359,9 +359,8 @@ class SettingsPeopleBundle {
           raw.remove('avatarValue');
         }
         people.add(
-          Person.fromJson(
-            raw,
-          ).copyWith(clearPassword: true, biometricsEnabled: false),
+          Person.fromJson(raw)
+              .copyWith(clearPassword: true, biometricsEnabled: false),
         );
       }
     }
