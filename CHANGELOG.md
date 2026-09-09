@@ -25,10 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   three of them get there: `very_good_analysis` 11, whose stricter lint set the
   code already passes, `mockito` 5.8 and `build_runner` 2.16. CI builds on
   Flutter 3.47.2
-- The Android build pins `flutter_inappwebview_android` to a prerelease. AGP 9
-  removed `getDefaultProguardFile('proguard-android.txt')`, which the latest
-  stable of that package still calls, so the build failed while evaluating the
-  plugin before any of this code ran. Drop the override once 1.2.0 ships stable
+- The Android build moves to AGP 8.13. AGP 9 removed
+  `getDefaultProguardFile('proguard-android.txt')`, which the web view plugin
+  still calls, so the build failed while evaluating that plugin before any of
+  this code was compiled. The plugin's 6.2 line fixes it and fails to compile
+  on macOS instead, in every prerelease so far, so the plugin is held to 6.1 as
+  a family and the toolchain gives way rather than the platform
 - The embedded MCP server carries the session the app holds, so an agent
   reaches a gated route through the same door. It never signs in itself, since
   that needs a person. `get_capabilities` reports whether a session is held, and

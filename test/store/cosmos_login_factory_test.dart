@@ -1,4 +1,5 @@
 import 'package:fireraccoon/store/cosmos_login.dart';
+import 'package:fireraccoon/store/cosmos_login_desktop.dart';
 import 'package:fireraccoon/store/cosmos_login_factory.dart';
 import 'package:fireraccoon/store/cosmos_login_webview.dart';
 import 'package:flutter/foundation.dart';
@@ -7,21 +8,36 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   tearDown(() => debugDefaultTargetPlatformOverride = null);
 
-  test('every platform with a web view gets the same one', () {
-    // One implementation covers all six now, Linux included, so a platform
-    // switch here would be a special case with nothing behind it.
-    for (final platform in TargetPlatform.values) {
+  test('inappwebview covers the platforms it implements', () {
+    for (final platform in [
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+      TargetPlatform.macOS,
+      TargetPlatform.windows,
+    ]) {
       debugDefaultTargetPlatformOverride = platform;
-      final login = resolveCosmosLogin();
-
-      expect(login, isA<WebviewCosmosLogin>(), reason: '$platform');
-      expect(login.isSupported, isTrue, reason: '$platform');
+      expect(
+        resolveCosmosLogin(),
+        isA<WebviewCosmosLogin>(),
+        reason: '$platform should use the inappwebview flow',
+      );
     }
   });
 
-  test('the unsupported answer still says so rather than pretending', () {
-    const login = UnsupportedCosmosLogin();
+  test('Linux falls to the desktop web view', () {
+    // flutter_inappwebview has no Linux implementation, so Linux uses
+    // webkit2gtk through desktop_webview_window instead.
+    debugDefaultTargetPlatformOverride = TargetPlatform.linux;
 
+    expect(resolveCosmosLogin(), isA<DesktopCosmosLogin>());
+  });
+
+  test('anything else reports itself unsupported rather than guessing', () {
+    debugDefaultTargetPlatformOverride = TargetPlatform.fuchsia;
+
+    final login = resolveCosmosLogin();
+
+    expect(login, isA<UnsupportedCosmosLogin>());
     expect(login.isSupported, isFalse);
   });
 }
