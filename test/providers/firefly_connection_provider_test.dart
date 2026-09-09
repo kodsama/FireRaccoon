@@ -6,7 +6,11 @@ import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/cosmos_session_provider.dart';
 import 'package:fireraccoon/providers/firefly_connection_provider.dart';
+import 'package:fireraccoon/providers/firefly_reconnect_provider.dart';
+import 'package:fireraccoon/store/cosmos_session.dart';
+import 'package:fireraccoon/store/cosmos_session_store.dart';
 
 import '../helpers/static_auth_notifier.dart';
 
@@ -54,6 +58,133 @@ void main() {
     }
     return container.read(fireflyConnectionProvider);
   }
+
+  test('a connection coming back says so, once', () async {
+    // Otherwise the sidebar goes back to saying connected while every screen
+    // keeps showing the failure it hit while the server was away.
+    var answer = 500;
+    final container = ProviderContainer(
+      overrides: [
+        cosmosSessionStoreProvider.overrideWithValue(_EmptyStore()),
+        authProvider.overrideWith(
+          () => StaticAuthNotifier(
+            AuthSettings(serverUrl: 'https://cash.example', apiToken: 'token'),
+            storage: testStorage(),
+            httpClient: MockClient(
+              (_) async => http.Response(
+                answer == 200 ? '{"data":{}}' : 'boom',
+                answer,
+                headers: const {'content-type': 'application/json'},
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.listen(fireflyConnectionProvider, (_, _) {});
+    container.listen(fireflyReconnectProvider, (_, _) {});
+    // Waited for explicitly: a probe whose answer arrives after the next one
+    // has started is discarded, and then nothing has settled to come back from.
+    await waitForStatus(
+      container,
+      until: (s) => s == FireflyConnectionStatus.unreachable,
+    );
+    expect(
+      container.read(fireflyConnectionProvider),
+      FireflyConnectionStatus.unreachable,
+    );
+    // The first settled answer is a failure, so nothing has come back yet.
+    expect(container.read(fireflyReconnectProvider), 0);
+
+    answer = 200;
+    container.read(fireflyConnectionProvider.notifier).refresh();
+    await waitForStatus(
+      container,
+      until: (s) => s == FireflyConnectionStatus.connected,
+    );
+
+    expect(container.read(fireflyReconnectProvider), 1);
+
+    // Still connected on the next check, which is not a second coming back.
+    container.read(fireflyConnectionProvider.notifier).refresh();
+    await waitForStatus(
+      container,
+      until: (s) => s == FireflyConnectionStatus.connected,
+    );
+
+    expect(container.read(fireflyReconnectProvider), 1);
+  });
+
+  test('a first connection at startup is not a reconnection', () async {
+    // The screens are loading already; reloading them costs a second fetch of
+    // everything for nothing.
+    final container = ProviderContainer(
+      overrides: [
+        cosmosSessionStoreProvider.overrideWithValue(_EmptyStore()),
+        authProvider.overrideWith(
+          () => StaticAuthNotifier(
+            AuthSettings(serverUrl: 'https://cash.example', apiToken: 'token'),
+            storage: testStorage(),
+            httpClient: MockClient(
+              (_) async => http.Response('{"data":{}}', 200),
+            ),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.listen(fireflyConnectionProvider, (_, _) {});
+    container.listen(fireflyReconnectProvider, (_, _) {});
+    await waitForStatus(
+      container,
+      until: (s) => s == FireflyConnectionStatus.connected,
+    );
+
+    expect(container.read(fireflyReconnectProvider), 0);
+  });
+
+  test('a Cosmos session arriving re-checks the connection', () async {
+    // Waiting out the poll left someone who had just signed in looking at a
+    // disconnected server and pressing Test connection to learn otherwise.
+    var probes = 0;
+    final container = ProviderContainer(
+      overrides: [
+        cosmosSessionStoreProvider.overrideWithValue(_EmptyStore()),
+        authProvider.overrideWith(
+          () => StaticAuthNotifier(
+            AuthSettings(serverUrl: 'https://cash.example', apiToken: 'token'),
+            storage: testStorage(),
+            httpClient: MockClient((_) async {
+              probes++;
+              return http.Response(
+                '{"data":{}}',
+                200,
+                headers: const {'content-type': 'application/json'},
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.listen(fireflyConnectionProvider, (_, _) {});
+    await waitForStatus(container);
+    final beforeSignIn = probes;
+
+    await container
+        .read(cosmosSessionProvider.notifier)
+        .signedIn(
+          CosmosSession(
+            host: 'cash.example',
+            cookie: 'jwt-value',
+            obtainedAt: DateTime.utc(2026, 9, 9),
+          ),
+        );
+    await waitForStatus(container);
+
+    expect(probes, greaterThan(beforeSignIn));
+  });
 
   test('reports disconnected when credentials are missing', () async {
     final container = ProviderContainer(
@@ -174,4 +305,21 @@ void main() {
       expect(await waitForStatus(container), FireflyConnectionStatus.connected);
     },
   );
+}
+
+/// A store with nothing in it, so the session under test is only what the
+/// test puts there.
+class _EmptyStore extends CosmosSessionStore {
+  _EmptyStore() : super(storage: null);
+
+  CosmosSession? saved;
+
+  @override
+  Future<CosmosSession?> load() async => null;
+
+  @override
+  Future<void> save(CosmosSession session) async => saved = session;
+
+  @override
+  Future<void> clear() async => saved = null;
 }

@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import 'auth_provider.dart';
+import 'cosmos_session_provider.dart';
+import 'firefly_reconnect_provider.dart';
 
 enum FireflyConnectionStatus { disconnected, checking, connected, unreachable }
 
@@ -26,6 +28,11 @@ class FireflyConnectionNotifier extends Notifier<FireflyConnectionStatus> {
   Duration _pollInterval = kFireflyConnectionPollInterval;
   bool _rereadingCredentials = false;
 
+  /// What the last probe settled on, or null before one has. Read instead of
+  /// the status itself because a probe sets `checking` on the way, so the
+  /// status at that moment says nothing about what it is coming back from.
+  bool? _wasConnected;
+
   @override
   FireflyConnectionStatus build() {
     ref.onDispose(() {
@@ -38,6 +45,15 @@ class FireflyConnectionNotifier extends Notifier<FireflyConnectionStatus> {
       _resetPollBackoff();
       Future.microtask(() => _probe(showChecking: true));
     }, fireImmediately: true);
+
+    ref.listen(cosmosSessionProvider, (previous, next) {
+      // A route session that has just arrived changes the answer. Waiting out
+      // the poll left someone who had signed in looking at a disconnected
+      // server and pressing Test connection to find out otherwise.
+      if (next == null || next == previous) return;
+      _log.fine('A Cosmos session arrived; re-checking the connection');
+      refresh();
+    });
 
     _startTimer(kFireflyConnectionPollInterval);
     _log.fine('Started Firefly connection polling every 30s');
@@ -119,6 +135,13 @@ class FireflyConnectionNotifier extends Notifier<FireflyConnectionStatus> {
       state = ok
           ? FireflyConnectionStatus.connected
           : FireflyConnectionStatus.unreachable;
+      if (ok && _wasConnected == false) {
+        // Coming back, not starting up. Everything that failed while the
+        // server was away is still showing that failure.
+        _log.info('The connection came back; reloading what failed without it');
+        ref.read(fireflyReconnectProvider.notifier).reconnected();
+      }
+      _wasConnected = ok;
       if (ok) {
         _log.fine('Connection probe succeeded');
         _consecutiveSuccesses++;
