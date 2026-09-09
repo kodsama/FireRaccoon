@@ -415,6 +415,46 @@ void main() {
       );
     });
 
+    test('a door shut in front of Firefly is not logged as a fault', () async {
+      // Reported at SEVERE, a proxy that will not route filled the app's
+      // Recent problems list with one entry per request, every one of them
+      // saying what the first one said. The client raises these typed, and a
+      // typed refusal is the caller's to explain rather than a stack trace's.
+      final output = <String>[];
+      AppLogger.configure(minLevel: Level.INFO, sink: output.add);
+      var attempts = 0;
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        readMaxAttempts: 3,
+        client: MockClient((_) async {
+          attempts++;
+          throw FireflyApiException(
+            'the proxy would not route',
+            unreachable: true,
+          );
+        }),
+      );
+
+      await expectLater(
+        service.getPrimaryCurrency(),
+        throwsA(isA<FireflyApiException>()),
+      );
+
+      // Asking again gets the same closed door, so it is asked once, not the
+      // three times a read is otherwise allowed.
+      expect(attempts, 1);
+      expect(output.any((line) => line.contains('SEVERE')), isFalse);
+      expect(
+        output.any((line) => line.contains('refused before Firefly saw it')),
+        isTrue,
+      );
+      expect(
+        output.any((line) => line.contains('could not reach Firefly')),
+        isTrue,
+      );
+    });
+
     test('non-positive request timeout falls back to the default', () {
       final output = <String>[];
       AppLogger.configure(minLevel: Level.INFO, sink: output.add);

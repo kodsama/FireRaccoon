@@ -172,11 +172,21 @@ class FireflyApiService implements FireflyService {
       // through here unlogged, so the one failure worth a record was the one
       // the log never mentioned.
       final elapsedMs = DateTime.now().difference(startedAt).inMilliseconds;
-      _log.severe(
-        'Operation refused: $operation (${elapsedMs}ms)$contextPart',
-        error,
-        stackTrace,
-      );
+      if (error.unreachable) {
+        // Nothing broke. Every call made while the server is out of reach
+        // fails identically, and a stack trace each says nothing the first one
+        // did not.
+        _log.warning(
+          'Operation could not reach Firefly: $operation '
+          '(${elapsedMs}ms)$contextPart: $error',
+        );
+      } else {
+        _log.severe(
+          'Operation refused: $operation (${elapsedMs}ms)$contextPart',
+          error,
+          stackTrace,
+        );
+      }
       rethrow;
     } on Object catch (error, stackTrace) {
       final elapsedMs = DateTime.now().difference(startedAt).inMilliseconds;
@@ -364,15 +374,22 @@ class FireflyApiService implements FireflyService {
       } on Object catch (error, stackTrace) {
         lastError = error;
         lastStackTrace = stackTrace;
+        // A URL that serves a page answers the same way however often we ask,
+        // and so does a proxy that will not route to Firefly at all. Both
+        // arrive typed, both are the caller's to explain, and neither is a
+        // stack trace's worth of noise.
+        if (error is FireflyApiException) {
+          _log.warning(
+            '[#$requestId] xx $method ${uri.path}$query refused before Firefly '
+            'saw it: $error',
+          );
+          Error.throwWithStackTrace(error, stackTrace);
+        }
         _log.severe(
           '[#$requestId] !! $method ${uri.path}$query failed (attempt=$attempt/$attempts)',
           error,
           stackTrace,
         );
-        // A URL that serves a page answers the same way however often we ask.
-        if (error is FireflyApiException) {
-          Error.throwWithStackTrace(error, stackTrace);
-        }
         if (attempt < attempts) {
           final delayMs = _computeRetryDelayMs(attempt);
           _log.warning(
