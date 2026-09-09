@@ -233,9 +233,8 @@ class AccountPrognosis {
   /// answering with its last point rather than a figure for that day.
   bool reachesBeyondForecast(DateTime date) =>
       timeline.isNotEmpty &&
-      prognosisStartOfDay(
-        date,
-      ).isAfter(prognosisStartOfDay(timeline.last.date));
+      prognosisStartOfDay(date)
+          .isAfter(prognosisStartOfDay(timeline.last.date));
 
   bool get hasNegativeRisk => firstNegativeDate != null;
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../l10n/l10n_extensions.dart';
 import '../models/side_menu_config.dart';
 import '../providers/side_menu_config_provider.dart';
@@ -191,9 +192,8 @@ class SideMenuSettingsSection extends ConsumerWidget {
           leading: const Icon(LucideIcons.menu, size: 20),
           title: Text(
             'Side Menu Layout',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontSize: 16),
+            style: Theme.of(context).textTheme.titleMedium
+                ?.copyWith(fontSize: 16),
           ),
           subtitle: const Text(
             'Reorganize menu items by long-pressing or dragging rows directly into or out of containers',

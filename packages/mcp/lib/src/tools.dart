@@ -2029,8 +2029,7 @@ List<McpTool> buildTools({
     ),
     McpTool(
       name: 'get_transactions',
-      description:
-          'Fetch transactions (last 365 days by default). Optionally filter by account and paginate.',
+      description: 'Fetch transactions (last 365 days by default). Optionally filter by account and paginate.',
       inputSchema: {
         'type': 'object',
         'properties': {
@@ -2058,8 +2057,7 @@ List<McpTool> buildTools({
                 'Only transactions on or before this date (YYYY-MM-DD).',
           },
           'reconciled': {
-            'description':
-                'Filter by reconciliation status: all, true/reconciled, or false/unreconciled.',
+            'description': 'Filter by reconciliation status: all, true/reconciled, or false/unreconciled.',
             'oneOf': [
               {'type': 'boolean'},
               {
@@ -2227,8 +2225,7 @@ List<McpTool> buildTools({
     McpTool(
       name: 'set_transaction_reconciled',
       writes: true,
-      description:
-          'Mark a transaction as reconciled or unreconciled after verifying it against a bank statement.',
+      description: 'Mark a transaction as reconciled or unreconciled after verifying it against a bank statement.',
       inputSchema: {
         'type': 'object',
         'required': ['transaction_id', 'reconciled'],
@@ -2838,9 +2835,8 @@ List<McpTool> buildTools({
 
         final api = service();
         final owner = await api.getCurrentUser();
-        final current = await DataExportService(
-          api,
-        ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+        final current = await DataExportService(api)
+            .export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
         final plan = planRestore(backup: snapshot, current: current.toJson());
         final max = ((args['max_differences_reported'] as num?)?.toInt() ?? 50)
             .clamp(1, 2000);
@@ -2906,8 +2902,7 @@ List<McpTool> buildTools({
           'max_steps_reported': {
             'type': 'integer',
             'default': 200,
-            'description':
-                'Ceiling on the steps listed back. The counts are always whole.',
+            'description': 'Ceiling on the steps listed back. The counts are always whole.',
           },
         },
       },
@@ -2947,9 +2942,8 @@ List<McpTool> buildTools({
         }
 
         final types = _strList(args['types']).toSet();
-        final current = await DataExportService(
-          api,
-        ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+        final current = await DataExportService(api)
+            .export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
         final plan = planRestore(
           backup: snapshot,
           current: current.toJson(),
@@ -4492,8 +4486,7 @@ List<McpTool> buildTools({
     ),
     McpTool(
       name: 'run_projection',
-      description:
-          'Run an on-device financial projection (savings, compound, portfolio, or cashflow).',
+      description: 'Run an on-device financial projection (savings, compound, portfolio, or cashflow).',
       inputSchema: {
         'type': 'object',
         'properties': {
@@ -4568,8 +4561,7 @@ List<McpTool> buildTools({
     ),
     McpTool(
       name: 'get_dashboard_kpis',
-      description:
-          'Compute dashboard KPIs (net worth, income, spending, savings) for a period.',
+      description: 'Compute dashboard KPIs (net worth, income, spending, savings) for a period.',
       inputSchema: {
         'type': 'object',
         'properties': {

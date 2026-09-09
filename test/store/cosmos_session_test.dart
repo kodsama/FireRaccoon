@@ -274,8 +274,7 @@ void main() {
       );
       expect(
         isCosmosLoginRedirect(302, {
-          'location':
-              'https://c.example/cosmos-ui/openid?client_id=__route_Firefly-III',
+          'location': 'https://c.example/cosmos-ui/openid?client_id=__route_Firefly-III',
         }),
         isTrue,
       );

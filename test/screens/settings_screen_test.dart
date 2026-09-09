@@ -6,6 +6,7 @@ import 'package:fireraccoon/providers/auth_provider.dart';
 import 'package:fireraccoon/screens/settings_screen.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+
 import '../helpers/dialog_test_helpers.dart';
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';

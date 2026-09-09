@@ -897,9 +897,8 @@ void main() {
       expect(key['lastUsedAt'], isNotNull);
       expect(
         DateTime.parse(key['lastUsedAt'] as String).isAfter(
-          DateTime.parse(
-            key['createdAt'] as String,
-          ).subtract(const Duration(seconds: 1)),
+          DateTime.parse(key['createdAt'] as String)
+              .subtract(const Duration(seconds: 1)),
         ),
         isTrue,
       );

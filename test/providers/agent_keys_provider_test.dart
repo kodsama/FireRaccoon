@@ -346,9 +346,9 @@ void main() {
           .read(agentKeysProvider.notifier)
           .recordUsage(id, DateTime(2026, 5, 1, 12));
 
-      final stamp = (await container.read(
-        agentKeysProvider.future,
-      )).single.lastUsedAt;
+      final stamp = (await container.read(agentKeysProvider.future))
+          .single
+          .lastUsedAt;
       expect(stamp!.isUtc, isTrue);
     });
 
@@ -491,17 +491,16 @@ void main() {
       // Revoke the middle one: it must drop to the bottom, not stay in place.
       await notifier.revoke(ids['second']!);
 
-      final labels = (await container.read(
-        agentKeysProvider.future,
-      )).map((view) => view.label).toList();
+      final labels = (await container.read(agentKeysProvider.future))
+          .map((view) => view.label)
+          .toList();
       expect(labels, ['first', 'third', 'second']);
 
       // And the ordering survives a reload, not just the in-memory update.
       final reloaded = containerFor(people);
       expect(
-        (await reloaded.read(
-          agentKeysProvider.future,
-        )).map((view) => view.label),
+        (await reloaded.read(agentKeysProvider.future))
+            .map((view) => view.label),
         ['first', 'third', 'second'],
       );
     });
@@ -522,9 +521,8 @@ void main() {
       await notifier.forget(ids['discard']!);
 
       expect(
-        (await container.read(
-          agentKeysProvider.future,
-        )).map((view) => view.label),
+        (await container.read(agentKeysProvider.future))
+            .map((view) => view.label),
         ['keep'],
       );
       final reloaded = containerFor(people);

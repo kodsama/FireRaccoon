@@ -15,6 +15,7 @@ import 'package:fireraccoon/screens/app_shell.dart';
 import 'package:fireraccoon/theme/app_theme.dart';
 import 'package:fireraccoon/theme/app_colors.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+
 import '../helpers/static_auth_notifier.dart';
 import '../helpers/fixed_accounts_notifier.dart';
 import '../helpers/test_data.dart';

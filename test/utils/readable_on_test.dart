@@ -12,19 +12,16 @@ double _contrast(Color a, Color b) {
 }
 
 void main() {
-  test(
-    'the default danger red gets the readable choice, not the estimated one',
-    () {
-      // 0xFFE05656 is where ThemeData.estimateBrightnessForColor says "dark" and
-      // hands back white at 3.7:1, under what body text needs. Black is 5.6:1.
-      const danger = Color(0xFFE05656);
+  test('the default danger red gets the readable choice, not the estimated one', () {
+    // 0xFFE05656 is where ThemeData.estimateBrightnessForColor says "dark" and
+    // hands back white at 3.7:1, under what body text needs. Black is 5.6:1.
+    const danger = Color(0xFFE05656);
 
-      final chosen = onColor(danger);
+    final chosen = onColor(danger);
 
-      expect(chosen, Colors.black);
-      expect(_contrast(chosen, danger), greaterThan(4.5));
-    },
-  );
+    expect(chosen, Colors.black);
+    expect(_contrast(chosen, danger), greaterThan(4.5));
+  });
 
   test('every semantic colour in the palettes clears AA for body text', () {
     // The colours the banner is actually painted with, across palettes.

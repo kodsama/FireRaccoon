@@ -94,9 +94,8 @@ void main() {
       // A snapshot that reads like a backup is worse than no snapshot: the
       // database, the attachments and the instance key are out of an API
       // client's reach and restoring needs the volume archive.
-      final snapshot = await DataExportService(
-        _serviceWith(_everything()),
-      ).export(takenAt: DateTime.utc(2026, 8, 21, 9));
+      final snapshot = await DataExportService(_serviceWith(_everything()))
+          .export(takenAt: DateTime.utc(2026, 8, 21, 9));
 
       final json = snapshot.toJson();
       expect(json['schema_version'], kDataExportSchemaVersion);
@@ -327,9 +326,8 @@ void main() {
     test('encodes to JSON without losing anything to a type', () async {
       // The whole point is a file someone can read later, so nothing in the
       // tree may be a Dart object jsonEncode refuses.
-      final snapshot = await DataExportService(
-        _serviceWith(_everything()),
-      ).export();
+      final snapshot = await DataExportService(_serviceWith(_everything()))
+          .export();
 
       expect(() => jsonEncode(snapshot.toJson()), returnsNormally);
     });

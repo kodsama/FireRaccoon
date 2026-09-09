@@ -44,9 +44,8 @@ void main() {
     final format = LocaleFormatting(const Locale('en'));
 
     expect(
-      const BudgetRouteFilters(
-        period: ExpensePeriod.year,
-      ).localizedPeriodLabel(l10n, format),
+      const BudgetRouteFilters(period: ExpensePeriod.year)
+          .localizedPeriodLabel(l10n, format),
       'This Year',
     );
     expect(

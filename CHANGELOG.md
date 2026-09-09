@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   implementation there and uses the webkit2gtk window the Linux build already
   links. On the web there is nothing to do, because the browser carries the
   cookie itself
+- Every package is at its latest, and the SDK floor moves to Dart 3.13 to let
+  three of them get there: `very_good_analysis` 11, whose stricter lint set the
+  code already passes, `mockito` 5.8 and `build_runner` 2.16. CI builds on
+  Flutter 3.47.2
 - The Android build pins `flutter_inappwebview_android` to a prerelease. AGP 9
   removed `getDefaultProguardFile('proguard-android.txt')`, which the latest
   stable of that package still calls, so the build failed while evaluating the

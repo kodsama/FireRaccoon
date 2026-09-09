@@ -820,9 +820,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Tooltip(
                       message: l10n.transactionPageSizeDescription,
                       child: Slider(
-                        value: transactionPageSizeSliderIndex(
-                          pageSize,
-                        ).toDouble(),
+                        value: transactionPageSizeSliderIndex(pageSize)
+                            .toDouble(),
                         min: 0,
                         max: kTransactionPageSizeSteps.toDouble(),
                         divisions: kTransactionPageSizeSteps,
