@@ -1036,6 +1036,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ),
           ),
+          // Under the same heading as the address and the token, because it is
+          // the third thing standing between the app and the ledger: without
+          // it a Cosmos route answers every request with a door.
+          const SizedBox(height: 12),
+          const CosmosSsoSection(),
         ],
         // Its own section, not part of the Firefly connection: these credentials
         // are for agents talking to FireRaccoon, and any signed-in person may
@@ -1051,7 +1056,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Card(child: McpSettingsSection()),
         ],
         const SizedBox(height: 24),
-        const CosmosSsoSection(),
         Text(
           l10n.recentProblems,
           style: Theme.of(context).textTheme.titleMedium,
