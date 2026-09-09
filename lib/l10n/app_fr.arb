@@ -1906,5 +1906,9 @@
   "cosmosSsoExplainer": "Connectez-vous si votre serveur Firefly III se trouve derrière une route Cosmos Cloud qui exige une authentification. Le jeton Firefly reste utilisé pour Firefly lui-même.",
   "cosmosSsoCancelled": "La connexion a été fermée avant la fin",
   "connectionFailedCosmos": "Ce serveur se trouve derrière une authentification Cosmos Cloud. Connectez-vous à Cosmos, puis réessayez.",
-  "cosmosSsoSignInAction": "Se connecter à Cosmos"
+  "cosmosSsoSignInAction": "Se connecter à Cosmos",
+  "mcpBasePortLabel": "Port de départ",
+  "mcpBasePortHelp": "Le serveur prend le premier port libre à partir d'ici, en essayant {count}. Changez-le si quelque chose occupe déjà cette plage.",
+  "mcpBasePortInvalid": "Entrez un port entre {min} et {max}",
+  "mcpBasePortReset": "Rétablir la valeur par défaut"
 }

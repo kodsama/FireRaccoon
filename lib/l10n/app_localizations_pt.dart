@@ -3864,4 +3864,20 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get cosmosSsoSignInAction => 'Iniciar sessão no Cosmos';
+
+  @override
+  String get mcpBasePortLabel => 'Porta inicial';
+
+  @override
+  String mcpBasePortHelp(int count) {
+    return 'O servidor usa a primeira porta livre a partir daqui, tentando $count. Altere-a se algo já ocupar este intervalo.';
+  }
+
+  @override
+  String mcpBasePortInvalid(int min, int max) {
+    return 'Introduza uma porta entre $min e $max';
+  }
+
+  @override
+  String get mcpBasePortReset => 'Repor predefinição';
 }

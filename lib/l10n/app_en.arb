@@ -2241,5 +2241,34 @@
   "cosmosSsoSignInAction": "Sign in to Cosmos",
   "@cosmosSsoSignInAction": {
     "description": "Button in the connection dialog that starts the Cosmos sign-in"
+  },
+  "mcpBasePortLabel": "Starting port",
+  "@mcpBasePortLabel": {
+    "description": "Label for the MCP server starting port field"
+  },
+  "mcpBasePortHelp": "The server binds the first free port from here, trying {count}. Change it when something else already holds this range.",
+  "@mcpBasePortHelp": {
+    "description": "Explains how the starting port is used",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "mcpBasePortInvalid": "Enter a port between {min} and {max}",
+  "@mcpBasePortInvalid": {
+    "description": "Shown when the entered port is out of range",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "mcpBasePortReset": "Reset to default",
+  "@mcpBasePortReset": {
+    "description": "Button that restores the default MCP port"
   }
 }

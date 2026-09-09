@@ -1,5 +1,9 @@
 # Local secrets (copy from .env.example)
 .env
+# Every variant, not just the exact name. A rename to .env.old put a live
+# Firefly token into a public repository, because the pattern was exact.
+.env.*
+!.env.example
 
 # Miscellaneous
 *.class

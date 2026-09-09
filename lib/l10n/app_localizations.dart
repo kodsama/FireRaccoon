@@ -6951,6 +6951,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign in to Cosmos'**
   String get cosmosSsoSignInAction;
+
+  /// Label for the MCP server starting port field
+  ///
+  /// In en, this message translates to:
+  /// **'Starting port'**
+  String get mcpBasePortLabel;
+
+  /// Explains how the starting port is used
+  ///
+  /// In en, this message translates to:
+  /// **'The server binds the first free port from here, trying {count}. Change it when something else already holds this range.'**
+  String mcpBasePortHelp(int count);
+
+  /// Shown when the entered port is out of range
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a port between {min} and {max}'**
+  String mcpBasePortInvalid(int min, int max);
+
+  /// Button that restores the default MCP port
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to default'**
+  String get mcpBasePortReset;
 }
 
 class _AppLocalizationsDelegate
