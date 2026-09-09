@@ -3811,6 +3811,37 @@ class AppLocalizationsSv extends AppLocalizations {
   String get secureConnectionTooltip => 'Krypterad anslutning (https)';
 
   @override
+  String get noRouteTitle => 'Den adressen är inte din bokföring';
+
+  @override
+  String get noRouteBody =>
+      'Något svarar på din serveradress, men det skickade inte förfrågan vidare till Firefly III. Kontrollera adressen i inställningarna, och att Firefly III körs bakom den.';
+
+  @override
+  String get noRouteTitleRaccoon => 'Fel tunna';
+
+  @override
+  String get noRouteBodyRaccoon =>
+      'Det finns en tunna på den adressen, men inget gott i den. Kontrollera adressen i inställningarna, och att Firefly III fortfarande körs bakom den.';
+
+  @override
+  String get cosmosGateTitle => 'Cosmos vill att du loggar in';
+
+  @override
+  String get cosmosGateBody =>
+      'Din Firefly III-server står bakom en Cosmos Cloud-rutt och dess session har tagit slut. FireRaccoon försökte förnya den i tysthet, men Cosmos bad om dig i stället.';
+
+  @override
+  String get cosmosGateTitleRaccoon => 'Locket är haspat';
+
+  @override
+  String get cosmosGateBodyRaccoon =>
+      'Cosmos Cloud haspade locket och vill se dig innan det öppnas igen. En inloggning så fortsätter rotandet.';
+
+  @override
+  String get cosmosSsoRenewing => 'Återansluter till Cosmos';
+
+  @override
   String get cosmosSsoTitle => 'Cosmos SSO';
 
   @override

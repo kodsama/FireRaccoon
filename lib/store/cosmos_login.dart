@@ -23,6 +23,21 @@ abstract interface class CosmosLogin {
   /// crashes in its own layout pass, and a second NSWindow whose closing told
   /// AppKit the app was done.
   Future<CosmosSession?> signIn(BuildContext context, Uri routeUrl);
+
+  /// Mints a route session without showing anybody anything, or null when
+  /// Cosmos wants a person after all.
+  ///
+  /// A route session runs out long before the Cosmos login behind it does, so
+  /// the usual renewal is Cosmos redirecting through its own authorize
+  /// endpoint and straight back, with nothing to type. Doing that in the
+  /// background is the difference between an app that reconnects itself and
+  /// one that puts up a sign-in button for a password nobody needs to enter.
+  ///
+  /// [staleCookie] is the value Cosmos has just refused. The web view keeps its
+  /// own copy of it, and a route Cosmos declines to open sets no new one, so
+  /// reading the jar afterwards hands back the dead cookie unless it is known
+  /// which one that was.
+  Future<CosmosSession?> renew(Uri routeUrl, {String? staleCookie});
 }
 
 /// The answer on a platform with no web view, and on web, where the browser
@@ -35,6 +50,10 @@ class UnsupportedCosmosLogin implements CosmosLogin {
 
   @override
   Future<CosmosSession?> signIn(BuildContext context, Uri routeUrl) async =>
+      null;
+
+  @override
+  Future<CosmosSession?> renew(Uri routeUrl, {String? staleCookie}) async =>
       null;
 }
 

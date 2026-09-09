@@ -5,10 +5,13 @@ import 'package:go_router/go_router.dart';
 
 import '../l10n/l10n_extensions.dart';
 import '../providers/auth_provider.dart';
+import '../providers/cosmos_gate_provider.dart';
 import '../providers/firefly_connection_provider.dart';
 import '../providers/theme_provider.dart';
 import '../store/credential_store_locked_exception.dart';
+import '../store/no_route_to_firefly_exception.dart';
 import '../theme/app_theme.dart';
+import 'cosmos_sso_section.dart';
 import 'fun_decorated_surface.dart';
 
 /// What a screen shows when a load failed.
@@ -31,6 +34,19 @@ class LoadFailureView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Before the gate, because it is the state most easily mistaken for one:
+    // an address that answers without routing to Firefly cannot be fixed by
+    // signing in to anything, and offering a sign-in for it sent people round
+    // a loop that could not help.
+    if (error is NoRouteToFireflyException) {
+      return NoRouteView(compact: compact);
+    }
+    // A shut Cosmos door is the one of these with a fix that is one button
+    // away, and saying "connect a server" to someone whose server is connected
+    // sends them to correct an address that was right.
+    if (ref.watch(cosmosGateProvider) == CosmosGate.signInRequired) {
+      return CosmosGateView(compact: compact);
+    }
     if (error is FireflyNotConnectedException) {
       return NotConnectedView(compact: compact);
     }
@@ -78,6 +94,61 @@ class NotConnectedView extends ConsumerWidget {
         onPressed: () => context.go('/settings'),
         icon: const Icon(Icons.settings_outlined, size: 18),
         label: Text(context.l10n.notConnectedAction),
+      ),
+    );
+  }
+}
+
+/// What a screen shows when the address answers but is not the ledger.
+///
+/// A reverse proxy with no route to Firefly answers every path with its own
+/// 404, which no credential fixes and no sign-in creates. The address is the
+/// thing to look at, along with whether Firefly is still running behind it.
+class NoRouteView extends ConsumerWidget {
+  const NoRouteView({super.key, this.compact = false});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
+    return SadRaccoonMessage(
+      compact: compact,
+      badge: Icons.wrong_location_outlined,
+      title: fun.noRouteTitle,
+      body: fun.noRouteBody,
+      action: FilledButton.icon(
+        onPressed: () => context.go('/settings'),
+        icon: const Icon(Icons.settings_outlined, size: 18),
+        label: Text(context.l10n.notConnectedAction),
+      ),
+    );
+  }
+}
+
+/// What a screen shows when Cosmos Cloud will not route to Firefly.
+///
+/// The server is right, the token is right, and the route session in front of
+/// them has run out. FireRaccoon renews those on its own; this is the rarer
+/// case where Cosmos wanted a person, so the button runs the real sign-in and
+/// the connection re-checks itself as soon as one comes back.
+class CosmosGateView extends ConsumerWidget {
+  const CosmosGateView({super.key, this.compact = false});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
+    return SadRaccoonMessage(
+      compact: compact,
+      badge: Icons.shield_outlined,
+      title: fun.cosmosGateTitle,
+      body: fun.cosmosGateBody,
+      action: CosmosSignInButton(
+        serverUrl: ref.watch(authProvider).serverUrl,
+        onSignedIn: () =>
+            ref.read(fireflyConnectionProvider.notifier).refresh(),
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/cosmos_gate_provider.dart';
 import 'package:fireraccoon/providers/cosmos_session_provider.dart';
 import 'package:fireraccoon/store/cosmos_login.dart';
 import 'package:fireraccoon/store/cosmos_session.dart';
@@ -20,6 +21,10 @@ class _BrokenLogin implements CosmosLogin {
   @override
   Future<CosmosSession?> signIn(BuildContext context, Uri routeUrl) async =>
       throw const CosmosLoginUnavailable('no window server');
+
+  @override
+  Future<CosmosSession?> renew(Uri routeUrl, {String? staleCookie}) async =>
+      throw const CosmosLoginUnavailable('no window server');
 }
 
 /// Stands in for the platform web view, and records what it was asked to open.
@@ -37,6 +42,20 @@ class _FakeLogin implements CosmosLogin {
     openedUrl = routeUrl;
     return session;
   }
+
+  @override
+  Future<CosmosSession?> renew(Uri routeUrl, {String? staleCookie}) async =>
+      session;
+}
+
+/// A gate whose state the test decides, without a Cosmos to ask.
+class _FixedGate extends CosmosGateNotifier {
+  _FixedGate(this.gate);
+
+  final CosmosGate gate;
+
+  @override
+  CosmosGate build() => gate;
 }
 
 /// A store that keeps the session in memory, so the section can be driven
@@ -71,12 +90,16 @@ void main() {
     WidgetTester tester, {
     required CosmosLogin login,
     String serverUrl = 'https://firefly.example',
+    CosmosGate gate = CosmosGate.open,
+    // A spinner never settles, so a state that shows one is pumped once.
+    bool settle = true,
   }) async {
     final store = _MemoryStore();
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
           cosmosSessionStoreProvider.overrideWithValue(store),
+          cosmosGateProvider.overrideWith(() => _FixedGate(gate)),
           authProvider.overrideWith(
             () => StaticAuthNotifier(
               AuthSettings(
@@ -90,9 +113,31 @@ void main() {
         child: buildLocalizedTestApp(child: CosmosSsoSection(login: login)),
       ),
     );
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      await tester.pump();
+    }
     return store;
   }
+
+  testWidgets('a renewal in flight is shown rather than a sign-in', (
+    tester,
+  ) async {
+    // The app renews an expired route session on its own. Offering a sign-in
+    // through that would have people typing a password for a reconnection
+    // already two seconds from finishing.
+    await pump(
+      tester,
+      login: _FakeLogin(session: session),
+      gate: CosmosGate.renewing,
+      settle: false,
+    );
+
+    expect(find.text('Reconnecting to Cosmos'), findsOneWidget);
+    expect(find.text('Sign in'), findsNothing);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+  });
 
   testWidgets('offers a sign-in when there is no session', (tester) async {
     await pump(tester, login: _FakeLogin(session: session));

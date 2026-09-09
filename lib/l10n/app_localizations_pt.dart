@@ -3826,6 +3826,37 @@ class AppLocalizationsPt extends AppLocalizations {
   String get secureConnectionTooltip => 'Ligação encriptada (https)';
 
   @override
+  String get noRouteTitle => 'Esse endereço não é a tua contabilidade';
+
+  @override
+  String get noRouteBody =>
+      'Algo responde no endereço do teu servidor, mas não encaminhou o pedido para o Firefly III. Verifica o endereço nas definições e se o Firefly III está a correr por trás.';
+
+  @override
+  String get noRouteTitleRaccoon => 'Caixote errado';
+
+  @override
+  String get noRouteBodyRaccoon =>
+      'Há um caixote nesse endereço, mas não tem nada lá dentro. Verifica o endereço nas definições e se o Firefly III ainda está a correr por trás.';
+
+  @override
+  String get cosmosGateTitle => 'O Cosmos quer que inicies sessão';
+
+  @override
+  String get cosmosGateBody =>
+      'O teu servidor Firefly III está atrás de uma rota do Cosmos Cloud e a sessão dessa rota expirou. O FireRaccoon tentou renová-la em silêncio e o Cosmos pediu por ti.';
+
+  @override
+  String get cosmosGateTitleRaccoon => 'A tampa está trancada';
+
+  @override
+  String get cosmosGateBodyRaccoon =>
+      'O Cosmos Cloud trancou o caixote e quer ver-te antes de abrir outra vez. Um início de sessão e a remexida continua.';
+
+  @override
+  String get cosmosSsoRenewing => 'A reconectar ao Cosmos';
+
+  @override
   String get cosmosSsoTitle => 'SSO Cosmos';
 
   @override

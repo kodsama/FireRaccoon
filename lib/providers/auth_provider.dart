@@ -13,6 +13,9 @@ import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:http/http.dart' as http;
 
 import '../store/cosmos_session_client.dart';
+import '../store/cosmos_sign_in_required_exception.dart';
+import '../store/no_route_to_firefly_exception.dart';
+import 'cosmos_gate_provider.dart';
 import 'cosmos_session_provider.dart';
 import '../utils/transport_security.dart';
 import '../utils/debug_env_credentials.dart';
@@ -151,7 +154,11 @@ class AuthNotifier extends Notifier<AuthSettings> {
   http.Client _testClient() => CosmosSessionClient(
     inner: _httpClient,
     session: () => ref.read(cosmosSessionProvider),
-    onSessionExpired: () => ref.read(cosmosSessionProvider.notifier).expired(),
+    onGateRejected: (url) =>
+        ref.read(cosmosGateProvider.notifier).rejected(url),
+    onGateAccepted: () => ref.read(cosmosGateProvider.notifier).accepted(),
+    onSessionRolledForward: (cookie) =>
+        ref.read(cosmosSessionProvider.notifier).rolledForward(cookie),
   );
   final DebugEnvLoader _debugEnvLoader;
   final Duration _readTimeout;
@@ -168,10 +175,19 @@ class AuthNotifier extends Notifier<AuthSettings> {
   /// startup. Until it is, redaction has nothing to match but the word Bearer,
   /// and any line carrying the token prints it. Hooking the setter rather than
   /// each assignment means a new way of setting one is covered by default.
+  /// The address the last state carried, so a change of server is noticed
+  /// without reading state back out of a notifier mid-assignment.
+  String? _lastServerUrl;
+
   @override
   set state(AuthSettings value) {
     AppLogger.addSecret(value.apiToken);
     super.state = value;
+    if (_lastServerUrl != null && _lastServerUrl != value.serverUrl) {
+      // A different server is a different Cosmos door, if there is one at all.
+      ref.read(cosmosGateProvider.notifier).addressChanged();
+    }
+    _lastServerUrl = value.serverUrl;
   }
 
   @override
@@ -416,12 +432,6 @@ class AuthNotifier extends Notifier<AuthSettings> {
         final response = await http.Response.fromStream(
           await _testClient().send(probe),
         ).timeout(const Duration(seconds: 10));
-        if (isCosmosLoginRedirect(response.statusCode, response.headers)) {
-          _log.warning('Connection test met a Cosmos sign-in');
-          return const ConnectionTestResult.failed(
-            ConnectionFailure.cosmosLoginRequired,
-          );
-        }
         if (response.statusCode == 200) {
           if (_answeredAsFirefly(response)) {
             return const ConnectionTestResult.ok();
@@ -450,6 +460,19 @@ class AuthNotifier extends Notifier<AuthSettings> {
             statusCode: response.statusCode,
           );
         }
+      } on NoRouteToFireflyException catch (error) {
+        // The address answers and has no route to Firefly. Retrying asks the
+        // same question, and calling it unreachable sent someone off to check
+        // a network that was fine.
+        _log.warning('Connection test was not routed to Firefly: $error');
+        return const ConnectionTestResult.failed(ConnectionFailure.notFirefly);
+      } on CosmosSignInRequiredException catch (error) {
+        // Not a failure to retry: Cosmos answers a request it will not route
+        // the same way every time, and the fix is a sign-in, not a second try.
+        _log.warning('Connection test met a Cosmos gate: $error');
+        return const ConnectionTestResult.failed(
+          ConnectionFailure.cosmosLoginRequired,
+        );
       } on Object catch (error, stackTrace) {
         _log.warning(
           'Connection test failed (attempt $attempt/2): $error',

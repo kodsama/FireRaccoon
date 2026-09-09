@@ -174,10 +174,59 @@ Nothing needs configuring in Cosmos. The route client already accepts the
 callback it uses, and Cosmos strips `jwttoken` before forwarding, so Firefly
 never sees it and the personal access token keeps working unchanged.
 
-The session is sent only to the host it was minted for, and dropped the moment
-Cosmos turns a request away. The embedded MCP server carries the same session,
-so an agent reaches the ledger through the same gate; it never signs in itself,
-because that needs a person.
+The session is sent only to the host it was minted for.
+
+### Staying signed in
+
+Cosmos gives a route session fourteen days and re-issues it on any request
+through the route once its token is more than a day old
+([`RefreshUserToken`](https://github.com/azukaar/Cosmos-Server/blob/master/src/user/token.go),
+called from `tokenMiddleware` for every proxied request). That is why a browser
+stays signed in for months rather than a fortnight: it takes the new cookie
+every time, so the fortnight never runs down.
+
+FireRaccoon keeps the cookie Cosmos hands back, for the same reason. It polls
+the connection every thirty seconds, so a running app rolls its session forward
+about once a day and never approaches the expiry. An app left closed for longer
+than fourteen days comes back to a session that has run out, exactly as a
+browser would.
+
+### When the route session runs out anyway
+
+The renewal is Cosmos redirecting through its own authorize endpoint and
+straight back, with nothing to type. FireRaccoon does that in a background web
+view the moment a request is turned away: the screens that were loading keep
+loading, the new cookie replaces the old one, and the connection re-checks
+itself. Nobody is asked anything.
+
+It is tried once per closed door, and again only after a request has actually
+got through. A renewal that hands back a session Cosmos refuses just as flatly
+would otherwise be refused, dropped and renewed again several times a second.
+
+Cosmos answers a caller it wants to authenticate with a redirect to
+`/cosmos-ui/login` or `/cosmos-ui/openid`, and that is the one a sign-in fixes.
+
+A plain-text `404 page not found` is something else, and worth telling apart.
+That is Go's own not-found, which Cosmos falls through to for a host it has no
+route for at all: no credential fixes it and no sign-in creates the route.
+FireRaccoon reports it as the address not leading to your ledger, and points at
+Settings rather than at a sign-in. Read as a Firefly answer it looked like the
+ledger refusing every request; read as a gate it sent people round a sign-in
+loop that could not help. Both were wrong for the same response.
+
+If you meet it, check the address, and check that Firefly III is still running
+behind whatever route serves it: a stopped container takes its Cosmos route
+with it, and the hostname falls through to the Cosmos UI.
+
+Only when the quiet renewal comes back empty, which means Cosmos wants a
+password or a second factor, does the app say so: **Settings → Backend
+connection → Cosmos SSO** shows the sign-in, and so does any screen that was
+waiting for data. Signing in there reconnects everything.
+
+The embedded MCP server carries whatever session the app holds, so an agent
+reaches the ledger through the same gate. It never signs in itself, because that
+needs a person: a refused request comes back as `proxy_sign_in_required`, with
+the remedy naming the app rather than a server to restart.
 
 Testing a connection to such a route reports it as a sign-in rather than a wrong
 address, and offers the sign-in from there.

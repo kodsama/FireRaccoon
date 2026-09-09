@@ -8,6 +8,7 @@ import 'package:flutter_secure_storage_platform_interface/flutter_secure_storage
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:fireraccoon/providers/auth_provider.dart';
+import 'package:fireraccoon/providers/cosmos_gate_provider.dart';
 import 'package:fireraccoon/utils/transport_security.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
 import 'package:fireraccoon/store/credential_store_locked_exception.dart';
@@ -18,6 +19,30 @@ import '../helpers/static_auth_notifier.dart';
 import '../helpers/test_data.dart';
 
 Future<Map<String, String>> _noEnv() async => const {};
+
+/// A gate whose state the test decides, without a Cosmos to ask.
+class _FixedGate extends CosmosGateNotifier {
+  _FixedGate(this.gate);
+
+  final CosmosGate gate;
+
+  @override
+  CosmosGate build() => gate;
+}
+
+/// Counts what reached the network, so a state that should stop a load can be
+/// shown to have stopped it.
+class _CountingAccountsService extends FakeFireflyService {
+  _CountingAccountsService(this.onCall);
+
+  final void Function() onCall;
+
+  @override
+  Future<List<Account>> getAccounts({List<String>? types}) async {
+    onCall();
+    return const [];
+  }
+}
 
 class _DelayedTransactionsService extends FakeFireflyService {
   final Completer<void> gate = Completer<void>();
@@ -916,6 +941,59 @@ void main() {
 
       expect(container.read(accountsProvider).isLoading, isTrue);
       expect(container.read(accountsProvider).hasError, isFalse);
+    });
+
+    test('a load keeps loading while the Cosmos session is renewed', () async {
+      // The renewal takes a second or two and rebuilds this when it lands.
+      // Reporting not-connected in the meantime flashed a message past on the
+      // way back to the data, when the honest answer is that it is loading.
+      final container = ProviderContainer(
+        overrides: [
+          apiServiceProvider.overrideWithValue(FakeFireflyService()),
+          cosmosGateProvider.overrideWith(
+            () => _FixedGate(CosmosGate.renewing),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final sub = container.listen(accountsProvider, (_, _) {});
+      addTearDown(sub.close);
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      expect(container.read(accountsProvider).isLoading, isTrue);
+      expect(container.read(accountsProvider).hasError, isFalse);
+    });
+
+    test('a load stops asking once Cosmos wants a person', () async {
+      // Every request meets the same shut door, so sending them is a dozen
+      // more log lines saying what the first one said.
+      var calls = 0;
+      final container = ProviderContainer(
+        overrides: [
+          apiServiceProvider.overrideWithValue(
+            _CountingAccountsService(() => calls++),
+          ),
+          cosmosGateProvider.overrideWith(
+            () => _FixedGate(CosmosGate.signInRequired),
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      final sub = container.listen(accountsProvider, (_, _) {});
+      addTearDown(sub.close);
+      for (var i = 0; i < 20; i++) {
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      expect(calls, isZero);
+      expect(
+        container.read(accountsProvider).error,
+        isA<FireflyNotConnectedException>(),
+      );
     });
 
     test('an unreadable keychain is named as the reason', () async {

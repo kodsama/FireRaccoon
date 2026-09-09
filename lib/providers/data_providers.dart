@@ -8,6 +8,7 @@ import '../store/cosmos_session_client.dart';
 import '../store/credential_store_locked_exception.dart';
 import '../utils/web_backend_proxy.dart';
 import 'auth_provider.dart';
+import 'cosmos_gate_provider.dart';
 import 'cosmos_session_provider.dart';
 
 final _log = AppLogger.scoped('providers.data');
@@ -25,7 +26,23 @@ final _log = AppLogger.scoped('providers.data');
 // state that carries an error and never resolves.
 Future<FireflyService> requireFireflyService(Ref ref, String providerName) {
   final service = ref.watch(apiServiceProvider);
-  if (service != null) return Future.value(service);
+  if (service != null) {
+    switch (ref.watch(cosmosGateProvider)) {
+      case CosmosGate.renewing:
+        // Nothing completes this, and the renewal rebuilds the provider when
+        // it lands. Staying loading is what someone should see for a
+        // reconnection that takes a second or two: the alternative is a
+        // not-connected screen flashing past on the way back to their data.
+        _log.finer('$providerName waiting for the Cosmos session to come back');
+        return Completer<FireflyService>().future;
+      case CosmosGate.signInRequired:
+        _log.fine('$providerName blocked: Cosmos wants a sign-in');
+        throw const FireflyNotConnectedException();
+      case CosmosGate.open:
+        break;
+    }
+    return Future.value(service);
+  }
 
   final auth = ref.watch(authProvider);
   if (!auth.isHydrated) {
@@ -56,6 +73,18 @@ const _envReadRetryJitterMs = String.fromEnvironment(
   'FIREFLY_READ_RETRY_JITTER_MS',
 );
 
+/// The socket the Firefly client talks over.
+///
+/// A provider for the same reason the credentials notifier takes one: the
+/// wiring around this client, the proxy session it carries and the refusals it
+/// reports, is the part that has broken twice, and it cannot be exercised
+/// through a client the provider builds for itself.
+final backendHttpClientProvider = Provider<http.Client>((ref) {
+  final client = http.Client();
+  ref.onDispose(client.close);
+  return client;
+});
+
 final apiServiceProvider = Provider<FireflyService?>((ref) {
   final authSettings = ref.watch(authProvider);
   if (authSettings.isValid) {
@@ -82,10 +111,13 @@ final apiServiceProvider = Provider<FireflyService?>((ref) {
       // Only wraps when there is a session to carry, so a connection that
       // never goes through Cosmos is left exactly as it was.
       client: CosmosSessionClient(
-        inner: http.Client(),
+        inner: ref.watch(backendHttpClientProvider),
         session: () => ref.read(cosmosSessionProvider),
-        onSessionExpired: () =>
-            ref.read(cosmosSessionProvider.notifier).expired(),
+        onGateRejected: (url) =>
+            ref.read(cosmosGateProvider.notifier).rejected(url),
+        onGateAccepted: () => ref.read(cosmosGateProvider.notifier).accepted(),
+        onSessionRolledForward: (cookie) =>
+            ref.read(cosmosSessionProvider.notifier).rolledForward(cookie),
       ),
     );
   } else {

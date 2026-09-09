@@ -80,6 +80,12 @@ class DesktopCosmosLogin implements CosmosLogin {
     }
   }
 
+  /// Always null: the only web view this platform has opens a window, and a
+  /// window that appears on its own is not a renewal nobody noticed.
+  @override
+  Future<CosmosSession?> renew(Uri routeUrl, {String? staleCookie}) async =>
+      null;
+
   Future<String?> _readSessionCookie(Webview window, Uri routeUrl) async {
     final host = routeUrl.host.toLowerCase();
     for (final cookie in await window.getAllCookies()) {

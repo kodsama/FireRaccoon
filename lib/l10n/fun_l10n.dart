@@ -185,4 +185,10 @@ class FunL10n {
       _pick(l10n.credentialsLockedTitle, l10n.credentialsLockedTitleRaccoon);
   String get credentialsLockedBody =>
       _pick(l10n.credentialsLockedBody, l10n.credentialsLockedBodyRaccoon);
+  String get cosmosGateTitle =>
+      _pick(l10n.cosmosGateTitle, l10n.cosmosGateTitleRaccoon);
+  String get cosmosGateBody =>
+      _pick(l10n.cosmosGateBody, l10n.cosmosGateBodyRaccoon);
+  String get noRouteTitle => _pick(l10n.noRouteTitle, l10n.noRouteTitleRaccoon);
+  String get noRouteBody => _pick(l10n.noRouteBody, l10n.noRouteBodyRaccoon);
 }

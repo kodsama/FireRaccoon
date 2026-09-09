@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../l10n/l10n_extensions.dart';
 import '../providers/auth_provider.dart';
+import '../providers/cosmos_gate_provider.dart';
 import '../providers/cosmos_session_provider.dart';
 import '../store/cosmos_login.dart';
 import '../store/cosmos_login_factory.dart';
@@ -56,6 +57,7 @@ class _CosmosSsoSectionState extends ConsumerState<CosmosSsoSection> {
     }
 
     final session = ref.watch(cosmosSessionProvider);
+    final renewing = ref.watch(cosmosGateProvider) == CosmosGate.renewing;
     final login = widget.login ?? resolveCosmosLogin();
 
     return Card(
@@ -87,7 +89,9 @@ class _CosmosSsoSectionState extends ConsumerState<CosmosSsoSection> {
               children: [
                 Expanded(
                   child: Text(
-                    session == null
+                    renewing
+                        ? l10n.cosmosSsoRenewing
+                        : session == null
                         ? l10n.cosmosSsoNotSignedIn
                         : l10n.cosmosSsoSignedIn(session.host),
                     style: TextStyle(
@@ -96,7 +100,13 @@ class _CosmosSsoSectionState extends ConsumerState<CosmosSsoSection> {
                     ),
                   ),
                 ),
-                if (session != null)
+                if (renewing)
+                  const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                else if (session != null)
                   TextButton(
                     onPressed: () =>
                         ref.read(cosmosSessionProvider.notifier).signedOut(),
@@ -115,7 +125,7 @@ class _CosmosSsoSectionState extends ConsumerState<CosmosSsoSection> {
                   ),
               ],
             ),
-            if (session == null && !login.isSupported) ...[
+            if (session == null && !renewing && !login.isSupported) ...[
               const SizedBox(height: 6),
               Text(
                 // On web the browser is already carrying the cookie, which is

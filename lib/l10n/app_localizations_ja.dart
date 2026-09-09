@@ -3717,6 +3717,37 @@ class AppLocalizationsJa extends AppLocalizations {
   String get secureConnectionTooltip => '暗号化された接続 (https)';
 
   @override
+  String get noRouteTitle => 'そのアドレスは家計簿ではありません';
+
+  @override
+  String get noRouteBody =>
+      'サーバーのアドレスでは何かが応答していますが、リクエストは Firefly III に渡されませんでした。設定でアドレスを確認し、その背後で Firefly III が動いているかも確かめてください。';
+
+  @override
+  String get noRouteTitleRaccoon => 'ゴミ箱が違います';
+
+  @override
+  String get noRouteBodyRaccoon =>
+      'そのアドレスにゴミ箱はありますが、中身がありません。設定でアドレスを確認し、Firefly III がまだ背後で動いているかも確かめてください。';
+
+  @override
+  String get cosmosGateTitle => 'Cosmos がサインインを求めています';
+
+  @override
+  String get cosmosGateBody =>
+      'Firefly III サーバーは Cosmos Cloud のルートの背後にあり、そのセッションが切れました。FireRaccoon は静かに更新を試みましたが、Cosmos はあなた自身の操作を求めました。';
+
+  @override
+  String get cosmosGateTitleRaccoon => 'フタが閉まっています';
+
+  @override
+  String get cosmosGateBodyRaccoon =>
+      'Cosmos Cloud がゴミ箱のフタを閉めてしまい、開ける前にあなたに会いたがっています。サインインすればあさりを再開できます。';
+
+  @override
+  String get cosmosSsoRenewing => 'Cosmos に再接続しています';
+
+  @override
   String get cosmosSsoTitle => 'Cosmos SSO';
 
   @override

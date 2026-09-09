@@ -6886,6 +6886,60 @@ abstract class AppLocalizations {
   /// **'Encrypted connection (https)'**
   String get secureConnectionTooltip;
 
+  /// Heading shown when the server address answers but does not route to Firefly III
+  ///
+  /// In en, this message translates to:
+  /// **'That address is not your ledger'**
+  String get noRouteTitle;
+
+  /// Explanation shown when the server address answers but does not route to Firefly III
+  ///
+  /// In en, this message translates to:
+  /// **'Something answers at your server address, but it did not pass the request to Firefly III. Check the address in Settings, and that Firefly III is running behind it.'**
+  String get noRouteBody;
+
+  /// Raccoon Mode heading when the server address does not route to Firefly III
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong bin'**
+  String get noRouteTitleRaccoon;
+
+  /// Raccoon Mode explanation when the server address does not route to Firefly III
+  ///
+  /// In en, this message translates to:
+  /// **'There is a bin at that address, but no snacks in it. Check the address in Settings, and that Firefly III is still running behind it.'**
+  String get noRouteBodyRaccoon;
+
+  /// Heading shown when a Cosmos Cloud route will not let the app through
+  ///
+  /// In en, this message translates to:
+  /// **'Cosmos wants a sign-in'**
+  String get cosmosGateTitle;
+
+  /// Explanation shown when a Cosmos Cloud route needs a sign-in
+  ///
+  /// In en, this message translates to:
+  /// **'Your Firefly III server sits behind a Cosmos Cloud route and its session has run out. FireRaccoon tried to renew it quietly, and Cosmos asked for you instead.'**
+  String get cosmosGateBody;
+
+  /// Raccoon Mode heading when a Cosmos Cloud route needs a sign-in
+  ///
+  /// In en, this message translates to:
+  /// **'The lid is latched'**
+  String get cosmosGateTitleRaccoon;
+
+  /// Raccoon Mode explanation when a Cosmos Cloud route needs a sign-in
+  ///
+  /// In en, this message translates to:
+  /// **'Cosmos Cloud latched the bin and wants to see you before it opens again. One sign-in and the rummaging continues.'**
+  String get cosmosGateBodyRaccoon;
+
+  /// Status shown while the Cosmos route session is being renewed in the background
+  ///
+  /// In en, this message translates to:
+  /// **'Reconnecting to Cosmos'**
+  String get cosmosSsoRenewing;
+
   /// Heading of the Cosmos SSO section in Settings
   ///
   /// In en, this message translates to:

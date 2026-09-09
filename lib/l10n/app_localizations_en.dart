@@ -3807,6 +3807,37 @@ class AppLocalizationsEn extends AppLocalizations {
   String get secureConnectionTooltip => 'Encrypted connection (https)';
 
   @override
+  String get noRouteTitle => 'That address is not your ledger';
+
+  @override
+  String get noRouteBody =>
+      'Something answers at your server address, but it did not pass the request to Firefly III. Check the address in Settings, and that Firefly III is running behind it.';
+
+  @override
+  String get noRouteTitleRaccoon => 'Wrong bin';
+
+  @override
+  String get noRouteBodyRaccoon =>
+      'There is a bin at that address, but no snacks in it. Check the address in Settings, and that Firefly III is still running behind it.';
+
+  @override
+  String get cosmosGateTitle => 'Cosmos wants a sign-in';
+
+  @override
+  String get cosmosGateBody =>
+      'Your Firefly III server sits behind a Cosmos Cloud route and its session has run out. FireRaccoon tried to renew it quietly, and Cosmos asked for you instead.';
+
+  @override
+  String get cosmosGateTitleRaccoon => 'The lid is latched';
+
+  @override
+  String get cosmosGateBodyRaccoon =>
+      'Cosmos Cloud latched the bin and wants to see you before it opens again. One sign-in and the rummaging continues.';
+
+  @override
+  String get cosmosSsoRenewing => 'Reconnecting to Cosmos';
+
+  @override
   String get cosmosSsoTitle => 'Cosmos SSO';
 
   @override

@@ -35,17 +35,17 @@ Tokens from OAuth are stored in secure storage the same way as personal access t
 | **Server URL** | Base URL of Firefly III, e.g. `https://firefly.example.com` |
 | **Allow insecure HTTP** | Permits `http://` URLs. Refused everywhere unless this is on, and the connection is badged as unencrypted for as long as it is one |
 | **Test connection** | Calls `GET /api/v1/about` before saving, without following redirects, so a reverse proxy's sign-in page is told apart from a wrong address |
-| **Cosmos SSO** | Signs in to a Cosmos Cloud route standing in front of Firefly III. See [Cosmos Cloud](cosmos-cloud.md) |
+| **Cosmos SSO** | Signs in to a Cosmos Cloud route standing in front of Firefly III, and shows when a session is being renewed. See [Cosmos Cloud](cosmos-cloud.md) |
 
 The connection carries a lock wherever it is reported: closed and green over
 https, open and red over http.
 
 ## A server behind a reverse-proxy login
 
-A proxy that requires its own login answers every path with a sign-in page, so
-the connection test reports that rather than a wrong address, and offers to sign
-in from where it says so. Cosmos Cloud is supported directly; see
-[Cosmos Cloud](cosmos-cloud.md).
+A proxy that requires its own login refuses every path, so the connection test
+reports that rather than a wrong address, and offers to sign in from where it
+says so. Cosmos Cloud is supported directly, including renewing an expired route
+session in the background without asking; see [Cosmos Cloud](cosmos-cloud.md).
 
 ## Environment variables
 

@@ -3840,6 +3840,37 @@ class AppLocalizationsFr extends AppLocalizations {
   String get secureConnectionTooltip => 'Connexion chiffrée (https)';
 
   @override
+  String get noRouteTitle => 'Cette adresse n\'est pas votre comptabilité';
+
+  @override
+  String get noRouteBody =>
+      'Quelque chose répond à l\'adresse de votre serveur, mais la requête n\'a pas été transmise à Firefly III. Vérifiez l\'adresse dans les réglages, et que Firefly III tourne bien derrière.';
+
+  @override
+  String get noRouteTitleRaccoon => 'Mauvaise poubelle';
+
+  @override
+  String get noRouteBodyRaccoon =>
+      'Il y a bien une poubelle à cette adresse, mais rien à grignoter dedans. Vérifiez l\'adresse dans les réglages, et que Firefly III tourne toujours derrière.';
+
+  @override
+  String get cosmosGateTitle => 'Cosmos demande une connexion';
+
+  @override
+  String get cosmosGateBody =>
+      'Votre serveur Firefly III se trouve derrière une route Cosmos Cloud dont la session a expiré. FireRaccoon a tenté de la renouveler discrètement, mais Cosmos vous a demandé à vous.';
+
+  @override
+  String get cosmosGateTitleRaccoon => 'Le couvercle est verrouillé';
+
+  @override
+  String get cosmosGateBodyRaccoon =>
+      'Cosmos Cloud a verrouillé la poubelle et veut vous voir avant de la rouvrir. Une connexion et la fouille reprend.';
+
+  @override
+  String get cosmosSsoRenewing => 'Reconnexion à Cosmos';
+
+  @override
   String get cosmosSsoTitle => 'SSO Cosmos';
 
   @override

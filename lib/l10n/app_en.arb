@@ -2193,6 +2193,42 @@
   "@secureConnectionTooltip": {
     "description": "Tooltip on the lock shown for an https connection"
   },
+  "noRouteTitle": "That address is not your ledger",
+  "@noRouteTitle": {
+    "description": "Heading shown when the server address answers but does not route to Firefly III"
+  },
+  "noRouteBody": "Something answers at your server address, but it did not pass the request to Firefly III. Check the address in Settings, and that Firefly III is running behind it.",
+  "@noRouteBody": {
+    "description": "Explanation shown when the server address answers but does not route to Firefly III"
+  },
+  "noRouteTitleRaccoon": "Wrong bin",
+  "@noRouteTitleRaccoon": {
+    "description": "Raccoon Mode heading when the server address does not route to Firefly III"
+  },
+  "noRouteBodyRaccoon": "There is a bin at that address, but no snacks in it. Check the address in Settings, and that Firefly III is still running behind it.",
+  "@noRouteBodyRaccoon": {
+    "description": "Raccoon Mode explanation when the server address does not route to Firefly III"
+  },
+  "cosmosGateTitle": "Cosmos wants a sign-in",
+  "@cosmosGateTitle": {
+    "description": "Heading shown when a Cosmos Cloud route will not let the app through"
+  },
+  "cosmosGateBody": "Your Firefly III server sits behind a Cosmos Cloud route and its session has run out. FireRaccoon tried to renew it quietly, and Cosmos asked for you instead.",
+  "@cosmosGateBody": {
+    "description": "Explanation shown when a Cosmos Cloud route needs a sign-in"
+  },
+  "cosmosGateTitleRaccoon": "The lid is latched",
+  "@cosmosGateTitleRaccoon": {
+    "description": "Raccoon Mode heading when a Cosmos Cloud route needs a sign-in"
+  },
+  "cosmosGateBodyRaccoon": "Cosmos Cloud latched the bin and wants to see you before it opens again. One sign-in and the rummaging continues.",
+  "@cosmosGateBodyRaccoon": {
+    "description": "Raccoon Mode explanation when a Cosmos Cloud route needs a sign-in"
+  },
+  "cosmosSsoRenewing": "Reconnecting to Cosmos",
+  "@cosmosSsoRenewing": {
+    "description": "Status shown while the Cosmos route session is being renewed in the background"
+  },
   "cosmosSsoTitle": "Cosmos SSO",
   "@cosmosSsoTitle": {
     "description": "Heading of the Cosmos SSO section in Settings"

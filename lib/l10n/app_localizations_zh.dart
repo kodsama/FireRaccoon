@@ -3709,6 +3709,37 @@ class AppLocalizationsZh extends AppLocalizations {
   String get secureConnectionTooltip => '加密连接 (https)';
 
   @override
+  String get noRouteTitle => '该地址不是你的账本';
+
+  @override
+  String get noRouteBody =>
+      '你的服务器地址有响应，但它没有把请求转给 Firefly III。请在设置中检查地址，并确认 Firefly III 仍在其后运行。';
+
+  @override
+  String get noRouteTitleRaccoon => '垃圾桶不对';
+
+  @override
+  String get noRouteBodyRaccoon =>
+      '那个地址确实有个垃圾桶，但里面什么也没有。请在设置中检查地址，并确认 Firefly III 仍在其后运行。';
+
+  @override
+  String get cosmosGateTitle => 'Cosmos 需要你登录';
+
+  @override
+  String get cosmosGateBody =>
+      '你的 Firefly III 服务器位于 Cosmos Cloud 路由之后，该路由的会话已过期。FireRaccoon 已尝试在后台续期，但 Cosmos 要求你亲自登录。';
+
+  @override
+  String get cosmosGateTitleRaccoon => '盖子被扣上了';
+
+  @override
+  String get cosmosGateBodyRaccoon =>
+      'Cosmos Cloud 扣上了垃圾桶盖，要先见到你才肯打开。登录一次就能继续翻找。';
+
+  @override
+  String get cosmosSsoRenewing => '正在重新连接 Cosmos';
+
+  @override
   String get cosmosSsoTitle => 'Cosmos SSO';
 
   @override
