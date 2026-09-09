@@ -19,6 +19,8 @@ import '../providers/write_ahead_provider.dart';
 import '../providers/undo_history_provider.dart';
 import '../services/mcp_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/connection_test_banner.dart';
+import '../widgets/cosmos_sso_section.dart';
 import '../widgets/insecure_connection_notice.dart';
 import '../widgets/theme_style_picker.dart';
 import '../widgets/autocomplete_text_field.dart';
@@ -157,6 +159,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ConnectionFailure.insecureRefused => l10n.connectionFailedInsecure,
       ConnectionFailure.unauthorized => l10n.connectionFailedUnauthorized,
       ConnectionFailure.notFirefly => l10n.connectionFailedNotFirefly,
+      ConnectionFailure.cosmosLoginRequired => l10n.connectionFailedCosmos,
       ConnectionFailure.unreachable => l10n.connectionFailedUnreachable,
       ConnectionFailure.serverError || null => l10n.connectionFailed,
     };
@@ -176,11 +179,35 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     bool obscureToken = true;
     bool isTesting = false;
     bool testSuccess = false;
+    // Held rather than shown in a snack bar: this dialog is modal, and its own
+    // scrim paints over anything the Scaffold puts underneath it, which left
+    // the message dimmed to the point of being unreadable.
+    ConnectionTestResult? testResult;
 
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setState) {
+          Future<void> runTest() async {
+            setState(() {
+              isTesting = true;
+              testSuccess = false;
+            });
+            final result = await ref
+                .read(authProvider.notifier)
+                .testConnection(
+                  urlController.text,
+                  tokenController.text,
+                  allowInsecure,
+                );
+            if (!context.mounted) return;
+            setState(() {
+              isTesting = false;
+              testSuccess = result.ok;
+              testResult = result;
+            });
+          }
+
           return AlertDialog(
             title: Text(l10n.fireflyConnectionTitle),
             content: SingleChildScrollView(
@@ -275,39 +302,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         onPressed: isTesting
                             ? null
                             : () async {
-                                setState(() {
-                                  isTesting = true;
-                                  testSuccess = false;
-                                });
-                                final result = await ref
-                                    .read(authProvider.notifier)
-                                    .testConnection(
-                                      urlController.text,
-                                      tokenController.text,
-                                      allowInsecure,
-                                    );
-                                if (context.mounted) {
-                                  setState(() {
-                                    isTesting = false;
-                                    testSuccess = result.ok;
-                                  });
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        result.ok
-                                            ? l10n.connectionSuccessful
-                                            : _connectionFailureText(
-                                                l10n,
-                                                result,
-                                              ),
-                                      ),
-                                      backgroundColor: result.ok
-                                          ? context.colors.success
-                                          : context.colors.danger,
-                                      duration: const Duration(seconds: 8),
-                                    ),
-                                  );
-                                }
+                                await runTest();
                               },
                         icon: isTesting
                             ? const SizedBox(
@@ -321,6 +316,26 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         label: Text(l10n.testConnection),
                       ),
                     ),
+                    if (testResult != null)
+                      ConnectionTestBanner(
+                        ok: testResult!.ok,
+                        message: testResult!.ok
+                            ? l10n.connectionSuccessful
+                            : _connectionFailureText(l10n, testResult!),
+                        // The one failure the person can act on without
+                        // leaving the dialog.
+                        action:
+                            testResult!.failure ==
+                                ConnectionFailure.cosmosLoginRequired
+                            ? CosmosSignInButton(
+                                serverUrl: urlController.text,
+                                // Signing in is only ever done so the
+                                // connection works, so the answer to whether
+                                // it does now is what someone is waiting for.
+                                onSignedIn: runTest,
+                              )
+                            : null,
+                      ),
                   ] else
                     Tooltip(
                       message: l10n.oauthClientId,
@@ -805,9 +820,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Tooltip(
                       message: l10n.transactionPageSizeDescription,
                       child: Slider(
-                        value: transactionPageSizeSliderIndex(
-                          pageSize,
-                        ).toDouble(),
+                        value: transactionPageSizeSliderIndex(pageSize)
+                            .toDouble(),
                         min: 0,
                         max: kTransactionPageSizeSteps.toDouble(),
                         divisions: kTransactionPageSizeSteps,
@@ -925,9 +939,22 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SideMenuSettingsSection(),
         if (ref.watch(canManageFireflyConnectionProvider)) ...[
           const SizedBox(height: 24),
-          Text(
-            l10n.backendConnection,
-            style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Text(
+                l10n.backendConnection,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              // Only once there is a server to describe. Before that the lock
+              // would be answering a question nobody has asked yet.
+              if (ref.watch(authProvider).serverUrl.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                TransportLockIcon(
+                  url: ref.watch(authProvider).serverUrl,
+                  size: 15,
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 16),
           Card(
@@ -1024,6 +1051,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const Card(child: McpSettingsSection()),
         ],
         const SizedBox(height: 24),
+        const CosmosSsoSection(),
         Text(
           l10n.recentProblems,
           style: Theme.of(context).textTheme.titleMedium,

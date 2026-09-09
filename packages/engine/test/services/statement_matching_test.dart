@@ -595,11 +595,9 @@ void main() {
     );
 
     test('one grammar reads every row in the export', () {
-      final result =
-          parseStatementRows(
-                rows: [raw('r1', '-481,00'), raw('r2', '-1 234,56')],
-              )
-              as StatementParsed;
+      final result = parseStatementRows(
+        rows: [raw('r1', '-481,00'), raw('r2', '-1 234,56')],
+      ) as StatementParsed;
 
       expect(result.grammar, AmountGrammar.commaDecimal);
       expect(result.rows.map((row) => row.amount).toList(), [-481.0, -1234.56]);
@@ -609,12 +607,10 @@ void main() {
 
     test('the balances settle the grammar the rows cannot', () {
       // Settling over the rows alone would refuse a readable export.
-      final result =
-          parseStatementRows(
-                rows: [raw('r1', '1,234')],
-                closingBalance: '-9 889,00',
-              )
-              as StatementParsed;
+      final result = parseStatementRows(
+        rows: [raw('r1', '1,234')],
+        closingBalance: '-9 889,00',
+      ) as StatementParsed;
 
       expect(result.grammar, AmountGrammar.commaDecimal);
       expect(result.rows.single.amount, 1.234);
@@ -623,53 +619,45 @@ void main() {
 
     test('a corpus with no evidence asks for amount_format', () {
       // Picking a separator here books a thousandth of the real amount.
-      final result =
-          parseStatementRows(rows: [raw('r1', '1,234'), raw('r2', '2,345')])
-              as StatementParseFailure;
+      final result = parseStatementRows(
+        rows: [raw('r1', '1,234'), raw('r2', '2,345')],
+      ) as StatementParseFailure;
 
       expect(result.field, 'amount_format');
       expect(result.message, contains('amount_format'));
     });
 
     test('a caller-supplied format is used instead of inference', () {
-      final result =
-          parseStatementRows(
-                rows: [raw('r1', '1,234')],
-                amountFormat: AmountGrammar.dotDecimal,
-              )
-              as StatementParsed;
+      final result = parseStatementRows(
+        rows: [raw('r1', '1,234')],
+        amountFormat: AmountGrammar.dotDecimal,
+      ) as StatementParsed;
 
       expect(result.rows.single.amount, 1234.0);
     });
 
     test('a balance that will not read names its own field', () {
       // Falling back to the other grammar for one number would misread it.
-      final opening =
-          parseStatementRows(
-                rows: [raw('r1', '-481,00')],
-                openingBalance: 'n/a',
-              )
-              as StatementParseFailure;
+      final opening = parseStatementRows(
+        rows: [raw('r1', '-481,00')],
+        openingBalance: 'n/a',
+      ) as StatementParseFailure;
       expect(opening.field, 'opening_balance');
 
-      final closing =
-          parseStatementRows(
-                rows: [raw('r1', '-481,00')],
-                openingBalance: '1 000,00',
-                closingBalance: 'n/a',
-              )
-              as StatementParseFailure;
+      final closing = parseStatementRows(
+        rows: [raw('r1', '-481,00')],
+        openingBalance: '1 000,00',
+        closingBalance: 'n/a',
+      ) as StatementParseFailure;
       expect(closing.field, 'closing_balance');
     });
 
     test('a row the grammar cannot read comes back with its readings', () {
       // The human answering sees both values instead of re-typing the number.
-      final result =
-          parseStatementRows(
-                rows: [raw('r1', '-481,00'), raw('r2', '1,234.56')],
-                amountFormat: AmountGrammar.commaDecimal,
-              )
-              as StatementParsed;
+      final result = parseStatementRows(
+        rows: [raw('r1', '-481,00'), raw('r2', '1,234.56')],
+        amountFormat: AmountGrammar.commaDecimal,
+      ) as StatementParsed;
 
       expect(result.rows.single.rowId, 'r1');
       final needsInput = result.needsInput.single;
@@ -680,11 +668,9 @@ void main() {
     });
 
     test('a double-signed row is surfaced, never guessed', () {
-      final result =
-          parseStatementRows(
-                rows: [raw('r1', '-481,00'), raw('r2', '-9 889,00-')],
-              )
-              as StatementParsed;
+      final result = parseStatementRows(
+        rows: [raw('r1', '-481,00'), raw('r2', '-9 889,00-')],
+      ) as StatementParsed;
 
       expect(result.needsInput.single.reason, 'double_sign');
       expect(result.needsInput.single.candidates, isEmpty);

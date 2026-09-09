@@ -81,9 +81,8 @@ class _TagFormDialogState extends ConsumerState<_TagFormDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to save tag: $e')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Failed to save tag: $e')));
       }
     }
   }

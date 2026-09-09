@@ -128,18 +128,16 @@ class _Toast extends StatelessWidget {
                     Flexible(
                       child: SelectableText(
                         message,
-                        style: Theme.of(
-                          context,
-                        ).textTheme.bodyMedium?.copyWith(color: foreground),
+                        style: Theme.of(context).textTheme.bodyMedium
+                            ?.copyWith(color: foreground),
                       ),
                     ),
                     if (onClose != null)
                       IconButton(
                         icon: const Icon(Icons.close, size: 18),
                         color: foreground,
-                        tooltip: MaterialLocalizations.of(
-                          context,
-                        ).closeButtonTooltip,
+                        tooltip: MaterialLocalizations.of(context)
+                            .closeButtonTooltip,
                         onPressed: onClose,
                       ),
                   ],

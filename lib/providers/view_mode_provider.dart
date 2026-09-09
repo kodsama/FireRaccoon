@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../store/secure_storage.dart';
 
 enum ViewMode { standard, compact, tight }

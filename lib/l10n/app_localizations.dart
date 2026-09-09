@@ -6885,6 +6885,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Encrypted connection (https)'**
   String get secureConnectionTooltip;
+
+  /// Heading of the Cosmos SSO section in Settings
+  ///
+  /// In en, this message translates to:
+  /// **'Cosmos SSO'**
+  String get cosmosSsoTitle;
+
+  /// Shown when there is no Cosmos session
+  ///
+  /// In en, this message translates to:
+  /// **'Not signed in'**
+  String get cosmosSsoNotSignedIn;
+
+  /// Shown with the host a Cosmos session belongs to
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in to {host}'**
+  String cosmosSsoSignedIn(String host);
+
+  /// Button that starts the Cosmos sign-in
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get cosmosSsoSignIn;
+
+  /// Button that drops the Cosmos session
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get cosmosSsoSignOut;
+
+  /// Shown where no web view can run the Cosmos flow
+  ///
+  /// In en, this message translates to:
+  /// **'Signing in to Cosmos is not available on this platform'**
+  String get cosmosSsoUnsupported;
+
+  /// Shown on web, where the browser holds the cookie
+  ///
+  /// In en, this message translates to:
+  /// **'Your browser already carries the Cosmos session'**
+  String get cosmosSsoWebNote;
+
+  /// Explains when Cosmos SSO is needed
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in when your Firefly III server sits behind a Cosmos Cloud route that requires a login. The Firefly token is still used for Firefly itself.'**
+  String get cosmosSsoExplainer;
+
+  /// Shown when the sign-in window was closed early
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in was closed before it finished'**
+  String get cosmosSsoCancelled;
+
+  /// Shown when the connection test met a Cosmos sign-in page
+  ///
+  /// In en, this message translates to:
+  /// **'That server sits behind a Cosmos Cloud sign-in. Sign in to Cosmos, then test again.'**
+  String get connectionFailedCosmos;
+
+  /// Button in the connection dialog that starts the Cosmos sign-in
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to Cosmos'**
+  String get cosmosSsoSignInAction;
 }
 
 class _AppLocalizationsDelegate

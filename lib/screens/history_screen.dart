@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
+
 import 'dart:convert';
 
 import 'package:go_router/go_router.dart';
+
 import '../l10n/l10n_extensions.dart';
 import '../providers/undo_history_provider.dart' as undo;
 import '../providers/theme_provider.dart';
@@ -79,9 +81,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       ),
     );
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(l10n.historyExportedAndShared)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l10n.historyExportedAndShared)));
   }
 
   void _jumpToCurrent(
@@ -136,9 +137,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final older = <undo.UndoEntry>[];
     for (final entry in entries) {
       final localDate = entry.timestampUtc.toLocal();
-      final dayDiff = DateUtils.dateOnly(
-        now,
-      ).difference(DateUtils.dateOnly(localDate)).inDays;
+      final dayDiff = DateUtils.dateOnly(now)
+          .difference(DateUtils.dateOnly(localDate))
+          .inDays;
       if (dayDiff == 0) {
         today.add(entry);
       } else if (dayDiff == 1) {

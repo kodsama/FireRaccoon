@@ -1,5 +1,6 @@
 // ignore: unused_import
 import 'package:intl/intl.dart' as intl;
+
 import 'app_localizations.dart';
 
 // ignore_for_file: type=lint
@@ -3804,4 +3805,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get secureConnectionTooltip => 'Encrypted connection (https)';
+
+  @override
+  String get cosmosSsoTitle => 'Cosmos SSO';
+
+  @override
+  String get cosmosSsoNotSignedIn => 'Not signed in';
+
+  @override
+  String cosmosSsoSignedIn(String host) {
+    return 'Signed in to $host';
+  }
+
+  @override
+  String get cosmosSsoSignIn => 'Sign in';
+
+  @override
+  String get cosmosSsoSignOut => 'Sign out';
+
+  @override
+  String get cosmosSsoUnsupported =>
+      'Signing in to Cosmos is not available on this platform';
+
+  @override
+  String get cosmosSsoWebNote =>
+      'Your browser already carries the Cosmos session';
+
+  @override
+  String get cosmosSsoExplainer =>
+      'Sign in when your Firefly III server sits behind a Cosmos Cloud route that requires a login. The Firefly token is still used for Firefly itself.';
+
+  @override
+  String get cosmosSsoCancelled => 'Sign-in was closed before it finished';
+
+  @override
+  String get connectionFailedCosmos =>
+      'That server sits behind a Cosmos Cloud sign-in. Sign in to Cosmos, then test again.';
+
+  @override
+  String get cosmosSsoSignInAction => 'Sign in to Cosmos';
 }

@@ -7,6 +7,7 @@ import 'package:fireraccoon/providers/data_providers.dart';
 import 'package:fireraccoon/providers/view_mode_provider.dart';
 import 'package:fireraccoon/screens/accounts_screen.dart';
 import 'package:fireraccoon/utils/locale_formatting.dart';
+
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/test_data.dart';
@@ -39,9 +40,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // Navigates to the account's transactions, pre-armed for reconciliation.
-    final uri = GoRouterState.of(
-      tester.element(find.byType(AccountsScreen)),
-    ).uri;
+    final uri = GoRouterState.of(tester.element(find.byType(AccountsScreen)))
+        .uri;
     expect(uri.path, '/transactions');
     expect(uri.queryParameters['account'], 'Checking');
     expect(uri.queryParameters['reconcile'], '1');
@@ -65,9 +65,8 @@ void main() {
     await tester.tap(find.text('Click to reconcile').first);
     await tester.pumpAndSettle();
 
-    final uri = GoRouterState.of(
-      tester.element(find.byType(AccountsScreen)),
-    ).uri;
+    final uri = GoRouterState.of(tester.element(find.byType(AccountsScreen)))
+        .uri;
     expect(uri.path, '/transactions');
     expect(uri.queryParameters['account'], 'Checking');
     expect(uri.queryParameters['reconcile'], '1');
@@ -353,9 +352,8 @@ void main() {
     // The only figure the column could show before the date became selectable,
     // so an existing view opens exactly as it did.
     final endOfMonth = endOfMonthFor(DateTime.now());
-    final label = LocaleFormatting(
-      const Locale('en'),
-    ).formatMediumDate(endOfMonth);
+    final label = LocaleFormatting(const Locale('en'))
+        .formatMediumDate(endOfMonth);
     expect(find.text(label), findsWidgets);
   });
 
@@ -382,9 +380,8 @@ void main() {
     ref.read(accountBalanceDateProvider.notifier).select(DateTime(2027, 3, 15));
     await tester.pumpAndSettle();
 
-    final label = LocaleFormatting(
-      const Locale('en'),
-    ).formatMediumDate(DateTime(2027, 3, 15));
+    final label = LocaleFormatting(const Locale('en'))
+        .formatMediumDate(DateTime(2027, 3, 15));
     expect(find.text(label), findsWidgets);
     // And the recorded balance the ledger holds through that day comes with it.
     expect(find.textContaining('4,321'), findsWidgets);
@@ -456,9 +453,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(ref.read(accountBalanceDateProvider), isNull);
-    final label = LocaleFormatting(
-      const Locale('en'),
-    ).formatMediumDate(endOfMonthFor(DateTime.now()));
+    final label = LocaleFormatting(const Locale('en'))
+        .formatMediumDate(endOfMonthFor(DateTime.now()));
     expect(find.text(label), findsWidgets);
   });
 }

@@ -8,14 +8,13 @@ import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 
 import '../l10n/app_localizations.dart';
 
-typedef IsolateSpawner =
-    Future<Isolate> Function(
-      void Function(McpIsolateConfig) entry,
-      McpIsolateConfig message, {
-      String? debugName,
-      SendPort? onExit,
-      SendPort? onError,
-    });
+typedef IsolateSpawner = Future<Isolate> Function(
+  void Function(McpIsolateConfig) entry,
+  McpIsolateConfig message, {
+  String? debugName,
+  SendPort? onExit,
+  SendPort? onError,
+});
 
 /// Runs the MCP server on localhost TCP in a worker isolate.
 ///
@@ -71,6 +70,7 @@ class McpService extends ChangeNotifier {
     String? agentKeysError,
     String? backupsDirectory,
     String? appVersion,
+    String? proxyCookie,
     int basePort = 8787,
   }) {
     final next = (_queue ?? Future<void>.value()).then(
@@ -82,6 +82,7 @@ class McpService extends ChangeNotifier {
         agentKeysError: agentKeysError,
         backupsDirectory: backupsDirectory,
         appVersion: appVersion,
+        proxyCookie: proxyCookie,
         basePort: basePort,
       ),
     );
@@ -98,6 +99,7 @@ class McpService extends ChangeNotifier {
     required String? agentKeysError,
     required String? backupsDirectory,
     required String? appVersion,
+    required String? proxyCookie,
     required int basePort,
   }) async {
     final active = [
@@ -110,6 +112,7 @@ class McpService extends ChangeNotifier {
       agentKeys: active,
       people: people,
       appVersion: appVersion,
+      proxyCookie: proxyCookie,
     );
     if (next == _fingerprint && _isolate != null) {
       _log.finer('MCP sync ignored: nothing the isolate captured changed');
@@ -166,6 +169,7 @@ class McpService extends ChangeNotifier {
           people,
           backupsDirectory,
           appVersion,
+          proxyCookie,
         ),
         debugName: 'fireraccoon-mcp-server',
         // A healthy isolate never finishes: the listening socket keeps its event
@@ -300,6 +304,7 @@ class McpService extends ChangeNotifier {
     required List<AgentKey> agentKeys,
     required List<AgentKeyPerson> people,
     required String? appVersion,
+    required String? proxyCookie,
   }) {
     final keyPart = (agentKeys.map((key) => key.hash).toList()..sort()).join(
       ',',
@@ -307,7 +312,7 @@ class McpService extends ChangeNotifier {
     final peoplePart = (people.map((p) => '${p.id}:${p.role}').toList()..sort())
         .join(',');
     return '$fireflyUrl|${fireflyToken.hashCode}|$keyPart|$peoplePart'
-        '|$appVersion';
+        '|$appVersion|${proxyCookie.hashCode}';
   }
 
   @override
@@ -329,6 +334,7 @@ class McpIsolateConfig {
     this.people,
     this.backupsDirectory,
     this.appVersion,
+    this.proxyCookie,
   );
 
   final SendPort send;
@@ -346,6 +352,10 @@ class McpIsolateConfig {
   /// The release an agent is talking to, reported by `get_capabilities`. Null
   /// until the platform answers with it, which is before anything can connect.
   final String? appVersion;
+
+  /// The reverse-proxy session the app signed in for, so an agent reaches a
+  /// gated route rather than its sign-in page.
+  final String? proxyCookie;
 }
 
 Future<void> _serverEntry(McpIsolateConfig cfg) async {
@@ -374,7 +384,11 @@ Future<void> _serverEntry(McpIsolateConfig cfg) async {
   final backupsDirectory = cfg.backupsDirectory;
   McpServer serverFor(AgentIdentity identity) => McpServer(
     tools: buildTools(
-      target: FireflyTarget(baseUrl: cfg.fireflyUrl, bearer: cfg.fireflyToken),
+      target: FireflyTarget(
+        baseUrl: cfg.fireflyUrl,
+        bearer: cfg.fireflyToken,
+        proxyCookie: cfg.proxyCookie,
+      ),
       identity: identity,
       backups: backupsDirectory == null
           ? null

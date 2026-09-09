@@ -46,34 +46,31 @@ void main() {
     expect(container.read(viewModeProvider), ViewMode.tight);
   });
 
-  test(
-    'toggle switches mode sequentially (standard -> compact -> tight -> standard) and persists',
-    () async {
-      final container = ProviderContainer();
-      addTearDown(container.dispose);
+  test('toggle switches mode sequentially (standard -> compact -> tight -> standard) and persists', () async {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
 
-      container.read(viewModeProvider);
-      await Future<void>.delayed(const Duration(milliseconds: 50));
+    container.read(viewModeProvider);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
 
-      container.read(viewModeProvider.notifier).toggle();
-      expect(container.read(viewModeProvider), ViewMode.compact);
+    container.read(viewModeProvider.notifier).toggle();
+    expect(container.read(viewModeProvider), ViewMode.compact);
 
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(await appSecureStorage.read(key: 'globalViewMode'), 'compact');
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(await appSecureStorage.read(key: 'globalViewMode'), 'compact');
 
-      container.read(viewModeProvider.notifier).toggle();
-      expect(container.read(viewModeProvider), ViewMode.tight);
+    container.read(viewModeProvider.notifier).toggle();
+    expect(container.read(viewModeProvider), ViewMode.tight);
 
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(await appSecureStorage.read(key: 'globalViewMode'), 'tight');
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(await appSecureStorage.read(key: 'globalViewMode'), 'tight');
 
-      container.read(viewModeProvider.notifier).toggle();
-      expect(container.read(viewModeProvider), ViewMode.standard);
+    container.read(viewModeProvider.notifier).toggle();
+    expect(container.read(viewModeProvider), ViewMode.standard);
 
-      await Future<void>.delayed(const Duration(milliseconds: 50));
-      expect(await appSecureStorage.read(key: 'globalViewMode'), 'standard');
-    },
-  );
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(await appSecureStorage.read(key: 'globalViewMode'), 'standard');
+  });
 
   test('setMode updates state and persists explicitly', () async {
     final container = ProviderContainer();

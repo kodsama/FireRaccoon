@@ -209,9 +209,8 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
     if (manifest.ownerId != null && manifest.ownerId != owner.id) {
       throw const WrongLedgerException();
     }
-    final current = await DataExportService(
-      api,
-    ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+    final current = await DataExportService(api)
+        .export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
     return planRestore(
       backup: snapshot,
       current: current.toJson(),

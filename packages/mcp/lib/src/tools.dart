@@ -4,6 +4,52 @@ import 'dart:math' show min;
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:http/http.dart' as http;
 
+/// Whether a response is a Cosmos Cloud route turning the caller away to sign
+/// in.
+///
+/// Recognised by the two paths Cosmos itself builds, matched on the path rather
+/// than anywhere in the string, and the OpenID form must carry the
+/// auto-provisioned `__route_` client. This decides whether an agent is told to
+/// sign in or told the server is down, so a substring match would send it after
+/// the wrong thing.
+bool isProxyLoginRedirect(int statusCode, Map<String, String> headers) {
+  if (statusCode < 300 || statusCode >= 400) return false;
+  final location = headers['location'] ?? headers['Location'] ?? '';
+  if (location.isEmpty) return false;
+  final target = Uri.tryParse(location);
+  if (target == null) return false;
+  if (target.path == '/cosmos-ui/login') return true;
+  if (target.path != '/cosmos-ui/openid') return false;
+  return (target.queryParameters['client_id'] ?? '').startsWith('__route_');
+}
+
+/// Adds the reverse-proxy session to every request bound for the target.
+http.Client _proxyClient(http.Client? inner, FireflyTarget target) {
+  final base = inner ?? http.Client();
+  final cookie = target.proxyCookie;
+  if (cookie == null || cookie.isEmpty) return base;
+  return _CookieClient(base, cookie);
+}
+
+class _CookieClient extends http.BaseClient {
+  _CookieClient(this._inner, this._cookie);
+
+  final http.Client _inner;
+  final String _cookie;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    final existing = request.headers['Cookie'] ?? request.headers['cookie'];
+    request.headers['Cookie'] = existing == null || existing.isEmpty
+        ? _cookie
+        : '$existing; $_cookie';
+    return _inner.send(request);
+  }
+
+  @override
+  void close() => _inner.close();
+}
+
 /// One MCP tool: name, description, JSON Schema, and executor.
 class McpTool {
   const McpTool({
@@ -1208,12 +1254,26 @@ DashboardPeriod _dashboardPeriod(String? raw) {
 /// is the caller's agent key, so the Firefly PAT never enters this process. On
 /// desktop it is the app's own saved Firefly connection.
 class FireflyTarget {
-  const FireflyTarget({required this.baseUrl, required this.bearer});
+  const FireflyTarget({
+    required this.baseUrl,
+    required this.bearer,
+    this.proxyCookie,
+  });
 
-  const FireflyTarget.unconfigured() : baseUrl = '', bearer = '';
+  const FireflyTarget.unconfigured()
+    : baseUrl = '',
+      bearer = '',
+      proxyCookie = null;
 
   final String baseUrl;
   final String bearer;
+
+  /// A reverse proxy session the app signed in for, sent as a Cookie header.
+  ///
+  /// Cosmos Cloud gates a route on its own cookie and strips it before
+  /// forwarding, so without this an agent reaches the sign-in page rather than
+  /// the ledger, whatever the Firefly token says.
+  final String? proxyCookie;
 
   bool get isConfigured => baseUrl.isNotEmpty && bearer.isNotEmpty;
 
@@ -1308,7 +1368,7 @@ List<McpTool> buildTools({
     return FireflyApiService(
       serverUrl: target.normalizedBaseUrl,
       apiToken: target.bearer,
-      client: httpClient,
+      client: _proxyClient(httpClient, target),
     );
   }
 
@@ -1326,6 +1386,7 @@ List<McpTool> buildTools({
         headers: {
           'Authorization': 'Bearer ${target.bearer}',
           'Accept': 'application/json',
+          if (target.proxyCookie != null) 'Cookie': target.proxyCookie!,
         },
       );
     } on Object {
@@ -1360,6 +1421,19 @@ List<McpTool> buildTools({
           'connected': false,
           'url': url,
           'reason': 'Firefly III at $url did not answer.',
+        };
+      }
+      if (isProxyLoginRedirect(about.statusCode, about.headers)) {
+        return {
+          'configured': true,
+          'connected': true,
+          'authorized': false,
+          'url': url,
+          'proxy': 'cosmos',
+          'reason':
+              'A Cosmos Cloud route stands in front of $url and this server '
+              'has no session for it. Sign in to Cosmos in the FireRaccoon '
+              'app; MCP carries the session the app holds.',
         };
       }
       if (about.statusCode == 401 || about.statusCode == 403) {
@@ -1780,6 +1854,9 @@ List<McpTool> buildTools({
         'version': _mcpVersion,
         'app': {
           'name': 'FireRaccoon',
+          // Whether this server can reach a route that stands in front of
+          // Firefly, so an agent knows a sign-in is owed before it starts.
+          'proxy_session': target.proxyCookie != null,
           // Null off the desktop app and the packaged server, which are the
           // only two hosts that know their own release.
           'version': appVersion,
@@ -1952,8 +2029,7 @@ List<McpTool> buildTools({
     ),
     McpTool(
       name: 'get_transactions',
-      description:
-          'Fetch transactions (last 365 days by default). Optionally filter by account and paginate.',
+      description: 'Fetch transactions (last 365 days by default). Optionally filter by account and paginate.',
       inputSchema: {
         'type': 'object',
         'properties': {
@@ -1981,8 +2057,7 @@ List<McpTool> buildTools({
                 'Only transactions on or before this date (YYYY-MM-DD).',
           },
           'reconciled': {
-            'description':
-                'Filter by reconciliation status: all, true/reconciled, or false/unreconciled.',
+            'description': 'Filter by reconciliation status: all, true/reconciled, or false/unreconciled.',
             'oneOf': [
               {'type': 'boolean'},
               {
@@ -2150,8 +2225,7 @@ List<McpTool> buildTools({
     McpTool(
       name: 'set_transaction_reconciled',
       writes: true,
-      description:
-          'Mark a transaction as reconciled or unreconciled after verifying it against a bank statement.',
+      description: 'Mark a transaction as reconciled or unreconciled after verifying it against a bank statement.',
       inputSchema: {
         'type': 'object',
         'required': ['transaction_id', 'reconciled'],
@@ -2761,9 +2835,8 @@ List<McpTool> buildTools({
 
         final api = service();
         final owner = await api.getCurrentUser();
-        final current = await DataExportService(
-          api,
-        ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+        final current = await DataExportService(api)
+            .export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
         final plan = planRestore(backup: snapshot, current: current.toJson());
         final max = ((args['max_differences_reported'] as num?)?.toInt() ?? 50)
             .clamp(1, 2000);
@@ -2829,8 +2902,7 @@ List<McpTool> buildTools({
           'max_steps_reported': {
             'type': 'integer',
             'default': 200,
-            'description':
-                'Ceiling on the steps listed back. The counts are always whole.',
+            'description': 'Ceiling on the steps listed back. The counts are always whole.',
           },
         },
       },
@@ -2870,9 +2942,8 @@ List<McpTool> buildTools({
         }
 
         final types = _strList(args['types']).toSet();
-        final current = await DataExportService(
-          api,
-        ).export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
+        final current = await DataExportService(api)
+            .export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
         final plan = planRestore(
           backup: snapshot,
           current: current.toJson(),
@@ -4415,8 +4486,7 @@ List<McpTool> buildTools({
     ),
     McpTool(
       name: 'run_projection',
-      description:
-          'Run an on-device financial projection (savings, compound, portfolio, or cashflow).',
+      description: 'Run an on-device financial projection (savings, compound, portfolio, or cashflow).',
       inputSchema: {
         'type': 'object',
         'properties': {
@@ -4491,8 +4561,7 @@ List<McpTool> buildTools({
     ),
     McpTool(
       name: 'get_dashboard_kpis',
-      description:
-          'Compute dashboard KPIs (net worth, income, spending, savings) for a period.',
+      description: 'Compute dashboard KPIs (net worth, income, spending, savings) for a period.',
       inputSchema: {
         'type': 'object',
         'properties': {

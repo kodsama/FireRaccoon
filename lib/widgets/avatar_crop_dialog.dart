@@ -137,9 +137,8 @@ class _AvatarCropDialogState extends State<_AvatarCropDialog> {
     } on Object catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Crop failed: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Crop failed: $e')));
     }
   }
 

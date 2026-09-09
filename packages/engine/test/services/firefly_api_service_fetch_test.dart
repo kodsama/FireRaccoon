@@ -202,9 +202,8 @@ void main() {
         return jsonHttpResponse(budgetsBody());
       });
 
-      final budgets = await serviceWith(
-        client,
-      ).getBudgets(start: DateTime(2026, 6, 1), end: DateTime(2026, 7, 1));
+      final budgets = await serviceWith(client)
+          .getBudgets(start: DateTime(2026, 6, 1), end: DateTime(2026, 7, 1));
 
       expect(uri.path, '/api/v1/budgets');
       expect(uri.queryParameters['start'], '2026-06-01');
@@ -372,9 +371,8 @@ void main() {
           });
         });
 
-        final balance = await serviceWith(
-          client,
-        ).getAccountBalanceAtDate('5', DateTime(2026, 6, 15));
+        final balance = await serviceWith(client)
+            .getAccountBalanceAtDate('5', DateTime(2026, 6, 15));
 
         expect(uri.path, '/api/v1/accounts/5');
         expect(uri.queryParameters['date'], '2026-06-15');
@@ -516,9 +514,8 @@ void main() {
           );
         });
 
-        final result = await serviceWith(
-          client,
-        ).searchTransactionsPage('coffee shop', page: 1, limit: 50);
+        final result = await serviceWith(client)
+            .searchTransactionsPage('coffee shop', page: 1, limit: 50);
 
         expect(uri.path, '/api/v1/search/transactions');
         expect(uri.queryParameters['query'], 'coffee shop');
@@ -621,9 +618,8 @@ void main() {
           );
         });
 
-        final page = await serviceWith(
-          client,
-        ).getBillTransactionsPage('9', page: 1, limit: 20);
+        final page = await serviceWith(client)
+            .getBillTransactionsPage('9', page: 1, limit: 20);
 
         expect(uri.path, '/api/v1/bills/9/transactions');
         expect(uri.queryParameters['limit'], '20');
@@ -642,9 +638,8 @@ void main() {
           );
         });
 
-        final page = await serviceWith(
-          client,
-        ).getRecurrenceTransactionsPage('4', page: 1, limit: 20);
+        final page = await serviceWith(client)
+            .getRecurrenceTransactionsPage('4', page: 1, limit: 20);
 
         expect(uri.path, '/api/v1/recurrences/4/transactions');
         expect(page.transactions.single.id, 'r1');
@@ -661,9 +656,8 @@ void main() {
         throwsException,
       );
       await expectLater(
-        serviceWith(
-          client,
-        ).getRecurrenceTransactionsPage('4', page: 1, limit: 20),
+        serviceWith(client)
+            .getRecurrenceTransactionsPage('4', page: 1, limit: 20),
         throwsException,
       );
     });
@@ -675,9 +669,8 @@ void main() {
         return jsonHttpResponse({'data': <Object?>[]});
       });
 
-      await serviceWith(
-        client,
-      ).getAccounts(types: const ['expense', 'revenue']);
+      await serviceWith(client)
+          .getAccounts(types: const ['expense', 'revenue']);
 
       expect(requested, containsAll(['expense', 'revenue']));
     });

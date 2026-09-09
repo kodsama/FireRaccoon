@@ -9,6 +9,11 @@ maintainer:
 dependencies:
   - libgtk-3-0
   - libsecret-1-0
+  # The Linux build has always linked the web view, through
+  # flutter_web_auth_2, and now signs in to Cosmos with it. Never declared,
+  # so a host without it got a package that would not start.
+  - libwebkit2gtk-4.1-0
+  - libsoup-3.0-0
 # Advisory disk-usage metadata (KiB). Required as a non-null int by
 # flutter_app_packager's MakeDebConfig.fromJson.
 installed_size: 120000

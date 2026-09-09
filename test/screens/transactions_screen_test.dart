@@ -6,6 +6,7 @@ import 'package:fireraccoon/screens/transactions_screen.dart';
 import 'package:fireraccoon/widgets/selection_check_control.dart';
 import 'package:fireraccoon/widgets/small_loading_indicator.dart';
 import 'package:fireraccoon/widgets/transaction_month_header.dart';
+
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
 import '../helpers/test_data.dart';

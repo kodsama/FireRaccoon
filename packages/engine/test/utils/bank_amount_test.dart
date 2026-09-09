@@ -88,15 +88,13 @@ void main() {
     test('resolves the bare 1,234 under a supplied grammar', () {
       // Catches the corpus grammar being ignored once one is resolved.
       expect(
-        _value(
-          parseBankAmount('1,234', grammar: AmountGrammar.commaDecimal),
-        ).value,
+        _value(parseBankAmount('1,234', grammar: AmountGrammar.commaDecimal))
+            .value,
         1.234,
       );
       expect(
-        _value(
-          parseBankAmount('1,234', grammar: AmountGrammar.dotDecimal),
-        ).value,
+        _value(parseBankAmount('1,234', grammar: AmountGrammar.dotDecimal))
+            .value,
         1234.0,
       );
     });

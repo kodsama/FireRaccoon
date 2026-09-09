@@ -1895,5 +1895,16 @@
   "credentialsLockedBodyRaccoon": "Den här tvättbjörnen vet var allt finns, men locket rör sig inte. Lås upp din nyckelring så gör den ett nytt försök.",
   "insecureConnectionBadge": "Okrypterad",
   "insecureConnectionWarning": "Din token och alla svar går i klartext över http://. Vem som helst på nätverket mellan dig och servern kan läsa dem. Använd https:// om du inte förstår risken.",
-  "secureConnectionTooltip": "Krypterad anslutning (https)"
+  "secureConnectionTooltip": "Krypterad anslutning (https)",
+  "cosmosSsoTitle": "Cosmos SSO",
+  "cosmosSsoNotSignedIn": "Inte inloggad",
+  "cosmosSsoSignedIn": "Inloggad på {host}",
+  "cosmosSsoSignIn": "Logga in",
+  "cosmosSsoSignOut": "Logga ut",
+  "cosmosSsoUnsupported": "Inloggning på Cosmos finns inte på den här plattformen",
+  "cosmosSsoWebNote": "Din webbläsare bär redan Cosmos-sessionen",
+  "cosmosSsoExplainer": "Logga in när din Firefly III-server ligger bakom en Cosmos Cloud-rutt som kräver inloggning. Firefly-token används fortfarande för Firefly självt.",
+  "cosmosSsoCancelled": "Inloggningen stängdes innan den blev klar",
+  "connectionFailedCosmos": "Den servern ligger bakom en Cosmos Cloud-inloggning. Logga in på Cosmos och testa igen.",
+  "cosmosSsoSignInAction": "Logga in på Cosmos"
 }

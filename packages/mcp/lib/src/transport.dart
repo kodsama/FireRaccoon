@@ -13,8 +13,10 @@ import 'mcp_server.dart';
 /// Firefly connection and only write access varies. A standalone server instead
 /// builds a server per connection so Firefly traffic carries the caller's own
 /// agent key, leaving the backend as the authority on what that key may do.
-typedef McpServerForConnection =
-    McpServer Function(AgentIdentity identity, String agentKey);
+typedef McpServerForConnection = McpServer Function(
+  AgentIdentity identity,
+  String agentKey,
+);
 
 /// Serves [server] over stdio: newline-delimited JSON-RPC on stdin/stdout.
 ///
