@@ -3,29 +3,42 @@
 # Dart AOT must match the image arch — compile on TARGETPLATFORM (QEMU when
 # cross-building arm64 on an amd64 runner).
 
-FROM --platform=$BUILDPLATFORM ghcr.io/cirruslabs/flutter:stable AS web-build
-RUN chown -R ubuntu:ubuntu /sdks/flutter /home/ubuntu && \
-    mkdir -p /home/ubuntu/.pub-cache && \
-    chown -R ubuntu:ubuntu /home/ubuntu
-USER ubuntu
-ENV HOME=/home/ubuntu
+# Flutter is installed rather than taken from a prebuilt image. The published
+# images lag: the newest was still on Dart 3.12 when the SDK floor moved to
+# 3.13, so nothing resolved. Cloning one tag pins the toolchain exactly and
+# keeps this in step with FLUTTER_VERSION in the workflows.
+FROM --platform=$BUILDPLATFORM debian:bookworm-slim AS web-build
+ARG FLUTTER_VERSION=3.47.2
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ca-certificates curl git unzip xz-utils zip libglu1-mesa \
+    && rm -rf /var/lib/apt/lists/*
+RUN useradd -m -u 1000 builder
+USER builder
+ENV HOME=/home/builder
+# --depth 1 on the tag: the build needs the tree at that version, not its
+# history, and a full clone is most of the image.
+RUN git clone --depth 1 --branch "$FLUTTER_VERSION" \
+      https://github.com/flutter/flutter.git "$HOME/flutter"
+ENV PATH="/home/builder/flutter/bin:/home/builder/.pub-cache/bin:${PATH}"
+RUN git config --global --add safe.directory "$HOME/flutter" \
+    && flutter config --no-analytics --enable-web \
+    && flutter precache --web
 WORKDIR /app
 
-COPY --chown=ubuntu:ubuntu pubspec.yaml pubspec.lock ./
-COPY --chown=ubuntu:ubuntu packages/engine packages/engine
-COPY --chown=ubuntu:ubuntu packages/mcp packages/mcp
-COPY --chown=ubuntu:ubuntu packages/app_backend packages/app_backend
+COPY --chown=builder:builder pubspec.yaml pubspec.lock ./
+COPY --chown=builder:builder packages/engine packages/engine
+COPY --chown=builder:builder packages/mcp packages/mcp
+COPY --chown=builder:builder packages/app_backend packages/app_backend
 RUN flutter pub get --no-example
 
-COPY --chown=ubuntu:ubuntu . .
-USER ubuntu
-RUN git config --global --add safe.directory /sdks/flutter
+COPY --chown=builder:builder . .
 RUN flutter build web --release --no-pub --dart-define=FIRERACCOON_MODE=server
 
 RUN find build/web -type f \( -name '*.js' -o -name '*.mjs' -o -name '*.wasm' -o -name '*.json' -o -name '*.css' -o -name '*.html' \) -exec gzip -k -9 {} +
 
 # Native (or QEMU) compile for linux/amd64 or linux/arm64.
-FROM dart:stable AS server-build
+# Pinned for the same reason, and to the Dart the pinned Flutter carries.
+FROM dart:3.13 AS server-build
 WORKDIR /app
 # app_backend depends on the engine by path, so ../engine has to exist before
 # pub can resolve anything at all. Manifests first, both packages, so a change
