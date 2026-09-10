@@ -783,6 +783,39 @@ void main() {
       expect(group.containsKey('splits'), isFalse);
     });
 
+    test('a group reports its own title where a description goes', () async {
+      // Firefly returns the legs in no stable order, so the top level carried
+      // whichever came first and changed between reads. It looked briefly as
+      // though a write had corrupted the row.
+      final result = await _tool(
+        'get_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+        ),
+      ).run({'transaction_id': '77'});
+
+      final tx = result['transaction']! as Map<String, Object?>;
+      expect(tx['description'], 'Rent and fees');
+      expect(tx['group_title'], 'Rent and fees');
+      // The legs keep their own.
+      final legs = (tx['splits'] as List).cast<Map<String, Object?>>();
+      expect(legs.map((l) => l['description']), ['Rent', 'Service fee']);
+    });
+
+    test('a Firefly-paged response says how many rows it carried', () async {
+      // Firefly's total counts journals while the rows are groups, so fewer
+      // rows than the total reads like a truncated page and is not one.
+      final result = await _tool(
+        'get_bill_transactions',
+        client: fireflyMockClient(),
+      ).run({'bill_id': '4'});
+
+      final pagination = result['pagination']! as Map<String, Object?>;
+      expect(pagination['count'], (result['transactions'] as List).length);
+      expect(pagination['total_counts_journals'], isTrue);
+      expect(pagination['total'], isNotNull);
+    });
+
     test('update_transaction sets a category on every leg of a group', () async {
       // Thirteen rows once stayed behind a run that reported all 64 moved.
       // The stated category resolved into the returned object's top-level

@@ -319,7 +319,13 @@ Map<String, Object?> _transactionJson(
   'type': transaction.type,
   'date': _dateOnly(transaction.date),
   'amount': transaction.totalAmount,
-  'description': transaction.description,
+  // A group's title, not whichever leg Firefly happened to return first.
+  // The order is not stable between reads, so this changed on its own and
+  // looked briefly as though a write had corrupted the row. The legs carry
+  // their own descriptions in `splits`.
+  'description': transaction.isSplitGroup
+      ? (transaction.groupTitle ?? transaction.description)
+      : transaction.description,
   'group_title': transaction.groupTitle,
   'source_id': transaction.sourceId,
   'source_name': transaction.sourceName,
@@ -1178,7 +1184,13 @@ Map<String, Object?> _pageJson(TransactionPageResult result) => {
   'pagination': {
     'current_page': result.currentPage,
     'total_pages': result.totalPages,
+    // Firefly counts journals here while the rows are groups, so a split
+    // group of three legs counts three and returns one. `count` is the rows
+    // in this response, which is what a caller comparing the two wants: the
+    // difference reads like a truncated page and is not one.
+    'count': result.transactions.length,
     'total': result.total,
+    'total_counts_journals': true,
   },
   'transactions': result.transactions.map(_transactionJson).toList(),
 };

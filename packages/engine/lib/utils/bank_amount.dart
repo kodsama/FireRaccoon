@@ -143,6 +143,8 @@ class AmountGrammarInference {
     required this.dotVotes,
     required this.commaVotes,
     required this.sampled,
+    this.ambiguous = 0,
+    this.agreed = 0,
   });
 
   /// Null when nothing in the corpus distinguishes the two grammars.
@@ -150,6 +152,15 @@ class AmountGrammarInference {
   final int dotVotes;
   final int commaVotes;
   final int sampled;
+
+  /// Amounts both grammars read, to different numbers. `1.000` is a thousand
+  /// under one and one under the other, and nothing but the caller can settle
+  /// it, so one of these is enough to withhold a verdict.
+  final int ambiguous;
+
+  /// Amounts both grammars read to the same number, which say nothing about
+  /// which separator is the decimal because either answer is identical.
+  final int agreed;
 
   int get decidingVotes => switch (grammar) {
     AmountGrammar.dotDecimal => dotVotes,
@@ -161,6 +172,8 @@ class AmountGrammarInference {
 AmountGrammarInference inferAmountGrammarDetailed(Iterable<String> corpus) {
   var dotVotes = 0;
   var commaVotes = 0;
+  var ambiguous = 0;
+  var agreed = 0;
   var sampled = 0;
   for (final raw in corpus) {
     sampled++;
@@ -170,6 +183,12 @@ AmountGrammarInference inferAmountGrammarDetailed(Iterable<String> corpus) {
       dotVotes++;
     } else if (asComma is BankAmountValue && asDot is! BankAmountValue) {
       commaVotes++;
+    } else if (asDot is BankAmountValue && asComma is BankAmountValue) {
+      if (asDot.value == asComma.value) {
+        agreed++;
+      } else {
+        ambiguous++;
+      }
     }
   }
   final AmountGrammar? grammar;
@@ -177,6 +196,16 @@ AmountGrammarInference inferAmountGrammarDetailed(Iterable<String> corpus) {
     grammar = AmountGrammar.dotDecimal;
   } else if (commaVotes > 0 && dotVotes == 0) {
     grammar = AmountGrammar.commaDecimal;
+  } else if (dotVotes == 0 && commaVotes == 0 && ambiguous == 0 && agreed > 0) {
+    // Every amount read the same either way, which is what a column of
+    // separator-free whole numbers looks like, and every Handelsbanken export
+    // is one. The grammar cannot change a single value here, so refusing to
+    // pick one only refuses an import that has nothing wrong with it. Firefly
+    // III's own wire shape is the one to take.
+    //
+    // Gated on something having been readable: a corpus nothing parses is
+    // still a refusal, because there the separator is not what is wrong.
+    grammar = AmountGrammar.dotDecimal;
   } else {
     grammar = null;
   }
@@ -185,6 +214,8 @@ AmountGrammarInference inferAmountGrammarDetailed(Iterable<String> corpus) {
     dotVotes: dotVotes,
     commaVotes: commaVotes,
     sampled: sampled,
+    ambiguous: ambiguous,
+    agreed: agreed,
   );
 }
 

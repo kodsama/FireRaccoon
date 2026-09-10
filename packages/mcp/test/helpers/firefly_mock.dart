@@ -371,6 +371,39 @@ Map<String, Object?> storedAfterWrite({
   };
 }
 
+/// A two-leg group, for a page whose journal total exceeds its row count.
+Map<String, Object?> _splitGroupMockItem() => {
+  'id': '77',
+  'type': 'transactions',
+  'attributes': {
+    'group_title': 'Rent and fees',
+    'transactions': [
+      {
+        'transaction_journal_id': '811',
+        'type': 'withdrawal',
+        'date': '2026-02-01',
+        'amount': '1200.00',
+        'description': 'Rent',
+        'source_name': 'Checking',
+        'destination_name': 'Landlord',
+        'currency_code': 'EUR',
+        'currency_symbol': '\u20ac',
+      },
+      {
+        'transaction_journal_id': '812',
+        'type': 'withdrawal',
+        'date': '2026-02-01',
+        'amount': '25.00',
+        'description': 'Service fee',
+        'source_name': 'Checking',
+        'destination_name': 'Landlord',
+        'currency_code': 'EUR',
+        'currency_symbol': '\u20ac',
+      },
+    ],
+  },
+};
+
 MockClient fireflyMockClient({
   bool aboutOk = true,
   bool usersReadable = true,
@@ -540,6 +573,13 @@ MockClient fireflyMockClient({
           },
         },
       }, status: 201);
+    }
+    if (path == '/api/v1/bills/4/transactions') {
+      // A split group of two legs: Firefly's total counts journals, so it says
+      // two where one row comes back, which is the thing worth reporting.
+      return jsonHttpResponse(
+        transactionsPageBody(items: [_splitGroupMockItem()], total: 2),
+      );
     }
     if (path == '/api/v1/budgets' && method != 'POST') {
       return jsonHttpResponse(budgetsBody());
