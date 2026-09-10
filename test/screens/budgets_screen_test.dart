@@ -226,7 +226,8 @@ class UpdatingFakeFireflyService extends FakeFireflyService {
   final updatedBudgets = <({String id, BudgetInput input})>[];
 
   @override
-  Future<void> updateBudget(String budgetId, BudgetInput input) async {
+  Future<Budget> updateBudget(String budgetId, BudgetInput input) async {
     updatedBudgets.add((id: budgetId, input: input));
+    return super.updateBudget(budgetId, input);
   }
 }

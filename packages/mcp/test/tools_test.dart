@@ -1104,7 +1104,11 @@ void main() {
             'active': true,
           });
       expect(result['ok'], isTrue);
-      expect(result['amount'], 500);
+      // The budget as Firefly stored it, not the request read back to itself.
+      final stored = result['budget']! as Map<String, Object?>;
+      expect(stored['auto_budget_amount'], 500);
+      expect(stored['auto_budget_type'], 'rollover');
+      expect(stored['auto_budget_period'], 'monthly');
     });
   });
 

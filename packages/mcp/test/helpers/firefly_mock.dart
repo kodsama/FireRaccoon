@@ -316,6 +316,60 @@ Map<String, Object?> transactionEnvelope(Map<String, Object?> item) => {
   'data': item,
 };
 
+/// The transaction a server would answer a write with: what it was sent, over
+/// what was already there.
+///
+/// A mock that answers with defaults cannot tell a stored change from a field
+/// the server accepted and dropped, which is the whole point of reading a
+/// write back.
+Map<String, Object?> storedAfterWrite({
+  required String id,
+  required Map<String, Object?> sent,
+  Map<String, Object?>? previous,
+}) {
+  final base = previous ?? transactionItem(id: id);
+  final attrs = base['attributes']! as Map<String, Object?>;
+  final legs = attrs['transactions']! as List;
+  final leg = {...legs.first as Map<String, Object?>};
+
+  for (final key in const [
+    'type',
+    'date',
+    'amount',
+    'description',
+    'source_id',
+    'source_name',
+    'destination_id',
+    'destination_name',
+    'category_id',
+    'category_name',
+    'budget_id',
+    'bill_id',
+    'notes',
+    'tags',
+    'reconciled',
+    'currency_code',
+    'foreign_amount',
+    'foreign_currency_code',
+  ]) {
+    if (sent.containsKey(key)) leg[key] = sent[key];
+  }
+  // Firefly resolves a name it was given and reports the id it landed on, so a
+  // name sent without an id cannot come back beside the id it replaced.
+  if (sent.containsKey('category_name') && !sent.containsKey('category_id')) {
+    leg['category_id'] = '99';
+  }
+
+  return {
+    ...base,
+    'id': id,
+    'attributes': {
+      ...attrs,
+      'transactions': [leg],
+    },
+  };
+}
+
 MockClient fireflyMockClient({
   bool aboutOk = true,
   bool usersReadable = true,
@@ -678,11 +732,14 @@ MockClient fireflyMockClient({
       if (method == 'PUT') {
         final decoded = jsonDecode(request.body) as Map<String, dynamic>;
         final txList = decoded['transactions'] as List?;
-        final reconciled =
-            txList != null &&
-            txList.isNotEmpty &&
-            txList.first['reconciled'] == true;
-        final updated = transactionItem(id: id, reconciled: reconciled);
+        final sent = txList == null || txList.isEmpty
+            ? const <String, Object?>{}
+            : (txList.first as Map<String, dynamic>);
+        final updated = storedAfterWrite(
+          id: id,
+          sent: sent,
+          previous: transactions[id],
+        );
         transactions[id] = updated;
         return jsonHttpResponse(transactionEnvelope(updated));
       }
@@ -700,9 +757,27 @@ MockClient fireflyMockClient({
       );
     }
     if (path.startsWith('/api/v1/budgets/') && method == 'PUT') {
-      final data = budgetsBody()['data']! as List<Object?>;
+      final sent = jsonDecode(request.body) as Map<String, dynamic>;
+      final previous =
+          (budgetsBody()['data']! as List<Object?>).first
+              as Map<String, Object?>;
+      final attrs = {
+        ...previous['attributes']! as Map<String, Object?>,
+        if (sent['name'] != null) 'name': sent['name'],
+        if (sent['active'] != null) 'active': sent['active'],
+        if (sent['notes'] != null) 'notes': sent['notes'],
+        if (sent['auto_budget_amount'] != null)
+          'auto_budget_amount': sent['auto_budget_amount'],
+        if (sent['auto_budget_type'] != null)
+          'auto_budget_type': sent['auto_budget_type'],
+        if (sent['auto_budget_period'] != null)
+          'auto_budget_period': sent['auto_budget_period'],
+        // Only ever moved by the id: the code alone is what Firefly drops.
+        if (sent['auto_budget_currency_id'] != null)
+          'auto_budget_currency_code': sent['auto_budget_currency_code'],
+      };
       return jsonHttpResponse(
-        transactionEnvelope(data.first as Map<String, Object?>),
+        transactionEnvelope({...previous, 'attributes': attrs}),
       );
     }
     if (path.startsWith('/api/v1/budgets/') && method == 'DELETE') {

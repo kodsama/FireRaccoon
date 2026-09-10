@@ -297,17 +297,24 @@ class Transaction {
     return payload;
   }
 
-  /// ISO-8601 with an explicit UTC offset: local DateTimes serialize without
-  /// one, which lets the server reinterpret them in its own timezone.
-  static String formatApiDateTime(DateTime date) {
-    if (date.isUtc) return date.toIso8601String();
-    final offset = date.timeZoneOffset;
-    final sign = offset.isNegative ? '-' : '+';
-    final abs = offset.abs();
-    final hours = abs.inHours.toString().padLeft(2, '0');
-    final minutes = (abs.inMinutes % 60).toString().padLeft(2, '0');
-    return '${date.toIso8601String()}$sign$hours:$minutes';
-  }
+  /// ISO-8601 with no offset, which is how Firefly reads a wall-clock date.
+  ///
+  /// Firefly stores an instant and renders the date in the server's own zone.
+  /// An explicit offset used to be appended here so the server could not
+  /// reinterpret the timestamp, and that is precisely what moved the date:
+  /// `2026-09-02T00:00:00+02:00` is 22:00 on the 1st in UTC and comes back as
+  /// the 1st. Every write from a client east of the server landed a day early,
+  /// and an edit that never mentioned the date moved it too, because the day
+  /// it had just read was re-sent the same way.
+  ///
+  /// Sending no offset is the other half of what [parseFireflyDate] already
+  /// does on the way in, where the offset is dropped and the wall clock kept.
+  /// Read and write agree now, so a date survives any number of round trips
+  /// whatever zone either end is in, and a time of day survives with it. A
+  /// stamped midday would have covered the common case only, since Firefly
+  /// writes 00:00 and the shift needs an hour smaller than the offset.
+  static String formatApiDateTime(DateTime date) =>
+      (date.isUtc ? date.toLocal() : date).toIso8601String();
 
   Map<String, dynamic> toSplitJson({bool isUpdate = false}) {
     final omitFinancials = isUpdate && reconciled;

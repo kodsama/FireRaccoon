@@ -994,7 +994,7 @@ class FireflyApiService implements FireflyService {
   }
 
   @override
-  Future<void> updateBudget(String budgetId, BudgetInput input) async {
+  Future<Budget> updateBudget(String budgetId, BudgetInput input) async {
     try {
       final response = await _send(
         'PUT',
@@ -1005,6 +1005,10 @@ class FireflyApiService implements FireflyService {
       if (response.statusCode != 200) {
         throw Exception('Failed to update budget: ${_status(response)}');
       }
+      // Firefly answers with the stored budget. Handing it back is what lets a
+      // caller tell a change from a field the server accepted and dropped.
+      final data = jsonDecode(response.body);
+      return Budget.fromJson(data['data'] as Map<String, dynamic>);
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
     }

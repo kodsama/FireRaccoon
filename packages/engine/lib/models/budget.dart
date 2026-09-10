@@ -105,6 +105,13 @@ class BudgetInput {
   final AutoBudgetPeriod? autoBudgetPeriod;
   final String currencyCode;
 
+  /// Firefly's id for [currencyCode], when the caller could resolve one.
+  ///
+  /// Firefly 6.6.6 accepts `auto_budget_currency_code` and stores nothing from
+  /// it. The id is the field it actually reads, so a redenomination only lands
+  /// when this is known.
+  final String? currencyId;
+
   const BudgetInput({
     required this.name,
     this.active = true,
@@ -113,6 +120,7 @@ class BudgetInput {
     this.autoBudgetAmount,
     this.autoBudgetPeriod,
     required this.currencyCode,
+    this.currencyId,
   });
 
   Map<String, dynamic> toJson() {
@@ -136,6 +144,9 @@ class BudgetInput {
       body['auto_budget_period'] =
           (autoBudgetPeriod ?? AutoBudgetPeriod.monthly).apiValue;
       body['auto_budget_currency_code'] = currencyCode;
+      if (currencyId != null && currencyId!.isNotEmpty) {
+        body['auto_budget_currency_id'] = currencyId;
+      }
     }
 
     return body;

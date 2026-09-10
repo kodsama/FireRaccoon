@@ -83,7 +83,7 @@ abstract class FireflyService {
   Future<Transaction> getTransaction(String transactionId);
   Future<void> deleteBudget(String budgetId);
   Future<Budget> createBudget(BudgetInput input);
-  Future<void> updateBudget(String budgetId, BudgetInput input);
+  Future<Budget> updateBudget(String budgetId, BudgetInput input);
   Future<List<BudgetLimit>> getBudgetLimits(
     String budgetId, {
     DateTime? start,

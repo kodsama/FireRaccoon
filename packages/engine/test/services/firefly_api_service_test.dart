@@ -924,7 +924,7 @@ void main() {
       );
     });
 
-    test('updateBudget sends PUT with budget input', () async {
+    test('updateBudget sends PUT and hands back what Firefly stored', () async {
       final client = MockClient((request) async {
         expect(request.method, 'PUT');
         expect(request.url.path, '/api/v1/budgets/3');
@@ -933,7 +933,29 @@ void main() {
         expect(body['auto_budget_amount'], '400.00');
         expect(body['auto_budget_type'], 'reset');
         expect(body['auto_budget_period'], 'monthly');
-        return http.Response('', 200);
+        expect(body['auto_budget_currency_code'], 'SEK');
+        // The code alone is accepted and dropped; the id is what Firefly reads.
+        expect(body['auto_budget_currency_id'], '17');
+        // Answer with a budget that kept its old currency, which is what the
+        // server does when it will not take the change.
+        return http.Response(
+          jsonEncode({
+            'data': {
+              'id': '3',
+              'attributes': {
+                'name': 'Food',
+                'active': true,
+                'auto_budget_amount': '400.00',
+                'auto_budget_type': 'reset',
+                'auto_budget_period': 'monthly',
+                'auto_budget_currency_code': 'EUR',
+                'auto_budget_currency_symbol': '\u20ac',
+              },
+            },
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
       });
       final service = FireflyApiService(
         serverUrl: baseUrl,
@@ -941,20 +963,60 @@ void main() {
         client: client,
       );
 
-      await expectLater(
-        service.updateBudget(
+      final stored = await service.updateBudget(
+        '3',
+        const BudgetInput(
+          name: 'Food',
+          autoBudgetType: AutoBudgetType.reset,
+          autoBudgetAmount: 400,
+          autoBudgetPeriod: AutoBudgetPeriod.monthly,
+          currencyCode: 'SEK',
+          currencyId: '17',
+        ),
+      );
+
+      expect(stored.name, 'Food');
+      expect(
+        stored.currencyCode,
+        'EUR',
+        reason: 'the caller has to be able to see the currency did not change',
+      );
+    });
+
+    test(
+      'updateBudget leaves the currency id out when it is unknown',
+      () async {
+        final client = MockClient((request) async {
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          expect(body.containsKey('auto_budget_currency_id'), isFalse);
+          return http.Response(
+            jsonEncode({
+              'data': {
+                'id': '3',
+                'attributes': {'name': 'Food', 'active': true},
+              },
+            }),
+            200,
+            headers: {'content-type': 'application/json'},
+          );
+        });
+        final service = FireflyApiService(
+          serverUrl: baseUrl,
+          apiToken: token,
+          client: client,
+        );
+
+        await service.updateBudget(
           '3',
           const BudgetInput(
             name: 'Food',
             autoBudgetType: AutoBudgetType.reset,
             autoBudgetAmount: 400,
-            autoBudgetPeriod: AutoBudgetPeriod.monthly,
             currencyCode: 'EUR',
           ),
-        ),
-        completes,
-      );
-    });
+        );
+      },
+    );
 
     test('updateBudget throws on failure', () async {
       final client = MockClient((_) async => http.Response('fail', 500));

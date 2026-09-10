@@ -482,6 +482,65 @@ bool _isEmptyValue(Object? value) {
   return false;
 }
 
+/// Whether [args] states [nameKey] as the replacement for [idKey].
+///
+/// Firefly resolves an id in preference to a name, so an id the caller never
+/// mentioned has to be dropped rather than sent alongside the new name. An
+/// empty name is a clear, which the cleared-fields path handles instead.
+bool _replacesId(Map<String, Object?> args, String nameKey, String idKey) =>
+    args.containsKey(nameKey) &&
+    !_isEmptyValue(args[nameKey]) &&
+    !args.containsKey(idKey);
+
+/// Fields the caller stated that the stored transaction does not carry.
+///
+/// Firefly answers 200 to a write it declined in part. A reconciled journal
+/// keeps its amounts, a category named beside an id keeps the id, and some
+/// fields on a split group only ever land on its legs. An echo of the request
+/// cannot tell any of that from a change, so what came back is what gets
+/// compared: thirteen rows once stayed behind a run that reported all of them
+/// moved and none failed.
+List<String> _unappliedTransactionFields(
+  Map<String, Object?> args,
+  Transaction saved,
+) {
+  // A restated group is compared leg by leg or not at all: the top-level
+  // fields mirror the first leg, so they say nothing about the rest.
+  if (args['splits'] is List) return const [];
+
+  bool stated(String key) => args.containsKey(key) && !_isEmptyValue(args[key]);
+  String text(String key) => '${args[key]}'.trim();
+
+  final missed = <String>[
+    // Not on a group: a group's description is its title, and Firefly keeps
+    // the legs' own, so a mismatch there says nothing about what was stored.
+    if (!saved.isSplitGroup &&
+        stated('description') &&
+        saved.description.trim() != text('description'))
+      'description',
+    if (stated('category_name') &&
+        saved.categoryName.toLowerCase() != text('category_name').toLowerCase())
+      'category_name',
+    if (stated('category_id') && saved.categoryId != text('category_id'))
+      'category_id',
+    if (stated('budget_id') && saved.budgetId != text('budget_id')) 'budget_id',
+    if (stated('notes') && (saved.notes ?? '').trim() != text('notes')) 'notes',
+    if (args['amount'] is num &&
+        ((args['amount'] as num).toDouble() - saved.amount).abs() > 0.005)
+      'amount',
+    if (args['reconciled'] is bool && saved.reconciled != args['reconciled'])
+      'reconciled',
+  ];
+
+  if (stated('date')) {
+    final asked = _optionalDate(args['date'], 'date');
+    if (asked != null && _dateOnly(asked) != _dateOnly(saved.date)) {
+      missed.add('date');
+    }
+  }
+  return missed;
+}
+
 Transaction _splitFromArgs(
   Map<String, Object?> leg,
   Map<String, Object?> args, {
@@ -492,6 +551,14 @@ Transaction _splitFromArgs(
   required int index,
 }) {
   String? pick(String key) => (leg[key] as String?) ?? (args[key] as String?);
+
+  // A leg naming its own category must not inherit the group's id, which
+  // Firefly would resolve in preference to the name.
+  String? pickCategoryId() =>
+      (leg['category_id'] as String?) ??
+      (_replacesId(leg, 'category_name', 'category_id')
+          ? null
+          : args['category_id'] as String?);
 
   final amount = (leg['amount'] as num?)?.toDouble();
   if (amount == null || amount <= 0) {
@@ -515,7 +582,7 @@ Transaction _splitFromArgs(
     currencyCode: (leg['currency_code'] as String?) ?? currencyCode,
     sourceId: pick('source_id'),
     destinationId: pick('destination_id'),
-    categoryId: pick('category_id'),
+    categoryId: pickCategoryId(),
     budgetId: pick('budget_id'),
     billId: pick('bill_id'),
     notes: pick('notes'),
@@ -730,10 +797,15 @@ Transaction _transactionFromArgs(
         leadingLeg?.destinationId ??
         (args['destination_id'] as String?) ??
         base?.destinationId,
+    // A name the caller stated wins over the id it replaces. Sending the new
+    // name beside the old id left Firefly resolving the id and discarding the
+    // name, so recategorising by name reported success and changed nothing.
     categoryId:
         leadingLeg?.categoryId ??
         (args['category_id'] as String?) ??
-        base?.categoryId,
+        (_replacesId(args, 'category_name', 'category_id')
+            ? null
+            : base?.categoryId),
     budgetId:
         leadingLeg?.budgetId ??
         (args['budget_id'] as String?) ??
@@ -2476,8 +2548,16 @@ List<McpTool> buildTools({
           return _badInput('${e.message}');
         }
         final saved = await api.updateTransaction(updated);
+        final ignored = _unappliedTransactionFields(args, saved);
         return {
-          'ok': true,
+          'ok': ignored.isEmpty,
+          if (ignored.isNotEmpty) 'code': 'not_applied',
+          if (ignored.isNotEmpty)
+            'error':
+                'Firefly III accepted the update and did not store '
+                '${ignored.join(', ')}. This is what a reconciled journal or a '
+                'split group does with fields it will not take. The '
+                'transaction as it now stands is in `transaction`.',
           'transaction_id': saved.id,
           'transaction': _transactionJson(saved, withSplits: true),
         };
@@ -3425,6 +3505,42 @@ List<McpTool> buildTools({
         final autoBudgetType = args.containsKey('auto_budget_type')
             ? AutoBudgetType.parse(args['auto_budget_type'] as String?)
             : existing.autoBudgetType;
+        // Firefly has no way to take an auto-budget off a budget that has
+        // one: `none` is refused with an amount and refused without one, so
+        // the keys are omitted and the old schedule survives untouched. Saying
+        // that beats reporting the success of a write that changed nothing.
+        if (amount <= 0 &&
+            autoBudgetType == AutoBudgetType.none &&
+            existing.autoBudgetType != AutoBudgetType.none) {
+          return {
+            'ok': false,
+            'code': 'not_supported',
+            'error':
+                'Firefly III cannot clear an auto-budget through its API, so '
+                'the existing ${existing.autoBudgetType.apiValue} '
+                '${existing.autoBudgetAmount.toStringAsFixed(2)} '
+                '${existing.currencyCode} would have stayed in place. Remove '
+                'it in the Firefly III interface instead.',
+          };
+        }
+
+        // Firefly reads the currency id and ignores the code, so a code has to
+        // be resolved before it can move a budget off its current currency.
+        final requestedCode = (args['currency_code'] as String?)?.toUpperCase();
+        String? currencyId;
+        if (requestedCode != null) {
+          currencyId = (await api.getCurrencies())
+              .where((currency) => currency.code.toUpperCase() == requestedCode)
+              .firstOrNull
+              ?.id;
+          if (currencyId == null) {
+            return _badInput('No enabled currency with code $requestedCode');
+          }
+        }
+
+        final period =
+            AutoBudgetPeriod.parse(args['auto_budget_period'] as String?) ??
+            existing.autoBudgetPeriod;
         final input = BudgetInput(
           name: name,
           active: args['active'] as bool? ?? existing.active,
@@ -3435,20 +3551,39 @@ List<McpTool> buildTools({
                     : autoBudgetType)
               : AutoBudgetType.none,
           autoBudgetAmount: amount,
-          autoBudgetPeriod:
-              AutoBudgetPeriod.parse(args['auto_budget_period'] as String?) ??
-              existing.autoBudgetPeriod,
+          autoBudgetPeriod: period,
           // The budget's own currency, never a hardcoded EUR: an instance whose
           // primary is not EUR would have had its budget redenominated.
-          currencyCode:
-              args['currency_code'] as String? ?? existing.currencyCode,
+          currencyCode: requestedCode ?? existing.currencyCode,
+          currencyId: currencyId,
         );
-        await api.updateBudget(budgetId, input);
+        final stored = await api.updateBudget(budgetId, input);
+
+        // The stored budget against what was asked for. Firefly answers 200 to
+        // fields it never wrote, and an echo of the request cannot tell that
+        // apart from a change, which is how a redenomination that did nothing
+        // read as a success.
+        final ignored = <String>[
+          if (requestedCode != null && stored.currencyCode != requestedCode)
+            'currency_code',
+          if (args.containsKey('amount') && stored.autoBudgetAmount != amount)
+            'amount',
+          if (args.containsKey('auto_budget_period') &&
+              stored.autoBudgetPeriod != period)
+            'auto_budget_period',
+          if (stored.name != name) 'name',
+        ];
+
         return {
-          'ok': true,
+          'ok': ignored.isEmpty,
+          if (ignored.isNotEmpty) 'code': 'not_applied',
+          if (ignored.isNotEmpty)
+            'error':
+                'Firefly III accepted the update and did not store '
+                '${ignored.join(', ')}. The budget as it now stands is in '
+                '`budget`.',
           'budget_id': budgetId,
-          'name': name,
-          'amount': amount,
+          'budget': _budgetJson(stored),
         };
       },
     ),
