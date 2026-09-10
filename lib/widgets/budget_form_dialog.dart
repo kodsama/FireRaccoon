@@ -9,6 +9,7 @@ import '../providers/budget_period_providers.dart';
 import '../providers/data_providers.dart';
 import '../providers/undo_history_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
 import 'autocomplete_text_field.dart';
@@ -265,14 +266,12 @@ class _BudgetFormDialogState extends ConsumerState<_BudgetFormDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.isEditing
-                  ? context.l10n.failedToUpdate(e.toString())
-                  : context.l10n.failedToCreateBudget(e.toString()),
-            ),
-          ),
+        reportError(
+          context,
+          widget.isEditing
+              ? context.l10n.failedToUpdate(readableError(e))
+              : context.l10n.failedToCreateBudget(readableError(e)),
+          error: e,
         );
       }
     }

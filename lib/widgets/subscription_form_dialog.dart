@@ -8,6 +8,7 @@ import '../providers/data_providers.dart';
 import '../providers/suggestion_providers.dart';
 import '../providers/undo_history_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
 import 'autocomplete_text_field.dart';
@@ -191,14 +192,12 @@ class _SubscriptionFormDialogState
       if (mounted) {
         setState(() => _saving = false);
         final l10n = context.l10n;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              widget.isEditing
-                  ? l10n.failedToUpdateSubscription(e.toString())
-                  : l10n.failedToCreateSubscription(e.toString()),
-            ),
-          ),
+        reportError(
+          context,
+          widget.isEditing
+              ? l10n.failedToUpdateSubscription(readableError(e))
+              : l10n.failedToCreateSubscription(readableError(e)),
+          error: e,
         );
       }
     }

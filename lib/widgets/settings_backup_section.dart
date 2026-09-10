@@ -1,3 +1,5 @@
+import '../utils/app_feedback.dart';
+
 import 'dart:convert';
 
 import 'package:file_selector/file_selector.dart';
@@ -14,7 +16,6 @@ import '../models/settings_bundle.dart';
 import '../providers/data_providers.dart';
 import '../providers/people_providers.dart';
 import '../providers/settings_export_import_provider.dart';
-import '../utils/app_feedback.dart';
 import '../utils/json_file_store.dart';
 import '../utils/settings_secrets_crypto.dart';
 import 'backup_passphrase_dialog.dart';
@@ -73,8 +74,7 @@ class SettingsBackupSection extends ConsumerWidget {
     await jsonStoreWrite(path, contents);
 
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(l10n.settingsExportedTo(path))));
+    showInfoToast(context, l10n.settingsExportedTo(path));
 
     await SharePlus.instance.share(
       ShareParams(
@@ -174,7 +174,7 @@ class SettingsBackupSection extends ConsumerWidget {
     } on Object catch (error, stackTrace) {
       _log.severe('Settings import failed', error, stackTrace);
       if (!context.mounted) return;
-      showErrorToast(context, l10n.settingsImportFailed(error.toString()));
+      showErrorToast(context, l10n.settingsImportFailed(readableError(error)));
     }
   }
 

@@ -1,3 +1,5 @@
+import '../utils/app_feedback.dart';
+
 import 'dart:math' as math;
 import 'dart:typed_data';
 import 'dart:ui' as ui;
@@ -137,8 +139,7 @@ class _AvatarCropDialogState extends State<_AvatarCropDialog> {
     } on Object catch (e) {
       if (!mounted) return;
       setState(() => _saving = false);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Crop failed: $e')));
+      reportError(context, 'Crop failed: $e');
     }
   }
 

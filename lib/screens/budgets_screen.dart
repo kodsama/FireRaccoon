@@ -13,6 +13,7 @@ import '../providers/theme_provider.dart';
 import '../router/budgets_route.dart';
 import '../router/route_navigation.dart';
 import '../router/route_query.dart';
+import '../utils/app_feedback.dart';
 import '../utils/search_filter.dart';
 import '../utils/create_flows.dart';
 import '../widgets/budget_form_dialog.dart';
@@ -473,18 +474,17 @@ class _BudgetCardState extends ConsumerState<_BudgetCard> {
         ref.invalidate(budgetsProvider);
         ref.invalidate(budgetPeriodMetricsProvider);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.budgetDeleted(widget.budget.name)),
-            ),
+          showInfoToast(
+            context,
+            context.l10n.budgetDeleted(widget.budget.name),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.failedToDeleteBudget(e.toString())),
-            ),
+          reportError(
+            context,
+            context.l10n.failedToDeleteBudget(readableError(e)),
+            error: e,
           );
         }
       }
@@ -795,18 +795,17 @@ class _BudgetCompactRowState extends ConsumerState<_BudgetCompactRow> {
         ref.invalidate(budgetsProvider);
         ref.invalidate(budgetPeriodMetricsProvider);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.budgetDeleted(widget.budget.name)),
-            ),
+          showInfoToast(
+            context,
+            context.l10n.budgetDeleted(widget.budget.name),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.failedToDeleteBudget(e.toString())),
-            ),
+          reportError(
+            context,
+            context.l10n.failedToDeleteBudget(readableError(e)),
+            error: e,
           );
         }
       }

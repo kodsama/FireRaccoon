@@ -15,6 +15,7 @@ import '../providers/people_providers.dart';
 import '../providers/data_providers.dart';
 import '../providers/suggestion_providers.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
 import 'autocomplete_text_field.dart';
@@ -574,7 +575,6 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
     if (_saving) return;
 
     setState(() => _saving = true);
-    final messenger = ScaffoldMessenger.of(context);
     final accounts = await ref.read(accountsProvider.future);
     if (!mounted) return;
 
@@ -588,45 +588,33 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
 
       if (description.isEmpty) {
         setState(() => _saving = false);
-        messenger.showSnackBar(
-          SnackBar(content: Text(context.l10n.missingDescription)),
-        );
+        showErrorToast(context, context.l10n.missingDescription);
         return;
       }
       if (amountRaw.isEmpty) {
         setState(() => _saving = false);
-        messenger.showSnackBar(
-          SnackBar(content: Text(context.l10n.missingAmount)),
-        );
+        showErrorToast(context, context.l10n.missingAmount);
         return;
       }
       if (amount == null || amount <= 0) {
         setState(() => _saving = false);
-        messenger.showSnackBar(
-          SnackBar(content: Text(context.l10n.invalidAmount)),
-        );
+        showErrorToast(context, context.l10n.invalidAmount);
         return;
       }
       if (split.sourceName == null || split.destinationName == null) {
         setState(() => _saving = false);
-        messenger.showSnackBar(
-          SnackBar(content: Text(context.l10n.missingAccounts)),
-        );
+        showErrorToast(context, context.l10n.missingAccounts);
         return;
       }
       if (requiresForeign) {
         if (foreignAmountRaw.isEmpty) {
           setState(() => _saving = false);
-          messenger.showSnackBar(
-            SnackBar(content: Text(context.l10n.missingForeignAmount)),
-          );
+          showErrorToast(context, context.l10n.missingForeignAmount);
           return;
         }
         if (foreignAmount == null || foreignAmount <= 0) {
           setState(() => _saving = false);
-          messenger.showSnackBar(
-            SnackBar(content: Text(context.l10n.invalidForeignAmount)),
-          );
+          showErrorToast(context, context.l10n.invalidForeignAmount);
           return;
         }
       }
@@ -637,31 +625,24 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       final target = double.tryParse(targetRaw);
       if (targetRaw.isEmpty) {
         setState(() => _saving = false);
-        messenger.showSnackBar(
-          SnackBar(content: Text(context.l10n.missingAmount)),
-        );
+        showErrorToast(context, context.l10n.missingAmount);
         return;
       }
       if (target == null || target <= 0) {
         setState(() => _saving = false);
-        messenger.showSnackBar(
-          SnackBar(content: Text(context.l10n.invalidAmount)),
-        );
+        showErrorToast(context, context.l10n.invalidAmount);
         return;
       }
       _targetTotal = target;
       final sum = _currentSplitSum();
       if ((sum - target).abs() > 0.005) {
         setState(() => _saving = false);
-        messenger.showSnackBar(
-          SnackBar(
-            content: Text(
-              context.l10n.splitsTotalMismatch(
-                context.format.formatMoney(
-                  target,
-                  widget.transaction.currencySymbol,
-                ),
-              ),
+        showErrorToast(
+          context,
+          context.l10n.splitsTotalMismatch(
+            context.format.formatMoney(
+              target,
+              widget.transaction.currencySymbol,
             ),
           ),
         );

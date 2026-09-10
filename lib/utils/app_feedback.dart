@@ -16,7 +16,6 @@ const Duration _kInfoDuration = Duration(seconds: 3);
 /// is any failure raised while dismissing one. The root overlay is above every
 /// route, so these are always readable.
 OverlayEntry? _current;
-Timer? _timer;
 
 /// Shows [message] as a failure that stays until it is dismissed.
 ///
@@ -61,35 +60,41 @@ void _show(BuildContext context, String message, {required bool isError}) {
   final scheme = Theme.of(context).colorScheme;
   dismissToast();
 
-  final entry = OverlayEntry(
+  late final OverlayEntry entry;
+  entry = OverlayEntry(
     builder: (context) => _Toast(
       message: message,
       background: isError ? scheme.errorContainer : scheme.inverseSurface,
       foreground: isError ? scheme.onErrorContainer : scheme.onInverseSurface,
+      // The countdown belongs to the entry rather than to this library, so a
+      // tree torn down mid-message takes the pending timer with it, and a
+      // message that replaces this one cannot have its own clock cancelled by
+      // the one it displaced.
+      linger: isError ? null : _kInfoDuration,
+      onElapsed: () {
+        if (_current == entry) dismissToast();
+      },
       onClose: isError ? dismissToast : null,
     ),
   );
   _current = entry;
   overlay.insert(entry);
-  if (!isError) {
-    _timer = Timer(_kInfoDuration, dismissToast);
-  }
 }
 
 /// Removes the visible message, if any.
 void dismissToast() {
-  _timer?.cancel();
-  _timer = null;
   final entry = _current;
   _current = null;
   if (entry != null && entry.mounted) entry.remove();
 }
 
-class _Toast extends StatelessWidget {
+class _Toast extends StatefulWidget {
   const _Toast({
     required this.message,
     required this.background,
     required this.foreground,
+    this.linger,
+    this.onElapsed,
     this.onClose,
   });
 
@@ -97,11 +102,41 @@ class _Toast extends StatelessWidget {
   final Color background;
   final Color foreground;
 
+  /// How long a confirmation stays. Null for errors, which wait to be read.
+  final Duration? linger;
+  final VoidCallback? onElapsed;
+
   /// Non-null for errors, which need an explicit way out.
   final VoidCallback? onClose;
 
   @override
+  State<_Toast> createState() => _ToastState();
+}
+
+class _ToastState extends State<_Toast> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    final linger = widget.linger;
+    if (linger != null) {
+      _timer = Timer(linger, () => widget.onElapsed?.call());
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final message = widget.message;
+    final background = widget.background;
+    final foreground = widget.foreground;
+    final onClose = widget.onClose;
     return Positioned(
       left: 16,
       right: 16,

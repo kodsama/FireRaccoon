@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../utils/app_feedback.dart';
+
 import 'dart:convert';
 
 import 'package:go_router/go_router.dart';
@@ -58,9 +60,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final l10n = context.l10n;
     final export = await _writeHistoryExport(history);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(l10n.historyExportedTo(export.path))),
-    );
+    showInfoToast(context, l10n.historyExportedTo(export.path));
   }
 
   Future<void> _exportAndShareHistory(undo.UndoHistoryState history) async {
@@ -81,8 +81,7 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
       ),
     );
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(l10n.historyExportedAndShared)));
+    showInfoToast(context, l10n.historyExportedAndShared);
   }
 
   void _jumpToCurrent(

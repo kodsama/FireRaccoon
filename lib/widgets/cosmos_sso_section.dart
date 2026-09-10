@@ -8,6 +8,7 @@ import '../providers/cosmos_session_provider.dart';
 import '../store/cosmos_login.dart';
 import '../store/cosmos_login_factory.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 
 /// Signs in to a Cosmos Cloud route that stands in front of Firefly.
 ///
@@ -33,9 +34,7 @@ class _CosmosSsoSectionState extends ConsumerState<CosmosSsoSection> {
       final session = await login.signIn(context, routeUrl);
       if (session == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.cosmosSsoCancelled)),
-        );
+        showInfoToast(context, context.l10n.cosmosSsoCancelled);
         return;
       }
       await ref.read(cosmosSessionProvider.notifier).signedIn(session);

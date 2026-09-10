@@ -13,6 +13,7 @@ import '../providers/undo_history_provider.dart';
 import '../router/accounts_route.dart';
 import '../router/route_navigation.dart';
 import '../router/route_query.dart';
+import '../utils/app_feedback.dart';
 import '../utils/search_filter.dart';
 import '../utils/create_flows.dart';
 import '../widgets/account_list_panel.dart';
@@ -358,14 +359,14 @@ class AccountsScreen extends ConsumerWidget {
           );
       ref.invalidate(accountsProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.accountDeleted(account.name))),
-        );
+        showInfoToast(context, l10n.accountDeleted(account.name));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.failedToDeleteAccount(e.toString()))),
+        reportError(
+          context,
+          l10n.failedToDeleteAccount(readableError(e)),
+          error: e,
         );
       }
     }

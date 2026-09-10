@@ -9,6 +9,7 @@ import '../providers/data_providers.dart';
 import '../providers/people_providers.dart';
 import '../providers/undo_history_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
 import 'autocomplete_text_field.dart';
@@ -239,8 +240,10 @@ class _AccountEditDialogState extends ConsumerState<AccountEditDialog>
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.failedToUpdate(e.toString()))),
+        reportError(
+          context,
+          context.l10n.failedToUpdate(readableError(e)),
+          error: e,
         );
       }
     }
@@ -277,16 +280,16 @@ class _AccountEditDialogState extends ConsumerState<AccountEditDialog>
       final service = ref.read(apiServiceProvider);
       await service?.deleteAccount(widget.account.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.accountDeleted(widget.account.name))),
-        );
+        showInfoToast(context, l10n.accountDeleted(widget.account.name));
         Navigator.of(context).pop(true);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _deleting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.failedToDeleteAccount(e.toString()))),
+        reportError(
+          context,
+          l10n.failedToDeleteAccount(readableError(e)),
+          error: e,
         );
       }
     }
