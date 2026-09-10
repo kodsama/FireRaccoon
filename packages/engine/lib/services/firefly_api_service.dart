@@ -1078,6 +1078,21 @@ class FireflyApiService implements FireflyService {
     }
   }
 
+  @override
+  Future<void> deleteBudgetLimit(String budgetId, String limitId) async {
+    try {
+      final response = await _send(
+        'DELETE',
+        '/api/v1/budgets/$budgetId/limits/$limitId',
+      );
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        throw Exception('Failed to delete budget limit: ${_status(response)}');
+      }
+    } catch (e) {
+      throw FireflyApiException('$e', cause: e);
+    }
+  }
+
   String _dateRangeQuery({DateTime? start, DateTime? end}) {
     final params = <String>[];
     if (start != null) {

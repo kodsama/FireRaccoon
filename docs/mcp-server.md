@@ -153,6 +153,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `get_budget_limits` | Per-period amounts on a budget |  |
 | `create_budget_limit` | Set a budget amount for one period | yes |
 | `update_budget_limit` | Change a budget limit | yes |
+| `delete_budget_limit` | Remove one budget limit, permanently | yes |
 | `get_categories` | List categories |  |
 | `create_category` | Create a category | yes |
 | `update_category` | Rename a category | yes |

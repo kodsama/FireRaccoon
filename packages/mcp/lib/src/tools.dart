@@ -96,6 +96,7 @@ const List<String> _writeToolNames = [
   'create_budget',
   'create_budget_limit',
   'update_budget_limit',
+  'delete_budget_limit',
   'create_bill',
   'update_bill',
   'delete_bill',
@@ -4040,6 +4041,42 @@ List<McpTool> buildTools({
         }
         await api.updateBudgetLimit(id, limitId, input);
         return {'ok': true, 'budget_id': id, 'limit_id': limitId};
+      },
+    ),
+    McpTool(
+      name: 'delete_budget_limit',
+      writes: true,
+      description:
+          'Delete one budget limit. Permanent, and the spending it tracked is '
+          'left where it is: the transactions are untouched, they simply stop '
+          'counting against a limit for that period. Needed to move a budget '
+          'between cadences, since the limits it already has stay behind and '
+          'a new one alongside them double-counts the period.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['budget_id', 'limit_id'],
+        'properties': {
+          'budget_id': {'type': 'string'},
+          'limit_id': {
+            'type': 'string',
+            'description': 'As returned by get_budget_limits.',
+          },
+        },
+      },
+      run: (args) async {
+        final id = (args['budget_id'] as String?)?.trim();
+        final limitId = (args['limit_id'] as String?)?.trim();
+        if (id == null || id.isEmpty) return _badInput('budget_id is required');
+        if (limitId == null || limitId.isEmpty) {
+          return _badInput('limit_id is required');
+        }
+        await service().deleteBudgetLimit(id, limitId);
+        return {
+          'ok': true,
+          'budget_id': id,
+          'limit_id': limitId,
+          'deleted': true,
+        };
       },
     ),
     McpTool(

@@ -596,6 +596,9 @@ MockClient fireflyMockClient({
         'data': [budgetLimitEnvelope()['data']],
       });
     }
+    if (path == '/api/v1/budgets/3/limits/11' && method == 'DELETE') {
+      return http.Response('', 204);
+    }
     if (path == '/api/v1/budgets/3/limits/11' && method == 'PUT') {
       return jsonHttpResponse(budgetLimitEnvelope(amount: '450.00'));
     }

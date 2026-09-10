@@ -1185,6 +1185,40 @@ void main() {
     });
   });
 
+  group('delete_budget_limit', () {
+    test('validates its ids', () async {
+      final tool = _tool('delete_budget_limit', client: fireflyMockClient());
+      expect((await tool.run({}))['code'], 'bad_input');
+      expect((await tool.run({'budget_id': '3'}))['code'], 'bad_input');
+    });
+
+    test('removes one limit', () async {
+      // Without it, switching a budget from monthly to yearly left the monthly
+      // limits behind with no way to remove them, and a yearly one alongside
+      // them double-counts the period. A budget with nine could not be moved
+      // at all.
+      final seen = <Uri>[];
+      final result = await _tool(
+        'delete_budget_limit',
+        client: fireflyMockClient(record: seen),
+      ).run({'budget_id': '3', 'limit_id': '11'});
+
+      expect(result['ok'], isTrue);
+      expect(result['deleted'], isTrue);
+      expect(
+        seen.map((uri) => uri.path),
+        contains('/api/v1/budgets/3/limits/11'),
+      );
+    });
+
+    test('is declared as a write', () async {
+      final tool = buildTools(target: _target)
+          .firstWhere((t) => t.name == 'delete_budget_limit');
+      // The writes flag is the gate a read-only key is refused by.
+      expect(tool.writes, isTrue);
+    });
+  });
+
   group('delete_budget', () {
     test('bad_input when budget_id missing', () async {
       final result = await _tool(

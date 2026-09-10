@@ -447,6 +447,11 @@ class FakeFireflyService implements FireflyService {
     _maybeThrow();
   }
 
+  @override
+  Future<void> deleteBudgetLimit(String budgetId, String limitId) async {
+    _maybeThrow();
+  }
+
   final List<Category> categories;
   final List<Tag> tags;
 

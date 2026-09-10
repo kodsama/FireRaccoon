@@ -98,6 +98,7 @@ abstract class FireflyService {
     String limitId,
     BudgetLimitInput input,
   );
+  Future<void> deleteBudgetLimit(String budgetId, String limitId);
   Future<void> updateAccount(
     String accountId, {
     String? name,
