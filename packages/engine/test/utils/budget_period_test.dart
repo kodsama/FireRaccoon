@@ -301,4 +301,96 @@ void main() {
       expect(BudgetPeriodMetrics(spent: 5, periodLimit: 0).progress, 0);
     });
   });
+
+  group('budgetCoverageRange', () {
+    DateRangeBounds september() => DateRangeBounds(
+      start: DateTime(2026, 9, 1),
+      end: DateTime(2026, 10, 1),
+    );
+
+    test('a yearly budget viewed over a month covers its year', () {
+      // Firefly scopes spent to the window it is given, so a yearly budget
+      // asked about September answered with September and read as 0 spent of
+      // 0 to spend, on a budget of 220,000 a year.
+      final range = budgetCoverageRange(
+        budgetPeriod: AutoBudgetPeriod.yearly,
+        viewingRange: september(),
+      );
+      expect(range.start, DateTime(2026, 1, 1));
+      expect(range.end, DateTime(2027, 1, 1));
+    });
+
+    test('a quarterly budget covers the quarter the view starts in', () {
+      // September ends when Q3 does, so a test of whether the view ends before
+      // the period does would call this whole and leave it a third of a
+      // quarter.
+      final range = budgetCoverageRange(
+        budgetPeriod: AutoBudgetPeriod.quarterly,
+        viewingRange: september(),
+      );
+      expect(range.start, DateTime(2026, 7, 1));
+      expect(range.end, DateTime(2026, 10, 1));
+    });
+
+    test('a half-yearly budget covers its half', () {
+      final range = budgetCoverageRange(
+        budgetPeriod: AutoBudgetPeriod.halfYear,
+        viewingRange: september(),
+      );
+      expect(range.start, DateTime(2026, 7, 1));
+      expect(range.end, DateTime(2027, 1, 1));
+    });
+
+    test('a weekly budget covers Monday to Monday', () {
+      final range = budgetCoverageRange(
+        budgetPeriod: AutoBudgetPeriod.weekly,
+        viewingRange: DateRangeBounds(
+          start: DateTime(2026, 9, 10),
+          end: DateTime(2026, 9, 11),
+        ),
+      );
+      expect(range.start, DateTime(2026, 9, 7));
+      expect(range.end, DateTime(2026, 9, 14));
+    });
+
+    test('a view already spanning the period is left alone', () {
+      final range = budgetCoverageRange(
+        budgetPeriod: AutoBudgetPeriod.monthly,
+        viewingRange: september(),
+      );
+      expect(range.start, DateTime(2026, 9, 1));
+      expect(range.end, DateTime(2026, 10, 1));
+    });
+
+    test('a view wider than the period is left alone', () {
+      final year = DateRangeBounds(
+        start: DateTime(2026, 1, 1),
+        end: DateTime(2027, 1, 1),
+      );
+      final range = budgetCoverageRange(
+        budgetPeriod: AutoBudgetPeriod.monthly,
+        viewingRange: year,
+      );
+      expect(range.start, year.start);
+      expect(range.end, year.end);
+    });
+
+    test('a budget with no cadence, or an open view, is left alone', () {
+      final open = DateRangeBounds(start: DateTime(2026, 9, 1));
+      expect(
+        budgetCoverageRange(
+          budgetPeriod: null,
+          viewingRange: september(),
+        ).start,
+        september().start,
+      );
+      expect(
+        budgetCoverageRange(
+          budgetPeriod: AutoBudgetPeriod.yearly,
+          viewingRange: open,
+        ).end,
+        isNull,
+      );
+    });
+  });
 }
