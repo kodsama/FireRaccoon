@@ -11,6 +11,7 @@ import '../theme/app_theme.dart';
 import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
+import '../utils/search_filter.dart';
 import 'autocomplete_text_field.dart';
 import 'tooltip_helpers.dart';
 
@@ -48,6 +49,11 @@ class _PiggyBankFormDialogState extends ConsumerState<_PiggyBankFormDialog> {
   late final TextEditingController _notesController;
   late final TextEditingController _groupController;
 
+  /// Filters the account list. A piggy bank on a ledger with forty accounts
+  /// meant scrolling a checkbox list to find two of them.
+  final _accountSearchController = TextEditingController();
+  String _accountQuery = '';
+
   late DateTime _startDate;
   DateTime? _targetDate;
   String _currencyCode = 'EUR';
@@ -80,6 +86,7 @@ class _PiggyBankFormDialogState extends ConsumerState<_PiggyBankFormDialog> {
     _targetController.dispose();
     _notesController.dispose();
     _groupController.dispose();
+    _accountSearchController.dispose();
     super.dispose();
   }
 
@@ -402,6 +409,7 @@ class _PiggyBankFormDialogState extends ConsumerState<_PiggyBankFormDialog> {
                               a.type == 'cash' ||
                               a.type == 'liability',
                         )
+                        .where((a) => a.matchesSearch(_accountQuery))
                         .toList();
                     final grouped = _groupAccounts(eligible);
 
@@ -593,6 +601,38 @@ class _PiggyBankFormDialogState extends ConsumerState<_PiggyBankFormDialog> {
           ),
         ),
         const SizedBox(height: 8),
+        TextField(
+          controller: _accountSearchController,
+          onChanged: (value) => setState(() => _accountQuery = value),
+          decoration: InputDecoration(
+            hintText: l10n.search,
+            prefixIcon: const Icon(LucideIcons.search, size: 16),
+            isDense: true,
+            border: const OutlineInputBorder(),
+            suffixIcon: _accountQuery.isEmpty
+                ? null
+                : IconButton(
+                    icon: const Icon(LucideIcons.x, size: 16),
+                    tooltip: MaterialLocalizations.of(context)
+                        .cancelButtonLabel,
+                    onPressed: () {
+                      _accountSearchController.clear();
+                      setState(() => _accountQuery = '');
+                    },
+                  ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        // Ticked accounts the search hides stay ticked, so a search never
+        // quietly drops one; clearing the field brings them back into view.
+        if (groupedAccounts.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              l10n.noAccountsFound,
+              style: TextStyle(color: context.colors.text3, fontSize: 13),
+            ),
+          ),
         ...groupedAccounts.entries.map((entry) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,

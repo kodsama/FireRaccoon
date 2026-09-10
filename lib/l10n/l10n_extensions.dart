@@ -157,6 +157,8 @@ extension ExpensePeriodL10n on ExpensePeriod {
     ExpensePeriod.quarter => l10n.expensePeriodQuarter,
     ExpensePeriod.semester => l10n.expensePeriodSemester,
     ExpensePeriod.year => l10n.expensePeriodYear,
+    ExpensePeriod.lastYear => l10n.expensePeriodLastYear,
+    ExpensePeriod.last3Years => l10n.expensePeriodLast3Years,
     ExpensePeriod.all => l10n.expensePeriodAll,
   };
 }

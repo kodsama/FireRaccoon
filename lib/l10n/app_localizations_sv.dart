@@ -1746,6 +1746,12 @@ class AppLocalizationsSv extends AppLocalizations {
   String get expensePeriodYear => 'Detta år';
 
   @override
+  String get expensePeriodLastYear => 'Förra året';
+
+  @override
+  String get expensePeriodLast3Years => 'Senaste 3 åren';
+
+  @override
   String get expensePeriodAll => 'All tid';
 
   @override

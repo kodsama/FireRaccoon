@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-10
+
+### Added
+
+- Last year and the last three years on a budget. A budget kept by the year had
+  nowhere to be looked at between this year and all time, so seeing what one did
+  last year meant picking the dates by hand. Both are whole calendar spans, and
+  the last three years takes this year and the two before it so it covers
+  everything the options above it cover: read as the three finished years
+  instead, a budget being spent against right now would vanish from it
+- The accounts a piggy bank saves on can be searched. Picking two out of forty
+  meant scrolling a column of checkboxes. A ticked account the search hides
+  stays ticked, so typing cannot quietly drop a selection
+
+### Fixed
+
+- A budget kept over a longer period than the one being viewed reported
+  nothing. Firefly scopes a budget's spend to exactly the window it is given,
+  and the screen gave it the viewed range whatever the budget was kept over, so
+  a budget of 220,000 a year looked at in September was asked about a twelfth
+  of its own period: nothing spent, nothing to spend. Such a budget is now
+  asked about the calendar period it belongs to, grouped so that this is one
+  extra request per distinct cadence rather than one per budget
+- A currency symbol made of letters ran into its amount. `kr16,880.00` reads as
+  one token rather than a price, which is what every figure on a krona ledger
+  looked like. A symbol ending in a letter takes a space now; punctuation takes
+  none, since nobody writes a euro sign followed by one
+- The budget card overflowed at phone width. Its spent figure and its limit
+  line were fixed width against each other, with nothing able to give, so the
+  wider text spilled off the row
+
 ## [0.6.0] - 2026-09-10
 
 ### Added

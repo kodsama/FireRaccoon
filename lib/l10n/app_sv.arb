@@ -972,6 +972,8 @@
   "expensePeriodQuarter": "Detta kvartal",
   "expensePeriodSemester": "Detta halvår",
   "expensePeriodYear": "Detta år",
+  "expensePeriodLastYear": "Förra året",
+  "expensePeriodLast3Years": "Senaste 3 åren",
   "expensePeriodAll": "All tid",
   "dashboardPeriodThisWeek": "Denna vecka",
   "dashboardPeriodLastWeek": "Förra veckan",

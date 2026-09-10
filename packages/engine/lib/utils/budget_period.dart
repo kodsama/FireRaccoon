@@ -82,6 +82,83 @@ int countBudgetPeriodsInRange({
   };
 }
 
+/// The window to ask Firefly for, for a budget kept on [budgetPeriod] while
+/// somebody is looking at [viewingRange].
+///
+/// Firefly scopes a budget's `spent` to exactly the window it is given, so a
+/// yearly budget asked about one month is asked about a twelfth of its own
+/// period and answers with whatever fell in that month, which for most months
+/// is nothing. A budget reading 220,000 a year then showed 0 spent and 0 to
+/// spend, and the figure was not wrong so much as answering a question nobody
+/// asked.
+///
+/// A range already covering a whole period or more is left alone, because the
+/// count it multiplies by is then meaningful. A shorter one snaps out to the
+/// calendar period its start falls in, so the figures are the ones the budget
+/// is actually kept in.
+DateRangeBounds budgetCoverageRange({
+  required AutoBudgetPeriod? budgetPeriod,
+  required DateRangeBounds viewingRange,
+}) {
+  final start = viewingRange.start;
+  final end = viewingRange.end;
+  if (budgetPeriod == null || start == null || end == null) {
+    return viewingRange;
+  }
+  final whole = _calendarPeriodAround(budgetPeriod, start);
+  // Spanning a whole period already, so the count it multiplies by means
+  // something and the view is left alone. Asked the other way round, as
+  // whether the view ends before the period does, September reads as a whole
+  // quarter because both end on 1 October.
+  final coversAWholePeriod =
+      !start.isAfter(whole.start!) && !end.isBefore(whole.end!);
+  return coversAWholePeriod ? viewingRange : whole;
+}
+
+/// The calendar period of [budgetPeriod] that [anchor] falls in, end exclusive.
+DateRangeBounds _calendarPeriodAround(
+  AutoBudgetPeriod budgetPeriod,
+  DateTime anchor,
+) {
+  final day = DateTime(anchor.year, anchor.month, anchor.day);
+  return switch (budgetPeriod) {
+    AutoBudgetPeriod.daily => DateRangeBounds(
+      start: day,
+      end: day.add(const Duration(days: 1)),
+    ),
+    // Monday to Monday, which is what a week means to a ledger kept in Europe.
+    AutoBudgetPeriod.weekly => () {
+      final monday = day.subtract(Duration(days: day.weekday - 1));
+      return DateRangeBounds(
+        start: monday,
+        end: monday.add(const Duration(days: 7)),
+      );
+    }(),
+    AutoBudgetPeriod.monthly => DateRangeBounds(
+      start: DateTime(day.year, day.month, 1),
+      end: DateTime(day.year, day.month + 1, 1),
+    ),
+    AutoBudgetPeriod.quarterly => () {
+      final firstMonth = ((day.month - 1) ~/ 3) * 3 + 1;
+      return DateRangeBounds(
+        start: DateTime(day.year, firstMonth, 1),
+        end: DateTime(day.year, firstMonth + 3, 1),
+      );
+    }(),
+    AutoBudgetPeriod.halfYear => () {
+      final firstMonth = day.month <= 6 ? 1 : 7;
+      return DateRangeBounds(
+        start: DateTime(day.year, firstMonth, 1),
+        end: DateTime(day.year, firstMonth + 6, 1),
+      );
+    }(),
+    AutoBudgetPeriod.yearly => DateRangeBounds(
+      start: DateTime(day.year, 1, 1),
+      end: DateTime(day.year + 1, 1, 1),
+    ),
+  };
+}
+
 double aggregateBudgetLimit({
   required double perPeriodAmount,
   required AutoBudgetPeriod? budgetPeriod,

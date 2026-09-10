@@ -1,3 +1,4 @@
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -93,5 +94,95 @@ void main() {
     await tapDialogPrimaryAction(tester, label: 'Save');
 
     expect(find.text('Edit piggy bank'), findsNothing);
+  });
+
+  testWidgets('the account list can be searched down to one', (tester) async {
+    configureDialogTestSurface(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    // A ledger with a column of similarly named accounts is the case this is
+    // for: picking two of forty meant scrolling a checkbox list.
+    Account asset(String id, String name) => Account(
+      id: id,
+      name: name,
+      type: 'asset',
+      role: 'defaultAsset',
+      currentBalance: 100,
+      currencySymbol: '\u20ac',
+      currencyCode: 'EUR',
+    );
+    final fake = buildDialogFireflyService(
+      accounts: [
+        asset('1', 'Lex - Avanza Fond'),
+        asset('2', 'Lex - Avanza ISK'),
+        asset('3', 'Lex - Nordnet ISK'),
+        asset('4', 'Lex - Revolut SEK'),
+      ],
+    );
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Consumer(
+          builder: (context, ref, _) => ElevatedButton(
+            onPressed: () => openCreatePiggyBankDialog(context, ref),
+            child: const Text('Open Dialog'),
+          ),
+        ),
+        fireflyService: fake,
+        authSettings: AuthSettings(
+          serverUrl: 'https://firefly.test',
+          apiToken: 'token',
+        ),
+      ),
+    );
+    await settleIgnoringOverflow(tester);
+    await tester.tap(find.text('Open Dialog'));
+    await settleIgnoringOverflow(tester);
+
+    expect(find.text('Lex - Avanza Fond'), findsOneWidget);
+    expect(find.text('Lex - Nordnet ISK'), findsOneWidget);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Search...'),
+      'nordnet',
+    );
+    await settleIgnoringOverflow(tester);
+
+    expect(find.text('Lex - Nordnet ISK'), findsOneWidget);
+    expect(find.text('Lex - Avanza Fond'), findsNothing);
+    expect(find.text('Lex - Revolut SEK'), findsNothing);
+  });
+
+  testWidgets('a search that matches nothing says so', (tester) async {
+    configureDialogTestSurface(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Consumer(
+          builder: (context, ref, _) => ElevatedButton(
+            onPressed: () => openCreatePiggyBankDialog(context, ref),
+            child: const Text('Open Dialog'),
+          ),
+        ),
+        fireflyService: buildDialogFireflyService(),
+        authSettings: AuthSettings(
+          serverUrl: 'https://firefly.test',
+          apiToken: 'token',
+        ),
+      ),
+    );
+    await settleIgnoringOverflow(tester);
+    await tester.tap(find.text('Open Dialog'));
+    await settleIgnoringOverflow(tester);
+
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Search...'),
+      'nothing called this',
+    );
+    await settleIgnoringOverflow(tester);
+
+    // Rather than an empty space that reads as a broken list.
+    expect(find.text('No accounts found.'), findsOneWidget);
   });
 }

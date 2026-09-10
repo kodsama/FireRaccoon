@@ -3256,6 +3256,18 @@ abstract class AppLocalizations {
   /// **'This Year'**
   String get expensePeriodYear;
 
+  /// No description provided for @expensePeriodLastYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Year'**
+  String get expensePeriodLastYear;
+
+  /// No description provided for @expensePeriodLast3Years.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 3 Years'**
+  String get expensePeriodLast3Years;
+
   /// No description provided for @expensePeriodAll.
   ///
   /// In en, this message translates to:

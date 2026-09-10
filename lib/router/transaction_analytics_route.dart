@@ -15,6 +15,8 @@ extension ExpensePeriodX on ExpensePeriod {
     ExpensePeriod.quarter => 'This Quarter',
     ExpensePeriod.semester => 'This Semester',
     ExpensePeriod.year => 'This Year',
+    ExpensePeriod.lastYear => 'Last Year',
+    ExpensePeriod.last3Years => 'Last 3 Years',
     ExpensePeriod.all => 'All Time',
   };
 }
