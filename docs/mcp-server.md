@@ -126,7 +126,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `set_transaction_reconciled` | Mark reconciled or unreconciled | yes |
 | `store_reconciliation` | Store an account reconciliation with optional correction | yes |
 | `create_transaction` | Create a transaction, one leg or several | yes |
-| `update_transaction` | Update a transaction; omitted fields keep their value | yes |
+| `update_transaction` | Update a transaction; omitted fields keep their value, and on a split group the bookkeeping reaches every leg | yes |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides | yes |
 | `delete_transaction` | Delete a transaction group and its splits | yes |
 | `export_firefly_data` | Snapshot of every entity the API exposes, for taking before a bulk change |  |
@@ -138,15 +138,15 @@ are described under [Importing a statement](#importing-a-statement).
 | `restore_backup` | Plan or apply putting a backup back, taking a fresh one first | yes |
 | `find_incomplete_transactions` | Transactions missing a description, category, budget, tags, payee, notes or piggy bank |  |
 | `search_transactions` | Full-text search, for matching statement lines |  |
-| `get_budgets` | List budgets with spent amounts |  |
+| `get_budgets` | List budgets with what was spent against them over a window |  |
 | `get_budget_transactions` | Transactions for a budget |  |
 | `update_account` | Name, identifiers, notes, role, currency, liability terms, or balances; omitted fields keep their value | yes |
-| `update_budget` | Update a budget; omitted fields keep their value | yes |
+| `update_budget` | Update a budget; omitted fields keep their value, and a period limit that did not follow the amount is reported | yes |
 | `delete_budget` | Delete a budget | yes |
 | `get_account` | One account, optionally as of a date |  |
 | `get_account_balance_at_date` | Balance on a date, for checking a statement close |  |
 | `get_account_balance_history` | Balance at each of a series of dates |  |
-| `create_account` | Create an asset, expense, revenue, or liability account | yes |
+| `create_account` | Create an asset, expense, revenue, liability, or reconciliation account | yes |
 | `create_liability` | Create a liability with its direction, interest, and opening balance | yes |
 | `delete_account` | Delete an account **and its transactions** | yes |
 | `create_budget` | Create a budget, optionally with an auto-budget | yes |
@@ -168,7 +168,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `delete_bill` | Delete a bill | yes |
 | `get_bill_transactions` | Transactions paid against a bill |  |
 | `get_piggy_banks` | List piggy banks and progress |  |
-| `create_piggy_bank` | Create a piggy bank | yes |
+| `create_piggy_bank` | Create a piggy bank, with a target date if it has one | yes |
 | `update_piggy_bank` | Update a piggy bank | yes |
 | `delete_piggy_bank` | Delete a piggy bank | yes |
 | `get_recurrences` | List recurring rules, each with the amount, accounts, category, budget and tags of the lines it creates |  |
@@ -351,6 +351,32 @@ once and only the amount, description and category vary. Reconciling a
 credit card is not one of these: `store_reconciliation` builds that payback from
 the purchases it settles, which is what keeps the group title and the per-leg
 links identical to what the app writes.
+
+A correction puts its other side against `<account> reconciliation`, an account
+Firefly only ever creates from its own interface. `store_reconciliation` makes
+it when the ledger has none, in the reconciled account's currency, because a
+name Firefly cannot resolve is a refusal and there was otherwise no way to
+write a correction at all.
+
+### A split group is edited as a group
+
+Firefly identifies one leg of a group by `transaction_journal_id`, and treats a
+leg that carries none as a new split, deleting the journals the update did not
+name. Every leg of an update carries its id now, so a group can be edited at
+all: it used to be destroyed and rebuilt with the same values under new ids,
+which is why a category move reported success and changed nothing, and why
+marking a group reconciled never held.
+
+A group-level call spreads the bookkeeping over every leg: `category_id`,
+`category_name`, `budget_id`, `notes`, `tags` and `bill_id`. What belongs to
+one leg stays with it, so amounts, descriptions and accounts are untouched. A
+`description` on a group is its title, since overwriting "Amortisation" and
+"Interest" with one string would be worse than the bug being fixed; pass
+`group_title` to be explicit about it.
+
+Editing one leg on its own is not exposed. It needs the leg's own id in the
+argument, and a documented rule that a leg left out of the list is deleted,
+which is a larger change than a schema line.
 
 ### Removing a value, not just changing it
 

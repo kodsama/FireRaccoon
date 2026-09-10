@@ -1,4 +1,4 @@
-// coverage:ignore-file — kIsWeb only ever takes one branch per platform
+// coverage:ignore-file: kIsWeb only ever takes one branch per platform
 import 'package:flutter/foundation.dart';
 
 /// Same-origin route FireRaccoon's own server proxies through to Firefly III.
