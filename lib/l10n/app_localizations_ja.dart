@@ -1713,6 +1713,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get expensePeriodYear => '今年';
 
   @override
+  String get expensePeriodLastYear => '昨年';
+
+  @override
+  String get expensePeriodLast3Years => '過去3年';
+
+  @override
   String get expensePeriodAll => '全期間';
 
   @override

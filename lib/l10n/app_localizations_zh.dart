@@ -1712,6 +1712,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get expensePeriodYear => '今年';
 
   @override
+  String get expensePeriodLastYear => '去年';
+
+  @override
+  String get expensePeriodLast3Years => '近三年';
+
+  @override
   String get expensePeriodAll => '全部';
 
   @override

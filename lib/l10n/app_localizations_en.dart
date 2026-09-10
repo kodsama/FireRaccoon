@@ -1748,6 +1748,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get expensePeriodYear => 'This Year';
 
   @override
+  String get expensePeriodLastYear => 'Last Year';
+
+  @override
+  String get expensePeriodLast3Years => 'Last 3 Years';
+
+  @override
   String get expensePeriodAll => 'All Time';
 
   @override
