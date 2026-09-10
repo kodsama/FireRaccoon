@@ -1,12 +1,10 @@
-import 'dart:convert';
-
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:share_plus/share_plus.dart';
 
+import '../utils/export_delivery.dart';
 import '../l10n/l10n_extensions.dart';
 import '../providers/backup_providers.dart';
 import '../utils/app_feedback.dart';
@@ -344,18 +342,14 @@ class _BackupTile extends ConsumerWidget {
         .read(backupsProvider.notifier)
         .file(manifest.id, kBackupSnapshotFile, password: password);
     if (contents == null || !context.mounted) return;
-    await SharePlus.instance.share(
-      ShareParams(
-        subject: 'fireraccoon-backup-${manifest.id}',
-        files: [
-          XFile.fromData(
-            utf8.encode(contents),
-            mimeType: 'application/json',
-            name: 'fireraccoon-backup-${manifest.id}.json',
-          ),
-        ],
-      ),
+    final l10n = context.l10n;
+    final path = await deliverExportFile(
+      fileName: 'fireraccoon-backup-${manifest.id}.json',
+      contents: contents,
+      subject: 'fireraccoon-backup-${manifest.id}',
     );
+    if (!context.mounted || path == null) return;
+    showInfoToast(context, l10n.fireflyDataExportedTo(path));
   }
 
   @override

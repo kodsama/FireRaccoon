@@ -1,12 +1,12 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:share_plus/share_plus.dart';
 
+import '../utils/export_delivery.dart';
 import '../utils/app_feedback.dart';
-
-import 'dart:convert';
 
 import 'package:go_router/go_router.dart';
 
@@ -65,23 +65,15 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
 
   Future<void> _exportAndShareHistory(undo.UndoHistoryState history) async {
     final l10n = context.l10n;
-    final export = await _writeHistoryExport(history);
     final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-    await SharePlus.instance.share(
-      ShareParams(
-        text: l10n.historyExportText,
-        subject: l10n.historyExportSubject,
-        files: [
-          XFile.fromData(
-            utf8.encode(export.contents),
-            mimeType: 'application/json',
-            name: 'fireraccoon_history_$timestamp.json',
-          ),
-        ],
-      ),
+    final path = await deliverExportFile(
+      fileName: 'fireraccoon_history_$timestamp.json',
+      contents: _historyExportPayload(history),
+      text: l10n.historyExportText,
+      subject: l10n.historyExportSubject,
     );
-    if (!mounted) return;
-    showInfoToast(context, l10n.historyExportedAndShared);
+    if (!mounted || path == null) return;
+    showInfoToast(context, l10n.historyExportedTo(path));
   }
 
   void _jumpToCurrent(
