@@ -405,15 +405,20 @@ void main() {
     test('testConnection reports a refused insecure address', () async {
       // It used to throw, from a button handler that did not catch, so the one
       // failure the person could fix immediately was the one that crashed.
-      final notifier = AuthNotifier(
-        storage: testStorage(),
-        debugEnvLoader: _noEnv,
+      // Through a container, because whether this refusal applies at all now
+      // depends on the deployment: a proxied web build is not the one dialling.
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith(
+            () => AuthNotifier(storage: testStorage(), debugEnvLoader: _noEnv),
+          ),
+        ],
       );
-      final result = await notifier.testConnection(
-        'http://firefly.test',
-        'token',
-        false,
-      );
+      addTearDown(container.dispose);
+
+      final result = await container
+          .read(authProvider.notifier)
+          .testConnection('http://firefly.test', 'token', false);
 
       expect(result.ok, isFalse);
       expect(result.failure, ConnectionFailure.insecureRefused);

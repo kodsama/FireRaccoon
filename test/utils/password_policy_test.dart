@@ -44,7 +44,7 @@ void main() {
     test(
       'reports missing uppercase and digit for a URL-like password',
       () async {
-        final result = validatePasswordPolicy('https://raccoon.kodsama.com');
+        final result = validatePasswordPolicy('https://raccoon.example.org');
         expect(result.hasMinLength, isTrue);
         expect(result.hasLower, isTrue);
         expect(result.hasSpecial, isTrue);

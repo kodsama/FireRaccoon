@@ -26,7 +26,18 @@ class InsecureTransportRefused implements Exception {
 }
 
 /// Refuses [url] unless [allowInsecure] says the person chose this.
-void requireEncryptedTransport(String url, {required bool allowInsecure}) {
-  if (allowInsecure) return;
+///
+/// [dialledByServer] lifts the refusal, because then this process never opens
+/// that connection. A web build in server mode talks to its own origin over
+/// whatever protocol the page was served with, and the address named here is
+/// one the server resolves on its own network. Refusing it browser-side made
+/// an internal backend impossible to save: the only address that works is the
+/// one the refusal was aimed at.
+void requireEncryptedTransport(
+  String url, {
+  required bool allowInsecure,
+  bool dialledByServer = false,
+}) {
+  if (allowInsecure || dialledByServer) return;
   if (isUnencryptedUrl(url)) throw InsecureTransportRefused(url);
 }
