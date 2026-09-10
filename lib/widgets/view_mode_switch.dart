@@ -11,7 +11,12 @@ import '../widgets/fun_decorated_surface.dart';
 /// The UI shows an icon and the label of the currently selected mode.
 /// Available view modes: Standard (Cards), Compact (Rows), and Tight (Tight rows).
 class ViewModeSwitcher extends ConsumerWidget {
-  const ViewModeSwitcher({super.key});
+  const ViewModeSwitcher({super.key, this.showLabel = true});
+
+  /// False where the header has no room for it, which is phone width. The
+  /// label is the widest thing in that row by some margin, and dropping it
+  /// beats shrinking a tap target below what a thumb can hit.
+  final bool showLabel;
 
   String _viewModeLabel(AppLocalizations l10n, ViewMode mode) => switch (mode) {
     ViewMode.standard => l10n.viewModeCards,
@@ -36,12 +41,15 @@ class ViewModeSwitcher extends ConsumerWidget {
       child: PopupMenuButton<ViewMode>(
         offset: const Offset(0, 12),
         padding: EdgeInsets.zero,
+        tooltip: modeLabel,
         icon: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(modeIcon, size: 18),
-            const SizedBox(width: 4),
-            Text(modeLabel, style: Theme.of(context).textTheme.bodySmall),
+            if (showLabel) ...[
+              const SizedBox(width: 4),
+              Text(modeLabel, style: Theme.of(context).textTheme.bodySmall),
+            ],
             const Icon(Icons.arrow_drop_down, size: 20),
           ],
         ),

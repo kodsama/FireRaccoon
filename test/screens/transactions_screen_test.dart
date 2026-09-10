@@ -6,6 +6,7 @@ import 'package:fireraccoon/screens/transactions_screen.dart';
 import 'package:fireraccoon/widgets/selection_check_control.dart';
 import 'package:fireraccoon/widgets/small_loading_indicator.dart';
 import 'package:fireraccoon/widgets/transaction_month_header.dart';
+import 'package:fireraccoon/widgets/firefly_refresh_button.dart';
 
 import '../helpers/mock_firefly_service.dart';
 import '../helpers/screen_test_app.dart';
@@ -659,141 +660,28 @@ void main() {
     expect(find.textContaining('\u20ac2,500.00'), findsWidgets);
   });
 
-  testWidgets(
-    'TransactionsScreen shows Refresh instead of view mode switcher',
-    (tester) async {
-      configureLargeScreen(tester);
-      addTearDown(tester.view.resetPhysicalSize);
-
-      await tester.pumpWidget(
-        await buildScreenTestApp(
-          child: const TransactionsScreen(),
-          fireflyService: transactionsFake(),
-          viewMode: ViewMode.compact,
-        ),
-      );
-      await pumpScreen(tester);
-
-      expect(find.text('Refresh'), findsOneWidget);
-      expect(find.byTooltip('Re-fetch data from Firefly III'), findsOneWidget);
-      // View mode lives in the app shell header, not on this filter bar.
-      expect(find.text('Rows'), findsNothing);
-    },
-  );
-
-  testWidgets('TransactionsScreen Refresh re-fetches from Firefly', (
+  testWidgets('TransactionsScreen leaves refresh to the header', (
     tester,
   ) async {
     configureLargeScreen(tester);
     addTearDown(tester.view.resetPhysicalSize);
 
-    final liveAccounts = List<Account>.from(sampleAccounts);
-    final liveTransactions = List<Transaction>.from(sampleTransactions);
-    final fake = _CountingTransactionsFake(
-      accounts: liveAccounts,
-      transactions: liveTransactions,
-    );
-
     await tester.pumpWidget(
       await buildScreenTestApp(
         child: const TransactionsScreen(),
-        fireflyService: fake,
+        fireflyService: transactionsFake(),
         viewMode: ViewMode.compact,
       ),
     );
     await pumpScreen(tester);
 
-    expect(find.text('Salary'), findsWidgets);
-    final accountsAfterWarm = fake.accountReads;
-    final transactionsAfterWarm = fake.transactionReads;
-
-    liveAccounts
-      ..clear()
-      ..add(
-        sampleAccounts.first.copyWith(
-          name: 'Refreshed Checking',
-          currentBalance: 42,
-        ),
-      );
-    liveTransactions
-      ..clear()
-      ..add(
-        sampleTransactions.first.copyWith(description: 'Edited in Firefly'),
-      );
-    fake.transactionPages[1] = TransactionPageResult(
-      transactions: List<Transaction>.from(liveTransactions),
-      currentPage: 1,
-      totalPages: 1,
-      total: liveTransactions.length,
-    );
-
-    await tester.tap(find.text('Refresh'));
-    await tester.pump();
-    await tester.pumpAndSettle();
-
-    expect(fake.accountReads, greaterThan(accountsAfterWarm));
-    expect(fake.transactionReads, greaterThan(transactionsAfterWarm));
-    expect(find.text('Edited in Firefly'), findsWidgets);
-    expect(find.text('Salary'), findsNothing);
+    // It lives in the shell header now, beside undo and redo, so it is there
+    // on every page instead of the three that happened to carry their own.
+    // Re-reading is covered by the button's own test and by
+    // firefly_data_refresh_test, which also covers the focused account.
+    expect(find.byType(FireflyRefreshButton), findsNothing);
+    expect(find.text('Refresh'), findsNothing);
+    // View mode lives in the app shell header too, not on this filter bar.
+    expect(find.text('Rows'), findsNothing);
   });
-}
-
-class _CountingTransactionsFake extends FakeFireflyService {
-  _CountingTransactionsFake({
-    required super.accounts,
-    required super.transactions,
-  }) : super(
-         transactionPages: {
-           1: TransactionPageResult(
-             transactions: transactions,
-             currentPage: 1,
-             totalPages: 1,
-             total: transactions.length,
-           ),
-         },
-       );
-
-  int accountReads = 0;
-  int transactionReads = 0;
-
-  @override
-  Future<List<Account>> getAccounts({
-    List<String> types = const ['asset', 'liability'],
-  }) async {
-    accountReads++;
-    return super.getAccounts(types: types);
-  }
-
-  @override
-  Future<List<Transaction>> getTransactions({
-    DateTime? start,
-    DateTime? end,
-    String? type,
-    void Function(List<Transaction> firstPage)? onFirstPage,
-    void Function(int loadedPages, int totalPages)? onPageProgress,
-  }) async {
-    transactionReads++;
-    return super.getTransactions(
-      start: start,
-      end: end,
-      type: type,
-      onFirstPage: onFirstPage,
-    );
-  }
-
-  @override
-  Future<TransactionPageResult> getTransactionsPage({
-    required int page,
-    required int limit,
-    DateTime? start,
-    DateTime? end,
-  }) async {
-    transactionReads++;
-    return super.getTransactionsPage(
-      page: page,
-      limit: limit,
-      start: start,
-      end: end,
-    );
-  }
 }

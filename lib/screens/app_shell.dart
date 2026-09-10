@@ -20,6 +20,7 @@ import '../providers/write_ahead_provider.dart';
 import '../l10n/l10n_extensions.dart';
 import '../utils/locale_formatting.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/firefly_refresh_button.dart';
 import '../widgets/insecure_connection_notice.dart';
 import '../widgets/view_mode_switch.dart';
 import '../widgets/person_selector_widget.dart';
@@ -1022,7 +1023,15 @@ class _HeaderState extends ConsumerState<_Header> {
               splashRadius: 20,
             ),
           ),
-          const ViewModeSwitcher(),
+          // The same account _RefreshableBody pulls off the route, so the
+          // header button and pull-to-refresh reach the same paginated
+          // instance on a view filtered to one account.
+          FireflyRefreshButton(
+            focusAccount: GoRouterState.of(context)
+                .uri
+                .queryParameters['account'],
+          ),
+          ViewModeSwitcher(showLabel: !isMobile),
         ],
       ),
     );

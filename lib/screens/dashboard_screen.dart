@@ -21,7 +21,6 @@ import '../utils/dashboard_navigation.dart';
 import '../utils/dashboard_period.dart';
 import '../utils/dashboard_stats.dart';
 import '../utils/display_labels.dart';
-import '../widgets/firefly_refresh_button.dart';
 import '../widgets/loading_body.dart';
 import '../widgets/not_connected_view.dart';
 import '../widgets/simple_charts.dart';
@@ -1095,7 +1094,6 @@ class _DashboardPeriodBar extends StatelessWidget {
             ),
           ),
         ),
-        FireflyRefreshButton(backgroundColor: colors.surface2),
       ],
     );
   }
