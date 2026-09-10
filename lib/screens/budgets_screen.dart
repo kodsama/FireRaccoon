@@ -599,39 +599,46 @@ class _BudgetCardState extends ConsumerState<_BudgetCard> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      fun.spent,
-                      style: TextStyle(color: colors.text3, fontSize: 12),
-                    ),
-                    widget.metricsLoading
-                        ? Text(
-                            '…',
-                            style: TextStyle(
-                              color: colors.text3,
-                              fontFamily: 'Roboto Slab',
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
+                // Both sides give way rather than overflow: a symbol made of
+                // letters carries a space now, and kr 16,880.00 / kr 20,000.00
+                // is wider than the row it used to fit in.
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        fun.spent,
+                        style: TextStyle(color: colors.text3, fontSize: 12),
+                      ),
+                      widget.metricsLoading
+                          ? Text(
+                              '…',
+                              style: TextStyle(
+                                color: colors.text3,
+                                fontFamily: 'Roboto Slab',
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            )
+                          : Text(
+                              format.formatMoney(spent, currencySymbol),
+                              style: const TextStyle(
+                                fontFamily: 'Roboto Slab',
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700,
+                              ),
                             ),
-                          )
-                        : Text(
-                            format.formatMoney(spent, currencySymbol),
-                            style: const TextStyle(
-                              fontFamily: 'Roboto Slab',
-                              fontSize: 20,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                  ],
+                    ],
+                  ),
                 ),
-                Text(
-                  limitLine,
-                  textAlign: TextAlign.end,
-                  style: TextStyle(
-                    color: colors.text2,
-                    fontWeight: FontWeight.w500,
+                Flexible(
+                  child: Text(
+                    limitLine,
+                    textAlign: TextAlign.end,
+                    style: TextStyle(
+                      color: colors.text2,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ],

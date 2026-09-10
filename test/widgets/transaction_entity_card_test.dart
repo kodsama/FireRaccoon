@@ -46,8 +46,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('+kr6,500.00'), findsOneWidget);
-      expect(find.textContaining('-kr6,500.00'), findsNothing);
+      expect(find.textContaining('+kr 6,500.00'), findsOneWidget);
+      expect(find.textContaining('-kr 6,500.00'), findsNothing);
     });
 
     testWidgets('shows transfer as negative on source account', (tester) async {
@@ -66,7 +66,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('-kr6,500.00'), findsOneWidget);
+      expect(find.textContaining('-kr 6,500.00'), findsOneWidget);
     });
 
     testWidgets('shows transfer as negative when no account filter', (
@@ -81,7 +81,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('-kr6,500.00'), findsOneWidget);
+      expect(find.textContaining('-kr 6,500.00'), findsOneWidget);
     });
 
     testWidgets('negative amount reverses signs for source and destination', (
@@ -103,7 +103,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('-kr6,500.00'), findsOneWidget);
+      expect(find.textContaining('-kr 6,500.00'), findsOneWidget);
 
       await tester.pumpWidget(
         await buildScreenTestApp(
@@ -115,7 +115,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('+kr6,500.00'), findsOneWidget);
+      expect(find.textContaining('+kr 6,500.00'), findsOneWidget);
     });
   });
 
@@ -135,8 +135,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('+kr6,500.00'), findsOneWidget);
-      expect(find.textContaining('-kr6,500.00'), findsNothing);
+      expect(find.textContaining('+kr 6,500.00'), findsOneWidget);
+      expect(find.textContaining('-kr 6,500.00'), findsNothing);
     });
 
     testWidgets('shows transfer as negative on source account', (tester) async {
@@ -152,7 +152,7 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('-kr6,500.00'), findsOneWidget);
+      expect(find.textContaining('-kr 6,500.00'), findsOneWidget);
     });
   });
 
@@ -188,8 +188,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('+kr40.00'), findsOneWidget);
-      expect(find.textContaining('+kr60.00'), findsOneWidget);
+      expect(find.textContaining('+kr 40.00'), findsOneWidget);
+      expect(find.textContaining('+kr 60.00'), findsOneWidget);
       expect(find.textContaining('-kr'), findsNothing);
 
       await tester.pumpWidget(
@@ -202,8 +202,8 @@ void main() {
       );
       await tester.pump();
 
-      expect(find.textContaining('-kr40.00'), findsOneWidget);
-      expect(find.textContaining('-kr60.00'), findsOneWidget);
+      expect(find.textContaining('-kr 40.00'), findsOneWidget);
+      expect(find.textContaining('-kr 60.00'), findsOneWidget);
     });
   });
 }

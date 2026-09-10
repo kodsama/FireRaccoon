@@ -144,6 +144,53 @@ void main() {
       expect(resolveExpenseDateRange(period: ExpensePeriod.all).start, isNull);
     });
 
+    test('last year is the year before this one', () {
+      final reference = DateTime(2026, 9, 10);
+      final range = resolveExpenseDateRange(
+        period: ExpensePeriod.lastYear,
+        reference: reference,
+      );
+
+      expect(range.start, DateTime(2025, 1, 1));
+      expect(range.end, DateTime(2026, 1, 1));
+    });
+
+    test('last three years includes the one being spent in', () {
+      // Each step down the menu covers everything the step above did. Read as
+      // the three finished years instead, this would leave out 2026 and a
+      // budget being spent against right now would vanish from it.
+      final reference = DateTime(2026, 9, 10);
+      final range = resolveExpenseDateRange(
+        period: ExpensePeriod.last3Years,
+        reference: reference,
+      );
+
+      expect(range.start, DateTime(2024, 1, 1));
+      expect(range.end, DateTime(2027, 1, 1));
+      expect(range.contains(DateTime(2026, 9, 10)), isTrue);
+      expect(range.contains(DateTime(2023, 12, 31)), isFalse);
+    });
+
+    test('the year options widen without gaps', () {
+      final reference = DateTime(2026, 9, 10);
+      final thisYear = resolveExpenseDateRange(
+        period: ExpensePeriod.year,
+        reference: reference,
+      );
+      final lastYear = resolveExpenseDateRange(
+        period: ExpensePeriod.lastYear,
+        reference: reference,
+      );
+      final three = resolveExpenseDateRange(
+        period: ExpensePeriod.last3Years,
+        reference: reference,
+      );
+
+      expect(lastYear.end, thisYear.start);
+      expect(three.start!.isBefore(lastYear.start!), isTrue);
+      expect(three.end, thisYear.end);
+    });
+
     test('custom range variants', () {
       final both = resolveExpenseDateRange(
         period: ExpensePeriod.month,

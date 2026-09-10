@@ -52,11 +52,21 @@ class LocaleFormatting {
     return _decimal(decimalDigits: decimalDigits).format(value);
   }
 
+  /// Separates an alphabetic symbol from the amount it prefixes.
+  ///
+  /// `kr16,880.00` runs together and reads as one token, so a symbol made of
+  /// letters takes a space. A punctuation symbol needs none and is worse with
+  /// one: nobody writes `€ 12.00`.
+  static String _symbolGap(String symbol) =>
+      _endsInALetter.hasMatch(symbol) ? ' ' : '';
+
+  static final _endsInALetter = RegExp(r'\p{L}$', unicode: true);
+
   /// Formats a monetary amount with the given symbol prefix (app convention).
   String formatMoney(double amount, String symbol, {int decimalDigits = 2}) {
     final formatted = formatNumber(amount.abs(), decimalDigits: decimalDigits);
     final sign = amount < 0 ? '-' : '';
-    return '$sign$symbol$formatted';
+    return '$sign$symbol${_symbolGap(symbol)}$formatted';
   }
 
   String formatSignedMoney(
@@ -65,7 +75,8 @@ class LocaleFormatting {
     int decimalDigits = 2,
   }) {
     final sign = amount >= 0 ? '+' : '-';
-    return '$sign$symbol${formatNumber(amount.abs(), decimalDigits: decimalDigits)}';
+    final formatted = formatNumber(amount.abs(), decimalDigits: decimalDigits);
+    return '$sign$symbol${_symbolGap(symbol)}$formatted';
   }
 
   String formatMonth(DateTime date) {

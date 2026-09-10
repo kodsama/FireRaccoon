@@ -979,6 +979,8 @@
   "expensePeriodQuarter": "This Quarter",
   "expensePeriodSemester": "This Semester",
   "expensePeriodYear": "This Year",
+  "expensePeriodLastYear": "Last Year",
+  "expensePeriodLast3Years": "Last 3 Years",
   "expensePeriodAll": "All Time",
   "dashboardPeriodThisWeek": "This week",
   "dashboardPeriodLastWeek": "Last week",

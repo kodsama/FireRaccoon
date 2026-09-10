@@ -3,7 +3,17 @@ import 'date_range.dart';
 
 String categoryGroupKey(String? name) => (name ?? '').trim();
 
-enum ExpensePeriod { week, month, lastMonth, quarter, semester, year, all }
+enum ExpensePeriod {
+  week,
+  month,
+  lastMonth,
+  quarter,
+  semester,
+  year,
+  lastYear,
+  last3Years,
+  all,
+}
 
 enum TransactionTypeFilter { all, expense, income, transfer }
 
@@ -84,6 +94,19 @@ DateRangeBounds resolveExpenseDateRange({
     case ExpensePeriod.year:
       return DateRangeBounds(
         start: DateTime(today.year, 1, 1),
+        end: DateTime(today.year + 1, 1, 1),
+      );
+    case ExpensePeriod.lastYear:
+      return DateRangeBounds(
+        start: DateTime(today.year - 1, 1, 1),
+        end: DateTime(today.year, 1, 1),
+      );
+    case ExpensePeriod.last3Years:
+      // This year and the two before it, so each step down the menu covers
+      // everything the step above did. Read as the three finished years
+      // instead, it would leave out the year being spent in.
+      return DateRangeBounds(
+        start: DateTime(today.year - 2, 1, 1),
         end: DateTime(today.year + 1, 1, 1),
       );
     case ExpensePeriod.all:

@@ -24,6 +24,27 @@ void main() {
       expect(formatting.formatSignedMoney(-5, '€'), '-€5.00');
     });
 
+    test('a symbol made of letters is separated from the amount', () {
+      // kr16,880.00 runs together and reads as one token.
+      expect(formatting.formatMoney(16880, 'kr'), 'kr 16,880.00');
+      expect(formatting.formatMoney(-3120, 'kr'), '-kr 3,120.00');
+      expect(formatting.formatSignedMoney(5, 'kr'), '+kr 5.00');
+      expect(formatting.formatMoney(1, 'SEK'), 'SEK 1.00');
+      expect(formatting.formatMoney(1, 'Kč'), 'Kč 1.00');
+    });
+
+    test('a punctuation symbol is not', () {
+      // Nobody writes € 12.00.
+      expect(formatting.formatMoney(12, '€'), '€12.00');
+      expect(formatting.formatMoney(12, '\$'), '\$12.00');
+      expect(formatting.formatMoney(12, '£'), '£12.00');
+      expect(formatting.formatMoney(12, '¥'), '¥12.00');
+    });
+
+    test('an absent symbol adds no stray space', () {
+      expect(formatting.formatMoney(12, ''), '12.00');
+    });
+
     test('formatMonth and short month labels', () {
       final date = DateTime(2026, 7, 6);
       expect(formatting.formatMonth(date), 'July');

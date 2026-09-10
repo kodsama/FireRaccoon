@@ -972,6 +972,8 @@
   "expensePeriodQuarter": "今四半期",
   "expensePeriodSemester": "今半期",
   "expensePeriodYear": "今年",
+  "expensePeriodLastYear": "昨年",
+  "expensePeriodLast3Years": "過去3年",
   "expensePeriodAll": "全期間",
   "dashboardPeriodThisWeek": "今週",
   "dashboardPeriodLastWeek": "先週",

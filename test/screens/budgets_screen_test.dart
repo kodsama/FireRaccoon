@@ -65,6 +65,32 @@ void main() {
     expect(find.textContaining('\u20ac'), findsNothing);
   });
 
+  testWidgets('the period menu offers the year spans before all time', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(child: const BudgetsScreen()),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('View period'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Last Year'), findsOneWidget);
+    expect(find.text('Last 3 Years'), findsOneWidget);
+
+    // Widening order, so each option covers everything above it and All Time
+    // stays last.
+    final lastYear = tester.getTopLeft(find.text('Last Year')).dy;
+    final three = tester.getTopLeft(find.text('Last 3 Years')).dy;
+    final allTime = tester.getTopLeft(find.text('All Time')).dy;
+    expect(lastYear, lessThan(three));
+    expect(three, lessThan(allTime));
+  });
+
   testWidgets('BudgetsScreen shows expanded budget transactions', (
     tester,
   ) async {
