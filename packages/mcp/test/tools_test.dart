@@ -1047,6 +1047,48 @@ void main() {
       expect(result['ok'], isTrue);
       expect(result['count'], 1);
     });
+
+    test('always asks for a window, and says which one', () async {
+      // Firefly computes spend only over a window it was given, and answers
+      // `spent: []` without one. That read as "nothing is attached to this
+      // budget" while 798 transactions were.
+      final seen = <Uri>[];
+      final result = await _tool(
+        'get_budgets',
+        client: fireflyMockClient(record: seen),
+      ).run({});
+
+      final asked = seen.firstWhere((uri) => uri.path == '/api/v1/budgets');
+      expect(asked.queryParameters['start'], isNotNull);
+      expect(asked.queryParameters['end'], isNotNull);
+      // A spend figure means nothing without the window it was measured over.
+      // Echoed as the caller's own range, whose end is exclusive everywhere in
+      // this surface; the inclusive end on the wire is a day earlier.
+      final window = result['window']! as Map<String, Object?>;
+      expect(window['start'], '1970-01-03');
+      expect(window['end'], '2038-01-16');
+    });
+
+    test('passes a window it was given', () async {
+      final seen = <Uri>[];
+      await _tool(
+        'get_budgets',
+        client: fireflyMockClient(record: seen),
+      ).run({'start_date': '2026-01-01', 'end_date': '2026-02-01'});
+
+      final asked = seen.firstWhere((uri) => uri.path == '/api/v1/budgets');
+      expect(asked.queryParameters['start'], '2026-01-01');
+      expect(asked.queryParameters['end'], '2026-01-31');
+    });
+
+    test('refuses a date it cannot read', () async {
+      final result = await _tool(
+        'get_budgets',
+        client: fireflyMockClient(),
+      ).run({'start_date': 'last Tuesday'});
+      expect(result['code'], 'bad_input');
+      expect('${result['error']}', contains('start_date'));
+    });
   });
 
   group('get_budget_transactions', () {

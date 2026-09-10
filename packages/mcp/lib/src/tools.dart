@@ -3301,15 +3301,42 @@ List<McpTool> buildTools({
     ),
     McpTool(
       name: 'get_budgets',
-      description: 'List all Firefly III budgets with spent amounts.',
-      inputSchema: const {'type': 'object', 'properties': {}},
+      description:
+          'List Firefly III budgets with what has been spent against them. '
+          'Firefly computes spend only over a window it was given, so one is '
+          'always sent: start_date and end_date when passed, the whole ledger '
+          'otherwise. The window used comes back in `window`, because a spend '
+          'figure means nothing without it.',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'start_date': {'type': 'string', 'description': 'YYYY-MM-DD.'},
+          'end_date': {'type': 'string', 'description': 'YYYY-MM-DD.'},
+        },
+      },
       run: (args) async {
+        final DateTime? start;
+        final DateTime? end;
+        try {
+          start = _optionalDate(args['start_date'], 'start_date');
+          end = _optionalDate(args['end_date'], 'end_date');
+        } on ArgumentError catch (e) {
+          return _badInput('${e.message}');
+        }
         final api = service();
-        final budgets = await api.getBudgets();
+        // Firefly answers `spent: []` to a budgets read carrying no window at
+        // all, and that read as "nothing is attached to this budget" while 798
+        // transactions were. A one-sided window is widened to the ledger edges
+        // on the way out, so both bounds absent is the one shape that computes
+        // nothing, and it was the only shape this tool could ask for.
+        final from = start ?? kFireflyLedgerStart;
+        final to = end ?? kFireflyLedgerEnd;
+        final budgets = await api.getBudgets(start: from, end: to);
         final primary = await api.getPrimaryCurrency();
         return {
           'ok': true,
           'count': budgets.length,
+          'window': {'start': _dateOnly(from), 'end': _dateOnly(to)},
           'budgets': [
             for (final budget in budgets) _budgetJson(budget, primary: primary),
           ],
