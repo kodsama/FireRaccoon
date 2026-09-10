@@ -783,6 +783,53 @@ void main() {
       expect(group.containsKey('splits'), isFalse);
     });
 
+    test('update_transaction sets a category on every leg of a group', () async {
+      // Thirteen rows once stayed behind a run that reported all 64 moved.
+      // The stated category resolved into the returned object's top-level
+      // fields, which serialisation never reads for a group: the legs are what
+      // go on the wire, and they were copied over verbatim.
+      final bodies = <String>[];
+      final result = await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '77', 'category_name': 'Lottery'});
+
+      final sent = jsonDecode(bodies.single) as Map<String, Object?>;
+      final legs = (sent['transactions'] as List).cast<Map<String, Object?>>();
+      expect(legs, hasLength(2));
+      expect(legs.map((l) => l['category_name']), ['Lottery', 'Lottery']);
+
+      // Each leg still says which journal it is, or Firefly would take them
+      // for new splits and delete the two it was asked to change.
+      expect(legs.map((l) => l['transaction_journal_id']), ['811', '812']);
+
+      // What belongs to a leg stays with that leg.
+      expect(legs.map((l) => l['amount']), ['1200.00', '25.00']);
+      expect(legs.map((l) => l['description']), ['Rent', 'Service fee']);
+      expect(result['ok'], isNotNull);
+    });
+
+    test('a description renames the group rather than its legs', () async {
+      final bodies = <String>[];
+      await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '77', 'description': 'Rent, February'});
+
+      final sent = jsonDecode(bodies.single) as Map<String, Object?>;
+      final legs = (sent['transactions'] as List).cast<Map<String, Object?>>();
+      expect(sent['group_title'], 'Rent, February');
+      // Overwriting "Rent" and "Service fee" with one string would be a worse
+      // bug than the one being fixed.
+      expect(legs.map((l) => l['description']), ['Rent', 'Service fee']);
+    });
+
     test('duplicate_transaction carries every leg of a split group', () async {
       // Regression: the copy was built from the top-level fields alone, so a
       // three-leg loan payment became one leg of the first leg's amount. The

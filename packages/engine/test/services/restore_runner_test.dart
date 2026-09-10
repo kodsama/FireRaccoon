@@ -202,6 +202,68 @@ void main() {
     expect((legs.last as Map)['description'], 'Wine');
   });
 
+  test(
+    'a restored leg does not claim the journal id it was backed up with',
+    () async {
+      // Every other id in a row goes through the live-id remap, because a
+      // backup's ids belong to the instance it was taken from. A journal id has
+      // no remap to go through: claimed on an instance that does not have it,
+      // Firefly answers 422, and on one that does it would rewrite somebody
+      // else's leg. Left off, Firefly writes new journals, which is what a
+      // restore wants.
+      final service = _recordingService();
+      final runner = RestoreRunner(service.api);
+
+      await runner.apply(
+        RestorePlan(
+          steps: [
+            _step(
+              type: 'transactions',
+              action: RestoreAction.create,
+              row: _transactionRow(
+                splits: [
+                  {
+                    'journal_id': '9001',
+                    'type': 'withdrawal',
+                    'date': '2026-01-15T00:00:00.000',
+                    'amount': 20.0,
+                    'description': 'Food',
+                    'source_id': '5',
+                    'destination_name': 'Store',
+                    'currency_code': 'EUR',
+                    'tags': const <String>[],
+                  },
+                  {
+                    'journal_id': '9002',
+                    'type': 'withdrawal',
+                    'date': '2026-01-15T00:00:00.000',
+                    'amount': 25.0,
+                    'description': 'Wine',
+                    'source_id': '5',
+                    'destination_name': 'Store',
+                    'currency_code': 'EUR',
+                    'tags': const <String>[],
+                  },
+                ],
+              ),
+            ),
+          ],
+          unrestorable: const [],
+        ),
+      );
+
+      final legs =
+          jsonDecode(service.calls.single.body)['transactions'] as List;
+      expect(legs, hasLength(2));
+      expect(
+        legs.every(
+          (leg) => !(leg as Map).containsKey('transaction_journal_id'),
+        ),
+        isTrue,
+      );
+    },
+  );
+
   test('an update writes the backup values over the live row', () async {
     final service = _recordingService();
     final runner = RestoreRunner(service.api);

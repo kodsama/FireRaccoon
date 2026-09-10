@@ -287,4 +287,78 @@ void main() {
       expect(split['destination_id'], '9102');
     });
   });
+
+  group('leg identity on an update', () {
+    Transaction group() => Transaction.fromJson({
+      'id': '77',
+      'attributes': {
+        'group_title': 'Rent and fees',
+        'transactions': [
+          {
+            'transaction_journal_id': '811',
+            'type': 'withdrawal',
+            'date': '2026-02-01',
+            'amount': '1200.00',
+            'description': 'Rent',
+            'source_name': 'Checking',
+            'destination_name': 'Landlord',
+            'currency_code': 'EUR',
+            'currency_symbol': '\u20ac',
+          },
+          {
+            'transaction_journal_id': '812',
+            'type': 'withdrawal',
+            'date': '2026-02-01',
+            'amount': '25.00',
+            'description': 'Service fee',
+            'source_name': 'Checking',
+            'destination_name': 'Landlord',
+            'currency_code': 'EUR',
+            'currency_symbol': '\u20ac',
+          },
+        ],
+      },
+    });
+
+    List<Object?> journalIds(Map<String, dynamic> payload) => [
+      for (final leg in payload['transactions'] as List)
+        (leg as Map<String, dynamic>)['transaction_journal_id'],
+    ];
+
+    test('an update addresses every leg by its journal id', () {
+      // Firefly matches a leg to a journal by this id alone. Without it the id
+      // reads as 0, the validator takes the leg for a new split, and the
+      // group's own journals are deleted as no longer present: an edit to a
+      // split group destroyed its legs and recreated them under new ids.
+      expect(journalIds(group().toApiPayload(isUpdate: true)), ['811', '812']);
+    });
+
+    test('a create claims none of them', () {
+      // A create or a duplicate carries legs copied from another group, and
+      // claiming their ids would rewrite that group instead of writing a new
+      // one.
+      expect(journalIds(group().toApiPayload()), [null, null]);
+    });
+
+    test('a leg Firefly never numbered sends no id', () {
+      final single = Transaction(
+        id: '1',
+        type: 'withdrawal',
+        date: DateTime(2026, 2, 1),
+        amount: 5,
+        description: 'Coffee',
+        sourceName: 'Checking',
+        destinationName: 'Cafe',
+        categoryName: '',
+        currencySymbol: '\u20ac',
+        currencyCode: 'EUR',
+      );
+      expect(
+        single
+            .toSplitJson(isUpdate: true)
+            .containsKey('transaction_journal_id'),
+        isFalse,
+      );
+    });
+  });
 }

@@ -512,11 +512,14 @@ List<String> _unappliedTransactionFields(
   String text(String key) => '${args[key]}'.trim();
 
   final missed = <String>[
-    // Not on a group: a group's description is its title, and Firefly keeps
-    // the legs' own, so a mismatch there says nothing about what was stored.
-    if (!saved.isSplitGroup &&
-        stated('description') &&
-        saved.description.trim() != text('description'))
+    // On a group a description is the group title, and the legs keep their
+    // own. Skipping the check entirely let a group-level rename answer ok
+    // while nothing moved.
+    if (stated('description') &&
+        (saved.isSplitGroup
+                ? (saved.groupTitle ?? '').trim()
+                : saved.description.trim()) !=
+            text('description'))
       'description',
     if (stated('category_name') &&
         saved.categoryName.toLowerCase() != text('category_name').toLowerCase())
@@ -637,6 +640,25 @@ Transaction _transactionFromArgs(
       (args['currency_code'] as String?) ?? base?.currencyCode ?? '';
   final currencySymbol = base?.currencySymbol ?? '';
 
+  // An empty string, or an empty tag list, is how a caller says "remove this".
+  // Left to the ordinary path it was indistinguishable from not mentioning the
+  // field at all, so a note could be set but never taken away.
+  const clearable = {
+    'notes': 'notes',
+    'category_name': 'category_name',
+    'category_id': 'category_id',
+    'budget_name': 'budget_name',
+    'budget_id': 'budget_id',
+    'bill_id': 'bill_id',
+    'piggy_bank_id': 'piggy_bank_id',
+    'tags': 'tags',
+  };
+  final cleared = <String>{
+    for (final entry in clearable.entries)
+      if (args.containsKey(entry.key) && _isEmptyValue(args[entry.key]))
+        entry.value,
+  };
+
   final splits = <Transaction>[
     if (legs.isNotEmpty)
       for (final (index, leg) in legs.indexed)
@@ -654,11 +676,30 @@ Transaction _transactionFromArgs(
     else if (copyingGroup)
       // A copy is not reconciled: nothing has been checked against a statement
       // yet, whatever was true of the original.
+      //
+      // Bookkeeping the caller stated for the group is applied to every leg.
+      // It used to resolve into the returned object's top-level fields only,
+      // where serialisation never looked: toApiPayload sends the legs, and a
+      // group's top-level fields merely mirror the first of them. copyWith
+      // keeps what it is passed null for, so an unmentioned field is left
+      // exactly as it was.
       for (final split in base!.resolvedSplits())
         split.copyWith(
           id: '0',
           date: date,
           reconciled: carryReconciled && split.reconciled,
+          categoryName: args['category_name'] as String?,
+          // Empty rather than null: toSplitJson leaves an empty id out, so
+          // Firefly resolves the name it was given instead of the id that
+          // name was meant to replace.
+          categoryId: _replacesId(args, 'category_name', 'category_id')
+              ? ''
+              : args['category_id'] as String?,
+          budgetId: args['budget_id'] as String?,
+          notes: args['notes'] as String?,
+          billId: args['bill_id'] as String?,
+          tags: args.containsKey('tags') ? _strList(args['tags']) : null,
+          clearedFields: cleared,
         ),
   ];
 
@@ -697,24 +738,6 @@ Transaction _transactionFromArgs(
   // sent the model default of false, so every edit silently threw away the
   // reconciliation the person had asserted, and a refresh was the first they
   // heard of it.
-  // An empty string, or an empty tag list, is how a caller says "remove this".
-  // Left to the ordinary path it was indistinguishable from not mentioning the
-  // field at all, so a note could be set but never taken away.
-  const clearable = {
-    'notes': 'notes',
-    'category_name': 'category_name',
-    'category_id': 'category_id',
-    'budget_name': 'budget_name',
-    'budget_id': 'budget_id',
-    'bill_id': 'bill_id',
-    'piggy_bank_id': 'piggy_bank_id',
-    'tags': 'tags',
-  };
-  final cleared = <String>{
-    for (final entry in clearable.entries)
-      if (args.containsKey(entry.key) && _isEmptyValue(args[entry.key]))
-        entry.value,
-  };
 
   final reconciled =
       (args['reconciled'] as bool?) ??
@@ -762,10 +785,13 @@ Transaction _transactionFromArgs(
     amount: amount,
     description: description,
     splits: splits,
+    // A stated description outranks the stored title: on a group it is the
+    // only thing a description can mean, and losing to base?.groupTitle made
+    // renaming one silently impossible.
     groupTitle: splits.length > 1
         ? (args['group_title'] as String?) ??
-              base?.groupTitle ??
               (args['description'] as String?) ??
+              base?.groupTitle ??
               description
         : null,
     // The model keeps the first leg in the top-level fields, so they mirror it
@@ -2515,7 +2541,9 @@ List<McpTool> buildTools({
       writes: true,
       description:
           'Update fields on an existing transaction. Anything omitted keeps its '
-          'current value.',
+          'current value. On a split group the bookkeeping fields apply to '
+          'every leg, each leg keeps its own amount, description and accounts, '
+          'and a description renames the group.',
       inputSchema: {
         'type': 'object',
         'required': ['transaction_id'],
@@ -2526,6 +2554,10 @@ List<McpTool> buildTools({
                 'Transaction group ID, as returned by get_transactions.',
           },
           ..._transactionFieldSchema(),
+          'group_title': {
+            'type': 'string',
+            'description': 'Title for a multi-leg group.',
+          },
         },
       },
       run: (args) async {

@@ -324,6 +324,19 @@ class Transaction {
       'description': description,
     };
 
+    // Firefly matches a submitted leg to an existing journal by this id.
+    // Absent, it reads as 0, which its validator accepts as a *new* split: the
+    // group then creates a replacement for every leg and destroys the ones it
+    // was asked to change. That is why a split group read as immutable, why
+    // marking one reconciled never stuck, and why a category move reported
+    // every row moved and left thirteen behind.
+    //
+    // Only on an update. A create or a duplicate carries legs copied from
+    // another group, and claiming their ids would rewrite that group instead.
+    if (isUpdate && (journalId?.isNotEmpty ?? false)) {
+      split['transaction_journal_id'] = journalId;
+    }
+
     if (!omitFinancials) {
       split['amount'] = amount.toStringAsFixed(2);
       split['currency_code'] = currencyCode;
