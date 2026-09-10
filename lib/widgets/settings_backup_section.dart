@@ -1,11 +1,13 @@
 import 'dart:convert';
 
+import '../utils/export_delivery.dart';
+import '../utils/app_feedback.dart';
+
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:share_plus/share_plus.dart';
 
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
@@ -14,7 +16,6 @@ import '../models/settings_bundle.dart';
 import '../providers/data_providers.dart';
 import '../providers/people_providers.dart';
 import '../providers/settings_export_import_provider.dart';
-import '../utils/app_feedback.dart';
 import '../utils/json_file_store.dart';
 import '../utils/settings_secrets_crypto.dart';
 import 'backup_passphrase_dialog.dart';
@@ -69,26 +70,16 @@ class SettingsBackupSection extends ConsumerWidget {
     final contents = await bundle.encodeSealed(passphrase);
     final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
     final fileName = 'fireraccoon_settings_$timestamp.json';
-    final path = await jsonStoreDocumentsPath(fileName);
-    await jsonStoreWrite(path, contents);
 
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(l10n.settingsExportedTo(path))));
-
-    await SharePlus.instance.share(
-      ShareParams(
-        text: l10n.settingsExportText,
-        subject: l10n.settingsExportSubject,
-        files: [
-          XFile.fromData(
-            utf8.encode(contents),
-            mimeType: 'application/json',
-            name: fileName,
-          ),
-        ],
-      ),
+    // Named after it lands, not before: on desktop the person chooses where.
+    final path = await deliverExportFile(
+      fileName: fileName,
+      contents: contents,
+      text: l10n.settingsExportText,
+      subject: l10n.settingsExportSubject,
     );
+    if (!context.mounted || path == null) return;
+    showInfoToast(context, l10n.settingsExportedTo(path));
   }
 
   /// Writes a snapshot of the Firefly data itself, which the settings bundle
@@ -174,7 +165,7 @@ class SettingsBackupSection extends ConsumerWidget {
     } on Object catch (error, stackTrace) {
       _log.severe('Settings import failed', error, stackTrace);
       if (!context.mounted) return;
-      showErrorToast(context, l10n.settingsImportFailed(error.toString()));
+      showErrorToast(context, l10n.settingsImportFailed(readableError(error)));
     }
   }
 

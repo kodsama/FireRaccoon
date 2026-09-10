@@ -96,6 +96,7 @@ const List<String> _writeToolNames = [
   'create_budget',
   'create_budget_limit',
   'update_budget_limit',
+  'delete_budget_limit',
   'create_bill',
   'update_bill',
   'delete_bill',
@@ -318,7 +319,13 @@ Map<String, Object?> _transactionJson(
   'type': transaction.type,
   'date': _dateOnly(transaction.date),
   'amount': transaction.totalAmount,
-  'description': transaction.description,
+  // A group's title, not whichever leg Firefly happened to return first.
+  // The order is not stable between reads, so this changed on its own and
+  // looked briefly as though a write had corrupted the row. The legs carry
+  // their own descriptions in `splits`.
+  'description': transaction.isSplitGroup
+      ? (transaction.groupTitle ?? transaction.description)
+      : transaction.description,
   'group_title': transaction.groupTitle,
   'source_id': transaction.sourceId,
   'source_name': transaction.sourceName,
@@ -378,7 +385,27 @@ List<Transaction> _filterByReconciled(
       .toList();
 }
 
-Map<String, Object?> _budgetJson(Budget budget) => {
+/// Firefly leaves a budget's auto-budget currency unset unless somebody chose
+/// one, and reports nothing for it. The amounts are in the ledger's primary
+/// currency then, so that is what gets reported: a budget list that claimed
+/// euro against a krona ledger was actively misleading.
+/// The enabled currency carrying [code], or null when none does.
+///
+/// Firefly accepts `auto_budget_currency_code` on a budget and stores nothing
+/// from it; the id is the field it reads. A code the caller gave has to be
+/// resolved before it can move a budget off the currency it is on.
+Future<FireflyCurrency?> _currencyByCode(
+  FireflyService api,
+  String code,
+) async {
+  final wanted = code.trim().toUpperCase();
+  if (wanted.isEmpty) return null;
+  return (await api.getCurrencies())
+      .where((currency) => currency.code.toUpperCase() == wanted)
+      .firstOrNull;
+}
+
+Map<String, Object?> _budgetJson(Budget budget, {FireflyCurrency? primary}) => {
   'id': budget.id,
   'name': budget.name,
   'active': budget.active,
@@ -387,8 +414,8 @@ Map<String, Object?> _budgetJson(Budget budget) => {
   'auto_budget_amount': budget.autoBudgetAmount,
   'auto_budget_type': budget.autoBudgetType.apiValue,
   'auto_budget_period': budget.autoBudgetPeriod?.apiValue,
-  'currency_symbol': budget.currencySymbol,
-  'currency_code': budget.currencyCode,
+  'currency_symbol': budget.currencySymbol ?? primary?.symbol,
+  'currency_code': budget.currencyCode ?? primary?.code,
 };
 
 /// Formats the calendar date, not the UTC one.
@@ -482,6 +509,68 @@ bool _isEmptyValue(Object? value) {
   return false;
 }
 
+/// Whether [args] states [nameKey] as the replacement for [idKey].
+///
+/// Firefly resolves an id in preference to a name, so an id the caller never
+/// mentioned has to be dropped rather than sent alongside the new name. An
+/// empty name is a clear, which the cleared-fields path handles instead.
+bool _replacesId(Map<String, Object?> args, String nameKey, String idKey) =>
+    args.containsKey(nameKey) &&
+    !_isEmptyValue(args[nameKey]) &&
+    !args.containsKey(idKey);
+
+/// Fields the caller stated that the stored transaction does not carry.
+///
+/// Firefly answers 200 to a write it declined in part. A reconciled journal
+/// keeps its amounts, a category named beside an id keeps the id, and some
+/// fields on a split group only ever land on its legs. An echo of the request
+/// cannot tell any of that from a change, so what came back is what gets
+/// compared: thirteen rows once stayed behind a run that reported all of them
+/// moved and none failed.
+List<String> _unappliedTransactionFields(
+  Map<String, Object?> args,
+  Transaction saved,
+) {
+  // A restated group is compared leg by leg or not at all: the top-level
+  // fields mirror the first leg, so they say nothing about the rest.
+  if (args['splits'] is List) return const [];
+
+  bool stated(String key) => args.containsKey(key) && !_isEmptyValue(args[key]);
+  String text(String key) => '${args[key]}'.trim();
+
+  final missed = <String>[
+    // On a group a description is the group title, and the legs keep their
+    // own. Skipping the check entirely let a group-level rename answer ok
+    // while nothing moved.
+    if (stated('description') &&
+        (saved.isSplitGroup
+                ? (saved.groupTitle ?? '').trim()
+                : saved.description.trim()) !=
+            text('description'))
+      'description',
+    if (stated('category_name') &&
+        saved.categoryName.toLowerCase() != text('category_name').toLowerCase())
+      'category_name',
+    if (stated('category_id') && saved.categoryId != text('category_id'))
+      'category_id',
+    if (stated('budget_id') && saved.budgetId != text('budget_id')) 'budget_id',
+    if (stated('notes') && (saved.notes ?? '').trim() != text('notes')) 'notes',
+    if (args['amount'] is num &&
+        ((args['amount'] as num).toDouble() - saved.amount).abs() > 0.005)
+      'amount',
+    if (args['reconciled'] is bool && saved.reconciled != args['reconciled'])
+      'reconciled',
+  ];
+
+  if (stated('date')) {
+    final asked = _optionalDate(args['date'], 'date');
+    if (asked != null && _dateOnly(asked) != _dateOnly(saved.date)) {
+      missed.add('date');
+    }
+  }
+  return missed;
+}
+
 Transaction _splitFromArgs(
   Map<String, Object?> leg,
   Map<String, Object?> args, {
@@ -492,6 +581,14 @@ Transaction _splitFromArgs(
   required int index,
 }) {
   String? pick(String key) => (leg[key] as String?) ?? (args[key] as String?);
+
+  // A leg naming its own category must not inherit the group's id, which
+  // Firefly would resolve in preference to the name.
+  String? pickCategoryId() =>
+      (leg['category_id'] as String?) ??
+      (_replacesId(leg, 'category_name', 'category_id')
+          ? null
+          : args['category_id'] as String?);
 
   final amount = (leg['amount'] as num?)?.toDouble();
   if (amount == null || amount <= 0) {
@@ -515,7 +612,7 @@ Transaction _splitFromArgs(
     currencyCode: (leg['currency_code'] as String?) ?? currencyCode,
     sourceId: pick('source_id'),
     destinationId: pick('destination_id'),
-    categoryId: pick('category_id'),
+    categoryId: pickCategoryId(),
     budgetId: pick('budget_id'),
     billId: pick('bill_id'),
     notes: pick('notes'),
@@ -570,6 +667,25 @@ Transaction _transactionFromArgs(
       (args['currency_code'] as String?) ?? base?.currencyCode ?? '';
   final currencySymbol = base?.currencySymbol ?? '';
 
+  // An empty string, or an empty tag list, is how a caller says "remove this".
+  // Left to the ordinary path it was indistinguishable from not mentioning the
+  // field at all, so a note could be set but never taken away.
+  const clearable = {
+    'notes': 'notes',
+    'category_name': 'category_name',
+    'category_id': 'category_id',
+    'budget_name': 'budget_name',
+    'budget_id': 'budget_id',
+    'bill_id': 'bill_id',
+    'piggy_bank_id': 'piggy_bank_id',
+    'tags': 'tags',
+  };
+  final cleared = <String>{
+    for (final entry in clearable.entries)
+      if (args.containsKey(entry.key) && _isEmptyValue(args[entry.key]))
+        entry.value,
+  };
+
   final splits = <Transaction>[
     if (legs.isNotEmpty)
       for (final (index, leg) in legs.indexed)
@@ -587,11 +703,30 @@ Transaction _transactionFromArgs(
     else if (copyingGroup)
       // A copy is not reconciled: nothing has been checked against a statement
       // yet, whatever was true of the original.
+      //
+      // Bookkeeping the caller stated for the group is applied to every leg.
+      // It used to resolve into the returned object's top-level fields only,
+      // where serialisation never looked: toApiPayload sends the legs, and a
+      // group's top-level fields merely mirror the first of them. copyWith
+      // keeps what it is passed null for, so an unmentioned field is left
+      // exactly as it was.
       for (final split in base!.resolvedSplits())
         split.copyWith(
           id: '0',
           date: date,
           reconciled: carryReconciled && split.reconciled,
+          categoryName: args['category_name'] as String?,
+          // Empty rather than null: toSplitJson leaves an empty id out, so
+          // Firefly resolves the name it was given instead of the id that
+          // name was meant to replace.
+          categoryId: _replacesId(args, 'category_name', 'category_id')
+              ? ''
+              : args['category_id'] as String?,
+          budgetId: args['budget_id'] as String?,
+          notes: args['notes'] as String?,
+          billId: args['bill_id'] as String?,
+          tags: args.containsKey('tags') ? _strList(args['tags']) : null,
+          clearedFields: cleared,
         ),
   ];
 
@@ -630,24 +765,6 @@ Transaction _transactionFromArgs(
   // sent the model default of false, so every edit silently threw away the
   // reconciliation the person had asserted, and a refresh was the first they
   // heard of it.
-  // An empty string, or an empty tag list, is how a caller says "remove this".
-  // Left to the ordinary path it was indistinguishable from not mentioning the
-  // field at all, so a note could be set but never taken away.
-  const clearable = {
-    'notes': 'notes',
-    'category_name': 'category_name',
-    'category_id': 'category_id',
-    'budget_name': 'budget_name',
-    'budget_id': 'budget_id',
-    'bill_id': 'bill_id',
-    'piggy_bank_id': 'piggy_bank_id',
-    'tags': 'tags',
-  };
-  final cleared = <String>{
-    for (final entry in clearable.entries)
-      if (args.containsKey(entry.key) && _isEmptyValue(args[entry.key]))
-        entry.value,
-  };
 
   final reconciled =
       (args['reconciled'] as bool?) ??
@@ -695,10 +812,13 @@ Transaction _transactionFromArgs(
     amount: amount,
     description: description,
     splits: splits,
+    // A stated description outranks the stored title: on a group it is the
+    // only thing a description can mean, and losing to base?.groupTitle made
+    // renaming one silently impossible.
     groupTitle: splits.length > 1
         ? (args['group_title'] as String?) ??
-              base?.groupTitle ??
               (args['description'] as String?) ??
+              base?.groupTitle ??
               description
         : null,
     // The model keeps the first leg in the top-level fields, so they mirror it
@@ -730,10 +850,15 @@ Transaction _transactionFromArgs(
         leadingLeg?.destinationId ??
         (args['destination_id'] as String?) ??
         base?.destinationId,
+    // A name the caller stated wins over the id it replaces. Sending the new
+    // name beside the old id left Firefly resolving the id and discarding the
+    // name, so recategorising by name reported success and changed nothing.
     categoryId:
         leadingLeg?.categoryId ??
         (args['category_id'] as String?) ??
-        base?.categoryId,
+        (_replacesId(args, 'category_name', 'category_id')
+            ? null
+            : base?.categoryId),
     budgetId:
         leadingLeg?.budgetId ??
         (args['budget_id'] as String?) ??
@@ -959,6 +1084,10 @@ Map<String, Object?> _piggyJson(PiggyBank piggy) => {
   'left_to_save': piggy.leftToSave,
   'currency_code': piggy.currencyCode,
   'start_date': _dateOnly(piggy.startDate),
+  // Never reported, which is why five piggy banks with target dates set all
+  // looked as though they had none. The model has parsed it all along.
+  'target_date': piggy.targetDate == null ? null : _dateOnly(piggy.targetDate!),
+  'notes': piggy.notes,
 };
 
 Map<String, Object?> _piggyFieldSchema() => {
@@ -1009,8 +1138,14 @@ Future<PiggyBankInput> _piggyInput(
         (await api.getPrimaryCurrency()).code,
     accountIds: accountIds,
     startDate: start,
-    targetDate: _optionalDate(args['target_date'], 'target_date'),
-    notes: args['notes'] as String?,
+    // Both fall back to what is already there. Without it an update that
+    // never mentioned them wiped them, against this tool's own promise that an
+    // omitted field keeps its value. Clearing one is not expressible: an empty
+    // string parses to null and falls through to the stored value, and piggy
+    // banks have no cleared-fields set the way transactions do.
+    targetDate:
+        _optionalDate(args['target_date'], 'target_date') ?? base?.targetDate,
+    notes: args['notes'] as String? ?? base?.notes,
   );
 }
 
@@ -1049,7 +1184,13 @@ Map<String, Object?> _pageJson(TransactionPageResult result) => {
   'pagination': {
     'current_page': result.currentPage,
     'total_pages': result.totalPages,
+    // Firefly counts journals here while the rows are groups, so a split
+    // group of three legs counts three and returns one. `count` is the rows
+    // in this response, which is what a caller comparing the two wants: the
+    // difference reads like a truncated page and is not one.
+    'count': result.transactions.length,
     'total': result.total,
+    'total_counts_journals': true,
   },
   'transactions': result.transactions.map(_transactionJson).toList(),
 };
@@ -1358,7 +1499,11 @@ List<McpTool> buildTools({
   BackupStore? backups,
   String? appVersion,
 }) {
-  FireflyService service() {
+  /// [requestTimeout] and [readMaxAttempts] are for a read that walks the
+  /// whole ledger, which needs a ceiling the ordinary one would kill. Left
+  /// alone for everything else, including every write: a long ceiling on a
+  /// write buys nothing and delays the report that it failed.
+  FireflyService service({Duration? requestTimeout, int? readMaxAttempts}) {
     if (!target.isConfigured) {
       throw const FireflyNotConnectedException(
         'No Firefly connection: start the server with FIRERACCOON_URL and '
@@ -1369,13 +1514,21 @@ List<McpTool> buildTools({
       serverUrl: target.normalizedBaseUrl,
       apiToken: target.bearer,
       client: _proxyClient(httpClient, target),
+      requestTimeout: requestTimeout ?? kFireflyRequestTimeout,
+      readMaxAttempts: readMaxAttempts ?? 3,
     );
   }
+
+  /// A client for a whole-ledger read.
+  FireflyService ledgerWalkService() => service(
+    requestTimeout: kFireflyLedgerWalkTimeout,
+    readMaxAttempts: kFireflyLedgerWalkAttempts,
+  );
 
   /// Null where nothing can keep a backup, which is every client that reaches
   /// Firefly directly rather than through FireRaccoon.
   BackupService? backupService() =>
-      backups == null ? null : BackupService(service(), backups);
+      backups == null ? null : BackupService(ledgerWalkService(), backups);
 
   /// One authenticated GET against the configured Firefly, or null when the
   /// server could not be reached at all.
@@ -2443,7 +2596,9 @@ List<McpTool> buildTools({
       writes: true,
       description:
           'Update fields on an existing transaction. Anything omitted keeps its '
-          'current value.',
+          'current value. On a split group the bookkeeping fields apply to '
+          'every leg, each leg keeps its own amount, description and accounts, '
+          'and a description renames the group.',
       inputSchema: {
         'type': 'object',
         'required': ['transaction_id'],
@@ -2454,6 +2609,10 @@ List<McpTool> buildTools({
                 'Transaction group ID, as returned by get_transactions.',
           },
           ..._transactionFieldSchema(),
+          'group_title': {
+            'type': 'string',
+            'description': 'Title for a multi-leg group.',
+          },
         },
       },
       run: (args) async {
@@ -2476,8 +2635,16 @@ List<McpTool> buildTools({
           return _badInput('${e.message}');
         }
         final saved = await api.updateTransaction(updated);
+        final ignored = _unappliedTransactionFields(args, saved);
         return {
-          'ok': true,
+          'ok': ignored.isEmpty,
+          if (ignored.isNotEmpty) 'code': 'not_applied',
+          if (ignored.isNotEmpty)
+            'error':
+                'Firefly III accepted the update and did not store '
+                '${ignored.join(', ')}. This is what a reconciled journal or a '
+                'split group does with fields it will not take. The '
+                'transaction as it now stands is in `transaction`.',
           'transaction_id': saved.id,
           'transaction': _transactionJson(saved, withSplits: true),
         };
@@ -2599,7 +2766,7 @@ List<McpTool> buildTools({
         }
 
         final snapshot = await DataExportService(
-          service(),
+          ledgerWalkService(),
         ).export(from: start, to: inclusiveEnd?.add(const Duration(days: 1)));
         final countsOnly = args['counts_only'] as bool? ?? false;
         final json = snapshot.toJson();
@@ -2942,7 +3109,10 @@ List<McpTool> buildTools({
         }
 
         final types = _strList(args['types']).toSet();
-        final current = await DataExportService(api)
+        // The whole ledger, read immediately before destructive writes, so it
+        // is the last read that should die on the ordinary ceiling. `api`
+        // keeps that ceiling for the writes below.
+        final current = await DataExportService(ledgerWalkService())
             .export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
         final plan = planRestore(
           backup: snapshot,
@@ -3169,15 +3339,45 @@ List<McpTool> buildTools({
     ),
     McpTool(
       name: 'get_budgets',
-      description: 'List all Firefly III budgets with spent amounts.',
-      inputSchema: const {'type': 'object', 'properties': {}},
+      description:
+          'List Firefly III budgets with what has been spent against them. '
+          'Firefly computes spend only over a window it was given, so one is '
+          'always sent: start_date and end_date when passed, the whole ledger '
+          'otherwise. The window used comes back in `window`, because a spend '
+          'figure means nothing without it.',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'start_date': {'type': 'string', 'description': 'YYYY-MM-DD.'},
+          'end_date': {'type': 'string', 'description': 'YYYY-MM-DD.'},
+        },
+      },
       run: (args) async {
+        final DateTime? start;
+        final DateTime? end;
+        try {
+          start = _optionalDate(args['start_date'], 'start_date');
+          end = _optionalDate(args['end_date'], 'end_date');
+        } on ArgumentError catch (e) {
+          return _badInput('${e.message}');
+        }
         final api = service();
-        final budgets = await api.getBudgets();
+        // Firefly answers `spent: []` to a budgets read carrying no window at
+        // all, and that read as "nothing is attached to this budget" while 798
+        // transactions were. A one-sided window is widened to the ledger edges
+        // on the way out, so both bounds absent is the one shape that computes
+        // nothing, and it was the only shape this tool could ask for.
+        final from = start ?? kFireflyLedgerStart;
+        final to = end ?? kFireflyLedgerEnd;
+        final budgets = await api.getBudgets(start: from, end: to);
+        final primary = await api.getPrimaryCurrency();
         return {
           'ok': true,
           'count': budgets.length,
-          'budgets': budgets.map(_budgetJson).toList(),
+          'window': {'start': _dateOnly(from), 'end': _dateOnly(to)},
+          'budgets': [
+            for (final budget in budgets) _budgetJson(budget, primary: primary),
+          ],
         };
       },
     ),
@@ -3222,7 +3422,13 @@ List<McpTool> buildTools({
           'name': {'type': 'string'},
           'type': {
             'type': 'string',
-            'enum': ['asset', 'expense', 'revenue', 'liability'],
+            'enum': [
+              'asset',
+              'expense',
+              'revenue',
+              'liability',
+              'reconciliation',
+            ],
           },
           'iban': {'type': 'string'},
           'bic': {'type': 'string'},
@@ -3425,6 +3631,41 @@ List<McpTool> buildTools({
         final autoBudgetType = args.containsKey('auto_budget_type')
             ? AutoBudgetType.parse(args['auto_budget_type'] as String?)
             : existing.autoBudgetType;
+        // Firefly has no way to take an auto-budget off a budget that has
+        // one: `none` is refused with an amount and refused without one, so
+        // the keys are omitted and the old schedule survives untouched. Saying
+        // that beats reporting the success of a write that changed nothing.
+        if (amount <= 0 &&
+            autoBudgetType == AutoBudgetType.none &&
+            existing.autoBudgetType != AutoBudgetType.none) {
+          return {
+            'ok': false,
+            'code': 'not_supported',
+            'error':
+                'Firefly III cannot clear an auto-budget through its API, so '
+                'the existing ${existing.autoBudgetType.apiValue} '
+                '${existing.autoBudgetAmount.toStringAsFixed(2)} '
+                '${existing.currencyCode} would have stayed in place. Remove '
+                'it in the Firefly III interface instead.',
+          };
+        }
+
+        // Firefly reads the currency id and ignores the code, so a code has to
+        // be resolved before it can move a budget off its current currency.
+        final requestedCode = (args['currency_code'] as String?)?.toUpperCase();
+        String? currencyId;
+        if (requestedCode != null) {
+          currencyId = (await _currencyByCode(api, requestedCode))?.id;
+          if (currencyId == null) {
+            return _badInput('No enabled currency with code $requestedCode');
+          }
+        }
+        // What the figures are in when the budget itself names nothing.
+        final primary = await api.getPrimaryCurrency();
+
+        final period =
+            AutoBudgetPeriod.parse(args['auto_budget_period'] as String?) ??
+            existing.autoBudgetPeriod;
         final input = BudgetInput(
           name: name,
           active: args['active'] as bool? ?? existing.active,
@@ -3435,20 +3676,85 @@ List<McpTool> buildTools({
                     : autoBudgetType)
               : AutoBudgetType.none,
           autoBudgetAmount: amount,
-          autoBudgetPeriod:
-              AutoBudgetPeriod.parse(args['auto_budget_period'] as String?) ??
-              existing.autoBudgetPeriod,
+          autoBudgetPeriod: period,
           // The budget's own currency, never a hardcoded EUR: an instance whose
           // primary is not EUR would have had its budget redenominated.
-          currencyCode:
-              args['currency_code'] as String? ?? existing.currencyCode,
+          currencyCode: requestedCode ?? existing.currencyCode ?? primary.code,
+          currencyId: currencyId,
         );
-        await api.updateBudget(budgetId, input);
+        final stored = await api.updateBudget(budgetId, input);
+
+        // The stored budget against what was asked for. Firefly answers 200 to
+        // fields it never wrote, and an echo of the request cannot tell that
+        // apart from a change, which is how a redenomination that did nothing
+        // read as a success.
+        final ignored = <String>[
+          if (requestedCode != null &&
+              (stored.currencyCode ?? primary.code) != requestedCode)
+            'currency_code',
+          if (args.containsKey('amount') && stored.autoBudgetAmount != amount)
+            'amount',
+          if (args.containsKey('auto_budget_period') &&
+              stored.autoBudgetPeriod != period)
+            'auto_budget_period',
+          if (stored.name != name) 'name',
+        ];
+
+        // Changing the rule does not move the limit already in force for a
+        // period, and that is deliberate on Firefly's side: rollover and
+        // adjusted compute a limit from what the previous period left or
+        // overspent, and a person can set one by hand. Overwriting it from an
+        // amount change would destroy a figure nobody asked to change, on a
+        // call whose contract is that omitted fields keep their value. So it
+        // is reported instead: a budget reading 220,000 whose live limit still
+        // reads 100,000 is the kind of thing you find out months later.
+        //
+        // Not a failure, and not `not_applied`: the amount did land, and that
+        // code means Firefly dropped a field it was given.
+        final unchangedLimits = <Map<String, Object?>>[];
+        if (args.containsKey('amount') && stored.autoBudgetAmount == amount) {
+          try {
+            final today = DateTime.now();
+            final inForce = await api.getBudgetLimits(
+              budgetId,
+              start: today,
+              end: today,
+            );
+            for (final limit in inForce) {
+              if ((limit.amount - amount).abs() > 0.005) {
+                unchangedLimits.add({
+                  'limit_id': limit.id,
+                  'start_date': _dateOnly(limit.start),
+                  'end_date': _dateOnly(limit.end),
+                  'amount': limit.amount,
+                  'currency_code': limit.currencyCode,
+                });
+              }
+            }
+          } on Object {
+            // A throw here would report a write that landed as a failure.
+          }
+        }
+
         return {
-          'ok': true,
+          'ok': ignored.isEmpty,
+          if (ignored.isNotEmpty) 'code': 'not_applied',
+          if (ignored.isNotEmpty)
+            'error':
+                'Firefly III accepted the update and did not store '
+                '${ignored.join(', ')}. The budget as it now stands is in '
+                '`budget`.',
           'budget_id': budgetId,
-          'name': name,
-          'amount': amount,
+          'budget': _budgetJson(stored, primary: primary),
+          if (unchangedLimits.isNotEmpty) ...{
+            'period_limits_unchanged': unchangedLimits,
+            'note':
+                'The auto-budget amount changed. The budget limit in force for '
+                'this period keeps its own amount, which Firefly III does not '
+                'rewrite from the rule, so tracking for the current period '
+                'still uses the figure above. Change it with '
+                'update_budget_limit, or remove it with delete_budget_limit.',
+          },
         };
       },
     ),
@@ -3576,7 +3882,15 @@ List<McpTool> buildTools({
         if (currency == null || currency.isEmpty) {
           return _badInput('currency_code is required');
         }
-        const accountTypes = ['asset', 'expense', 'revenue', 'liability'];
+        const accountTypes = [
+          'asset',
+          'expense',
+          'revenue',
+          'liability',
+          // Firefly makes these only from its own interface, and a
+          // reconciliation correction has to name one that exists.
+          'reconciliation',
+        ];
         if (!accountTypes.contains(type)) {
           return _badInput('type must be one of ${accountTypes.join(', ')}');
         }
@@ -3651,6 +3965,15 @@ List<McpTool> buildTools({
         final requested = AutoBudgetType.parse(
           args['auto_budget_type'] as String?,
         );
+        // What the amount is in when the caller names no currency.
+        final primary = await api.getPrimaryCurrency();
+        final requestedCode = args['currency_code'] as String?;
+        final currency = requestedCode == null
+            ? null
+            : await _currencyByCode(api, requestedCode);
+        if (requestedCode != null && currency == null) {
+          return _badInput('No enabled currency with code $requestedCode');
+        }
         final created = await api.createBudget(
           BudgetInput(
             name: name,
@@ -3665,12 +3988,13 @@ List<McpTool> buildTools({
             autoBudgetPeriod: AutoBudgetPeriod.parse(
               args['auto_budget_period'] as String?,
             ),
-            currencyCode:
-                args['currency_code'] as String? ??
-                (await api.getPrimaryCurrency()).code,
+            currencyCode: currency?.code ?? primary.code,
+            // Without the id Firefly keeps the instance default, which is how
+            // every budget on this ledger stayed euro.
+            currencyId: currency?.id,
           ),
         );
-        return {'ok': true, 'budget': _budgetJson(created)};
+        return {'ok': true, 'budget': _budgetJson(created, primary: primary)};
       },
     ),
     McpTool(
@@ -3789,6 +4113,42 @@ List<McpTool> buildTools({
         }
         await api.updateBudgetLimit(id, limitId, input);
         return {'ok': true, 'budget_id': id, 'limit_id': limitId};
+      },
+    ),
+    McpTool(
+      name: 'delete_budget_limit',
+      writes: true,
+      description:
+          'Delete one budget limit. Permanent, and the spending it tracked is '
+          'left where it is: the transactions are untouched, they simply stop '
+          'counting against a limit for that period. Needed to move a budget '
+          'between cadences, since the limits it already has stay behind and '
+          'a new one alongside them double-counts the period.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['budget_id', 'limit_id'],
+        'properties': {
+          'budget_id': {'type': 'string'},
+          'limit_id': {
+            'type': 'string',
+            'description': 'As returned by get_budget_limits.',
+          },
+        },
+      },
+      run: (args) async {
+        final id = (args['budget_id'] as String?)?.trim();
+        final limitId = (args['limit_id'] as String?)?.trim();
+        if (id == null || id.isEmpty) return _badInput('budget_id is required');
+        if (limitId == null || limitId.isEmpty) {
+          return _badInput('limit_id is required');
+        }
+        await service().deleteBudgetLimit(id, limitId);
+        return {
+          'ok': true,
+          'budget_id': id,
+          'limit_id': limitId,
+          'deleted': true,
+        };
       },
     ),
     McpTool(

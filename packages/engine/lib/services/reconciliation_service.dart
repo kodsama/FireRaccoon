@@ -25,6 +25,10 @@ class ReconciliationService {
 
     Transaction? correction;
     if (createCorrection && gap.abs() > tolerance) {
+      await _ensureReconciliationAccount(
+        accountName: accountName,
+        currencyCode: currencyCode,
+      );
       correction = await _api.createTransaction(
         buildReconciliationCorrection(
           accountId: accountId,
@@ -45,6 +49,33 @@ class ReconciliationService {
 
   /// Marks [journalsToReconcile] reconciled and creates a Platinum-style
   /// multi-split payback transfer from [paymentAccount] to [creditCard].
+  /// Makes the `<account> reconciliation` account a correction refers to, if
+  /// Firefly has not.
+  ///
+  /// Firefly creates one only from its own interface, so on a ledger that has
+  /// never reconciled this account there is nothing for the correction to name
+  /// and the write is refused. Nothing in the API surface made one either,
+  /// which left the correction impossible rather than merely awkward.
+  ///
+  /// Asked for by type, because a plain account read covers asset and
+  /// liability only and would not see an existing one.
+  Future<void> _ensureReconciliationAccount({
+    required String accountName,
+    required String currencyCode,
+  }) async {
+    final wanted = reconciliationAccountName(accountName);
+    final existing = await _api.getAccounts(types: const ['reconciliation']);
+    final already = existing.any(
+      (account) => account.name.toLowerCase() == wanted.toLowerCase(),
+    );
+    if (already) return;
+    await _api.createAccount(
+      name: wanted,
+      type: 'reconciliation',
+      currencyCode: currencyCode,
+    );
+  }
+
   Future<ReconciliationStoreResult> storeCreditCardPayback({
     required List<Transaction> journalsToReconcile,
     required Account creditCard,

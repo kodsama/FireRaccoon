@@ -26,6 +26,31 @@ void main() {
   });
 
   group('requireEncryptedTransport', () {
+    test('lets through an address the server is the one to dial', () {
+      // The internal backend is the only address that works in a server
+      // deployment, and it is exactly the address this refusal blocked. The
+      // browser talks to its own origin; nothing in this process opens the
+      // plain-http connection being named.
+      expect(
+        () => requireEncryptedTransport(
+          'http://Firefly-III:8080',
+          allowInsecure: false,
+          dialledByServer: true,
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('still refuses it when this process does the dialling', () {
+      expect(
+        () => requireEncryptedTransport(
+          'http://Firefly-III:8080',
+          allowInsecure: false,
+        ),
+        throwsA(isA<InsecureTransportRefused>()),
+      );
+    });
+
     test('refuses plain http unless it was chosen', () {
       expect(
         () => requireEncryptedTransport(

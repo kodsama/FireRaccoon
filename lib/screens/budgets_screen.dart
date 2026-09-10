@@ -13,6 +13,7 @@ import '../providers/theme_provider.dart';
 import '../router/budgets_route.dart';
 import '../router/route_navigation.dart';
 import '../router/route_query.dart';
+import '../utils/app_feedback.dart';
 import '../utils/search_filter.dart';
 import '../utils/create_flows.dart';
 import '../widgets/budget_form_dialog.dart';
@@ -309,16 +310,17 @@ String _budgetInfoLine({
   required BudgetPeriodMetrics metrics,
   required AppLocalizations l10n,
   required LocaleFormatting format,
+  required String currencySymbol,
 }) {
   final cadence = _budgetCadenceLabel(budget, l10n);
   if (cadence != null) {
     return l10n.budgetPerPeriod(
-      format.formatMoney(budget.autoBudgetAmount, budget.currencySymbol),
+      format.formatMoney(budget.autoBudgetAmount, currencySymbol),
       cadence,
     );
   }
   return l10n.ofAmount(
-    format.formatMoney(budget.autoBudgetAmount, budget.currencySymbol),
+    format.formatMoney(budget.autoBudgetAmount, currencySymbol),
   );
 }
 
@@ -328,12 +330,10 @@ String _budgetLimitLine({
   required BudgetPeriodMetrics metrics,
   required AppLocalizations l10n,
   required LocaleFormatting format,
+  required String currencySymbol,
 }) {
   final viewPeriod = filters.localizedPeriodLabel(l10n, format);
-  final limitText = format.formatMoney(
-    metrics.periodLimit,
-    budget.currencySymbol,
-  );
+  final limitText = format.formatMoney(metrics.periodLimit, currencySymbol);
 
   if (metrics.periodLimit != budget.autoBudgetAmount) {
     return l10n.budgetLimitForPeriod(limitText, viewPeriod);
@@ -466,25 +466,27 @@ class _BudgetCardState extends ConsumerState<_BudgetCard> {
               undoPayload: {
                 'name': widget.budget.name,
                 'amount': widget.budget.autoBudgetAmount,
-                'currencyCode': widget.budget.currencyCode,
+                'currencyCode':
+                    widget.budget.currencyCode ??
+                    ref.read(primaryCurrencyProvider).asData?.value.code ??
+                    '',
               },
               redoPayload: {'budgetId': widget.budget.id},
             );
         ref.invalidate(budgetsProvider);
         ref.invalidate(budgetPeriodMetricsProvider);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.budgetDeleted(widget.budget.name)),
-            ),
+          showInfoToast(
+            context,
+            context.l10n.budgetDeleted(widget.budget.name),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.failedToDeleteBudget(e.toString())),
-            ),
+          reportError(
+            context,
+            context.l10n.failedToDeleteBudget(readableError(e)),
+            error: e,
           );
         }
       }
@@ -502,6 +504,13 @@ class _BudgetCardState extends ConsumerState<_BudgetCard> {
     final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = ref.watch(localeFormattingProvider);
     final b = widget.budget;
+    // Firefly leaves a budget's auto-budget currency unset unless somebody
+    // chose one, so these figures are in the ledger's primary currency and
+    // that is what has to be shown. They used to fall back to the euro.
+    final currencySymbol =
+        b.currencySymbol ??
+        ref.watch(primaryCurrencyProvider).asData?.value.symbol ??
+        '';
     final metrics = widget.metrics ?? _fallbackMetrics(b, widget.filters);
     final spent = widget.metricsLoading ? b.spent : metrics.spent;
     final periodLimit = metrics.periodLimit;
@@ -514,6 +523,7 @@ class _BudgetCardState extends ConsumerState<_BudgetCard> {
       metrics: metrics,
       l10n: l10n,
       format: format,
+      currencySymbol: currencySymbol,
     );
     final limitLine = _budgetLimitLine(
       budget: b,
@@ -521,6 +531,7 @@ class _BudgetCardState extends ConsumerState<_BudgetCard> {
       metrics: metrics,
       l10n: l10n,
       format: format,
+      currencySymbol: currencySymbol,
     );
 
     return ExpandableEntityCard(
@@ -606,7 +617,7 @@ class _BudgetCardState extends ConsumerState<_BudgetCard> {
                             ),
                           )
                         : Text(
-                            format.formatMoney(spent, b.currencySymbol),
+                            format.formatMoney(spent, currencySymbol),
                             style: const TextStyle(
                               fontFamily: 'Roboto Slab',
                               fontSize: 20,
@@ -644,10 +655,10 @@ class _BudgetCardState extends ConsumerState<_BudgetCard> {
                 Text(
                   isOver
                       ? l10n.overBudget(
-                          format.formatMoney(remaining.abs(), b.currencySymbol),
+                          format.formatMoney(remaining.abs(), currencySymbol),
                         )
                       : l10n.leftInBudget(
-                          format.formatMoney(remaining, b.currencySymbol),
+                          format.formatMoney(remaining, currencySymbol),
                         ),
                   style: TextStyle(
                     color: isOver ? colors.danger : colors.text2,
@@ -788,25 +799,27 @@ class _BudgetCompactRowState extends ConsumerState<_BudgetCompactRow> {
               undoPayload: {
                 'name': widget.budget.name,
                 'amount': widget.budget.autoBudgetAmount,
-                'currencyCode': widget.budget.currencyCode,
+                'currencyCode':
+                    widget.budget.currencyCode ??
+                    ref.read(primaryCurrencyProvider).asData?.value.code ??
+                    '',
               },
               redoPayload: {'budgetId': widget.budget.id},
             );
         ref.invalidate(budgetsProvider);
         ref.invalidate(budgetPeriodMetricsProvider);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.budgetDeleted(widget.budget.name)),
-            ),
+          showInfoToast(
+            context,
+            context.l10n.budgetDeleted(widget.budget.name),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.l10n.failedToDeleteBudget(e.toString())),
-            ),
+          reportError(
+            context,
+            context.l10n.failedToDeleteBudget(readableError(e)),
+            error: e,
           );
         }
       }
@@ -823,6 +836,13 @@ class _BudgetCompactRowState extends ConsumerState<_BudgetCompactRow> {
     final l10n = context.l10n;
     final format = ref.watch(localeFormattingProvider);
     final b = widget.budget;
+    // Firefly leaves a budget's auto-budget currency unset unless somebody
+    // chose one, so these figures are in the ledger's primary currency and
+    // that is what has to be shown. They used to fall back to the euro.
+    final currencySymbol =
+        b.currencySymbol ??
+        ref.watch(primaryCurrencyProvider).asData?.value.symbol ??
+        '';
     final metrics = widget.metrics ?? _fallbackMetrics(b, widget.filters);
     final spent = widget.metricsLoading ? b.spent : metrics.spent;
     final periodLimit = metrics.periodLimit;
@@ -835,6 +855,7 @@ class _BudgetCompactRowState extends ConsumerState<_BudgetCompactRow> {
       metrics: metrics,
       l10n: l10n,
       format: format,
+      currencySymbol: currencySymbol,
     );
 
     return ExpandableEntityCompactRow(
@@ -870,8 +891,8 @@ class _BudgetCompactRowState extends ConsumerState<_BudgetCompactRow> {
                       )
                     : Text(
                         l10n.budgetSpentFraction(
-                          format.formatMoney(spent, b.currencySymbol),
-                          format.formatMoney(periodLimit, b.currencySymbol),
+                          format.formatMoney(spent, currencySymbol),
+                          format.formatMoney(periodLimit, currencySymbol),
                         ),
                         style: const TextStyle(
                           fontFamily: 'Roboto Slab',
@@ -915,10 +936,10 @@ class _BudgetCompactRowState extends ConsumerState<_BudgetCompactRow> {
                 Text(
                   isOver
                       ? l10n.overBudget(
-                          format.formatMoney(remaining.abs(), b.currencySymbol),
+                          format.formatMoney(remaining.abs(), currencySymbol),
                         )
                       : l10n.leftInBudget(
-                          format.formatMoney(remaining, b.currencySymbol),
+                          format.formatMoney(remaining, currencySymbol),
                         ),
                   style: TextStyle(
                     color: isOver ? colors.danger : colors.text3,

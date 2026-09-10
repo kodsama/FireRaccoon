@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../store/cosmos_session_client.dart';
 import '../store/credential_store_locked_exception.dart';
+import '../deployment/deployment_providers.dart';
 import '../utils/web_backend_proxy.dart';
 import 'auth_provider.dart';
 import 'cosmos_session_provider.dart';
@@ -74,7 +75,12 @@ final apiServiceProvider = Provider<FireflyService?>((ref) {
     // else to invalidate the provider.
     ref.watch(cosmosSessionProvider);
     return FireflyApiService(
-      serverUrl: resolveBackendUrlForHttp(authSettings.serverUrl),
+      serverUrl: resolveBackendUrlForHttp(
+        authSettings.serverUrl,
+        proxied: backendIsProxied(
+          serverMode: ref.watch(deploymentConfigProvider).isServer,
+        ),
+      ),
       apiToken: authSettings.apiToken,
       readMaxAttempts: readMaxAttempts ?? 3,
       readRetryBaseDelayMs: readRetryBaseDelayMs ?? 200,

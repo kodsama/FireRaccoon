@@ -375,7 +375,12 @@ class RestoreRunner {
 
   Transaction _leg(Map<String, Object?> leg, String groupId) => Transaction(
     id: groupId,
-    journalId: leg['journal_id'] as String?,
+    // Deliberately not carried. Every other id here goes through _liveOrNull
+    // because a backup's ids belong to the instance it was taken from, and a
+    // journal id has no remap to go through: claiming one that does not exist
+    // is a 422, and claiming one that does would rewrite somebody else's leg.
+    // Without it Firefly writes new journals, which is what a restore wants.
+    journalId: null,
     type: _string(leg['type'], fallback: 'withdrawal'),
     date: _date(leg['date']) ?? DateTime.now(),
     amount: _double(leg['amount']) ?? 0,

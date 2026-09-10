@@ -10,6 +10,7 @@ import '../providers/theme_provider.dart';
 import '../router/route_query.dart';
 import '../router/transactions_route.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../widgets/payee_form_dialog.dart';
 import '../widgets/confirmation_dialog.dart';
 import '../widgets/entity_header_actions.dart';
@@ -119,9 +120,7 @@ class _PayeeCard extends ConsumerWidget {
           ref.invalidate(counterpartyAccountsProvider);
         } catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to delete payee: $e')),
-            );
+            reportError(context, 'Failed to delete payee: $e');
           }
         }
       }
@@ -239,9 +238,7 @@ class _PayeeRow extends ConsumerWidget {
           ref.invalidate(counterpartyAccountsProvider);
         } catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to delete payee: $e')),
-            );
+            reportError(context, 'Failed to delete payee: $e');
           }
         }
       }

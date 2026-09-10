@@ -12,6 +12,8 @@ import 'package:fireraccoon/providers/auth_provider.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
 import 'package:fireraccoon/models/account.dart';
 import 'package:fireraccoon/screens/app_shell.dart';
+import 'package:fireraccoon/widgets/firefly_refresh_button.dart';
+import 'package:fireraccoon/widgets/view_mode_switch.dart';
 import 'package:fireraccoon/theme/app_theme.dart';
 import 'package:fireraccoon/theme/app_colors.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -99,6 +101,78 @@ void main() {
 
     expect(find.text('Dashboard Content'), findsOneWidget);
     expect(find.text('Dashboard'), findsWidgets);
+  });
+
+  testWidgets('the header carries refresh on every page it heads', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(await buildTestApp());
+    await tester.pumpAndSettle();
+
+    // It used to live on three pages out of a dozen, so whether it was there
+    // depended on where you happened to be.
+    expect(find.byType(FireflyRefreshButton), findsOneWidget);
+
+    await tester.tap(find.text('Accounts').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Accounts Content'), findsOneWidget);
+    expect(find.byType(FireflyRefreshButton), findsOneWidget);
+
+    await tester.tap(find.byIcon(LucideIcons.settings).first);
+    await tester.pumpAndSettle();
+    expect(find.text('Settings Content'), findsOneWidget);
+    expect(find.byType(FireflyRefreshButton), findsOneWidget);
+  });
+
+  testWidgets('the header refresh sits left of the view-mode control', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(await buildTestApp());
+    await tester.pumpAndSettle();
+
+    final refresh = tester.getTopLeft(find.byType(FireflyRefreshButton));
+    final viewMode = tester.getTopLeft(find.byType(ViewModeSwitcher));
+    expect(refresh.dx, lessThan(viewMode.dx));
+  });
+
+  testWidgets('the header refresh takes its account from the route', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 1000);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(await buildTestApp());
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<FireflyRefreshButton>(find.byType(FireflyRefreshButton))
+          .focusAccount,
+      isNull,
+    );
+
+    // Refreshing the all-accounts list does not touch a single account's own
+    // paginated instance, which is why the filtered view has to say which one
+    // it is looking at. Pull-to-refresh reads the same query parameter.
+    final context = tester.element(find.byType(AppShell));
+    GoRouter.of(context).go('/accounts?account=5');
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<FireflyRefreshButton>(find.byType(FireflyRefreshButton))
+          .focusAccount,
+      '5',
+    );
   });
 
   testWidgets('AppShell navigation interactions', (tester) async {

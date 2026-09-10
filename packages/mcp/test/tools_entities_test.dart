@@ -783,6 +783,86 @@ void main() {
       expect(group.containsKey('splits'), isFalse);
     });
 
+    test('a group reports its own title where a description goes', () async {
+      // Firefly returns the legs in no stable order, so the top level carried
+      // whichever came first and changed between reads. It looked briefly as
+      // though a write had corrupted the row.
+      final result = await _tool(
+        'get_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+        ),
+      ).run({'transaction_id': '77'});
+
+      final tx = result['transaction']! as Map<String, Object?>;
+      expect(tx['description'], 'Rent and fees');
+      expect(tx['group_title'], 'Rent and fees');
+      // The legs keep their own.
+      final legs = (tx['splits'] as List).cast<Map<String, Object?>>();
+      expect(legs.map((l) => l['description']), ['Rent', 'Service fee']);
+    });
+
+    test('a Firefly-paged response says how many rows it carried', () async {
+      // Firefly's total counts journals while the rows are groups, so fewer
+      // rows than the total reads like a truncated page and is not one.
+      final result = await _tool(
+        'get_bill_transactions',
+        client: fireflyMockClient(),
+      ).run({'bill_id': '4'});
+
+      final pagination = result['pagination']! as Map<String, Object?>;
+      expect(pagination['count'], (result['transactions'] as List).length);
+      expect(pagination['total_counts_journals'], isTrue);
+      expect(pagination['total'], isNotNull);
+    });
+
+    test('update_transaction sets a category on every leg of a group', () async {
+      // Thirteen rows once stayed behind a run that reported all 64 moved.
+      // The stated category resolved into the returned object's top-level
+      // fields, which serialisation never reads for a group: the legs are what
+      // go on the wire, and they were copied over verbatim.
+      final bodies = <String>[];
+      final result = await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '77', 'category_name': 'Lottery'});
+
+      final sent = jsonDecode(bodies.single) as Map<String, Object?>;
+      final legs = (sent['transactions'] as List).cast<Map<String, Object?>>();
+      expect(legs, hasLength(2));
+      expect(legs.map((l) => l['category_name']), ['Lottery', 'Lottery']);
+
+      // Each leg still says which journal it is, or Firefly would take them
+      // for new splits and delete the two it was asked to change.
+      expect(legs.map((l) => l['transaction_journal_id']), ['811', '812']);
+
+      // What belongs to a leg stays with that leg.
+      expect(legs.map((l) => l['amount']), ['1200.00', '25.00']);
+      expect(legs.map((l) => l['description']), ['Rent', 'Service fee']);
+      expect(result['ok'], isNotNull);
+    });
+
+    test('a description renames the group rather than its legs', () async {
+      final bodies = <String>[];
+      await _tool(
+        'update_transaction',
+        client: fireflyMockClient(
+          transactionOverrides: {'77': _splitGroupItem()},
+          recordBodies: bodies,
+        ),
+      ).run({'transaction_id': '77', 'description': 'Rent, February'});
+
+      final sent = jsonDecode(bodies.single) as Map<String, Object?>;
+      final legs = (sent['transactions'] as List).cast<Map<String, Object?>>();
+      expect(sent['group_title'], 'Rent, February');
+      // Overwriting "Rent" and "Service fee" with one string would be a worse
+      // bug than the one being fixed.
+      expect(legs.map((l) => l['description']), ['Rent', 'Service fee']);
+    });
+
     test('duplicate_transaction carries every leg of a split group', () async {
       // Regression: the copy was built from the top-level fields alone, so a
       // three-leg loan payment became one leg of the first leg's amount. The
@@ -1413,6 +1493,31 @@ void main() {
       ).run({'piggy_bank_id': '4', 'name': 'Laptop 2'});
 
       expect((result['piggy_bank'] as Map)['name'], 'Laptop 2');
+    });
+
+    test('a target date is reported at all', () async {
+      // Never in the response, so five piggy banks with target dates set all
+      // read as having none, and the write looked like the thing at fault.
+      final result = await _tool(
+        'get_piggy_banks',
+        client: fireflyMockClient(),
+      ).run({});
+
+      final piggy = (result['piggy_banks'] as List).single as Map;
+      expect(piggy['target_date'], '2026-12-24');
+    });
+
+    test('an update that omits the target date keeps it', () async {
+      // "Omitted fields keep their value" is this tool's own promise, and the
+      // target date and the notes were the two that did not.
+      final bodies = <String>[];
+      await _tool(
+        'update_piggy_bank',
+        client: fireflyMockClient(recordBodies: bodies),
+      ).run({'piggy_bank_id': '4', 'name': 'Laptop 2'});
+
+      final sent = jsonDecode(bodies.single) as Map<String, Object?>;
+      expect(sent['target_date'], '2026-12-24');
     });
 
     test('delete_piggy_bank deletes', () async {

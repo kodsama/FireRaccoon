@@ -11,10 +11,18 @@ as `cosmos-icon`). Unsupported Compose features are ignored on import. Official
 docs: [ServApps](https://cosmos-cloud.io/docs/servapps/),
 [Cosmos-Compose](https://cosmos-cloud.io/docs/cosmos-compose/).
 
-FireRaccoon is a **static nginx** image (`ghcr.io/kodsama/fireraccoon`). It does
-not store Firefly tokens; each browser user connects under **Settings → Firefly
-III connection** using Firefly’s **public** HTTPS URL (not an internal Docker
-hostname). API calls run in the browser, so Docker networks do not bypass CORS.
+FireRaccoon runs its own Dart backend (`ghcr.io/kodsama/fireraccoon`), which
+serves the web build and proxies the Firefly API through `/api/firefly`. Each
+browser user connects under **Settings → Firefly III connection**.
+
+An internal Docker hostname is the right target here, and the shortest path:
+the browser only ever talks to FireRaccoon's own origin, and the server makes
+the Firefly call over the container network. `http://firefly-app:8080` needs no
+CORS configuration and does not leave the host. A public HTTPS URL works too,
+and sends every request out to the internet and back.
+
+**Allow HTTP connections** is not needed for an internal address in this mode,
+because nothing in the browser dials it.
 
 | Scenario | Import file |
 |----------|-------------|
@@ -146,7 +154,7 @@ passwords; the full-stack file is for a self-contained import.
 
 | Field | Role |
 |-------|------|
-| `image` | Baked Flutter web + nginx |
+| `image` | Baked Flutter web plus the Dart backend that serves and proxies it |
 | `ports` | Empty: Cosmos `routes` terminate HTTPS |
 | `volumes` | None on FireRaccoon (static UI) |
 | `cosmos-icon` | [`assets/fireraccoon_logo.png`](../assets/fireraccoon_logo.png) |

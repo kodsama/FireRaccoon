@@ -220,6 +220,15 @@ double computeReconciliationGap({
 }
 
 /// Builds a reconciliation correction transaction for [gap] on [endDate].
+/// The account Firefly puts the other side of a correction against.
+///
+/// Firefly names these `<account> reconciliation` and only ever creates one
+/// from its own interface. A correction refers to it by name, and a name
+/// Firefly cannot resolve is a refusal, so whatever writes a correction has to
+/// make sure it exists first.
+String reconciliationAccountName(String accountName) =>
+    '$accountName reconciliation';
+
 Transaction buildReconciliationCorrection({
   required String accountId,
   required String accountName,
@@ -229,7 +238,7 @@ Transaction buildReconciliationCorrection({
   required DateTime endDate,
 }) {
   final amount = gap.abs();
-  final reconciliationAccount = '$accountName reconciliation';
+  final reconciliationAccount = reconciliationAccountName(accountName);
   final isShort = gap > 0;
 
   return Transaction(

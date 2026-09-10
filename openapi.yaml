@@ -1293,6 +1293,7 @@ x-mcp:
       - create_budget
       - create_budget_limit
       - update_budget_limit
+      - delete_budget_limit
       - create_bill
       - update_bill
       - delete_bill
@@ -1547,6 +1548,10 @@ x-mcp:
       description: Change an existing budget limit
       mapsTo: PUT /api/v1/budgets/{budgetId}/limits/{limitId}
       required: [budget_id, limit_id, amount]
+    delete_budget_limit:
+      description: Remove one budget limit, permanently
+      mapsTo: DELETE /api/v1/budgets/{budgetId}/limits/{limitId}
+      required: [budget_id, limit_id]
     get_categories:
       description: List categories
       mapsTo: GET /api/v1/categories

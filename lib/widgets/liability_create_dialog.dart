@@ -9,6 +9,7 @@ import '../providers/data_providers.dart';
 import '../providers/suggestion_providers.dart';
 import '../providers/undo_history_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
 import 'autocomplete_text_field.dart';
@@ -145,10 +146,10 @@ class _LiabilityCreateDialogState
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.failedToCreateLiability(e.toString())),
-          ),
+        reportError(
+          context,
+          context.l10n.failedToCreateLiability(readableError(e)),
+          error: e,
         );
       }
     }

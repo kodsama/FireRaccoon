@@ -11,6 +11,7 @@ import '../router/categories_tags_route.dart';
 import '../router/route_query.dart';
 import '../router/transactions_route.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../widgets/category_form_dialog.dart';
 import '../widgets/tag_form_dialog.dart';
 import '../widgets/confirmation_dialog.dart';
@@ -205,9 +206,7 @@ class _CategoryCard extends ConsumerWidget {
           ref.invalidate(categoriesProvider);
         } catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to delete category: $e')),
-            );
+            reportError(context, 'Failed to delete category: $e');
           }
         }
       }
@@ -312,9 +311,7 @@ class _CategoryRow extends ConsumerWidget {
           ref.invalidate(categoriesProvider);
         } catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to delete category: $e')),
-            );
+            reportError(context, 'Failed to delete category: $e');
           }
         }
       }
@@ -395,9 +392,7 @@ class _TagCard extends ConsumerWidget {
           ref.invalidate(tagsProvider);
         } catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text('Failed to delete tag: $e')));
+            reportError(context, 'Failed to delete tag: $e');
           }
         }
       }
@@ -500,9 +495,7 @@ class _TagRow extends ConsumerWidget {
           ref.invalidate(tagsProvider);
         } catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text('Failed to delete tag: $e')));
+            reportError(context, 'Failed to delete tag: $e');
           }
         }
       }

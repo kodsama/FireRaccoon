@@ -19,6 +19,7 @@ import '../providers/write_ahead_provider.dart';
 import '../providers/undo_history_provider.dart';
 import '../services/mcp_service.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../widgets/connection_test_banner.dart';
 import '../widgets/cosmos_sso_section.dart';
 import '../widgets/insecure_connection_notice.dart';
@@ -382,9 +383,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                           if (context.mounted) Navigator.pop(ctx);
                         } catch (e) {
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(e.toString())),
-                            );
+                            reportError(context, readableError(e), error: e);
                           }
                         }
                       },
@@ -566,16 +565,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ref.invalidate(primaryCurrencyProvider);
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.primaryCurrencyChanged(selected.code))),
-        );
+        showInfoToast(context, l10n.primaryCurrencyChanged(selected.code));
       }
     } catch (error) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.failedToSetPrimaryCurrency(error.toString())),
-          ),
+        reportError(
+          context,
+          l10n.failedToSetPrimaryCurrency(readableError(error)),
+          error: error,
         );
       }
     }
@@ -797,13 +794,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             final result = await runWriteAheadNow(ref);
                             if (!context.mounted) return;
                             if (result.hasFailures) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    'Write-ahead created ${result.created}, '
-                                    'failed ${result.failed}',
-                                  ),
-                                ),
+                              reportError(
+                                context,
+                                'Write-ahead created ${result.created}, '
+                                'failed ${result.failed}',
                               );
                             }
                           }

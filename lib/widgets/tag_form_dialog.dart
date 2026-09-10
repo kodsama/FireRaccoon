@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../l10n/l10n_extensions.dart';
 import '../providers/data_providers.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import 'tooltip_helpers.dart';
 
 Future<bool?> showTagFormDialog({
@@ -81,8 +82,7 @@ class _TagFormDialogState extends ConsumerState<_TagFormDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed to save tag: $e')));
+        reportError(context, 'Failed to save tag: $e');
       }
     }
   }

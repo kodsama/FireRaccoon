@@ -8,20 +8,20 @@ import '../theme/app_theme.dart';
 
 /// Re-fetches every Firefly-backed cache, spinning until the data lands.
 ///
-/// Holds the in-flight flag itself so a stateless screen can host it. Pass
-/// [focusAccount] from a view filtered to one account: refreshing the
+/// Sits in the shell header beside undo and redo, so it is reachable from
+/// every page rather than from the three that happened to carry their own. It
+/// is shaped like those two for the same reason: a bordered pill with a label
+/// read as a page control, which is what it used to be.
+///
+/// Holds the in-flight flag itself, so a stateless header can host it, and
+/// refuses a second tap while a read is running.
+///
+/// Pass [focusAccount] from a view filtered to one account. Refreshing the
 /// all-accounts list does not touch that account's own paginated instance.
 class FireflyRefreshButton extends ConsumerStatefulWidget {
-  const FireflyRefreshButton({
-    super.key,
-    this.focusAccount,
-    this.backgroundColor,
-  });
+  const FireflyRefreshButton({super.key, this.focusAccount});
 
   final String? focusAccount;
-
-  /// Fill behind the pill, for a bar whose other controls sit on `surface2`.
-  final Color? backgroundColor;
 
   @override
   ConsumerState<FireflyRefreshButton> createState() =>
@@ -45,48 +45,22 @@ class _FireflyRefreshButtonState extends ConsumerState<FireflyRefreshButton> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final l10n = context.l10n;
 
     return Tooltip(
-      message: l10n.tooltipRefreshFromFirefly,
-      child: Material(
-        color: widget.backgroundColor ?? colors.surface,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: _refreshing ? null : _refresh,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colors.border),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (_refreshing)
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colors.text,
-                    ),
-                  )
-                else
-                  Icon(LucideIcons.refreshCw, size: 16, color: colors.text),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.refreshFromFirefly,
-                  style: TextStyle(
-                    color: colors.text,
-                    fontWeight: FontWeight.w500,
-                  ),
+      message: context.l10n.tooltipRefreshFromFirefly,
+      child: IconButton(
+        onPressed: _refreshing ? null : _refresh,
+        splashRadius: 20,
+        icon: _refreshing
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: colors.text2,
                 ),
-              ],
-            ),
-          ),
-        ),
+              )
+            : Icon(LucideIcons.refreshCw, size: 20, color: colors.text2),
       ),
     );
   }

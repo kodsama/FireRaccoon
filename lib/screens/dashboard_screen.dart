@@ -21,7 +21,6 @@ import '../utils/dashboard_navigation.dart';
 import '../utils/dashboard_period.dart';
 import '../utils/dashboard_stats.dart';
 import '../utils/display_labels.dart';
-import '../widgets/firefly_refresh_button.dart';
 import '../widgets/loading_body.dart';
 import '../widgets/not_connected_view.dart';
 import '../widgets/simple_charts.dart';
@@ -731,6 +730,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             (budget) => _BudgetGlanceRow(
                               budget: budget,
                               format: format,
+                              budgetSymbol:
+                                  budget.currencySymbol ??
+                                  currencyAsync.asData?.value.symbol ??
+                                  '',
                             ),
                           ),
                     ],
@@ -1095,7 +1098,6 @@ class _DashboardPeriodBar extends StatelessWidget {
             ),
           ),
         ),
-        FireflyRefreshButton(backgroundColor: colors.surface2),
       ],
     );
   }
@@ -1343,7 +1345,15 @@ class _BudgetGlanceRow extends StatelessWidget {
   final Budget budget;
   final LocaleFormatting format;
 
-  const _BudgetGlanceRow({required this.budget, required this.format});
+  /// Resolved by the caller, which has the primary currency to hand. Firefly
+  /// leaves a budget's own unset unless somebody chose one.
+  final String budgetSymbol;
+
+  const _BudgetGlanceRow({
+    required this.budget,
+    required this.format,
+    required this.budgetSymbol,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1369,12 +1379,12 @@ class _BudgetGlanceRow extends StatelessWidget {
                 l10n.budgetSpentFraction(
                   format.formatMoney(
                     budget.spent,
-                    budget.currencySymbol,
+                    budgetSymbol,
                     decimalDigits: 0,
                   ),
                   format.formatMoney(
                     budget.autoBudgetAmount,
-                    budget.currencySymbol,
+                    budgetSymbol,
                     decimalDigits: 0,
                   ),
                 ),

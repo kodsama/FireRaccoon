@@ -26,6 +26,45 @@ void main() {
     expect(find.text('New Budget'), findsOneWidget);
   });
 
+  testWidgets('a budget Firefly gave no currency shows the ledger one', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    // Firefly leaves a budget's auto-budget currency unset unless somebody
+    // chose one, and the model used to fall back to the euro, so every figure
+    // on this screen read as euro while the amounts were in krona.
+    final fake = FakeFireflyService(
+      budgets: [
+        Budget(
+          id: '1',
+          name: 'Housing',
+          active: true,
+          spent: 16880,
+          autoBudgetAmount: 20000,
+        ),
+      ],
+      primaryCurrency: const FireflyCurrency(
+        id: '2',
+        code: 'SEK',
+        name: 'Swedish krona',
+        symbol: 'kr',
+      ),
+    );
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const BudgetsScreen(),
+        fireflyService: fake,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('kr'), findsWidgets);
+    expect(find.textContaining('\u20ac'), findsNothing);
+  });
+
   testWidgets('BudgetsScreen shows expanded budget transactions', (
     tester,
   ) async {
@@ -226,7 +265,8 @@ class UpdatingFakeFireflyService extends FakeFireflyService {
   final updatedBudgets = <({String id, BudgetInput input})>[];
 
   @override
-  Future<void> updateBudget(String budgetId, BudgetInput input) async {
+  Future<Budget> updateBudget(String budgetId, BudgetInput input) async {
     updatedBudgets.add((id: budgetId, input: input));
+    return super.updateBudget(budgetId, input);
   }
 }

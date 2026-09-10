@@ -1148,7 +1148,7 @@ class _RecordingFireflyService extends FakeFireflyService {
   }
 
   @override
-  Future<void> updateBudget(String budgetId, BudgetInput input) async {
+  Future<Budget> updateBudget(String budgetId, BudgetInput input) async {
     updateBudgetCalls++;
     return super.updateBudget(budgetId, input);
   }

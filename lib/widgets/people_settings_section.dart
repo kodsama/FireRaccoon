@@ -1,3 +1,5 @@
+import '../utils/app_feedback.dart';
+
 import 'dart:typed_data';
 
 import 'package:file_selector/file_selector.dart';
@@ -81,8 +83,7 @@ Future<Uint8List?> _pickAndCropAvatar(BuildContext context) async {
       _ when error.contains('5 MB') => l10n.avatarTooLarge,
       _ => l10n.avatarInvalidFormat,
     };
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    showInfoToast(context, message);
     return null;
   }
 
@@ -754,10 +755,7 @@ Future<void> _showChangePasswordDialog(
                 }
                 if (!ctx.mounted) return;
                 Navigator.of(ctx).pop();
-                final messenger = ScaffoldMessenger.maybeOf(context);
-                messenger?.showSnackBar(
-                  SnackBar(content: Text(l10n.passwordChanged)),
-                );
+                showInfoToast(context, l10n.passwordChanged);
               },
               child: Text(l10n.save),
             ),

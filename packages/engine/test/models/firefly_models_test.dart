@@ -291,6 +291,35 @@ void main() {
       expect(budget.autoBudgetAmount, 400);
     });
 
+    test('keeps the currency Firefly named', () {
+      final budget = Budget.fromJson({
+        'id': '3',
+        'attributes': {
+          'name': 'Food',
+          'active': true,
+          'auto_budget_currency_symbol': 'kr',
+          'auto_budget_currency_code': 'SEK',
+        },
+      });
+
+      expect(budget.currencyCode, 'SEK');
+      expect(budget.currencySymbol, 'kr');
+    });
+
+    test('invents none when Firefly named none', () {
+      // It used to fall back to the euro, so on a ledger whose primary is
+      // anything else every budget read as euro while the figures were in the
+      // ledger's own currency. Null says what the server said, and a caller
+      // that has to show one falls back to the primary.
+      final budget = Budget.fromJson({
+        'id': '3',
+        'attributes': {'name': 'Food', 'active': true},
+      });
+
+      expect(budget.currencyCode, isNull);
+      expect(budget.currencySymbol, isNull);
+    });
+
     test('handles empty spent and missing fields', () {
       final budget = Budget.fromJson({
         'id': '1',

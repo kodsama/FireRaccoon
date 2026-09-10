@@ -3,29 +3,52 @@ import 'package:test/test.dart';
 
 void main() {
   group('Transaction.formatApiDateTime', () {
-    test('keeps UTC instants unambiguous', () {
+    test('never sends an offset, so the server reads the wall clock', () {
+      // The offset was the bug. Firefly stores an instant and reads the day
+      // off it, so midnight plus a positive offset was the previous day, and
+      // the calendar date is what a ledger means.
       final formatted = Transaction.formatApiDateTime(
-        DateTime.utc(2026, 7, 11, 10, 30),
+        DateTime(2026, 9, 2, 8, 45),
       );
-      expect(formatted, '2026-07-11T10:30:00.000Z');
+      expect(formatted, '2026-09-02T08:45:00.000');
+      expect(formatted, isNot(contains('+')));
+      expect(formatted, isNot(endsWith('Z')));
     });
 
-    test('appends an explicit offset for local times', () {
-      final local = DateTime(2026, 7, 11, 10, 30);
-      final formatted = Transaction.formatApiDateTime(local);
-      // Local ISO strings carry no offset by default; the suffix must encode
-      // the actual zone so the server cannot reinterpret the timestamp.
-      final offset = local.timeZoneOffset;
-      final sign = offset.isNegative ? '-' : '+';
-      final abs = offset.abs();
-      final expectedSuffix =
-          '$sign${abs.inHours.toString().padLeft(2, '0')}:'
-          '${(abs.inMinutes % 60).toString().padLeft(2, '0')}';
-      expect(formatted, startsWith('2026-07-11T10:30:00.000'));
-      expect(formatted, endsWith(expectedSuffix));
+    test('a UTC instant goes out as the wall clock it reads as', () {
+      final utc = DateTime.utc(2026, 7, 11, 10, 30);
+      expect(
+        Transaction.formatApiDateTime(utc),
+        utc.toLocal().toIso8601String(),
+      );
+      expect(Transaction.formatApiDateTime(utc), isNot(endsWith('Z')));
     });
 
-    test('toSplitJson serializes date with offset and round-trips', () {
+    test('an hour smaller than the offset keeps its day', () {
+      // The case a stamped midday could not reach: 01:00 with an offset ahead
+      // of the server is the previous day once converted.
+      expect(
+        Transaction.formatApiDateTime(DateTime(2026, 9, 2, 1)),
+        '2026-09-02T01:00:00.000',
+      );
+    });
+
+    test('a bare calendar date keeps its day', () {
+      expect(
+        Transaction.formatApiDateTime(DateTime(2026, 9, 2)),
+        '2026-09-02T00:00:00.000',
+      );
+    });
+
+    test('a date survives a round trip through Firefly unchanged', () {
+      // parseFireflyDate drops the offset the server stamped on; this sends
+      // none back. The pair is what makes an edit that never mentions the date
+      // leave it alone, which it did not when the two disagreed.
+      final read = parseFireflyDate('2026-09-02T00:00:00+02:00');
+      expect(Transaction.formatApiDateTime(read!), '2026-09-02T00:00:00.000');
+    });
+
+    test('toSplitJson dates a transaction on the day it was given', () {
       final transaction = Transaction(
         id: '1',
         type: 'withdrawal',
@@ -39,9 +62,7 @@ void main() {
         currencyCode: 'EUR',
       );
 
-      final json = transaction.toSplitJson();
-      final parsed = DateTime.parse(json['date'] as String).toLocal();
-      expect(parsed, transaction.date);
+      expect(transaction.toSplitJson()['date'], '2026-07-11T00:00:00.000');
     });
 
     test('toSplitJson serializes budget_name and category_name', () {
@@ -264,6 +285,80 @@ void main() {
       expect(split['currency_code'], 'SEK');
       expect(split['source_id'], '9101');
       expect(split['destination_id'], '9102');
+    });
+  });
+
+  group('leg identity on an update', () {
+    Transaction group() => Transaction.fromJson({
+      'id': '77',
+      'attributes': {
+        'group_title': 'Rent and fees',
+        'transactions': [
+          {
+            'transaction_journal_id': '811',
+            'type': 'withdrawal',
+            'date': '2026-02-01',
+            'amount': '1200.00',
+            'description': 'Rent',
+            'source_name': 'Checking',
+            'destination_name': 'Landlord',
+            'currency_code': 'EUR',
+            'currency_symbol': '\u20ac',
+          },
+          {
+            'transaction_journal_id': '812',
+            'type': 'withdrawal',
+            'date': '2026-02-01',
+            'amount': '25.00',
+            'description': 'Service fee',
+            'source_name': 'Checking',
+            'destination_name': 'Landlord',
+            'currency_code': 'EUR',
+            'currency_symbol': '\u20ac',
+          },
+        ],
+      },
+    });
+
+    List<Object?> journalIds(Map<String, dynamic> payload) => [
+      for (final leg in payload['transactions'] as List)
+        (leg as Map<String, dynamic>)['transaction_journal_id'],
+    ];
+
+    test('an update addresses every leg by its journal id', () {
+      // Firefly matches a leg to a journal by this id alone. Without it the id
+      // reads as 0, the validator takes the leg for a new split, and the
+      // group's own journals are deleted as no longer present: an edit to a
+      // split group destroyed its legs and recreated them under new ids.
+      expect(journalIds(group().toApiPayload(isUpdate: true)), ['811', '812']);
+    });
+
+    test('a create claims none of them', () {
+      // A create or a duplicate carries legs copied from another group, and
+      // claiming their ids would rewrite that group instead of writing a new
+      // one.
+      expect(journalIds(group().toApiPayload()), [null, null]);
+    });
+
+    test('a leg Firefly never numbered sends no id', () {
+      final single = Transaction(
+        id: '1',
+        type: 'withdrawal',
+        date: DateTime(2026, 2, 1),
+        amount: 5,
+        description: 'Coffee',
+        sourceName: 'Checking',
+        destinationName: 'Cafe',
+        categoryName: '',
+        currencySymbol: '\u20ac',
+        currencyCode: 'EUR',
+      );
+      expect(
+        single
+            .toSplitJson(isUpdate: true)
+            .containsKey('transaction_journal_id'),
+        isFalse,
+      );
     });
   });
 }

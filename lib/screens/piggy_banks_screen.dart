@@ -11,6 +11,7 @@ import '../providers/theme_provider.dart';
 import '../router/route_query.dart';
 import '../router/transactions_route.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../utils/create_flows.dart';
 import '../utils/locale_formatting.dart';
 import '../widgets/confirmation_dialog.dart';
@@ -136,14 +137,14 @@ class _PiggyBankCard extends ConsumerWidget {
           );
       ref.invalidate(piggyBanksProvider);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.piggyBankDeleted(piggyBank.name))),
-        );
+        showInfoToast(context, l10n.piggyBankDeleted(piggyBank.name));
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.failedToDeletePiggyBank(e.toString()))),
+        reportError(
+          context,
+          l10n.failedToDeletePiggyBank(readableError(e)),
+          error: e,
         );
       }
     }
