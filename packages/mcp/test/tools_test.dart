@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
@@ -978,6 +979,36 @@ void main() {
       expect(result['ok'], isTrue);
       expect(result['reconciled_count'], 1);
       expect(result['gap'], isA<num>());
+    });
+
+    test('makes the reconciliation account the correction names', () async {
+      // Firefly creates one only from its own interface, and a correction
+      // refers to it by name, so on a ledger that has never reconciled this
+      // account the write was refused with no way through the tools to fix it.
+      final seen = <Uri>[];
+      final bodies = <String>[];
+      final result = await _tool(
+        'store_reconciliation',
+        client: fireflyMockClient(record: seen, recordBodies: bodies),
+      ).run(reconciliationArgs());
+
+      expect(result['ok'], isTrue);
+      // Looked for by type: a plain account read covers asset and liability
+      // only and would not have seen an existing one either.
+      expect(
+        seen.any(
+          (uri) =>
+              uri.path == '/api/v1/accounts' &&
+              uri.queryParameters['type'] == 'reconciliation',
+        ),
+        isTrue,
+      );
+      final created = bodies
+          .map((b) => jsonDecode(b) as Map<String, Object?>)
+          .where((b) => b['type'] == 'reconciliation')
+          .toList();
+      expect(created, hasLength(1));
+      expect(created.single['name'], 'Checking reconciliation');
     });
 
     test('skips correction when create_correction is false', () async {

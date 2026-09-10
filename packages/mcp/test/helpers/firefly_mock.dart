@@ -513,6 +513,34 @@ MockClient fireflyMockClient({
         request.url.queryParameters['type'] == 'revenue') {
       return jsonHttpResponse(revenueAccountsBody());
     }
+    if (path == '/api/v1/accounts' &&
+        request.url.queryParameters['type'] == 'reconciliation') {
+      // Empty by default: Firefly makes one only from its own interface, so a
+      // ledger that has never reconciled this account has none, which is the
+      // case a correction has to cope with.
+      return jsonHttpResponse({
+        'data': <Object?>[],
+        'meta': {
+          'pagination': {'total_pages': 1},
+        },
+      });
+    }
+    if (path == '/api/v1/accounts' && method == 'POST') {
+      final sent = jsonDecode(request.body) as Map<String, dynamic>;
+      return jsonHttpResponse({
+        'data': {
+          'id': '900',
+          'type': 'accounts',
+          'attributes': {
+            'name': sent['name'],
+            'type': sent['type'],
+            'currency_code': sent['currency_code'],
+            'currency_symbol': '\u20ac',
+            'current_balance': '0.00',
+          },
+        },
+      }, status: 201);
+    }
     if (path == '/api/v1/budgets' && method != 'POST') {
       return jsonHttpResponse(budgetsBody());
     }

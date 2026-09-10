@@ -3394,7 +3394,13 @@ List<McpTool> buildTools({
           'name': {'type': 'string'},
           'type': {
             'type': 'string',
-            'enum': ['asset', 'expense', 'revenue', 'liability'],
+            'enum': [
+              'asset',
+              'expense',
+              'revenue',
+              'liability',
+              'reconciliation',
+            ],
           },
           'iban': {'type': 'string'},
           'bic': {'type': 'string'},
@@ -3803,7 +3809,15 @@ List<McpTool> buildTools({
         if (currency == null || currency.isEmpty) {
           return _badInput('currency_code is required');
         }
-        const accountTypes = ['asset', 'expense', 'revenue', 'liability'];
+        const accountTypes = [
+          'asset',
+          'expense',
+          'revenue',
+          'liability',
+          // Firefly makes these only from its own interface, and a
+          // reconciliation correction has to name one that exists.
+          'reconciliation',
+        ];
         if (!accountTypes.contains(type)) {
           return _badInput('type must be one of ${accountTypes.join(', ')}');
         }
