@@ -54,7 +54,7 @@ class _BudgetFormDialogState extends ConsumerState<_BudgetFormDialog> {
   late final TextEditingController _notesController;
 
   late bool _active;
-  late String _currencyCode;
+  String? _currencyCode;
   late BudgetAmountMode _amountMode;
   late AutoBudgetType _autoBudgetType;
   late AutoBudgetPeriod _autoBudgetPeriod;
@@ -78,7 +78,9 @@ class _BudgetFormDialogState extends ConsumerState<_BudgetFormDialog> {
     );
     _notesController = TextEditingController(text: budget?.notes ?? '');
     _active = budget?.active ?? true;
-    _currencyCode = budget?.currencyCode ?? 'EUR';
+    // Filled from the primary currency in build when the budget carries none,
+    // which is what Firefly returns for a budget nobody set one on.
+    _currencyCode = budget?.currencyCode;
     _autoBudgetType = budget?.autoBudgetType ?? AutoBudgetType.reset;
     _autoBudgetPeriod = budget?.autoBudgetPeriod ?? AutoBudgetPeriod.monthly;
     final now = DateTime.now();
@@ -169,9 +171,17 @@ class _BudgetFormDialogState extends ConsumerState<_BudgetFormDialog> {
       autoBudgetPeriod: _amountMode == BudgetAmountMode.autoBudget
           ? _autoBudgetPeriod
           : null,
-      currencyCode: _currencyCode,
+      currencyCode: _resolvedCurrencyCode(),
     );
   }
+
+  /// The budget's own currency, else the ledger's. Firefly returns none for a
+  /// budget nobody set one on, and defaulting to the euro is how a krona
+  /// ledger ended up with euro budgets.
+  String _resolvedCurrencyCode() =>
+      _currencyCode ??
+      ref.read(primaryCurrencyProvider).asData?.value.code ??
+      '';
 
   BudgetLimitInput? _buildLimitInput() {
     if (_amountMode != BudgetAmountMode.dateRange) return null;
@@ -180,7 +190,7 @@ class _BudgetFormDialogState extends ConsumerState<_BudgetFormDialog> {
       start: _limitStart,
       end: _limitEnd,
       amount: amount,
-      currencyCode: _currencyCode,
+      currencyCode: _resolvedCurrencyCode(),
     );
   }
 
@@ -238,7 +248,8 @@ class _BudgetFormDialogState extends ConsumerState<_BudgetFormDialog> {
                     autoBudgetType: budget.autoBudgetType,
                     autoBudgetAmount: budget.autoBudgetAmount,
                     autoBudgetPeriod: budget.autoBudgetPeriod,
-                    currencyCode: budget.currencyCode,
+                    currencyCode:
+                        budget.currencyCode ?? _resolvedCurrencyCode(),
                   ),
                 ),
               },
@@ -452,12 +463,12 @@ class _BudgetFormDialogState extends ConsumerState<_BudgetFormDialog> {
                             l10n.tooltipBudgetCurrency,
                             AutocompleteTextField(
                               readOnly: true,
-                              suggestions: [_currencyCode],
+                              suggestions: [_resolvedCurrencyCode()],
                               decoration: _fieldDecoration(
                                 l10n.defaultCurrency,
                               ),
                               controller: TextEditingController(
-                                text: _currencyCode,
+                                text: _resolvedCurrencyCode(),
                               ),
                             ),
                           ),
@@ -465,8 +476,8 @@ class _BudgetFormDialogState extends ConsumerState<_BudgetFormDialog> {
                             final items = currencies.isEmpty
                                 ? [
                                     DropdownMenuItem(
-                                      value: _currencyCode,
-                                      child: Text(_currencyCode),
+                                      value: _resolvedCurrencyCode(),
+                                      child: Text(_resolvedCurrencyCode()),
                                     ),
                                   ]
                                 : currencies

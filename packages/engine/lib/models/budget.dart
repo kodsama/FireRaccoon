@@ -10,8 +10,16 @@ class Budget {
   final double autoBudgetAmount;
   final AutoBudgetType autoBudgetType;
   final AutoBudgetPeriod? autoBudgetPeriod;
-  final String currencySymbol;
-  final String currencyCode;
+
+  /// What Firefly says the auto-budget is denominated in, or null when it says
+  /// nothing, which is what it does for a budget that never had one set.
+  ///
+  /// Not defaulted. These used to fall back to the euro, so on a ledger whose
+  /// primary currency is anything else every budget read as euro while the
+  /// figures were in the ledger's own currency. A caller that has to show one
+  /// falls back to the primary currency, which is what the amount is in.
+  final String? currencySymbol;
+  final String? currencyCode;
 
   Budget({
     required this.id,
@@ -22,8 +30,8 @@ class Budget {
     required this.autoBudgetAmount,
     this.autoBudgetType = AutoBudgetType.none,
     this.autoBudgetPeriod,
-    required this.currencySymbol,
-    required this.currencyCode,
+    this.currencySymbol,
+    this.currencyCode,
   });
 
   factory Budget.fromJson(Map<String, dynamic> json) {
@@ -54,8 +62,8 @@ class Budget {
       autoBudgetPeriod: AutoBudgetPeriod.parse(
         attrs['auto_budget_period'] as String?,
       ),
-      currencySymbol: attrs['auto_budget_currency_symbol'] as String? ?? '€',
-      currencyCode: attrs['auto_budget_currency_code'] as String? ?? 'EUR',
+      currencySymbol: attrs['auto_budget_currency_symbol'] as String?,
+      currencyCode: attrs['auto_budget_currency_code'] as String?,
     );
   }
 }

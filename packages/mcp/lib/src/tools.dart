@@ -378,7 +378,27 @@ List<Transaction> _filterByReconciled(
       .toList();
 }
 
-Map<String, Object?> _budgetJson(Budget budget) => {
+/// Firefly leaves a budget's auto-budget currency unset unless somebody chose
+/// one, and reports nothing for it. The amounts are in the ledger's primary
+/// currency then, so that is what gets reported: a budget list that claimed
+/// euro against a krona ledger was actively misleading.
+/// The enabled currency carrying [code], or null when none does.
+///
+/// Firefly accepts `auto_budget_currency_code` on a budget and stores nothing
+/// from it; the id is the field it reads. A code the caller gave has to be
+/// resolved before it can move a budget off the currency it is on.
+Future<FireflyCurrency?> _currencyByCode(
+  FireflyService api,
+  String code,
+) async {
+  final wanted = code.trim().toUpperCase();
+  if (wanted.isEmpty) return null;
+  return (await api.getCurrencies())
+      .where((currency) => currency.code.toUpperCase() == wanted)
+      .firstOrNull;
+}
+
+Map<String, Object?> _budgetJson(Budget budget, {FireflyCurrency? primary}) => {
   'id': budget.id,
   'name': budget.name,
   'active': budget.active,
@@ -387,8 +407,8 @@ Map<String, Object?> _budgetJson(Budget budget) => {
   'auto_budget_amount': budget.autoBudgetAmount,
   'auto_budget_type': budget.autoBudgetType.apiValue,
   'auto_budget_period': budget.autoBudgetPeriod?.apiValue,
-  'currency_symbol': budget.currencySymbol,
-  'currency_code': budget.currencyCode,
+  'currency_symbol': budget.currencySymbol ?? primary?.symbol,
+  'currency_code': budget.currencyCode ?? primary?.code,
 };
 
 /// Formats the calendar date, not the UTC one.
@@ -3286,10 +3306,13 @@ List<McpTool> buildTools({
       run: (args) async {
         final api = service();
         final budgets = await api.getBudgets();
+        final primary = await api.getPrimaryCurrency();
         return {
           'ok': true,
           'count': budgets.length,
-          'budgets': budgets.map(_budgetJson).toList(),
+          'budgets': [
+            for (final budget in budgets) _budgetJson(budget, primary: primary),
+          ],
         };
       },
     ),
@@ -3561,14 +3584,13 @@ List<McpTool> buildTools({
         final requestedCode = (args['currency_code'] as String?)?.toUpperCase();
         String? currencyId;
         if (requestedCode != null) {
-          currencyId = (await api.getCurrencies())
-              .where((currency) => currency.code.toUpperCase() == requestedCode)
-              .firstOrNull
-              ?.id;
+          currencyId = (await _currencyByCode(api, requestedCode))?.id;
           if (currencyId == null) {
             return _badInput('No enabled currency with code $requestedCode');
           }
         }
+        // What the figures are in when the budget itself names nothing.
+        final primary = await api.getPrimaryCurrency();
 
         final period =
             AutoBudgetPeriod.parse(args['auto_budget_period'] as String?) ??
@@ -3586,7 +3608,7 @@ List<McpTool> buildTools({
           autoBudgetPeriod: period,
           // The budget's own currency, never a hardcoded EUR: an instance whose
           // primary is not EUR would have had its budget redenominated.
-          currencyCode: requestedCode ?? existing.currencyCode,
+          currencyCode: requestedCode ?? existing.currencyCode ?? primary.code,
           currencyId: currencyId,
         );
         final stored = await api.updateBudget(budgetId, input);
@@ -3596,7 +3618,8 @@ List<McpTool> buildTools({
         // apart from a change, which is how a redenomination that did nothing
         // read as a success.
         final ignored = <String>[
-          if (requestedCode != null && stored.currencyCode != requestedCode)
+          if (requestedCode != null &&
+              (stored.currencyCode ?? primary.code) != requestedCode)
             'currency_code',
           if (args.containsKey('amount') && stored.autoBudgetAmount != amount)
             'amount',
@@ -3615,7 +3638,7 @@ List<McpTool> buildTools({
                 '${ignored.join(', ')}. The budget as it now stands is in '
                 '`budget`.',
           'budget_id': budgetId,
-          'budget': _budgetJson(stored),
+          'budget': _budgetJson(stored, primary: primary),
         };
       },
     ),
@@ -3818,6 +3841,15 @@ List<McpTool> buildTools({
         final requested = AutoBudgetType.parse(
           args['auto_budget_type'] as String?,
         );
+        // What the amount is in when the caller names no currency.
+        final primary = await api.getPrimaryCurrency();
+        final requestedCode = args['currency_code'] as String?;
+        final currency = requestedCode == null
+            ? null
+            : await _currencyByCode(api, requestedCode);
+        if (requestedCode != null && currency == null) {
+          return _badInput('No enabled currency with code $requestedCode');
+        }
         final created = await api.createBudget(
           BudgetInput(
             name: name,
@@ -3832,12 +3864,13 @@ List<McpTool> buildTools({
             autoBudgetPeriod: AutoBudgetPeriod.parse(
               args['auto_budget_period'] as String?,
             ),
-            currencyCode:
-                args['currency_code'] as String? ??
-                (await api.getPrimaryCurrency()).code,
+            currencyCode: currency?.code ?? primary.code,
+            // Without the id Firefly keeps the instance default, which is how
+            // every budget on this ledger stayed euro.
+            currencyId: currency?.id,
           ),
         );
-        return {'ok': true, 'budget': _budgetJson(created)};
+        return {'ok': true, 'budget': _budgetJson(created, primary: primary)};
       },
     ),
     McpTool(

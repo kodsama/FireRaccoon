@@ -730,6 +730,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             (budget) => _BudgetGlanceRow(
                               budget: budget,
                               format: format,
+                              budgetSymbol:
+                                  budget.currencySymbol ??
+                                  currencyAsync.asData?.value.symbol ??
+                                  '',
                             ),
                           ),
                     ],
@@ -1341,7 +1345,15 @@ class _BudgetGlanceRow extends StatelessWidget {
   final Budget budget;
   final LocaleFormatting format;
 
-  const _BudgetGlanceRow({required this.budget, required this.format});
+  /// Resolved by the caller, which has the primary currency to hand. Firefly
+  /// leaves a budget's own unset unless somebody chose one.
+  final String budgetSymbol;
+
+  const _BudgetGlanceRow({
+    required this.budget,
+    required this.format,
+    required this.budgetSymbol,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1367,12 +1379,12 @@ class _BudgetGlanceRow extends StatelessWidget {
                 l10n.budgetSpentFraction(
                   format.formatMoney(
                     budget.spent,
-                    budget.currencySymbol,
+                    budgetSymbol,
                     decimalDigits: 0,
                   ),
                   format.formatMoney(
                     budget.autoBudgetAmount,
-                    budget.currencySymbol,
+                    budgetSymbol,
                     decimalDigits: 0,
                   ),
                 ),

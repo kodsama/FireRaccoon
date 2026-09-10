@@ -31,6 +31,20 @@ class _Recorder {
       if (request.method == 'GET' && path == '/api/v1/budgets') {
         return jsonHttpResponse(budgets!);
       }
+      if (request.method == 'GET' && path == '/api/v1/currencies/primary') {
+        // What a budget's figures are in when the budget itself names nothing.
+        return jsonHttpResponse({
+          'data': {
+            'id': '17',
+            'type': 'currencies',
+            'attributes': {
+              'code': 'SEK',
+              'name': 'Swedish krona',
+              'symbol': 'kr',
+            },
+          },
+        });
+      }
       if (request.method == 'GET' && path == '/api/v1/currencies') {
         return jsonHttpResponse({
           'data': [
@@ -193,6 +207,57 @@ void main() {
     });
   });
 
+  group('a group rename that did not land', () {
+    test('is reported against the title, not skipped', () async {
+      // The description check used to skip split groups entirely, so a rename
+      // that changed nothing answered ok.
+      final recorder = _Recorder();
+      final group = {
+        'id': '77',
+        'type': 'transactions',
+        'attributes': {
+          'group_title': 'Rent and fees',
+          'transactions': [
+            {
+              'transaction_journal_id': '811',
+              'type': 'withdrawal',
+              'date': '2026-02-01',
+              'amount': '1200.00',
+              'description': 'Rent',
+              'source_name': 'Checking',
+              'destination_name': 'Landlord',
+              'currency_code': 'EUR',
+              'currency_symbol': '\u20ac',
+            },
+            {
+              'transaction_journal_id': '812',
+              'type': 'withdrawal',
+              'date': '2026-02-01',
+              'amount': '25.00',
+              'description': 'Service fee',
+              'source_name': 'Checking',
+              'destination_name': 'Landlord',
+              'currency_code': 'EUR',
+              'currency_symbol': '\u20ac',
+            },
+          ],
+        },
+      };
+      final client = recorder.client(
+        transaction: group,
+        onWrite: () => transactionEnvelope(group),
+      );
+
+      final result = await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'description': 'Rent, February'});
+
+      expect(result['code'], 'not_applied');
+      expect('${result['error']}', contains('description'));
+    });
+  });
+
   group('dates', () {
     test('an update that never mentions the date keeps the day', () async {
       // Bug and fix in one: the day came back off the wire, went out again as
@@ -233,6 +298,54 @@ void main() {
     });
   });
 
+  group('create_budget', () {
+    test('sends the currency id, not the code alone', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        onWrite: () => {
+          'data': {
+            'id': '9',
+            'attributes': {
+              'name': 'Insurance',
+              'active': true,
+              'auto_budget_amount': '2500.00',
+              'auto_budget_type': 'reset',
+              'auto_budget_currency_code': 'SEK',
+              'auto_budget_currency_symbol': 'kr',
+            },
+          },
+        },
+      );
+
+      final result = await _tool(
+        'create_budget',
+        client,
+      ).run({'name': 'Insurance', 'amount': 2500, 'currency_code': 'SEK'});
+
+      expect(result['ok'], isTrue);
+      // Firefly stores nothing from the code, so the code alone left every
+      // budget on the instance default.
+      expect(recorder.body!['auto_budget_currency_id'], '17');
+      expect(recorder.body!['auto_budget_currency_code'], 'SEK');
+    });
+
+    test('refuses a currency no enabled currency carries', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        onWrite: () => throw StateError('must not reach the server'),
+      );
+
+      final result = await _tool(
+        'create_budget',
+        client,
+      ).run({'name': 'Insurance', 'amount': 2500, 'currency_code': 'XYZ'});
+
+      expect(result['code'], 'bad_input');
+      expect('${result['error']}', contains('XYZ'));
+      expect(recorder.body, isNull);
+    });
+  });
+
   group('update_budget', () {
     test('reports a currency Firefly accepted and dropped', () async {
       final recorder = _Recorder();
@@ -267,6 +380,30 @@ void main() {
       expect(result['ok'], isFalse);
       expect(result['code'], 'not_applied');
       expect('${result['error']}', contains('currency_code'));
+    });
+
+    test('reports the ledger currency for a budget that names none', () async {
+      // A budget list that claimed euro against a krona ledger was actively
+      // misleading: the amounts were never euro.
+      final recorder = _Recorder();
+      final client = recorder.client(
+        budgets: budgetsBody(),
+        onWrite: () => {
+          'data': {
+            'id': '3',
+            'attributes': {'name': 'Food', 'active': true},
+          },
+        },
+      );
+
+      final result = await _tool(
+        'update_budget',
+        client,
+      ).run({'budget_id': '3', 'name': 'Food'});
+
+      final stored = result['budget']! as Map<String, Object?>;
+      expect(stored['currency_code'], 'SEK');
+      expect(stored['currency_symbol'], 'kr');
     });
 
     test('refuses a currency code no enabled currency carries', () async {
