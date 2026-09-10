@@ -204,6 +204,7 @@ Map<String, Object?> piggyEnvelope({String name = 'New Laptop'}) => {
       'currency_code': 'EUR',
       'currency_symbol': '€',
       'start_date': '2026-01-01T00:00:00+00:00',
+      'target_date': '2026-12-24T00:00:00+00:00',
       'accounts': [
         {'account_id': '5', 'name': 'Checking', 'current_amount': '100.00'},
       ],
@@ -314,6 +315,93 @@ Map<String, Object?> transactionsPageBody({
 /// Routes Firefly III API calls for MCP tool tests.
 Map<String, Object?> transactionEnvelope(Map<String, Object?> item) => {
   'data': item,
+};
+
+/// The transaction a server would answer a write with: what it was sent, over
+/// what was already there.
+///
+/// A mock that answers with defaults cannot tell a stored change from a field
+/// the server accepted and dropped, which is the whole point of reading a
+/// write back.
+Map<String, Object?> storedAfterWrite({
+  required String id,
+  required Map<String, Object?> sent,
+  Map<String, Object?>? previous,
+}) {
+  final base = previous ?? transactionItem(id: id);
+  final attrs = base['attributes']! as Map<String, Object?>;
+  final legs = attrs['transactions']! as List;
+  final leg = {...legs.first as Map<String, Object?>};
+
+  for (final key in const [
+    'type',
+    'date',
+    'amount',
+    'description',
+    'source_id',
+    'source_name',
+    'destination_id',
+    'destination_name',
+    'category_id',
+    'category_name',
+    'budget_id',
+    'bill_id',
+    'notes',
+    'tags',
+    'reconciled',
+    'currency_code',
+    'foreign_amount',
+    'foreign_currency_code',
+  ]) {
+    if (sent.containsKey(key)) leg[key] = sent[key];
+  }
+  // Firefly resolves a name it was given and reports the id it landed on, so a
+  // name sent without an id cannot come back beside the id it replaced.
+  if (sent.containsKey('category_name') && !sent.containsKey('category_id')) {
+    leg['category_id'] = '99';
+  }
+
+  return {
+    ...base,
+    'id': id,
+    'attributes': {
+      ...attrs,
+      'transactions': [leg],
+    },
+  };
+}
+
+/// A two-leg group, for a page whose journal total exceeds its row count.
+Map<String, Object?> _splitGroupMockItem() => {
+  'id': '77',
+  'type': 'transactions',
+  'attributes': {
+    'group_title': 'Rent and fees',
+    'transactions': [
+      {
+        'transaction_journal_id': '811',
+        'type': 'withdrawal',
+        'date': '2026-02-01',
+        'amount': '1200.00',
+        'description': 'Rent',
+        'source_name': 'Checking',
+        'destination_name': 'Landlord',
+        'currency_code': 'EUR',
+        'currency_symbol': '\u20ac',
+      },
+      {
+        'transaction_journal_id': '812',
+        'type': 'withdrawal',
+        'date': '2026-02-01',
+        'amount': '25.00',
+        'description': 'Service fee',
+        'source_name': 'Checking',
+        'destination_name': 'Landlord',
+        'currency_code': 'EUR',
+        'currency_symbol': '\u20ac',
+      },
+    ],
+  },
 };
 
 MockClient fireflyMockClient({
@@ -458,6 +546,41 @@ MockClient fireflyMockClient({
         request.url.queryParameters['type'] == 'revenue') {
       return jsonHttpResponse(revenueAccountsBody());
     }
+    if (path == '/api/v1/accounts' &&
+        request.url.queryParameters['type'] == 'reconciliation') {
+      // Empty by default: Firefly makes one only from its own interface, so a
+      // ledger that has never reconciled this account has none, which is the
+      // case a correction has to cope with.
+      return jsonHttpResponse({
+        'data': <Object?>[],
+        'meta': {
+          'pagination': {'total_pages': 1},
+        },
+      });
+    }
+    if (path == '/api/v1/accounts' && method == 'POST') {
+      final sent = jsonDecode(request.body) as Map<String, dynamic>;
+      return jsonHttpResponse({
+        'data': {
+          'id': '900',
+          'type': 'accounts',
+          'attributes': {
+            'name': sent['name'],
+            'type': sent['type'],
+            'currency_code': sent['currency_code'],
+            'currency_symbol': '\u20ac',
+            'current_balance': '0.00',
+          },
+        },
+      }, status: 201);
+    }
+    if (path == '/api/v1/bills/4/transactions') {
+      // A split group of two legs: Firefly's total counts journals, so it says
+      // two where one row comes back, which is the thing worth reporting.
+      return jsonHttpResponse(
+        transactionsPageBody(items: [_splitGroupMockItem()], total: 2),
+      );
+    }
     if (path == '/api/v1/budgets' && method != 'POST') {
       return jsonHttpResponse(budgetsBody());
     }
@@ -512,6 +635,9 @@ MockClient fireflyMockClient({
       return jsonHttpResponse({
         'data': [budgetLimitEnvelope()['data']],
       });
+    }
+    if (path == '/api/v1/budgets/3/limits/11' && method == 'DELETE') {
+      return http.Response('', 204);
     }
     if (path == '/api/v1/budgets/3/limits/11' && method == 'PUT') {
       return jsonHttpResponse(budgetLimitEnvelope(amount: '450.00'));
@@ -678,11 +804,14 @@ MockClient fireflyMockClient({
       if (method == 'PUT') {
         final decoded = jsonDecode(request.body) as Map<String, dynamic>;
         final txList = decoded['transactions'] as List?;
-        final reconciled =
-            txList != null &&
-            txList.isNotEmpty &&
-            txList.first['reconciled'] == true;
-        final updated = transactionItem(id: id, reconciled: reconciled);
+        final sent = txList == null || txList.isEmpty
+            ? const <String, Object?>{}
+            : (txList.first as Map<String, dynamic>);
+        final updated = storedAfterWrite(
+          id: id,
+          sent: sent,
+          previous: transactions[id],
+        );
         transactions[id] = updated;
         return jsonHttpResponse(transactionEnvelope(updated));
       }
@@ -700,9 +829,27 @@ MockClient fireflyMockClient({
       );
     }
     if (path.startsWith('/api/v1/budgets/') && method == 'PUT') {
-      final data = budgetsBody()['data']! as List<Object?>;
+      final sent = jsonDecode(request.body) as Map<String, dynamic>;
+      final previous =
+          (budgetsBody()['data']! as List<Object?>).first
+              as Map<String, Object?>;
+      final attrs = {
+        ...previous['attributes']! as Map<String, Object?>,
+        if (sent['name'] != null) 'name': sent['name'],
+        if (sent['active'] != null) 'active': sent['active'],
+        if (sent['notes'] != null) 'notes': sent['notes'],
+        if (sent['auto_budget_amount'] != null)
+          'auto_budget_amount': sent['auto_budget_amount'],
+        if (sent['auto_budget_type'] != null)
+          'auto_budget_type': sent['auto_budget_type'],
+        if (sent['auto_budget_period'] != null)
+          'auto_budget_period': sent['auto_budget_period'],
+        // Only ever moved by the id: the code alone is what Firefly drops.
+        if (sent['auto_budget_currency_id'] != null)
+          'auto_budget_currency_code': sent['auto_budget_currency_code'],
+      };
       return jsonHttpResponse(
-        transactionEnvelope(data.first as Map<String, Object?>),
+        transactionEnvelope({...previous, 'attributes': attrs}),
       );
     }
     if (path.startsWith('/api/v1/budgets/') && method == 'DELETE') {

@@ -394,8 +394,20 @@ class FakeFireflyService implements FireflyService {
   }
 
   @override
-  Future<void> updateBudget(String budgetId, BudgetInput input) async {
+  Future<Budget> updateBudget(String budgetId, BudgetInput input) async {
     _maybeThrow();
+    return Budget(
+      id: budgetId,
+      name: input.name,
+      active: input.active,
+      notes: input.notes,
+      spent: 0,
+      autoBudgetAmount: input.autoBudgetAmount ?? 0,
+      autoBudgetType: input.autoBudgetType,
+      autoBudgetPeriod: input.autoBudgetPeriod,
+      currencySymbol: _primaryCurrency.symbol,
+      currencyCode: input.currencyCode,
+    );
   }
 
   @override
@@ -432,6 +444,11 @@ class FakeFireflyService implements FireflyService {
     String limitId,
     BudgetLimitInput input,
   ) async {
+    _maybeThrow();
+  }
+
+  @override
+  Future<void> deleteBudgetLimit(String budgetId, String limitId) async {
     _maybeThrow();
   }
 

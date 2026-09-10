@@ -1,7 +1,8 @@
 # Deployment
 
-FireRaccoon ships as a Flutter **web** build served by nginx in Docker. Tagged
-releases also build Android, iOS, macOS, Windows, and Linux installers via
+FireRaccoon ships as a Flutter **web** build served by its own Dart backend in
+Docker, which also proxies the Firefly API through `/api/firefly`. Tagged
+releases build Android, iOS, macOS, Windows, and Linux installers via
 `.github/workflows/release.yml`.
 
 ## GitHub Releases (`0.1`, `1.0.0`, …)

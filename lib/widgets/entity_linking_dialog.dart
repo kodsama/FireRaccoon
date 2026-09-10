@@ -6,6 +6,7 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import '../providers/data_providers.dart';
 import '../providers/paginated_transactions_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import 'confirmation_dialog.dart';
 
 enum EntityLinkingSourceType { payee, category, tag }
@@ -244,21 +245,17 @@ class __EntityLinkingDialogState extends ConsumerState<_EntityLinkingDialog> {
 
       if (mounted) {
         Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Successfully linked and updated $txUpdatedCount transaction(s)'
-              '${recUpdatedCount > 0 ? " and $recUpdatedCount recurring transaction(s)" : ""}'
-              '!',
-            ),
-          ),
+        showInfoToast(
+          context,
+          'Successfully linked and updated $txUpdatedCount transaction(s)'
+          '${recUpdatedCount > 0 ? " and $recUpdatedCount recurring transaction(s)" : ""}'
+          '!',
         );
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text('Failed to apply link: $e')));
+        reportError(context, 'Failed to apply link: $e');
       }
     }
   }

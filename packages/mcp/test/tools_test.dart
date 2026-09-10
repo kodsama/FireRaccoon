@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
@@ -980,6 +981,36 @@ void main() {
       expect(result['gap'], isA<num>());
     });
 
+    test('makes the reconciliation account the correction names', () async {
+      // Firefly creates one only from its own interface, and a correction
+      // refers to it by name, so on a ledger that has never reconciled this
+      // account the write was refused with no way through the tools to fix it.
+      final seen = <Uri>[];
+      final bodies = <String>[];
+      final result = await _tool(
+        'store_reconciliation',
+        client: fireflyMockClient(record: seen, recordBodies: bodies),
+      ).run(reconciliationArgs());
+
+      expect(result['ok'], isTrue);
+      // Looked for by type: a plain account read covers asset and liability
+      // only and would not have seen an existing one either.
+      expect(
+        seen.any(
+          (uri) =>
+              uri.path == '/api/v1/accounts' &&
+              uri.queryParameters['type'] == 'reconciliation',
+        ),
+        isTrue,
+      );
+      final created = bodies
+          .map((b) => jsonDecode(b) as Map<String, Object?>)
+          .where((b) => b['type'] == 'reconciliation')
+          .toList();
+      expect(created, hasLength(1));
+      expect(created.single['name'], 'Checking reconciliation');
+    });
+
     test('skips correction when create_correction is false', () async {
       final result = await _tool(
         'store_reconciliation',
@@ -1047,6 +1078,48 @@ void main() {
       expect(result['ok'], isTrue);
       expect(result['count'], 1);
     });
+
+    test('always asks for a window, and says which one', () async {
+      // Firefly computes spend only over a window it was given, and answers
+      // `spent: []` without one. That read as "nothing is attached to this
+      // budget" while 798 transactions were.
+      final seen = <Uri>[];
+      final result = await _tool(
+        'get_budgets',
+        client: fireflyMockClient(record: seen),
+      ).run({});
+
+      final asked = seen.firstWhere((uri) => uri.path == '/api/v1/budgets');
+      expect(asked.queryParameters['start'], isNotNull);
+      expect(asked.queryParameters['end'], isNotNull);
+      // A spend figure means nothing without the window it was measured over.
+      // Echoed as the caller's own range, whose end is exclusive everywhere in
+      // this surface; the inclusive end on the wire is a day earlier.
+      final window = result['window']! as Map<String, Object?>;
+      expect(window['start'], '1970-01-03');
+      expect(window['end'], '2038-01-16');
+    });
+
+    test('passes a window it was given', () async {
+      final seen = <Uri>[];
+      await _tool(
+        'get_budgets',
+        client: fireflyMockClient(record: seen),
+      ).run({'start_date': '2026-01-01', 'end_date': '2026-02-01'});
+
+      final asked = seen.firstWhere((uri) => uri.path == '/api/v1/budgets');
+      expect(asked.queryParameters['start'], '2026-01-01');
+      expect(asked.queryParameters['end'], '2026-01-31');
+    });
+
+    test('refuses a date it cannot read', () async {
+      final result = await _tool(
+        'get_budgets',
+        client: fireflyMockClient(),
+      ).run({'start_date': 'last Tuesday'});
+      expect(result['code'], 'bad_input');
+      expect('${result['error']}', contains('start_date'));
+    });
   });
 
   group('get_budget_transactions', () {
@@ -1104,7 +1177,45 @@ void main() {
             'active': true,
           });
       expect(result['ok'], isTrue);
-      expect(result['amount'], 500);
+      // The budget as Firefly stored it, not the request read back to itself.
+      final stored = result['budget']! as Map<String, Object?>;
+      expect(stored['auto_budget_amount'], 500);
+      expect(stored['auto_budget_type'], 'rollover');
+      expect(stored['auto_budget_period'], 'monthly');
+    });
+  });
+
+  group('delete_budget_limit', () {
+    test('validates its ids', () async {
+      final tool = _tool('delete_budget_limit', client: fireflyMockClient());
+      expect((await tool.run({}))['code'], 'bad_input');
+      expect((await tool.run({'budget_id': '3'}))['code'], 'bad_input');
+    });
+
+    test('removes one limit', () async {
+      // Without it, switching a budget from monthly to yearly left the monthly
+      // limits behind with no way to remove them, and a yearly one alongside
+      // them double-counts the period. A budget with nine could not be moved
+      // at all.
+      final seen = <Uri>[];
+      final result = await _tool(
+        'delete_budget_limit',
+        client: fireflyMockClient(record: seen),
+      ).run({'budget_id': '3', 'limit_id': '11'});
+
+      expect(result['ok'], isTrue);
+      expect(result['deleted'], isTrue);
+      expect(
+        seen.map((uri) => uri.path),
+        contains('/api/v1/budgets/3/limits/11'),
+      );
+    });
+
+    test('is declared as a write', () async {
+      final tool = buildTools(target: _target)
+          .firstWhere((t) => t.name == 'delete_budget_limit');
+      // The writes flag is the gate a read-only key is refused by.
+      expect(tool.writes, isTrue);
     });
   });
 
@@ -1233,5 +1344,52 @@ void main() {
 
     expect(result.expected.length, greaterThan(1));
     expect(result.endExpected, greaterThan(0));
+  });
+
+  group('a whole-ledger read gets its own ceiling', () {
+    /// Counts requests per distinct URL, so the answer is the attempt count
+    /// however many endpoints the caller fans out over, and answers everything
+    /// but accounts normally.
+    MockClient countingAccounts(Map<String, int> perUrl) {
+      final inner = fireflyMockClient();
+      return MockClient((request) async {
+        if (request.url.path == '/api/v1/accounts') {
+          final key = request.url.toString();
+          perUrl[key] = (perUrl[key] ?? 0) + 1;
+          throw const SocketException('down');
+        }
+        return http.Response.fromStream(
+          await inner.send(
+            http.Request(request.method, request.url)
+              ..headers.addAll(request.headers)
+              ..body = request.body,
+          ),
+        );
+      });
+    }
+
+    test('an ordinary read is tried three times', () async {
+      final perUrl = <String, int>{};
+      await _tool('get_accounts', client: countingAccounts(perUrl)).run({});
+      expect(perUrl, isNotEmpty);
+      expect(perUrl.values.toSet(), {3});
+    });
+
+    test(
+      'a ledger walk is tried fewer, because each try waits longer',
+      () async {
+        // The ceiling is per attempt, so three minutes times the ordinary three
+        // attempts is nine minutes of nothing against a server that never
+        // answers.
+        final perUrl = <String, int>{};
+        await _tool(
+          'export_firefly_data',
+          client: countingAccounts(perUrl),
+        ).run({});
+        expect(perUrl, isNotEmpty);
+        expect(perUrl.values.toSet(), {kFireflyLedgerWalkAttempts});
+        expect(kFireflyLedgerWalkAttempts, lessThan(3));
+      },
+    );
   });
 }

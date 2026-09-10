@@ -112,15 +112,14 @@ Future<void> duplicateTransactionEntity(
     await refreshTransactionLists(ref, filterAccount, upsert: duplicated);
     await onMutated?.call();
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.transactionDuplicated)));
+      showInfoToast(context, l10n.transactionDuplicated);
     }
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.failedToDuplicateTransaction(e.toString())),
-        ),
+      reportError(
+        context,
+        l10n.failedToDuplicateTransaction(readableError(e)),
+        error: e,
       );
     }
   }
@@ -164,10 +163,10 @@ Future<void> toggleTransactionReconciled(
     paginated.patchTransaction(transaction);
     onPatched?.call(transaction);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.failedToUpdateReconciliation(e.toString())),
-        ),
+      reportError(
+        context,
+        l10n.failedToUpdateReconciliation(readableError(e)),
+        error: e,
       );
     }
   }
@@ -195,8 +194,7 @@ Future<void> saveTransactionEntity(
         );
     await refreshTransactionLists(ref, filterAccount, upsert: saved);
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.transactionSaved)));
+      showInfoToast(context, l10n.transactionSaved);
     }
   } catch (e, stackTrace) {
     if (context.mounted) {
@@ -251,13 +249,14 @@ Future<void> deleteTransactionEntity(
     );
     await onMutated?.call();
     if (context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.transactionDeleted)));
+      showInfoToast(context, l10n.transactionDeleted);
     }
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.failedToDeleteTransaction(e.toString()))),
+      reportError(
+        context,
+        l10n.failedToDeleteTransaction(readableError(e)),
+        error: e,
       );
     }
   }

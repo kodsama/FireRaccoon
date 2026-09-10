@@ -220,8 +220,9 @@ void main() {
     await tester.enterText(_fieldLabeled('Payee'), 'Groceries');
     await tester.pump();
 
+    // tapDialogPrimaryAction already settles. A second pass burns four
+    // seconds of test time, and a confirmation clears itself after three.
     await tapDialogPrimaryAction(tester, label: 'Save');
-    await settleIgnoringOverflow(tester);
 
     expect(find.text('Transaction created.'), findsOneWidget);
   });

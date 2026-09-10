@@ -33,7 +33,7 @@ Tokens from OAuth are stored in secure storage the same way as personal access t
 | Setting | Description |
 |---------|-------------|
 | **Server URL** | Base URL of Firefly III, e.g. `https://firefly.example.com` |
-| **Allow insecure HTTP** | Permits `http://` URLs. Refused everywhere unless this is on, and the connection is badged as unencrypted for as long as it is one |
+| **Allow insecure HTTP** | Permits `http://` URLs. Refused everywhere unless this is on, and the connection is badged as unencrypted for as long as it is one. Not needed in a server deployment on the web, where the server does the dialling and this app only ever talks to its own origin |
 | **Test connection** | Calls `GET /api/v1/about` before saving, without following redirects, so a reverse proxy's sign-in page is told apart from a wrong address |
 | **Cosmos SSO** | Signs in to a Cosmos Cloud route standing in front of Firefly III. See [Cosmos Cloud](cosmos-cloud.md) |
 
@@ -51,7 +51,16 @@ in from where it says so. Cosmos Cloud is supported directly; see
 
 ## CORS (web deployments)
 
-When FireRaccoon runs in the browser, requests go from the user's origin to your Firefly III host. Browsers block cross-origin API calls unless Firefly allows them.
+In **server mode** there is nothing to configure. The page is served by the
+process that holds the credentials, so the browser asks its own origin and the
+server makes the Firefly call through `/api/firefly`. That is also the only way
+to reach a backend on the server's own network: a container name does not
+resolve in a browser, and a plain-http address is blocked as mixed content on
+an https page. `http://firefly-app:8080` is a perfectly good Server URL here.
+
+In **local mode** on the web, requests go from the user's origin to your
+Firefly III host, and browsers block cross-origin API calls unless Firefly
+allows them.
 
 **Recommended:** serve FireRaccoon and Firefly III under the same domain via a reverse proxy, e.g.:
 

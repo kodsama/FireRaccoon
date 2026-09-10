@@ -39,6 +39,15 @@ dart analyze packages/engine packages/mcp packages/app_backend \
 flutter analyze || fail "flutter analyze reported issues"
 
 section "4/5  tests"
+# Stale coverage first. format_coverage aggregates whatever sits in these
+# directories, and a hit map written against another tree's line numbers lands
+# its hits on the wrong lines, so an edited package reports far less coverage
+# than it has and fails its floor on a commit that touched nothing in it. A map
+# belonging to a test file that has since been deleted lingers the same way.
+# Seen twice now: MCP read 76.4% against a 99% floor, and 99.1% on a clean run.
+rm -rf packages/engine/coverage packages/mcp/coverage \
+  packages/app_backend/coverage coverage
+
 # Password handling derives a key per call, 600k PBKDF2 rounds. A test doing
 # several, instrumented for coverage and competing with the other isolates,
 # crosses the 30s default and fails on load rather than on what it asserts.

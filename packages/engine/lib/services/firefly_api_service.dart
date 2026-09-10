@@ -23,6 +23,24 @@ import '../utils/date_range.dart';
 import 'firefly_api_exception.dart';
 import 'firefly_service.dart';
 
+/// Per-request ceiling for a call somebody is waiting on.
+const Duration kFireflyRequestTimeout = Duration(seconds: 45);
+
+/// Per-request ceiling for a read that walks the whole ledger.
+///
+/// A backup or a full export fetches page after page, and a page off a loaded
+/// Firefly has been measured at 6 to 30 seconds. Against the ordinary ceiling
+/// every attempt died, and a backup that cannot be taken when the server is
+/// struggling is missing at exactly the moment it is wanted.
+const Duration kFireflyLedgerWalkTimeout = Duration(minutes: 3);
+
+/// Attempts for a whole-ledger read, fewer than the ordinary three.
+///
+/// The ceiling applies per attempt, so three of them against a server that
+/// never answers is nine minutes of nothing. At three minutes a timeout is no
+/// longer a blip worth retrying twice.
+const int kFireflyLedgerWalkAttempts = 2;
+
 class FireflyApiService implements FireflyService {
   final String serverUrl;
   final String apiToken;
@@ -42,11 +60,11 @@ class FireflyApiService implements FireflyService {
     int readMaxAttempts = 3,
     int readRetryBaseDelayMs = 200,
     int readRetryJitterMs = 0,
-    Duration requestTimeout = const Duration(seconds: 45),
+    Duration requestTimeout = kFireflyRequestTimeout,
     Random? random,
   }) : _client = client ?? http.Client(),
        _requestTimeout = requestTimeout <= Duration.zero
-           ? const Duration(seconds: 45)
+           ? kFireflyRequestTimeout
            : requestTimeout,
        _readMaxAttempts = readMaxAttempts < 1 ? 1 : readMaxAttempts,
        _readRetryBaseDelayMs = readRetryBaseDelayMs < 0
@@ -994,7 +1012,7 @@ class FireflyApiService implements FireflyService {
   }
 
   @override
-  Future<void> updateBudget(String budgetId, BudgetInput input) async {
+  Future<Budget> updateBudget(String budgetId, BudgetInput input) async {
     try {
       final response = await _send(
         'PUT',
@@ -1005,6 +1023,10 @@ class FireflyApiService implements FireflyService {
       if (response.statusCode != 200) {
         throw Exception('Failed to update budget: ${_status(response)}');
       }
+      // Firefly answers with the stored budget. Handing it back is what lets a
+      // caller tell a change from a field the server accepted and dropped.
+      final data = jsonDecode(response.body);
+      return Budget.fromJson(data['data'] as Map<String, dynamic>);
     } catch (e) {
       throw FireflyApiException('$e', cause: e);
     }
@@ -1068,6 +1090,21 @@ class FireflyApiService implements FireflyService {
         throw Exception(
           'Failed to update budget limit: ${response.statusCode}',
         );
+      }
+    } catch (e) {
+      throw FireflyApiException('$e', cause: e);
+    }
+  }
+
+  @override
+  Future<void> deleteBudgetLimit(String budgetId, String limitId) async {
+    try {
+      final response = await _send(
+        'DELETE',
+        '/api/v1/budgets/$budgetId/limits/$limitId',
+      );
+      if (response.statusCode != 204 && response.statusCode != 200) {
+        throw Exception('Failed to delete budget limit: ${_status(response)}');
       }
     } catch (e) {
       throw FireflyApiException('$e', cause: e);

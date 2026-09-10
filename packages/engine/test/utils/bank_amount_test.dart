@@ -179,6 +179,39 @@ void main() {
       expect(inferAmountGrammar(const ['1234', '1,234', '']), isNull);
     });
 
+    test('settles a corpus no grammar can read differently', () {
+      // Every Handelsbanken export is a column of separator-free whole
+      // numbers. Both grammars read each one to the same value, so the choice
+      // cannot change a single figure, and refusing to make it only refused an
+      // import with nothing wrong with it.
+      expect(
+        inferAmountGrammar(const ['-481', '1200', '25']),
+        AmountGrammar.dotDecimal,
+      );
+    });
+
+    test('still refuses when one amount reads two ways', () {
+      // 1.000 is a thousand under one grammar and one under the other. One of
+      // these is enough to withhold a verdict, whatever the rest agree on.
+      expect(inferAmountGrammar(const ['-481', '1200', '1.000']), isNull);
+    });
+
+    test('still refuses a corpus nothing can read', () {
+      // Here the separator is not what is wrong, so settling on one would
+      // answer a question nobody asked and hide the real problem.
+      expect(inferAmountGrammar(const ['n/a', 'pending', '']), isNull);
+    });
+
+    test('counts what it saw either way', () {
+      final agreed = inferAmountGrammarDetailed(const ['-481', '1200']);
+      expect(agreed.agreed, 2);
+      expect(agreed.ambiguous, 0);
+
+      final undecidable = inferAmountGrammarDetailed(const ['1,234']);
+      expect(undecidable.ambiguous, 1);
+      expect(undecidable.agreed, 0);
+    });
+
     test('returns null when rows contradict each other', () {
       // Catches a mixed export being forced onto whichever row came first.
       expect(inferAmountGrammar(const ['1234,56', '1234.56']), isNull);

@@ -11,6 +11,7 @@ import '../providers/data_providers.dart';
 import '../providers/undo_history_provider.dart';
 import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/app_feedback.dart';
 import '../utils/create_flows.dart';
 import '../utils/locale_formatting.dart';
 import '../widgets/confirmation_dialog.dart';
@@ -349,14 +350,14 @@ Future<void> _deleteBill(BuildContext context, WidgetRef ref, Bill bill) async {
         );
     ref.invalidate(billsProvider);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.subscriptionDeleted(bill.name))),
-      );
+      showInfoToast(context, l10n.subscriptionDeleted(bill.name));
     }
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.failedToDeleteSubscription(e.toString()))),
+      reportError(
+        context,
+        l10n.failedToDeleteSubscription(readableError(e)),
+        error: e,
       );
     }
   }
@@ -656,18 +657,17 @@ Future<void> _deleteRecurrence(
     }
     ref.invalidate(recurrencesProvider);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.recurringTransactionDeleted(recurrence.title)),
-        ),
+      showInfoToast(
+        context,
+        l10n.recurringTransactionDeleted(recurrence.title),
       );
     }
   } catch (e) {
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(l10n.failedToDeleteRecurringTransaction(e.toString())),
-        ),
+      reportError(
+        context,
+        l10n.failedToDeleteRecurringTransaction(readableError(e)),
+        error: e,
       );
     }
   }

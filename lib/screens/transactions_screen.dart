@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
+import '../utils/app_feedback.dart';
 import '../utils/locale_formatting.dart';
 import '../theme/app_theme.dart';
 import '../providers/data_providers.dart';
@@ -25,7 +26,6 @@ import '../utils/transaction_list_grouping.dart';
 import '../widgets/account_balance_check_panel.dart';
 import '../widgets/account_filter_dialog.dart';
 import '../widgets/entity_screen_header.dart';
-import '../widgets/firefly_refresh_button.dart';
 import '../widgets/not_connected_view.dart';
 import '../widgets/small_loading_indicator.dart';
 import '../widgets/selection_check_control.dart';
@@ -276,9 +276,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
     final toUnreconcile = changes.toUnreconcile;
     if (!changes.hasWork) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.balanceCheckNothingToReconcile)),
-        );
+        showInfoToast(context, context.l10n.balanceCheckNothingToReconcile);
       }
       return;
     }
@@ -406,8 +404,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
           : context.l10n.failedToUpdateReconciliation(
               '${failedOriginals.length}/$attempted',
             );
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+      showInfoToast(context, message);
     }
   }
 
@@ -459,19 +456,17 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.balanceCheckPaybackReconciled)),
-        );
+        showInfoToast(context, context.l10n.balanceCheckPaybackReconciled);
       }
     } catch (error) {
       for (final original in [...toReconcile, ...toUnreconcile]) {
         notifier.patchTransaction(original);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(context.l10n.failedToUpdateReconciliation('$error')),
-          ),
+        reportError(
+          context,
+          context.l10n.failedToUpdateReconciliation(readableError(error)),
+          error: error,
         );
       }
     }
@@ -530,13 +525,14 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       );
 
       if (created == true && mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(l10n.transactionCreated)));
+        showInfoToast(context, l10n.transactionCreated);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.failedToCreateTransaction(e.toString()))),
+        reportError(
+          context,
+          l10n.failedToCreateTransaction(readableError(e)),
+          error: e,
         );
       }
     }
@@ -1028,7 +1024,6 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                       );
                     },
                   ),
-                  FireflyRefreshButton(focusAccount: filterAccount),
                 ],
               ),
             ),

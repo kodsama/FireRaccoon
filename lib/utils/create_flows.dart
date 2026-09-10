@@ -13,6 +13,7 @@ import '../widgets/recurring_transaction_form_dialog.dart';
 import '../widgets/subscription_form_dialog.dart';
 import '../widgets/transaction_edit_panel.dart';
 import '../widgets/transaction_entity_card.dart';
+import 'app_feedback.dart';
 
 final _log = AppLogger.scoped('flows.create');
 
@@ -164,15 +165,16 @@ Future<void> openNewTransactionFlow(
 
     if (created == true && context.mounted) {
       _log.info('Transaction create flow completed successfully');
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(l10n.transactionCreated)));
+      showInfoToast(context, l10n.transactionCreated);
     }
   } catch (e) {
     // coverage:ignore-start
     _log.warning('Transaction create flow failed: $e');
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l10n.failedToCreateTransaction(e.toString()))),
+      reportError(
+        context,
+        l10n.failedToCreateTransaction(readableError(e)),
+        error: e,
       );
     }
     // coverage:ignore-end
@@ -191,8 +193,7 @@ Future<void> openCreateAccountDialog(
       _log.info('Liability created successfully');
     }
     if (created == true && context.mounted) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(context.l10n.liabilityCreated)));
+      showInfoToast(context, context.l10n.liabilityCreated);
     }
     return;
   }
@@ -207,8 +208,7 @@ Future<void> openCreateAccountDialog(
     _log.info('Account created successfully (accountType=$accountType)');
   }
   if (created == true && context.mounted) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(context.l10n.accountCreated)));
+    showInfoToast(context, context.l10n.accountCreated);
   }
   // coverage:ignore-end
 }
@@ -220,8 +220,7 @@ Future<void> openCreateBudgetDialog(BuildContext context, WidgetRef ref) async {
     _log.info('Budget created successfully');
   }
   if (created == true && context.mounted) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(context.l10n.budgetCreated)));
+    showInfoToast(context, context.l10n.budgetCreated);
   }
 }
 
@@ -235,9 +234,7 @@ Future<void> openCreateSubscriptionDialog(
     _log.info('Subscription created successfully');
   }
   if (created == true && context.mounted) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(context.l10n.subscriptionCreated)));
+    showInfoToast(context, context.l10n.subscriptionCreated);
   }
 }
 
@@ -254,9 +251,7 @@ Future<void> openCreateRecurringTransactionDialog(
     _log.info('Recurring transaction created successfully');
   }
   if (created == true && context.mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(context.l10n.recurringTransactionCreated)),
-    );
+    showInfoToast(context, context.l10n.recurringTransactionCreated);
   }
 }
 
@@ -270,7 +265,6 @@ Future<void> openCreatePiggyBankDialog(
     _log.info('Piggy bank created successfully');
   }
   if (created == true && context.mounted) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(context.l10n.piggyBankCreated)));
+    showInfoToast(context, context.l10n.piggyBankCreated);
   }
 }

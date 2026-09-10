@@ -14,6 +14,7 @@ import 'package:http/http.dart' as http;
 
 import '../store/cosmos_session_client.dart';
 import 'cosmos_session_provider.dart';
+import '../deployment/deployment_providers.dart';
 import '../utils/transport_security.dart';
 import '../utils/debug_env_credentials.dart';
 import '../utils/web_backend_proxy.dart';
@@ -332,7 +333,13 @@ class AuthNotifier extends Notifier<AuthSettings> {
     // Every saved connection funnels through here, so this is where the rule
     // holds: the connection test refuses http too, but a settings import and an
     // OAuth sign-in never go near it.
-    requireEncryptedTransport(serverUrl, allowInsecure: allowInsecure);
+    requireEncryptedTransport(
+      serverUrl,
+      allowInsecure: allowInsecure,
+      dialledByServer: backendIsProxied(
+        serverMode: ref.read(deploymentConfigProvider).isServer,
+      ),
+    );
     // Apply in memory first so the session works even if persistence fails.
     state = AuthSettings(
       serverUrl: serverUrl,
@@ -389,12 +396,18 @@ class AuthNotifier extends Notifier<AuthSettings> {
     bool insecure,
   ) async {
     final baseUrl = url.endsWith('/') ? url.substring(0, url.length - 1) : url;
-    if (!insecure && baseUrl.startsWith('http://')) {
+    final proxied = backendIsProxied(
+      serverMode: ref.read(deploymentConfigProvider).isServer,
+    );
+    // Refusing plain http here only ever spoke for a request this process was
+    // about to make. Proxied, it is the server that dials, and the address it
+    // dials is the one this refusal made unsaveable.
+    if (!insecure && !proxied && baseUrl.startsWith('http://')) {
       return const ConnectionTestResult.failed(
         ConnectionFailure.insecureRefused,
       );
     }
-    final requestBaseUrl = resolveBackendUrlForHttp(baseUrl);
+    final requestBaseUrl = resolveBackendUrlForHttp(baseUrl, proxied: proxied);
 
     _log.fine('Testing Firefly connection endpoint');
     // Two bounded attempts: a stalled request must not hang the status

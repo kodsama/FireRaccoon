@@ -108,6 +108,68 @@ void main() {
     );
   });
 
+  testWidgets('a message stays above a dialog opened after it', (tester) async {
+    // An error waits until it is dismissed, so a dialog is very likely to open
+    // while one is still up. The message has to stay reachable, not just
+    // visible: a modal barrier drawn over it would swallow the close button.
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => Column(
+              children: [
+                ElevatedButton(
+                  onPressed: () => showErrorToast(context, 'it broke'),
+                  child: const Text('raise'),
+                ),
+                ElevatedButton(
+                  onPressed: () => showDialog<void>(
+                    context: context,
+                    builder: (_) => const AlertDialog(title: Text('a modal')),
+                  ),
+                  child: const Text('open'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('raise'));
+    await tester.pump();
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.text('it broke'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pump();
+
+    expect(
+      find.text('it broke'),
+      findsNothing,
+      reason: 'the close button took the tap, so nothing is drawn over it',
+    );
+    expect(find.byType(AlertDialog), findsOneWidget);
+  });
+
+  testWidgets('a confirmation stops counting when its tree goes away', (
+    tester,
+  ) async {
+    await _pumpHost(tester, onPressed: (c) => showInfoToast(c, 'saved'));
+    await tester.tap(find.text('go'));
+    await tester.pump();
+    expect(find.text('saved'), findsOneWidget);
+
+    // The countdown has to die with the tree. Held in library state it
+    // outlived the widget that raised it, and every screen test that ended on
+    // a confirmation failed on a timer still pending after teardown.
+    await tester.pumpWidget(const SizedBox());
+    expect(find.text('saved'), findsNothing);
+  });
+
   testWidgets('a second message replaces the first', (tester) async {
     await tester.pumpWidget(
       MaterialApp(

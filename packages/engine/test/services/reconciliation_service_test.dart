@@ -21,6 +21,33 @@ class _RecordingApi implements FireflyService {
     return transaction.copyWith(id: 'created-1');
   }
 
+  /// What the ledger already has of type `reconciliation`.
+  List<Account> reconciliationAccounts = const [];
+  final accountCreates = <String>[];
+
+  @override
+  Future<List<Account>> getAccounts({
+    List<String> types = const ['asset', 'liability'],
+  }) async => types.contains('reconciliation')
+      ? reconciliationAccounts
+      : const <Account>[];
+
+  @override
+  Future<Account> createAccount({
+    required String name,
+    required String type,
+    required String currencyCode,
+    String? role,
+  }) async {
+    accountCreates.add('$type:$name:$currencyCode');
+    return _account(
+      id: 'new-1',
+      name: name,
+      type: type,
+      currencyCode: currencyCode,
+    );
+  }
+
   @override
   noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
@@ -106,6 +133,82 @@ void main() {
 
     expect(api.creates, hasLength(1));
     expect(result.correction?.id, 'created-1');
+  });
+
+  test(
+    'a correction makes the reconciliation account Firefly has not',
+    () async {
+      // Firefly creates these only from its own interface, and a correction
+      // names one: on a ledger that has never reconciled this account there was
+      // nothing for it to name, and no way through the API to make one, so the
+      // correction could not be written at all.
+      final api = _RecordingApi();
+      final service = ReconciliationService(api);
+
+      await service.store(
+        journalsToReconcile: [_tx(id: '1')],
+        accountId: 'a1',
+        accountName: 'Checking',
+        currencyCode: 'EUR',
+        currencySymbol: '\u20ac',
+        endDate: DateTime(2026, 1, 31),
+        gap: 12.5,
+      );
+
+      expect(api.accountCreates, [
+        'reconciliation:Checking reconciliation:EUR',
+      ]);
+      // Named exactly as the correction refers to it, or Firefly cannot resolve
+      // the name and refuses the write.
+      final correction = api.creates.single;
+      expect([
+        correction.sourceName,
+        correction.destinationName,
+      ], contains('Checking reconciliation'));
+    },
+  );
+
+  test('one that already exists is not made again', () async {
+    final api = _RecordingApi()
+      ..reconciliationAccounts = [
+        _account(
+          id: 'r1',
+          name: 'Checking reconciliation',
+          type: 'reconciliation',
+        ),
+      ];
+    final service = ReconciliationService(api);
+
+    await service.store(
+      journalsToReconcile: [_tx(id: '1')],
+      accountId: 'a1',
+      accountName: 'Checking',
+      currencyCode: 'EUR',
+      currencySymbol: '\u20ac',
+      endDate: DateTime(2026, 1, 31),
+      gap: 12.5,
+    );
+
+    expect(api.accountCreates, isEmpty);
+    expect(api.creates, hasLength(1));
+  });
+
+  test('nothing is made when there is no correction to write', () async {
+    final api = _RecordingApi();
+    final service = ReconciliationService(api);
+
+    await service.store(
+      journalsToReconcile: [_tx(id: '1')],
+      accountId: 'a1',
+      accountName: 'Checking',
+      currencyCode: 'EUR',
+      currencySymbol: '\u20ac',
+      endDate: DateTime(2026, 1, 31),
+      gap: 0,
+    );
+
+    expect(api.accountCreates, isEmpty);
+    expect(api.creates, isEmpty);
   });
 
   test('store reports partial progress on mid-loop failure', () async {
