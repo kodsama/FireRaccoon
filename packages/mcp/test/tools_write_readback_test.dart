@@ -22,6 +22,7 @@ class _Recorder {
     required Map<String, Object?> Function() onWrite,
     Map<String, Object?>? transaction,
     Map<String, Object?>? budgets,
+    List<Object?>? limits,
   }) {
     return MockClient((request) async {
       final path = request.url.path;
@@ -30,6 +31,9 @@ class _Recorder {
       }
       if (request.method == 'GET' && path == '/api/v1/budgets') {
         return jsonHttpResponse(budgets!);
+      }
+      if (request.method == 'GET' && path == '/api/v1/budgets/3/limits') {
+        return jsonHttpResponse({'data': limits ?? <Object?>[]});
       }
       if (request.method == 'GET' && path == '/api/v1/currencies/primary') {
         // What a budget's figures are in when the budget itself names nothing.
@@ -453,6 +457,100 @@ void main() {
       expect(result['code'], 'not_applied');
       expect('${result['error']}', contains('amount'));
       expect('${result['error']}', contains('auto_budget_period'));
+    });
+
+    test('says when the period limit did not follow the amount', () async {
+      // Firefly keeps the limit in force for a period independent of the rule,
+      // so a budget read 220,000 while its 2026 limit still read 100,000 and
+      // nothing said so.
+      final recorder = _Recorder();
+      final client = recorder.client(
+        budgets: budgetsBody(),
+        limits: [
+          {
+            'id': '11',
+            'type': 'budget_limits',
+            'attributes': {
+              'budget_id': '3',
+              'start': '2026-01-01T00:00:00+00:00',
+              'end': '2026-12-31T00:00:00+00:00',
+              'amount': '100000.00',
+              'currency_code': 'SEK',
+              'currency_symbol': 'kr',
+            },
+          },
+        ],
+        onWrite: () => {
+          'data': {
+            'id': '3',
+            'attributes': {
+              'name': 'Holidays',
+              'active': true,
+              'auto_budget_amount': '220000.00',
+              'auto_budget_type': 'reset',
+              'auto_budget_period': 'yearly',
+              'auto_budget_currency_code': 'SEK',
+              'auto_budget_currency_symbol': 'kr',
+            },
+          },
+        },
+      );
+
+      final result = await _tool(
+        'update_budget',
+        client,
+      ).run({'budget_id': '3', 'name': 'Holidays', 'amount': 220000});
+
+      // The write landed, so this is not a failure and not not_applied.
+      expect(result['ok'], isTrue);
+      expect(result.containsKey('code'), isFalse);
+
+      final stale = result['period_limits_unchanged']! as List;
+      expect(stale, hasLength(1));
+      expect((stale.single as Map)['limit_id'], '11');
+      expect((stale.single as Map)['amount'], 100000);
+      expect('${result['note']}', contains('update_budget_limit'));
+    });
+
+    test('says nothing when the limit already agrees', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        budgets: budgetsBody(),
+        limits: [
+          {
+            'id': '11',
+            'type': 'budget_limits',
+            'attributes': {
+              'budget_id': '3',
+              'start': '2026-01-01T00:00:00+00:00',
+              'end': '2026-12-31T00:00:00+00:00',
+              'amount': '220000.00',
+              'currency_code': 'SEK',
+              'currency_symbol': 'kr',
+            },
+          },
+        ],
+        onWrite: () => {
+          'data': {
+            'id': '3',
+            'attributes': {
+              'name': 'Holidays',
+              'active': true,
+              'auto_budget_amount': '220000.00',
+              'auto_budget_type': 'reset',
+              'auto_budget_currency_code': 'SEK',
+            },
+          },
+        },
+      );
+
+      final result = await _tool(
+        'update_budget',
+        client,
+      ).run({'budget_id': '3', 'name': 'Holidays', 'amount': 220000});
+
+      expect(result.containsKey('period_limits_unchanged'), isFalse);
+      expect(result.containsKey('note'), isFalse);
     });
 
     test('refuses to pretend it cleared an auto-budget', () async {

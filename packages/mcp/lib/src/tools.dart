@@ -3688,6 +3688,42 @@ List<McpTool> buildTools({
           if (stored.name != name) 'name',
         ];
 
+        // Changing the rule does not move the limit already in force for a
+        // period, and that is deliberate on Firefly's side: rollover and
+        // adjusted compute a limit from what the previous period left or
+        // overspent, and a person can set one by hand. Overwriting it from an
+        // amount change would destroy a figure nobody asked to change, on a
+        // call whose contract is that omitted fields keep their value. So it
+        // is reported instead: a budget reading 220,000 whose live limit still
+        // reads 100,000 is the kind of thing you find out months later.
+        //
+        // Not a failure, and not `not_applied`: the amount did land, and that
+        // code means Firefly dropped a field it was given.
+        final unchangedLimits = <Map<String, Object?>>[];
+        if (args.containsKey('amount') && stored.autoBudgetAmount == amount) {
+          try {
+            final today = DateTime.now();
+            final inForce = await api.getBudgetLimits(
+              budgetId,
+              start: today,
+              end: today,
+            );
+            for (final limit in inForce) {
+              if ((limit.amount - amount).abs() > 0.005) {
+                unchangedLimits.add({
+                  'limit_id': limit.id,
+                  'start_date': _dateOnly(limit.start),
+                  'end_date': _dateOnly(limit.end),
+                  'amount': limit.amount,
+                  'currency_code': limit.currencyCode,
+                });
+              }
+            }
+          } on Object {
+            // A throw here would report a write that landed as a failure.
+          }
+        }
+
         return {
           'ok': ignored.isEmpty,
           if (ignored.isNotEmpty) 'code': 'not_applied',
@@ -3698,6 +3734,15 @@ List<McpTool> buildTools({
                 '`budget`.',
           'budget_id': budgetId,
           'budget': _budgetJson(stored, primary: primary),
+          if (unchangedLimits.isNotEmpty) ...{
+            'period_limits_unchanged': unchangedLimits,
+            'note':
+                'The auto-budget amount changed. The budget limit in force for '
+                'this period keeps its own amount, which Firefly III does not '
+                'rewrite from the rule, so tracking for the current period '
+                'still uses the figure above. Change it with '
+                'update_budget_limit, or remove it with delete_budget_limit.',
+          },
         };
       },
     ),
