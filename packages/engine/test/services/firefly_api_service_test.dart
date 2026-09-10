@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
@@ -3310,6 +3311,90 @@ void main() {
           ),
         ),
       );
+    });
+  });
+
+  group('the per-request ceiling', () {
+    test('a request that outlives it is a failure, not a hang', () async {
+      final client = MockClient((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+        return jsonHttpResponse({'data': <Object?>[]});
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+        requestTimeout: const Duration(milliseconds: 20),
+        readMaxAttempts: 1,
+      );
+
+      await expectLater(
+        service.getAccounts(),
+        throwsA(isA<FireflyApiException>()),
+      );
+    });
+
+    test('one inside it is left alone', () async {
+      final client = MockClient((_) async {
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        return jsonHttpResponse({'data': <Object?>[]});
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+        requestTimeout: const Duration(seconds: 5),
+      );
+
+      expect(await service.getAccounts(), isEmpty);
+    });
+
+    test('zero means the default rather than instant failure', () async {
+      final client = MockClient(
+        (_) async => jsonHttpResponse({'data': <Object?>[]}),
+      );
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+        requestTimeout: Duration.zero,
+      );
+
+      expect(await service.getAccounts(), isEmpty);
+    });
+
+    test('a whole-ledger walk is given longer and tried less', () {
+      // The ceiling is per attempt, so the ordinary three of them against a
+      // server that never answers would be nine minutes of nothing.
+      expect(kFireflyLedgerWalkTimeout, greaterThan(kFireflyRequestTimeout));
+      expect(kFireflyLedgerWalkAttempts, lessThan(3));
+      expect(
+        kFireflyLedgerWalkTimeout * kFireflyLedgerWalkAttempts,
+        lessThanOrEqualTo(const Duration(minutes: 6)),
+      );
+    });
+
+    test('attempts are counted as asked', () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        throw const SocketException('down');
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+        readMaxAttempts: 2,
+        readRetryBaseDelayMs: 0,
+      );
+
+      // One request, so the count is the attempts. getAccounts would fetch a
+      // page per account type and multiply them.
+      await expectLater(
+        service.getPrimaryCurrency(),
+        throwsA(isA<FireflyApiException>()),
+      );
+      expect(calls, 2);
     });
   });
 }

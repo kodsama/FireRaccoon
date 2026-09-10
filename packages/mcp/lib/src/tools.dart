@@ -1487,7 +1487,11 @@ List<McpTool> buildTools({
   BackupStore? backups,
   String? appVersion,
 }) {
-  FireflyService service() {
+  /// [requestTimeout] and [readMaxAttempts] are for a read that walks the
+  /// whole ledger, which needs a ceiling the ordinary one would kill. Left
+  /// alone for everything else, including every write: a long ceiling on a
+  /// write buys nothing and delays the report that it failed.
+  FireflyService service({Duration? requestTimeout, int? readMaxAttempts}) {
     if (!target.isConfigured) {
       throw const FireflyNotConnectedException(
         'No Firefly connection: start the server with FIRERACCOON_URL and '
@@ -1498,13 +1502,21 @@ List<McpTool> buildTools({
       serverUrl: target.normalizedBaseUrl,
       apiToken: target.bearer,
       client: _proxyClient(httpClient, target),
+      requestTimeout: requestTimeout ?? kFireflyRequestTimeout,
+      readMaxAttempts: readMaxAttempts ?? 3,
     );
   }
+
+  /// A client for a whole-ledger read.
+  FireflyService ledgerWalkService() => service(
+    requestTimeout: kFireflyLedgerWalkTimeout,
+    readMaxAttempts: kFireflyLedgerWalkAttempts,
+  );
 
   /// Null where nothing can keep a backup, which is every client that reaches
   /// Firefly directly rather than through FireRaccoon.
   BackupService? backupService() =>
-      backups == null ? null : BackupService(service(), backups);
+      backups == null ? null : BackupService(ledgerWalkService(), backups);
 
   /// One authenticated GET against the configured Firefly, or null when the
   /// server could not be reached at all.
@@ -2742,7 +2754,7 @@ List<McpTool> buildTools({
         }
 
         final snapshot = await DataExportService(
-          service(),
+          ledgerWalkService(),
         ).export(from: start, to: inclusiveEnd?.add(const Duration(days: 1)));
         final countsOnly = args['counts_only'] as bool? ?? false;
         final json = snapshot.toJson();
@@ -3085,7 +3097,10 @@ List<McpTool> buildTools({
         }
 
         final types = _strList(args['types']).toSet();
-        final current = await DataExportService(api)
+        // The whole ledger, read immediately before destructive writes, so it
+        // is the last read that should die on the ordinary ceiling. `api`
+        // keeps that ceiling for the writes below.
+        final current = await DataExportService(ledgerWalkService())
             .export(from: kFireflyLedgerStart, to: kFireflyLedgerEnd);
         final plan = planRestore(
           backup: snapshot,

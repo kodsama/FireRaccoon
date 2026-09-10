@@ -1345,4 +1345,51 @@ void main() {
     expect(result.expected.length, greaterThan(1));
     expect(result.endExpected, greaterThan(0));
   });
+
+  group('a whole-ledger read gets its own ceiling', () {
+    /// Counts requests per distinct URL, so the answer is the attempt count
+    /// however many endpoints the caller fans out over, and answers everything
+    /// but accounts normally.
+    MockClient countingAccounts(Map<String, int> perUrl) {
+      final inner = fireflyMockClient();
+      return MockClient((request) async {
+        if (request.url.path == '/api/v1/accounts') {
+          final key = request.url.toString();
+          perUrl[key] = (perUrl[key] ?? 0) + 1;
+          throw const SocketException('down');
+        }
+        return http.Response.fromStream(
+          await inner.send(
+            http.Request(request.method, request.url)
+              ..headers.addAll(request.headers)
+              ..body = request.body,
+          ),
+        );
+      });
+    }
+
+    test('an ordinary read is tried three times', () async {
+      final perUrl = <String, int>{};
+      await _tool('get_accounts', client: countingAccounts(perUrl)).run({});
+      expect(perUrl, isNotEmpty);
+      expect(perUrl.values.toSet(), {3});
+    });
+
+    test(
+      'a ledger walk is tried fewer, because each try waits longer',
+      () async {
+        // The ceiling is per attempt, so three minutes times the ordinary three
+        // attempts is nine minutes of nothing against a server that never
+        // answers.
+        final perUrl = <String, int>{};
+        await _tool(
+          'export_firefly_data',
+          client: countingAccounts(perUrl),
+        ).run({});
+        expect(perUrl, isNotEmpty);
+        expect(perUrl.values.toSet(), {kFireflyLedgerWalkAttempts});
+        expect(kFireflyLedgerWalkAttempts, lessThan(3));
+      },
+    );
+  });
 }
