@@ -1077,6 +1077,10 @@ Map<String, Object?> _piggyJson(PiggyBank piggy) => {
   'left_to_save': piggy.leftToSave,
   'currency_code': piggy.currencyCode,
   'start_date': _dateOnly(piggy.startDate),
+  // Never reported, which is why five piggy banks with target dates set all
+  // looked as though they had none. The model has parsed it all along.
+  'target_date': piggy.targetDate == null ? null : _dateOnly(piggy.targetDate!),
+  'notes': piggy.notes,
 };
 
 Map<String, Object?> _piggyFieldSchema() => {
@@ -1127,8 +1131,14 @@ Future<PiggyBankInput> _piggyInput(
         (await api.getPrimaryCurrency()).code,
     accountIds: accountIds,
     startDate: start,
-    targetDate: _optionalDate(args['target_date'], 'target_date'),
-    notes: args['notes'] as String?,
+    // Both fall back to what is already there. Without it an update that
+    // never mentioned them wiped them, against this tool's own promise that an
+    // omitted field keeps its value. Clearing one is not expressible: an empty
+    // string parses to null and falls through to the stored value, and piggy
+    // banks have no cleared-fields set the way transactions do.
+    targetDate:
+        _optionalDate(args['target_date'], 'target_date') ?? base?.targetDate,
+    notes: args['notes'] as String? ?? base?.notes,
   );
 }
 

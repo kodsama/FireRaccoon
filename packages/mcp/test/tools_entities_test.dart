@@ -1462,6 +1462,31 @@ void main() {
       expect((result['piggy_bank'] as Map)['name'], 'Laptop 2');
     });
 
+    test('a target date is reported at all', () async {
+      // Never in the response, so five piggy banks with target dates set all
+      // read as having none, and the write looked like the thing at fault.
+      final result = await _tool(
+        'get_piggy_banks',
+        client: fireflyMockClient(),
+      ).run({});
+
+      final piggy = (result['piggy_banks'] as List).single as Map;
+      expect(piggy['target_date'], '2026-12-24');
+    });
+
+    test('an update that omits the target date keeps it', () async {
+      // "Omitted fields keep their value" is this tool's own promise, and the
+      // target date and the notes were the two that did not.
+      final bodies = <String>[];
+      await _tool(
+        'update_piggy_bank',
+        client: fireflyMockClient(recordBodies: bodies),
+      ).run({'piggy_bank_id': '4', 'name': 'Laptop 2'});
+
+      final sent = jsonDecode(bodies.single) as Map<String, Object?>;
+      expect(sent['target_date'], '2026-12-24');
+    });
+
     test('delete_piggy_bank deletes', () async {
       final result = await _tool(
         'delete_piggy_bank',

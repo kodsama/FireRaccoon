@@ -204,6 +204,7 @@ Map<String, Object?> piggyEnvelope({String name = 'New Laptop'}) => {
       'currency_code': 'EUR',
       'currency_symbol': '€',
       'start_date': '2026-01-01T00:00:00+00:00',
+      'target_date': '2026-12-24T00:00:00+00:00',
       'accounts': [
         {'account_id': '5', 'name': 'Checking', 'current_amount': '100.00'},
       ],
