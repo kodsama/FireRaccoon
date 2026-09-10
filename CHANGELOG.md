@@ -7,6 +7,124 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-10
+
+### Added
+
+- `delete_budget_limit`. Get, create and update were all there and delete was
+  not, at every layer, so a budget could gain per-period limits and never lose
+  one. Moving a budget between cadences was impossible rather than awkward: the
+  old monthly limits stay behind, a yearly one alongside them double-counts the
+  period, and widening a single stale limit into the yearly span does nothing
+  for a budget carrying nine of them
+- `get_budgets` takes a window. Firefly computes spend only over a window it
+  was given and answers an empty array without one, so every budget reported
+  nothing spent, which reads as "no transactions are attached" when 798 of them
+  are. A window always goes out now, the caller's or the whole ledger, and the
+  one used comes back with the answer, because an all-time figure against a
+  monthly limit is only interpretable if the response says so
+- `create_account` makes a reconciliation account, and
+  `store_reconciliation` makes the one its correction needs. A correction puts
+  its other side against `<account> reconciliation`, which Firefly creates only
+  from its own interface, so on a ledger that had never reconciled an account
+  there was nothing for the correction to name and no way through the API to
+  make one
+- Exports save where you put them on macOS, Windows and Linux. A share sheet on
+  macOS is `NSSharingServicePicker`, which lists applications to send a file to
+  and has no save-to-disk service for JSON, so an export asked which app should
+  receive it and never offered a folder. Phones and the web still share, having
+  nowhere to save. Dismissing the dialog now reports nothing, which the old flow
+  could not express: it wrote the file before opening the picker
+- The refresh control sits in the header beside undo and redo, so it is on
+  every page rather than the three that carried their own. It takes the account
+  from the route exactly as pull-to-refresh does, so a view filtered to one
+  account still reaches that account's own paginated list. The view-mode label
+  gives way at phone width, where the header has no room for a fourth control
+- A write reports what Firefly stored rather than what it was asked, so
+  `update_transaction` and `update_budget` compare the response against the
+  request and answer `not_applied`, naming the fields, with the stored entity
+  attached. An agent cannot see the interface, so a response that echoes the
+  request is indistinguishable from a change
+
+### Fixed
+
+- A split group could not be edited, and editing one destroyed it. Firefly
+  identifies a leg by `transaction_journal_id` and reads a missing one as a new
+  split, deleting every journal the update did not name, so a group-level edit
+  replaced all its legs with copies under new ids. Anything keyed to a journal
+  went with them, including the payback link a credit-card reconciliation
+  writes and the leg ids `match_statement` hands out. On a reconciled leg it
+  failed outright. Bookkeeping stated for a group now reaches every leg, while
+  amounts, descriptions and accounts stay with the leg that owns them
+- Every date landed a day early. An explicit offset was appended so the server
+  could not reinterpret the instant, and that is what moved the day: midnight
+  at +02:00 is 22:00 the day before in UTC, which is the day Firefly stores and
+  reads back. An edit that never mentioned the date moved it too, because the
+  day just read off the wire went back out the same way. No offset is sent now,
+  which is the other half of what the read already does
+- A category named on an update was discarded. The new name went out beside the
+  id it was meant to replace, and Firefly resolves the id, so recategorising by
+  name reported success and changed nothing
+- A budget read as euro on a ledger that is not. The model fell back to a
+  hardcoded euro for a budget whose auto-budget currency Firefly reports
+  nothing for, which is every budget nobody chose one on, so the budgets screen
+  and the dashboard showed euro over figures in the ledger's own
+  currency. Nothing is invented now, and a caller that has to show one falls
+  back to the primary currency
+- A budget's currency never changed. Firefly accepts
+  `auto_budget_currency_code` and stores nothing from it, so the code alone left
+  every budget on the instance default. The id it does read goes with it
+- Clearing an auto-budget is refused rather than reported as done. Firefly
+  cannot express it, so the old schedule survived either way
+- A budget's live limit does not follow its amount, and now says so. Firefly
+  keeps that limit independent of the rule on purpose, since rollover and
+  adjusted compute one from what the previous period left, so it is reported
+  rather than overwritten
+- A piggy bank's target date was invisible and then wiped. The response never
+  carried the field, so a target date that was set read as absent, and the
+  update took the date from the arguments with no fallback to the stored value,
+  so any edit that never mentioned it cleared it
+- A failure raised from a dialog was invisible. A SnackBar draws inside its
+  Scaffold, under any dialog route and its scrim, so a message arrived exactly
+  where it could not be read. All 63 call sites go through one helper that
+  draws above every route, carries Firefly's own words rather than an
+  exception's rendering of them, and keeps a copy in the diagnostics list
+- A web build in server mode dialled Firefly from the browser. The backend URL
+  was rewritten to the same-origin proxy only for one hardcoded hostname, so
+  every other address was fetched directly, which cannot reach a backend on the
+  server's own network: a container name does not resolve in a browser and a
+  plain-http address is blocked as mixed content on an https page. The path it
+  rewrote to was wrong as well. The plain-http refusal follows the same fact and
+  is lifted where the server does the dialling, so an internal address can be
+  saved without the toggle and in any order
+- A backup could not be taken while the server was struggling. Both
+  whole-ledger reads ran against the ordinary 45-second per-request ceiling,
+  and a page off a loaded Firefly has been measured at 6 to 30 seconds. They
+  ask for three minutes now, and are tried twice rather than three times,
+  because the ceiling is per attempt. Every write keeps the short ceiling,
+  including those in a restore, whose plan is read through the long one
+- `match_statement` demanded `amount_format` from an export it could not read
+  wrong. A grammar is voted for only when the other cannot read an amount at
+  all, so a column of separator-free whole numbers voted for neither. Where
+  every amount reads the same either way the choice cannot change a figure, so
+  one is taken; an amount that reads two ways, or a corpus nothing can read,
+  is still a refusal
+- A split group reported whichever leg Firefly returned first as its
+  description, and the order is not stable between reads, so it changed on its
+  own. The group's title goes there, and the legs keep their own
+- A Firefly-paged response says how many rows it carried. The total counts
+  journals while the rows are groups, so fewer rows than the total read like a
+  truncated page
+- The web Docker image could not build against the raised SDK floor. Every
+  published Flutter image was still on Dart 3.12 while the floor had moved to
+  3.13, so the image stopped resolving and 0.5.0 went out without it. The
+  toolchain is cloned at one tag now rather than floating on `:stable`, which
+  is what let it drift behind the floor
+- The pre-commit coverage gate failed on coverage that was not missing. It
+  never emptied `packages/*/coverage`, and a hit map written against another
+  tree's line numbers lands its hits on the wrong lines: MCP read 76.4% against
+  a 99% floor and 99.1% on a clean run
+
 ## [0.5.0] - 2026-09-09
 
 ### Added
