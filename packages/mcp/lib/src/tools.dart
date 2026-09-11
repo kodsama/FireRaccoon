@@ -2714,7 +2714,9 @@ List<McpTool> buildTools({
           'Store an account reconciliation: mark transactions reconciled and '
           'optionally create a correction transaction. For credit-card '
           '(ccAsset) accounts, pass payment_account_id and payback_date to '
-          'also create a multi-split payback transfer. Not atomic — a mid-loop '
+          'also create a payback transfer: one leg per purchase, or a single '
+          'netted leg when the selection holds refunds too. Not atomic — a '
+          'mid-loop '
           'failure leaves already-updated journals reconciled; the error '
           'message reports how many journals were updated.',
       inputSchema: {
