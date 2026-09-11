@@ -18,7 +18,6 @@ import '../utils/search_filter.dart';
 import '../utils/create_flows.dart';
 import '../widgets/account_list_panel.dart';
 import '../widgets/entity_screen_header.dart';
-import '../widgets/view_mode_switch.dart';
 import '../widgets/show_inactive_accounts_toggle.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
@@ -162,7 +161,6 @@ class AccountsScreen extends ConsumerWidget {
                       ),
                     ),
                     const _BalanceDateChip(),
-                    const ViewModeSwitcher(),
                   ],
                 ),
                 if (!hasAnyCategoryToShow) ...[

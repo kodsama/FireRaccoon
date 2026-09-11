@@ -6,6 +6,7 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
 import 'package:fireraccoon/providers/view_mode_provider.dart';
 import 'package:fireraccoon/screens/accounts_screen.dart';
+import 'package:fireraccoon/widgets/view_mode_switch.dart';
 import 'package:fireraccoon/utils/locale_formatting.dart';
 
 import '../helpers/mock_firefly_service.dart';
@@ -24,6 +25,21 @@ void main() {
     expect(find.text('Accounts'), findsOneWidget);
     expect(find.text('Checking'), findsWidgets);
     expect(find.text('Asset Accounts'), findsOneWidget);
+  });
+
+  testWidgets('the view-mode control is the header one, not a second', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      await buildScreenTestApp(child: const AccountsScreen()),
+    );
+    await tester.pumpAndSettle();
+
+    // The screen carried its own beside the filters, under the one in the
+    // header, so the same control appeared twice on the same page.
+    expect(find.byType(ViewModeSwitcher), findsNothing);
   });
 
   testWidgets('AccountsScreen reconcile action jumps to the account view', (

@@ -13,6 +13,7 @@ import 'package:go_router/go_router.dart';
 import '../l10n/l10n_extensions.dart';
 import '../providers/undo_history_provider.dart' as undo;
 import '../providers/theme_provider.dart';
+import '../providers/view_mode_provider.dart';
 import '../router/history_route.dart';
 import '../theme/app_theme.dart';
 import '../utils/json_file_store.dart';
@@ -100,6 +101,8 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
     final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final history = ref.watch(undo.undoHistoryProvider);
     final notifier = ref.read(undo.undoHistoryProvider.notifier);
+    // The view mode is chosen once, in the header, and every list obeys it.
+    final tight = ref.watch(viewModeProvider) == ViewMode.tight;
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
     final routeState = GoRouterState.of(context);
     final routeQuery = HistoryRoute.searchFrom(routeState) ?? _query;
@@ -280,7 +283,9 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                   : ListView.separated(
                       controller: _listController,
                       itemCount: flat.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 8),
+                      separatorBuilder: (_, _) => tight
+                          ? Divider(color: colors.border, height: 1)
+                          : const SizedBox(height: 8),
                       itemBuilder: (context, index) {
                         final row = flat[index];
                         if (row.header != null) {
@@ -302,6 +307,50 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                           (item) => item.id == entry.id,
                         );
                         final isCurrent = absoluteIndex == history.cursor;
+                        if (tight) {
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            color: isCurrent ? colors.surface2 : null,
+                            child: Row(
+                              children: [
+                                SizedBox(
+                                  width: 180,
+                                  child: Text(
+                                    entry.type.localizedLabel(l10n),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      fontSize: 13,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    entry.details,
+                                    style: TextStyle(
+                                      color: colors.text2,
+                                      fontSize: 13,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  dateFormat.format(
+                                    entry.timestampUtc.toLocal(),
+                                  ),
+                                  style: TextStyle(
+                                    color: colors.text3,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
                         return Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
