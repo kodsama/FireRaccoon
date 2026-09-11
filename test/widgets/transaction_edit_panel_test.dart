@@ -351,17 +351,33 @@ void main() {
         )
         .dy;
 
-    // Amount beside date, the payee beside the account it came out of, the
-    // two classifications together, then the one long line. The date used to
-    // take a whole row of its own for eight characters.
+    // Amount, date and category on one row, the payee beside the account the
+    // money moved through, then the description across the width a sentence
+    // needs, then budget and tags.
     expect(labelY('Amount'), labelY('Date'));
+    expect(labelY('Date'), labelY('Category'));
     expect(labelY('Payee'), labelY('Asset account'));
     expect(labelY('Budget'), labelY('Tags'));
-    expect(labelY('Category'), labelY('Description'));
 
     expect(labelY('Amount'), lessThan(labelY('Payee')));
-    expect(labelY('Payee'), lessThan(labelY('Budget')));
-    expect(labelY('Budget'), lessThan(labelY('Category')));
+    expect(labelY('Payee'), lessThan(labelY('Description')));
+    expect(labelY('Description'), lessThan(labelY('Budget')));
+
+    double width(String label) => tester
+        .getSize(
+          find
+              .ancestor(
+                of: find.text(label),
+                matching: find.byType(InputDecorator),
+              )
+              .first,
+        )
+        .width;
+
+    // The two small fields share the left half, so the category's left edge
+    // lines up with the account and tag columns under it.
+    expect(width('Category'), closeTo(width('Asset account'), 1));
+    expect(width('Description'), greaterThan(width('Category') * 1.9));
   });
 
   testWidgets('a deposit leads with whoever paid', (tester) async {

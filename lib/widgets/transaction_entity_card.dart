@@ -24,6 +24,7 @@ import '../widgets/fun_decorated_surface.dart';
 import '../widgets/resize_handle.dart';
 import '../widgets/selection_check_control.dart';
 import '../widgets/split_transaction_rows.dart';
+import '../widgets/tight_rows_table_shell.dart';
 import '../widgets/transaction_edit_panel.dart';
 
 export '../providers/transaction_list_refresh.dart'
@@ -424,20 +425,22 @@ class _TransactionEntityCardState extends ConsumerState<TransactionEntityCard> {
             if (t.isSplitGroup && _splitsExpanded)
               SplitTransactionChildList(transaction: t),
             if (_expanded)
-              TransactionEditPanel(
-                key: ValueKey('edit-${t.id}'),
-                transaction: t,
-                onCancel: () => setState(() => _expanded = false),
-                onSave: (updated) async {
-                  await saveTransactionEntity(
-                    context,
-                    ref,
-                    widget.filterAccount,
-                    t,
-                    updated,
-                  );
-                  if (mounted) setState(() => _expanded = false);
-                },
+              FitToTightRowsViewport(
+                child: TransactionEditPanel(
+                  key: ValueKey('edit-${t.id}'),
+                  transaction: t,
+                  onCancel: () => setState(() => _expanded = false),
+                  onSave: (updated) async {
+                    await saveTransactionEntity(
+                      context,
+                      ref,
+                      widget.filterAccount,
+                      t,
+                      updated,
+                    );
+                    if (mounted) setState(() => _expanded = false);
+                  },
+                ),
               ),
           ],
         ),
@@ -670,20 +673,22 @@ class _TransactionEntityCompactRowState
             if (t.isSplitGroup && _splitsExpanded)
               SplitTransactionChildList(transaction: t, compact: true),
             if (_expanded)
-              TransactionEditPanel(
-                key: ValueKey('edit-${t.id}'),
-                transaction: t,
-                onCancel: () => setState(() => _expanded = false),
-                onSave: (updated) async {
-                  await saveTransactionEntity(
-                    context,
-                    ref,
-                    widget.filterAccount,
-                    t,
-                    updated,
-                  );
-                  if (mounted) setState(() => _expanded = false);
-                },
+              FitToTightRowsViewport(
+                child: TransactionEditPanel(
+                  key: ValueKey('edit-${t.id}'),
+                  transaction: t,
+                  onCancel: () => setState(() => _expanded = false),
+                  onSave: (updated) async {
+                    await saveTransactionEntity(
+                      context,
+                      ref,
+                      widget.filterAccount,
+                      t,
+                      updated,
+                    );
+                    if (mounted) setState(() => _expanded = false);
+                  },
+                ),
               ),
           ],
         ),
@@ -1419,20 +1424,22 @@ class _TransactionEntityTightRowState
                 filterAccount: widget.filterAccount,
               ),
             if (_expanded)
-              TransactionEditPanel(
-                key: ValueKey('edit-${t.id}'),
-                transaction: t,
-                onCancel: () => setState(() => _expanded = false),
-                onSave: (updated) async {
-                  await saveTransactionEntity(
-                    context,
-                    ref,
-                    widget.filterAccount,
-                    t,
-                    updated,
-                  );
-                  if (mounted) setState(() => _expanded = false);
-                },
+              FitToTightRowsViewport(
+                child: TransactionEditPanel(
+                  key: ValueKey('edit-${t.id}'),
+                  transaction: t,
+                  onCancel: () => setState(() => _expanded = false),
+                  onSave: (updated) async {
+                    await saveTransactionEntity(
+                      context,
+                      ref,
+                      widget.filterAccount,
+                      t,
+                      updated,
+                    );
+                    if (mounted) setState(() => _expanded = false);
+                  },
+                ),
               ),
           ],
         ),

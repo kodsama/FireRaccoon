@@ -1159,11 +1159,29 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       ],
     );
 
+    // The amount and the date are a few characters each, so they share the
+    // left half and the category takes the right. Nested inside one half
+    // rather than cut into thirds, so the category's edge lines up with the
+    // columns under it.
+    final headRow = pair(
+      datedHere
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: amountField),
+                SizedBox(width: rowGap),
+                Expanded(child: dateField),
+              ],
+            )
+          : amountField,
+      categoryField,
+    );
+
     final coreFields = wide
         ? Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (datedHere) pair(amountField, dateField) else amountField,
+              headRow,
               _gapBox(compact: compact),
               pair(
                 counterpartyField,
@@ -1171,9 +1189,11 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
                 between: swapAccountsButton,
               ),
               _gapBox(compact: compact),
-              pair(budgetField, tagsField),
+              // A description runs to a sentence, so it gets the width a
+              // sentence needs rather than half a row.
+              descriptionField,
               _gapBox(compact: compact),
-              pair(categoryField, descriptionField),
+              pair(budgetField, tagsField),
             ],
           )
         : Column(
@@ -1182,6 +1202,8 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
               amountField,
               _gapBox(compact: compact),
               if (datedHere) ...[dateField, _gapBox(compact: compact)],
+              categoryField,
+              _gapBox(compact: compact),
               counterpartyField,
               if (swapAccountsButton == null)
                 _gapBox(compact: compact)
@@ -1192,13 +1214,11 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
                 ),
               ownAccountField,
               _gapBox(compact: compact),
+              descriptionField,
+              _gapBox(compact: compact),
               budgetField,
               _gapBox(compact: compact),
               tagsField,
-              _gapBox(compact: compact),
-              categoryField,
-              _gapBox(compact: compact),
-              descriptionField,
             ],
           );
 
