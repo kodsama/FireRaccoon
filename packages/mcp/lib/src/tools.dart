@@ -91,6 +91,7 @@ const List<String> _writeToolNames = [
   'create_tag',
   'update_tag',
   'delete_tag',
+  'merge_tags',
   'create_account',
   'delete_account',
   'create_budget',
@@ -403,6 +404,19 @@ Future<FireflyCurrency?> _currencyByCode(
   return (await api.getCurrencies())
       .where((currency) => currency.code.toUpperCase() == wanted)
       .firstOrNull;
+}
+
+/// The tag in [tags] that [value] names, by id or by name, or null for none.
+///
+/// Firefly's own tag routes take either in the same path segment, and somebody
+/// reconciling two tags is thinking of their names, not their ids.
+Tag? _tagNamed(List<Tag> tags, String value) {
+  final wanted = value.trim();
+  if (wanted.isEmpty) return null;
+  return tags.where((tag) => tag.id == wanted).firstOrNull ??
+      tags
+          .where((tag) => tag.name.toLowerCase() == wanted.toLowerCase())
+          .firstOrNull;
 }
 
 Map<String, Object?> _budgetJson(Budget budget, {FireflyCurrency? primary}) => {
@@ -4330,6 +4344,95 @@ List<McpTool> buildTools({
         if (id == null || id.isEmpty) return _badInput('tag_id is required');
         await service().deleteTag(id);
         return {'ok': true, 'tag_id': id, 'deleted': true};
+      },
+    ),
+    McpTool(
+      name: 'merge_tags',
+      writes: true,
+      description:
+          'Move every transaction from one tag onto another and remove the tag '
+          'left empty, which is how two tags meaning the same thing become '
+          'one. Firefly has no merge endpoint and refuses a rename onto a name '
+          'already in use, so the rows have to be moved before the tag can go. '
+          'A tag sits on a leg rather than on the group around it, so only the '
+          'legs carrying it are rewritten and the rest of a split is left '
+          'alone. Both tags are named by name or by id. Nothing is written '
+          'while dry_run is true, which is the default. One write per '
+          'transaction group: a tag on hundreds of rows takes minutes.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['from_tag', 'into_tag'],
+        'properties': {
+          'from_tag': {
+            'type': 'string',
+            'description':
+                'The tag to empty and then remove, by name or id. Its '
+                'description goes with it.',
+          },
+          'into_tag': {
+            'type': 'string',
+            'description': 'The tag to keep, by name or id. It must exist.',
+          },
+          'dry_run': {
+            'type': 'boolean',
+            'default': true,
+            'description': 'Report the rows and write nothing.',
+          },
+        },
+      },
+      run: (args) async {
+        final from = (args['from_tag'] as String?)?.trim() ?? '';
+        final into = (args['into_tag'] as String?)?.trim() ?? '';
+        if (from.isEmpty) return _badInput('from_tag is required');
+        if (into.isEmpty) return _badInput('into_tag is required');
+
+        final api = service();
+        final tags = await api.getTags();
+        final source = _tagNamed(tags, from);
+        final target = _tagNamed(tags, into);
+        if (source == null) {
+          return _notFound('No tag "$from". get_tags lists what there is.');
+        }
+        if (target == null) {
+          // Merging into a name nothing carries is a rename, and a rename is
+          // one write rather than one per row.
+          return _notFound(
+            'No tag "$into" to merge into. Nothing carries that name yet, so '
+            'this is a rename: update_tag does it in a single write.',
+          );
+        }
+
+        final dryRun = args['dry_run'] as bool? ?? true;
+        final TagMergeResult merged;
+        try {
+          merged = await TagMergeService(api)
+              .merge(from: source, into: target, dryRun: dryRun);
+        } on ArgumentError catch (e) {
+          return _badInput('${e.message}');
+        }
+
+        // A tag on thousands of rows would otherwise answer with thousands of
+        // ids. The counts stay whole.
+        const reported = 100;
+        final ids = merged.transactionIds;
+        return {
+          'ok': true,
+          'dry_run': merged.dryRun,
+          'from': {'id': merged.from.id, 'name': merged.from.name},
+          'into': {'id': merged.into.id, 'name': merged.into.name},
+          'transaction_count': ids.length,
+          'leg_count': merged.legs,
+          'transaction_ids': ids.take(reported).toList(),
+          if (ids.length > reported)
+            'transaction_ids_truncated': ids.length - reported,
+          'tag_removed': merged.tagRemoved,
+          if (merged.dryRun)
+            'next': ids.isEmpty
+                ? 'No transaction carries ${merged.from.name}, so delete_tag '
+                      'is all this needs.'
+                : 'Call again with dry_run false to move them and remove '
+                      '${merged.from.name}.',
+        };
       },
     ),
     McpTool(

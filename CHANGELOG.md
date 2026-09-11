@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `merge_tags` moves every transaction from one tag onto another and removes
+  the tag it empties. Firefly has no merge endpoint and refuses a rename onto a
+  name already in use, so two tags meaning the same thing had nowhere to go and
+  one of them stayed in the list forever. A tag sits on a leg rather than on
+  the group around it, so only the legs carrying it are rewritten and the rest
+  of a split keeps its own tags. It writes once per transaction group and
+  reports the rows without writing while `dry_run` is true, which is the
+  default
+
 ## [0.7.0] - 2026-09-10
 
 ### Added

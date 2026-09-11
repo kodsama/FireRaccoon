@@ -1248,6 +1248,20 @@ class FireflyApiService implements FireflyService {
     }
   }
 
+  /// Firefly's route takes a tag or its id in the same segment, which is why
+  /// the id the rest of the tag calls use works here.
+  /// https://github.com/firefly-iii/firefly-iii/blob/main/routes/api.php
+  @override
+  Future<List<Transaction>> getTagTransactions(String tagId) async {
+    try {
+      return await _fetchAllTransactionPages(
+        '/api/v1/tags/$tagId/transactions',
+      );
+    } catch (e) {
+      throw FireflyApiException('$e', cause: e);
+    }
+  }
+
   @override
   Future<Tag> createTag(String tag, {String? description}) async {
     try {

@@ -50,7 +50,7 @@ See `docs/adr/0002-local-vs-server-mode.md` and `docs/deployment.md`.
 
 Accounts, transactions, budgets, budget limits, categories, tags, bills, piggy
 banks, recurrences, currencies, reconciliation, and the on-device projection:
-59 tools, 31 of them write-gated. The rich account prognosis behind the UI is
+67 tools, 36 of them write-gated. The rich account prognosis behind the UI is
 the one engine capability with no tool
 (`docs/adr/0001-projection-vs-prognosis.md`). `get_capabilities` returns the
 live catalog and the write-gated names a `viewer` key is refused. Domain terms
@@ -106,6 +106,7 @@ live in `CONTEXT.md`.
 | `create_tag` | Create a tag |
 | `update_tag` | Rename a tag, and optionally replace its description |
 | `delete_tag` | Delete a tag |
+| `merge_tags` | Move every transaction from one tag onto another and remove the tag left empty; reports the rows and writes nothing unless `dry_run` is false |
 | `get_bills` | List bills with their amount ranges |
 | `create_bill` | Create a bill |
 | `update_bill` | Update a bill; omitted fields keep their value |

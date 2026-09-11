@@ -162,6 +162,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `create_tag` | Create a tag | yes |
 | `update_tag` | Rename a tag | yes |
 | `delete_tag` | Delete a tag | yes |
+| `merge_tags` | Move every transaction from one tag onto another and remove the tag left empty; reports the rows and writes nothing unless `dry_run` is false | yes |
 | `get_bills` | List bills with amount ranges |  |
 | `create_bill` | Create a bill | yes |
 | `update_bill` | Update a bill; omitted fields keep their value | yes |
@@ -416,6 +417,26 @@ account's own.
 `foreign_amount` comes with it: the rate cannot be read off the local figure,
 carrying the old one over would pair this month's amount with last month's rate,
 and scaling it would invent a rate and record it as fact.
+
+### Two tags that mean the same thing
+
+Firefly has no merge endpoint, and it refuses a rename onto a name already in
+use with a 422 saying so, which leaves a duplicate tag with nowhere to go:
+`Vacances` sits beside `Holidays` and neither can absorb the other.
+
+`merge_tags` moves the rows instead. Every leg carrying `from_tag` is rewritten
+to carry `into_tag`, and the tag it emptied is deleted. A tag belongs to a
+journal rather than to the group around it, so the legs of a split that do not
+carry it keep their own tags, and a leg already carrying both ends up with one.
+Either tag can be named by name or by id, since Firefly's own tag route takes
+either.
+
+It writes once per transaction group and reports nothing but counts while
+`dry_run` is true, which is the default. It is not atomic: a failure part way
+leaves the groups already written carrying the new tag, keeps the old tag in
+place, and says how many moved, because running it again moves what is left.
+Merging into a name nothing carries yet is refused rather than guessed at,
+because that is a rename, and `update_tag` does a rename in one write.
 
 ## Managing keys
 
