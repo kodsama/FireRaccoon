@@ -18,10 +18,12 @@ import '../theme/app_theme.dart';
 import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
+import 'amount_currency_suffix.dart';
 import 'autocomplete_text_field.dart';
 import 'budget_create_dialog.dart';
 import 'category_form_dialog.dart';
 import 'payee_form_dialog.dart';
+import 'tag_input_field.dart';
 
 class TransactionEditPanel extends ConsumerStatefulWidget {
   final Transaction transaction;
@@ -839,7 +841,17 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
         controller: split.amountController,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         suggestions: const [],
-        decoration: _fieldDecoration(l10n, l10n.amount),
+        // The currency sits in the field the figure is in. It used to be a
+        // row of its own under the optional fields, where an amount in krona
+        // and an amount in euro looked exactly alike.
+        decoration: AmountCurrencySuffix.decorate(
+          _fieldDecoration(l10n, l10n.amount),
+          AmountCurrencySuffix(
+            code: split.currencyCode,
+            currencies: currencies,
+            onChanged: (code) => setState(() => split.currencyCode = code),
+          ),
+        ),
         onChanged: (_) => setState(() {}),
       ),
     );
@@ -988,34 +1000,19 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       ),
     );
 
-    final currencyField = _withTooltip(
-      l10n.tooltipFieldCurrency,
-      _currencyDropdown(
-        label: l10n.defaultCurrency,
-        value: split.currencyCode,
-        currencies: currencies,
-        onChanged: (code) {
-          if (code == null) return;
-          setState(() => split.currencyCode = code);
-        },
+    final dateField = _buildDateField(l10n, format);
+
+    final tagsField = _withTooltip(
+      l10n.tooltipFieldTags,
+      TagInputField(
+        controller: split.tagsController,
+        suggestions: tags,
+        label: l10n.tags,
+        addHint: l10n.addTag,
       ),
     );
 
-    final dateField = _buildDateField(l10n, format);
-
     final optionalFields = <Widget>[
-      currencyField,
-      _gapBox(compact: compact),
-      _withTooltip(
-        l10n.tooltipFieldTags,
-        AutocompleteTextField(
-          controller: split.tagsController,
-          tagMode: true,
-          suggestions: tags,
-          decoration: _fieldDecoration(l10n, l10n.tags),
-        ),
-      ),
-      _gapBox(compact: compact),
       _withTooltip(
         l10n.tooltipFieldPiggyBank,
         DropdownButtonFormField<String?>(
@@ -1127,54 +1124,65 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       ],
     ];
 
-    // Payee/destination leads; description sits where currency used to be;
-    // default currency lives under optional fields.
+    // Paired down the panel: amount beside date, the other party beside the
+    // account it moved through, the two classifications beside each other,
+    // then the one long line. The date used to stretch the whole width for
+    // eight characters of value.
+    //
+    // A group carries one date for every leg, shown above with the group
+    // title, so a leg of a split pairs its amount with nothing.
+    final datedHere = _splits.length == 1;
+
+    // The other party leads and the account it moved through follows, which
+    // reads the same for a withdrawal and a deposit though the two sit on
+    // opposite ends of the journal. A transfer has two accounts of its own,
+    // so it keeps source before destination and offers the exchange between
+    // them.
+    final (counterpartyField, ownAccountField) = switch (_type) {
+      'deposit' => (sourceFieldWithCreate, destinationField),
+      'transfer' => (sourceField, destinationField),
+      _ => (destinationField, sourceField),
+    };
+
+    Widget pair(Widget left, Widget right, {Widget? between}) => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(child: left),
+        if (between == null)
+          SizedBox(width: rowGap)
+        else
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: rowGap / 2),
+            child: between,
+          ),
+        Expanded(child: right),
+      ],
+    );
+
     final coreFields = wide
         ? Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 3, child: destinationField),
-                  SizedBox(width: rowGap),
-                  Expanded(flex: 2, child: amountField),
-                ],
-              ),
-              if (swapAccountsButton == null)
-                _gapBox(compact: compact)
-              else
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: swapAccountsButton,
-                ),
-              sourceFieldWithCreate,
+              if (datedHere) pair(amountField, dateField) else amountField,
               _gapBox(compact: compact),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: categoryField),
-                  SizedBox(width: rowGap),
-                  Expanded(child: budgetField),
-                  if (!compact) ...[
-                    SizedBox(width: rowGap),
-                    Expanded(child: descriptionField),
-                  ],
-                ],
+              pair(
+                counterpartyField,
+                ownAccountField,
+                between: swapAccountsButton,
               ),
-              if (compact) ...[_gapBox(compact: compact), descriptionField],
-              if (_splits.length == 1) ...[
-                _gapBox(compact: compact),
-                dateField,
-              ],
+              _gapBox(compact: compact),
+              pair(budgetField, tagsField),
+              _gapBox(compact: compact),
+              pair(categoryField, descriptionField),
             ],
           )
         : Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              destinationField,
-              _gapBox(compact: compact),
               amountField,
+              _gapBox(compact: compact),
+              if (datedHere) ...[dateField, _gapBox(compact: compact)],
+              counterpartyField,
               if (swapAccountsButton == null)
                 _gapBox(compact: compact)
               else
@@ -1182,17 +1190,15 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
                   alignment: Alignment.centerLeft,
                   child: swapAccountsButton,
                 ),
-              sourceFieldWithCreate,
-              _gapBox(compact: compact),
-              categoryField,
+              ownAccountField,
               _gapBox(compact: compact),
               budgetField,
               _gapBox(compact: compact),
+              tagsField,
+              _gapBox(compact: compact),
+              categoryField,
+              _gapBox(compact: compact),
               descriptionField,
-              if (_splits.length == 1) ...[
-                _gapBox(compact: compact),
-                dateField,
-              ],
             ],
           );
 

@@ -432,18 +432,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Transfer'));
     await tester.pumpAndSettle();
-    final fields = find.descendant(
-      of: find.byType(Dialog),
-      matching: find.byType(TextField),
+    // By label, not by index: the panel puts the amount first now, and a
+    // test that counts fields fills in whichever one moved into the slot.
+    Finder labelled(String label) => find.byWidgetPredicate(
+      (widget) => widget is TextField && widget.decoration?.labelText == label,
     );
-    await tester.enterText(fields.at(0), 'Checking');
-    await tester.enterText(fields.at(1), '5.00');
-    await tester.enterText(fields.at(2), 'Checking');
-    final description = find.byWidgetPredicate(
-      (widget) =>
-          widget is TextField && widget.decoration?.labelText == 'Description',
-    );
-    await tester.enterText(description, 'Coffee');
+    await tester.enterText(labelled('Amount'), '5.00');
+    await tester.enterText(labelled('Source Account'), 'Checking');
+    await tester.enterText(labelled('Destination Account'), 'Checking');
+    await tester.enterText(labelled('Description'), 'Coffee');
     await tester.pump();
 
     final save = find.widgetWithText(ElevatedButton, 'Save');

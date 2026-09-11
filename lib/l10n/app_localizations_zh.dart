@@ -2288,6 +2288,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tags => '标签';
 
   @override
+  String get addTag => '添加标签';
+
+  @override
   String get subscription => '订阅';
 
   @override
@@ -2675,9 +2678,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipFieldAmount => '所选货币下的主金额。';
 
   @override
-  String get tooltipFieldCurrency => '该分录的主货币。';
-
-  @override
   String get tooltipFieldForeignAmount => '可选的外币金额。';
 
   @override
@@ -2693,7 +2693,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipFieldPiggyBank => '将该分录关联到存钱罐。';
 
   @override
-  String get tooltipFieldTags => '用逗号分隔标签，便于快速筛选。';
+  String get tooltipFieldTags => '用于快速筛选的标签。回车添加，叉号移除。';
 
   @override
   String get tooltipFieldSubscription => '将该分录关联到订阅。';
