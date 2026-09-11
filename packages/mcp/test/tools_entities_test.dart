@@ -1333,6 +1333,29 @@ void main() {
       expect((result['tags'] as List).single, containsPair('name', 'urgent'));
     });
 
+    test('a name another tag carries is refused, with the way out', () async {
+      // Firefly's own answer is a 422 saying the name is in use, which left
+      // two tags meaning the same thing sitting side by side with nothing to
+      // do about it.
+      final result = await _tool(
+        'update_tag',
+        client: fireflyMockClient(),
+      ).run({'tag_id': 't2', 'tag': 'urgent'});
+
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'name_taken');
+      expect('${result['remedy']}', contains('merge_tags'));
+    });
+
+    test('a tag keeping the name it already has is no collision', () async {
+      final result = await _tool(
+        'update_tag',
+        client: fireflyMockClient(),
+      ).run({'tag_id': 't1', 'tag': 'urgent', 'description': 'now described'});
+
+      expect(result['ok'], isTrue);
+    });
+
     test('create, rename and delete a tag', () async {
       final client = fireflyMockClient();
       expect(

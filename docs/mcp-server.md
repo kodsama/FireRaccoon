@@ -160,7 +160,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `delete_category` | Delete a category | yes |
 | `get_tags` | List tags |  |
 | `create_tag` | Create a tag | yes |
-| `update_tag` | Rename a tag | yes |
+| `update_tag` | Rename a tag, or refuse and point at `merge_tags` when another tag has the name | yes |
 | `delete_tag` | Delete a tag | yes |
 | `merge_tags` | Move every transaction from one tag onto another and remove the tag left empty; reports the rows and writes nothing unless `dry_run` is false | yes |
 | `get_bills` | List bills with amount ranges |  |
@@ -423,6 +423,8 @@ and scaling it would invent a rate and record it as fact.
 Firefly has no merge endpoint, and it refuses a rename onto a name already in
 use with a 422 saying so, which leaves a duplicate tag with nowhere to go:
 `Vacances` sits beside `Holidays` and neither can absorb the other.
+`update_tag` now refuses that rename itself, before the write, and names the
+tag already holding the name.
 
 `merge_tags` moves the rows instead. Every leg carrying `from_tag` is rewritten
 to carry `into_tag`, and the tag it emptied is deleted. A tag belongs to a

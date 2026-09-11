@@ -104,7 +104,7 @@ live in `CONTEXT.md`.
 | `delete_category` | Delete a category |
 | `get_tags` | List tags |
 | `create_tag` | Create a tag |
-| `update_tag` | Rename a tag, and optionally replace its description |
+| `update_tag` | Rename a tag, and optionally replace its description; refused when another tag carries the name |
 | `delete_tag` | Delete a tag |
 | `merge_tags` | Move every transaction from one tag onto another and remove the tag left empty; reports the rows and writes nothing unless `dry_run` is false |
 | `get_bills` | List bills with their amount ranges |

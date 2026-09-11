@@ -1576,7 +1576,9 @@ x-mcp:
       mapsTo: POST /api/v1/tags
       required: [tag]
     update_tag:
-      description: Rename a tag
+      description: >
+        Rename a tag, or refuse when another tag already carries the name,
+        which Firefly will not allow and merge_tags exists for.
       mapsTo: PUT /api/v1/tags/{tagId}
       required: [tag_id, tag]
     delete_tag:

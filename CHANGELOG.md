@@ -18,6 +18,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reports the rows without writing while `dry_run` is true, which is the
   default
 
+### Changed
+
+- `update_tag` refuses a name another tag already carries before it writes,
+  and names `merge_tags` as the way to fold the two together. Firefly answers
+  such a rename with a 422 saying the name is in use, which is true and says
+  nothing about what to do instead
+
 ## [0.7.0] - 2026-09-10
 
 ### Added

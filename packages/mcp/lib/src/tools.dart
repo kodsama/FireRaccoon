@@ -4302,7 +4302,11 @@ List<McpTool> buildTools({
     McpTool(
       name: 'update_tag',
       writes: true,
-      description: 'Rename a tag, and optionally replace its description.',
+      description:
+          'Rename a tag, and optionally replace its description. A name '
+          'another tag already carries is refused before the write, since '
+          'Firefly will not hold two: merge_tags folds the two together '
+          'instead.',
       inputSchema: {
         'type': 'object',
         'required': ['tag_id', 'tag'],
@@ -4317,7 +4321,28 @@ List<McpTool> buildTools({
         final tag = (args['tag'] as String?)?.trim();
         if (id == null || id.isEmpty) return _badInput('tag_id is required');
         if (tag == null || tag.isEmpty) return _badInput('tag is required');
-        final updated = await service().updateTag(
+        final api = service();
+        // Firefly answers this rename with a 422 saying the name is in use,
+        // which is true and says nothing about what to do instead. Matched
+        // exactly: whether a name differing only in case collides is the
+        // database's business, and refusing one here that Firefly would have
+        // taken would be worse than letting it answer.
+        final taken = (await api.getTags())
+            .where((existing) => existing.name == tag)
+            .firstOrNull;
+        if (taken != null && taken.id != id) {
+          return {
+            'ok': false,
+            'code': 'name_taken',
+            'error':
+                'Tag ${taken.id} already carries the name "${taken.name}", '
+                'and Firefly will not hold two of them.',
+            'remedy':
+                'merge_tags moves every transaction from one of them onto the '
+                'other and removes the one it empties.',
+          };
+        }
+        final updated = await api.updateTag(
           id,
           tag,
           description: args['description'] as String?,
