@@ -2708,6 +2708,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tooltipSwapTransferAccounts => 'Swap the two accounts.';
 
   @override
+  String get tooltipTurnDirectionRound =>
+      'Turn it round: the money goes the other way.';
+
+  @override
   String get disconnectConfirmTitle => 'Disconnect Firefly III';
 
   @override

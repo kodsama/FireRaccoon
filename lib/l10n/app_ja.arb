@@ -1490,6 +1490,7 @@
   "tooltipFieldSourceAccount": "お金の送り元口座。",
   "tooltipFieldDestinationAccount": "お金の送り先口座。",
   "tooltipSwapTransferAccounts": "2つの口座を入れ替えます。",
+  "tooltipTurnDirectionRound": "向きを入れ替えます。お金の流れが逆になります。",
   "disconnectConfirmTitle": "Firefly III の接続を解除",
   "connectionFailedNotFirefly": "そのアドレスは応答しましたが、Firefly III の API ではありません。サーバー URL を確認してください。画面用のアドレスやサインインページは、どのパスでもウェブページを返します。",
   "connectionFailedUnauthorized": "サーバーは応答し、トークンを拒否しました。個人アクセストークンを確認してください。",

@@ -2708,6 +2708,10 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tooltipSwapTransferAccounts => 'Byt plats på de två kontona.';
 
   @override
+  String get tooltipTurnDirectionRound =>
+      'Vänd riktningen: pengarna går andra vägen.';
+
+  @override
   String get disconnectConfirmTitle => 'Koppla från Firefly III';
 
   @override

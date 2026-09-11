@@ -4960,6 +4960,12 @@ abstract class AppLocalizations {
   /// **'Swap the two accounts.'**
   String get tooltipSwapTransferAccounts;
 
+  /// No description provided for @tooltipTurnDirectionRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn it round: the money goes the other way.'**
+  String get tooltipTurnDirectionRound;
+
   /// No description provided for @disconnectConfirmTitle.
   ///
   /// In en, this message translates to:

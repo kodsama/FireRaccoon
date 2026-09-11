@@ -2651,6 +2651,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipSwapTransferAccounts => '交换两个账户。';
 
   @override
+  String get tooltipTurnDirectionRound => '调转方向：钱款反向流动。';
+
+  @override
   String get disconnectConfirmTitle => '断开 Firefly III 连接';
 
   @override

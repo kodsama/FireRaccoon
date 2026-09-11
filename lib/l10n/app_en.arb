@@ -1567,6 +1567,7 @@
   "tooltipFieldSourceAccount": "Account money comes from.",
   "tooltipFieldDestinationAccount": "Account money goes to.",
   "tooltipSwapTransferAccounts": "Swap the two accounts.",
+  "tooltipTurnDirectionRound": "Turn it round: the money goes the other way.",
   "disconnectConfirmTitle": "Disconnect Firefly III",
   "connectionFailedNotFirefly": "That address answered, but not with the Firefly III API. Check the server URL: a user interface address, or one behind a sign-in page, answers every path with a web page.",
   "connectionFailedUnauthorized": "The server answered and refused the token. Check the personal access token.",

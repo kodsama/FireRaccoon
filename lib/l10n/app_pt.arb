@@ -1490,6 +1490,7 @@
   "tooltipFieldSourceAccount": "Conta de onde sai o dinheiro.",
   "tooltipFieldDestinationAccount": "Conta para onde vai o dinheiro.",
   "tooltipSwapTransferAccounts": "Trocar as duas contas.",
+  "tooltipTurnDirectionRound": "Inverter o sentido: o dinheiro passa a ir ao contrário.",
   "disconnectConfirmTitle": "Desconectar o Firefly III",
   "connectionFailedNotFirefly": "Esse endereço respondeu, mas não com a API do Firefly III. Verifique o URL do servidor: um endereço de interface, ou um atrás de uma página de início de sessão, responde a todos os caminhos com uma página web.",
   "connectionFailedUnauthorized": "O servidor respondeu e recusou o token. Verifique o token de acesso pessoal.",
