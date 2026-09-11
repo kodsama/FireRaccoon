@@ -3061,6 +3061,29 @@ class AppLocalizationsPt extends AppLocalizations {
       'Nenhuma entrada corresponde aos filtros.';
 
   @override
+  String get historyEntryWhatChanged => 'O que mudou';
+
+  @override
+  String get historyEntryNothingRecorded =>
+      'Nada foi registado para esta alteração.';
+
+  @override
+  String get historyEntryRevert => 'Reverter esta alteração';
+
+  @override
+  String get historyEntryReverted => 'Alteração revertida';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return 'Não foi possível reverter esta alteração: $error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before (limpo)';
+  }
+
+  @override
   String historyExportedTo(String path) {
     return 'Histórico exportado para $path';
   }

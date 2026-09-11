@@ -2960,6 +2960,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noHistoryEntriesMatchFilters => '没有符合筛选条件的历史条目。';
 
   @override
+  String get historyEntryWhatChanged => '变更内容';
+
+  @override
+  String get historyEntryNothingRecorded => '此次变更没有记录。';
+
+  @override
+  String get historyEntryRevert => '撤销此变更';
+
+  @override
+  String get historyEntryReverted => '变更已撤销';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return '无法撤销此变更：$error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before（已清除）';
+  }
+
+  @override
   String historyExportedTo(String path) {
     return '历史已导出至 $path';
   }

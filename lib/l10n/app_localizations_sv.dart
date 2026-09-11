@@ -3046,6 +3046,29 @@ class AppLocalizationsSv extends AppLocalizations {
   String get noHistoryEntriesMatchFilters => 'Inga poster matchar filtren.';
 
   @override
+  String get historyEntryWhatChanged => 'Vad som ändrades';
+
+  @override
+  String get historyEntryNothingRecorded =>
+      'Inget registrerades för den här ändringen.';
+
+  @override
+  String get historyEntryRevert => 'Ångra den här ändringen';
+
+  @override
+  String get historyEntryReverted => 'Ändringen är ångrad';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return 'Kunde inte ångra ändringen: $error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before (rensat)';
+  }
+
+  @override
   String historyExportedTo(String path) {
     return 'Historik exporterad till $path';
   }

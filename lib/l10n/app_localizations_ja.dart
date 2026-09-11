@@ -2965,6 +2965,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get noHistoryEntriesMatchFilters => 'フィルターに一致する履歴エントリはありません。';
 
   @override
+  String get historyEntryWhatChanged => '変更内容';
+
+  @override
+  String get historyEntryNothingRecorded => 'この変更には記録がありません。';
+
+  @override
+  String get historyEntryRevert => 'この変更を取り消す';
+
+  @override
+  String get historyEntryReverted => '変更を取り消しました';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return 'この変更を取り消せませんでした: $error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before（消去）';
+  }
+
+  @override
   String historyExportedTo(String path) {
     return '履歴を $path にエクスポートしました';
   }

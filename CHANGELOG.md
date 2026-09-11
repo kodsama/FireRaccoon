@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A history entry opens on what it changed. Both sides of a change are stored,
+  so the detail is the exact difference between them, field by field, as it
+  was and as it became, and it can be taken back from there: any entry, not
+  only the last one. Reaching something from last week through undo meant
+  undoing everything done since, which is somebody's work. Taking one change
+  back is recorded as a change of its own, so the list stays a record of what
+  happened in the order it happened, and the revert can itself be undone
 - `update_transaction` takes `splits`, so one leg of a split group can be
   changed without touching the others. Each entry names its leg by the
   `journal_id` `get_transaction` reports for it and states only what changes;

@@ -1658,6 +1658,12 @@
   "searchHistory": "履歴を検索",
   "allActions": "すべての操作",
   "noHistoryEntriesMatchFilters": "フィルターに一致する履歴エントリはありません。",
+  "historyEntryWhatChanged": "変更内容",
+  "historyEntryNothingRecorded": "この変更には記録がありません。",
+  "historyEntryRevert": "この変更を取り消す",
+  "historyEntryReverted": "変更を取り消しました",
+  "historyEntryRevertFailed": "この変更を取り消せませんでした: {error}",
+  "historyEntryCleared": "{before}（消去）",
   "historyExportedTo": "履歴を {path} にエクスポートしました",
   "@historyExportedTo": {
     "placeholders": {
