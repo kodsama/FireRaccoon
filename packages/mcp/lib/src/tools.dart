@@ -179,6 +179,14 @@ Map<String, Object?> _sealed(BackupPasswordException error) => {
   'error': '$error',
 };
 
+/// A manifest as a tool reports it: its own fields, with the id left to
+/// `backup_id` beside them.
+///
+/// `list_backups` keeps whole manifests in its rows, since a list of them
+/// cannot be flattened, and that is the one place `id` stays.
+Map<String, Object?> _manifestFields(BackupManifest manifest) =>
+    manifest.toJson()..remove('id');
+
 Map<String, Object?> _backupsUnavailable() => {
   'ok': false,
   'code': 'unavailable',
@@ -3099,10 +3107,13 @@ List<McpTool> buildTools({
         );
         return {
           'ok': true,
-          // Hoisted out of the manifest: every other backup tool takes this id
-          // as `backup_id`, and the next call after taking one needs it.
+          // The manifest itself, not a `backup` object holding it, which is
+          // where every other tool's own fields are. Named `backup_id` rather
+          // than the manifest's `id`, because that is what the rest of the
+          // backup tools take, and one value under two names in one answer is
+          // worse than either.
           'backup_id': manifest.id,
-          'backup': manifest.toJson(),
+          ..._manifestFields(manifest),
           if (!manifest.complete)
             'warning':
                 'Some data sets could not be read; see entries[].error. The '
@@ -3166,7 +3177,7 @@ List<McpTool> buildTools({
         if (manifest == null) return _notFound('No backup $id');
         final file = (args['file'] as String?)?.trim();
         if (file == null || file.isEmpty) {
-          return {'ok': true, 'backup_id': id, 'backup': manifest.toJson()};
+          return {'ok': true, 'backup_id': id, ..._manifestFields(manifest)};
         }
         final String? contents;
         try {

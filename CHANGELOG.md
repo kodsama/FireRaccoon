@@ -25,8 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `export_firefly_data` answers with its collections at the top level instead
   of under an `export` key of their own, so the accounts and transactions of a
   snapshot sit where the tool for each already puts them. `create_backup` and
-  `get_backup` now report `backup_id` beside the manifest, which is the id
-  every other backup tool asks for
+  `get_backup` answer with the manifest's own fields the same way, under the
+  `backup_id` the rest of the backup tools take rather than the manifest's
+  `id`. `list_backups` still carries whole manifests in its rows, since a list
+  of them cannot be flattened
 
 ### Fixed
 

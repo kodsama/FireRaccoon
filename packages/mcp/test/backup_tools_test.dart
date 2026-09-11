@@ -105,17 +105,17 @@ void main() {
       final result = await tool.run({});
 
       expect(result['ok'], isTrue);
-      final backup = result['backup']! as Map<String, Object?>;
-      expect(backup['complete'], isTrue);
+      expect(result['complete'], isTrue);
       expect(result['warning'], isNull);
-      final id = backup['id']! as String;
-      // Where every other backup tool reads and reports it, so the id the next
-      // call needs is not buried in the manifest.
-      expect(result['backup_id'], id);
+      // The manifest's own fields, at the top level where every other tool
+      // answers, under the `backup_id` the rest of the backup tools take.
+      final id = result['backup_id']! as String;
+      expect(result.containsKey('backup'), isFalse);
+      expect(result.containsKey('id'), isFalse);
       expect(File('${root.path}/$id/snapshot.json').existsSync(), isTrue);
       expect(File('${root.path}/$id/csv/rules.csv').existsSync(), isTrue);
-      expect(backup['taken_at'], isA<String>());
-      expect((backup['timezone']! as Map)['offset_minutes'], isA<int>());
+      expect(result['taken_at'], isA<String>());
+      expect((result['timezone']! as Map)['offset_minutes'], isA<int>());
     });
 
     test('create_backup says so when a data set is missing', () async {
@@ -129,7 +129,7 @@ void main() {
 
       expect(result['ok'], isTrue);
       expect(result['warning'], contains('entries[].error'));
-      expect((result['backup']! as Map)['complete'], isFalse);
+      expect(result['complete'], isFalse);
     });
 
     test('list_backups reports what is there, newest first', () async {
@@ -156,7 +156,7 @@ void main() {
         client: client,
         backups: store,
       ).run({});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
 
       final result = await _tool(
         'get_backup',
@@ -164,7 +164,7 @@ void main() {
         backups: store,
       ).run({'backup_id': id});
 
-      expect((result['backup']! as Map)['id'], id);
+      expect(result['backup_id'], id);
       expect(result['contents'], isNull);
     });
 
@@ -175,7 +175,7 @@ void main() {
         client: client,
         backups: store,
       ).run({});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
       final tool = _tool('get_backup', client: client, backups: store);
 
       final whole = await tool.run({'backup_id': id, 'file': 'csv/tags.csv'});
@@ -200,7 +200,7 @@ void main() {
         client: client,
         backups: store,
       ).run({});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
 
       expect((await tool.run({'backup_id': ''}))['code'], 'bad_input');
       expect((await tool.run({'backup_id': 'nope'}))['code'], 'not_found');
@@ -217,7 +217,7 @@ void main() {
         client: client,
         backups: store,
       ).run({});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
       final tool = _tool('delete_backup', client: client, backups: store);
 
       expect((await tool.run({'backup_id': 'nope'}))['code'], 'not_found');
@@ -265,7 +265,7 @@ void main() {
         client: client,
         backups: store,
       ).run({});
-      return (created['backup']! as Map)['id']! as String;
+      return created['backup_id']! as String;
     }
 
     test('plans without writing anything', () async {
@@ -502,9 +502,8 @@ void main() {
         backups: store,
       ).run({'password': 'a good password'});
 
-      final backup = result['backup']! as Map<String, Object?>;
-      expect(backup['encrypted'], isTrue);
-      final id = backup['id']! as String;
+      expect(result['encrypted'], isTrue);
+      final id = result['backup_id']! as String;
       expect(
         File('${root.path}/$id/manifest.json').readAsStringSync(),
         contains('"encrypted": true'),
@@ -522,7 +521,7 @@ void main() {
         client: client,
         backups: store,
       ).run({'password': 'a good password'});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
       final tool = _tool('get_backup', client: client, backups: store);
 
       final without = await tool.run({'backup_id': id, 'file': 'csv/tags.csv'});
@@ -542,10 +541,7 @@ void main() {
       expect(wrong['error'], contains('does not open'));
       expect(right['contents'], contains('tags'));
       // The manifest still reads without one, or a list would be useless.
-      expect(
-        (await tool.run({'backup_id': id}))['backup'],
-        isA<Map<String, Object?>>(),
-      );
+      expect((await tool.run({'backup_id': id}))['counts'], isNotNull);
     });
 
     test('restoring a sealed backup asks for the password', () async {
@@ -555,7 +551,7 @@ void main() {
         client: client,
         backups: store,
       ).run({'password': 'a good password'});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
       final tool = _tool('restore_backup', client: client, backups: store);
 
       final without = await tool.run({'backup_id': id});
@@ -576,7 +572,7 @@ void main() {
         client: client,
         backups: store,
       ).run({'password': 'a good password'});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
 
       final restored =
           await _tool('restore_backup', client: client, backups: store).run({
@@ -602,7 +598,7 @@ void main() {
         client: client,
         backups: store,
       ).run({});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
 
       final result = await _tool(
         'verify_backup',
@@ -624,7 +620,7 @@ void main() {
         client: client,
         backups: store,
       ).run({});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
       File('${root.path}/$id/csv/tags.csv').writeAsStringSync('tampered');
 
       final result = await _tool(
@@ -646,7 +642,7 @@ void main() {
         client: client,
         backups: store,
       ).run({});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
       final snapshotFile = File('${root.path}/$id/snapshot.json');
       final snapshot =
           jsonDecode(snapshotFile.readAsStringSync()) as Map<String, Object?>;
@@ -672,7 +668,7 @@ void main() {
         client: client,
         backups: store,
       ).run({'password': 'a good password'});
-      final id = (created['backup']! as Map)['id']! as String;
+      final id = created['backup_id']! as String;
       final tool = _tool('verify_backup', client: client, backups: store);
 
       final wrong = await tool.run({'backup_id': id, 'password': 'nope'});
