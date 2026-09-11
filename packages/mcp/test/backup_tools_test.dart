@@ -109,6 +109,9 @@ void main() {
       expect(backup['complete'], isTrue);
       expect(result['warning'], isNull);
       final id = backup['id']! as String;
+      // Where every other backup tool reads and reports it, so the id the next
+      // call needs is not buried in the manifest.
+      expect(result['backup_id'], id);
       expect(File('${root.path}/$id/snapshot.json').existsSync(), isTrue);
       expect(File('${root.path}/$id/csv/rules.csv').existsSync(), isTrue);
       expect(backup['taken_at'], isA<String>());

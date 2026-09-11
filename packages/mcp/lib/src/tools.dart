@@ -2777,7 +2777,11 @@ List<McpTool> buildTools({
                 value is List && key != 'covers' && key != 'excludes',
           );
         }
-        return {'ok': true, 'counts_only': countsOnly, 'export': json};
+        // Spread, not nested under `export`: every collection here is the
+        // same list its own tool answers with, and a caller that reads
+        // `accounts` off get_accounts should not have to reach through a
+        // wrapper for the same rows.
+        return {'ok': true, 'counts_only': countsOnly, ...json};
       },
     ),
     McpTool(
@@ -2814,6 +2818,9 @@ List<McpTool> buildTools({
         );
         return {
           'ok': true,
+          // Hoisted out of the manifest: every other backup tool takes this id
+          // as `backup_id`, and the next call after taking one needs it.
+          'backup_id': manifest.id,
           'backup': manifest.toJson(),
           if (!manifest.complete)
             'warning':
@@ -2878,7 +2885,7 @@ List<McpTool> buildTools({
         if (manifest == null) return _notFound('No backup $id');
         final file = (args['file'] as String?)?.trim();
         if (file == null || file.isEmpty) {
-          return {'ok': true, 'backup': manifest.toJson()};
+          return {'ok': true, 'backup_id': id, 'backup': manifest.toJson()};
         }
         final String? contents;
         try {

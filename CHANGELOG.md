@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `export_firefly_data` answers with its collections at the top level instead
+  of under an `export` key of their own, so the accounts and transactions of a
+  snapshot sit where the tool for each already puts them. `create_backup` and
+  `get_backup` now report `backup_id` beside the manifest, which is the id
+  every other backup tool asks for
+
 ### Fixed
 
 - `get_dashboard_kpis` would not take a period. Its enum of periods was built
