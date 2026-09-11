@@ -216,8 +216,8 @@ void main() {
 
     await tester.enterText(_fieldLabeled('Description'), 'Coffee');
     await tester.enterText(_fieldLabeled('Amount'), '4.50');
-    await tester.enterText(_fieldLabeled('Asset account'), 'Checking');
-    await tester.enterText(_fieldLabeled('Payee'), 'Groceries');
+    await tester.enterText(_fieldLabeled('From'), 'Checking');
+    await tester.enterText(_fieldLabeled('To'), 'Groceries');
     await tester.pump();
 
     // tapDialogPrimaryAction already settles. A second pass burns four

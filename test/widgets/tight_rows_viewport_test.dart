@@ -37,7 +37,12 @@ Future<void> _pumpInShell(WidgetTester tester, {required bool fit}) async {
           child: SingleChildScrollView(
             child: TightRowsTableShell(
               minContentWidth: _tableWidth,
-              header: const SizedBox.shrink(),
+              // A marker at the far edge of the table, to tell a table that
+              // panned from one that did not.
+              header: const Align(
+                alignment: Alignment.centerRight,
+                child: Text('last column'),
+              ),
               rows: [fit ? FitToTightRowsViewport(child: panel) : panel],
             ),
           ),
@@ -83,8 +88,8 @@ void main() {
       'Amount',
       'Date',
       'Category',
-      'Payee',
-      'Asset account',
+      'From',
+      'To',
       'Description',
       'Budget',
       'Tags',
@@ -97,6 +102,36 @@ void main() {
     }
     // Filling the window rather than shrinking to its own idea of a width.
     expect(_rightEdge(tester, 'Description'), greaterThan(_viewport * 0.9));
+  });
+
+  testWidgets('panning the table leaves the form where the window is', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await _pumpInShell(tester, fit: true);
+    final form = _rightEdge(tester, 'Description');
+    final column = tester.getTopLeft(find.text('last column')).dx;
+
+    final table = tester.widget<SingleChildScrollView>(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is SingleChildScrollView &&
+            widget.scrollDirection == Axis.horizontal,
+      ),
+    );
+    table.controller!.jumpTo(200);
+    await tester.pumpAndSettle();
+
+    // The columns moved under it; the form stayed in the window, which is the
+    // only place all of it fits.
+    expect(
+      tester.getTopLeft(find.text('last column')).dx,
+      closeTo(column - 200, 1),
+    );
+    expect(_rightEdge(tester, 'Description'), closeTo(form, 1));
+    expect(_rightEdge(tester, 'Description'), lessThanOrEqualTo(_viewport));
   });
 
   testWidgets('with no table around it the child is left alone', (

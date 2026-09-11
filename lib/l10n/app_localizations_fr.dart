@@ -1153,7 +1153,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sourceAccount => 'Compte source';
 
   @override
+  String get fromAccount => 'De';
+
+  @override
   String get destinationAccount => 'Compte destination';
+
+  @override
+  String get toAccount => 'Vers';
 
   @override
   String get payee => 'Bénéficiaire';

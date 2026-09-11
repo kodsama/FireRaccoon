@@ -1126,7 +1126,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sourceAccount => '送金元口座';
 
   @override
+  String get fromAccount => '出金元';
+
+  @override
   String get destinationAccount => '送金先口座';
+
+  @override
+  String get toAccount => '入金先';
 
   @override
   String get payee => '支払先';

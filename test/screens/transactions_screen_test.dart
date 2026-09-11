@@ -438,8 +438,8 @@ void main() {
       (widget) => widget is TextField && widget.decoration?.labelText == label,
     );
     await tester.enterText(labelled('Amount'), '5.00');
-    await tester.enterText(labelled('Source Account'), 'Checking');
-    await tester.enterText(labelled('Destination Account'), 'Checking');
+    await tester.enterText(labelled('From'), 'Checking');
+    await tester.enterText(labelled('To'), 'Checking');
     await tester.enterText(labelled('Description'), 'Coffee');
     await tester.pump();
 

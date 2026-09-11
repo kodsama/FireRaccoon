@@ -200,20 +200,19 @@ void main() {
     final source = fieldWith('Checking').controller!;
     final destination = fieldWith('Coop').controller!;
 
-    // Money out of Checking to Coop, read as a payee and an asset account,
-    // with the amount marked as leaving.
-    expect(find.text('Payee'), findsOneWidget);
+    // Money out of Checking and off to Coop, with the amount marked as
+    // leaving.
+    expect(source.text, 'Checking');
+    expect(destination.text, 'Coop');
     expect(find.text('\u2212 '), findsOneWidget);
 
     await tester.tap(find.byIcon(LucideIcons.arrowLeftRight));
     await tester.pumpAndSettle();
 
-    // Coop paid Checking instead. The accounts trade places so the payer is
-    // where a payer belongs, which changing the type alone would not do.
+    // Coop paid Checking instead: the two accounts trade places, so From and
+    // To still read the way the money moves.
     expect(source.text, 'Coop');
     expect(destination.text, 'Checking');
-    expect(find.text('Revenue account'), findsOneWidget);
-    expect(find.text('Payee'), findsNothing);
     expect(find.text('+ '), findsOneWidget);
   });
 
@@ -255,7 +254,7 @@ void main() {
     expect(find.byIcon(LucideIcons.arrowLeftRight), findsNothing);
   });
 
-  testWidgets('withdrawal leads with Payee and says which currency', (
+  testWidgets('a withdrawal reads from one account to the other', (
     tester,
   ) async {
     configureLargeScreen(tester);
@@ -289,8 +288,11 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Payee'), findsOneWidget);
-    expect(find.text('Destination Account'), findsNothing);
+    // Where it came from on the left, where it went on the right, whichever
+    // of the two is the payee.
+    expect(find.text('From'), findsOneWidget);
+    expect(find.text('To'), findsOneWidget);
+    expect(find.text('Payee'), findsNothing);
     expect(find.text('Description'), findsOneWidget);
 
     // The currency reads off the amount itself. It used to be a row of its
@@ -303,7 +305,7 @@ void main() {
     expect(find.text('Default Currency'), findsNothing);
 
     expect(
-      tester.getTopLeft(find.text('Payee')).dy,
+      tester.getTopLeft(find.text('From')).dy,
       lessThan(tester.getTopLeft(find.text('Description')).dy),
     );
   });
@@ -415,11 +417,11 @@ void main() {
     // needs, then budget and tags.
     expect(labelY('Amount'), labelY('Date'));
     expect(labelY('Date'), labelY('Category'));
-    expect(labelY('Payee'), labelY('Asset account'));
+    expect(labelY('From'), labelY('To'));
     expect(labelY('Budget'), labelY('Tags'));
 
-    expect(labelY('Amount'), lessThan(labelY('Payee')));
-    expect(labelY('Payee'), lessThan(labelY('Description')));
+    expect(labelY('Amount'), lessThan(labelY('From')));
+    expect(labelY('From'), lessThan(labelY('Description')));
     expect(labelY('Description'), lessThan(labelY('Budget')));
 
     double width(String label) => tester
@@ -437,7 +439,7 @@ void main() {
     // up with the tag column under it. The account row sits a few pixels
     // narrower either side, where the arrow between the two of them goes.
     expect(width('Category'), closeTo(width('Tags'), 1));
-    expect(width('Asset account'), closeTo(width('Tags'), 24));
+    expect(width('To'), closeTo(width('Tags'), 24));
     expect(width('Description'), greaterThan(width('Category') * 1.9));
   });
 
@@ -474,13 +476,20 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // The payer is the source of a deposit and the destination of a
-    // withdrawal, so the pair is ordered by what it means and not by which
-    // end of the journal it sits on.
-    final payer = tester.getTopLeft(find.text('Revenue account'));
-    final account = tester.getTopLeft(find.text('Asset account'));
-    expect(payer.dy, account.dy);
-    expect(payer.dx, lessThan(account.dx));
+    // The payer is where a deposit comes from, so it leads; on a withdrawal
+    // the same side holds the account the money left.
+    final from = tester.getTopLeft(find.text('From'));
+    final to = tester.getTopLeft(find.text('To'));
+    expect(from.dy, to.dy);
+    expect(from.dx, lessThan(to.dx));
+    expect(
+      tester
+          .widgetList<TextField>(find.byType(TextField))
+          .firstWhere((field) => field.decoration?.labelText == 'From')
+          .controller
+          ?.text,
+      'Employer',
+    );
   });
 
   testWidgets('withdrawal destination field offers expense accounts', (

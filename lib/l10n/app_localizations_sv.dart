@@ -1144,7 +1144,13 @@ class AppLocalizationsSv extends AppLocalizations {
   String get sourceAccount => 'Källkonto';
 
   @override
+  String get fromAccount => 'Från';
+
+  @override
   String get destinationAccount => 'Målkonto';
+
+  @override
+  String get toAccount => 'Till';
 
   @override
   String get payee => 'Mottagare';

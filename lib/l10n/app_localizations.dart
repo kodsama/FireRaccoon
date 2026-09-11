@@ -2194,11 +2194,23 @@ abstract class AppLocalizations {
   /// **'Source Account'**
   String get sourceAccount;
 
+  /// No description provided for @fromAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get fromAccount;
+
   /// No description provided for @destinationAccount.
   ///
   /// In en, this message translates to:
   /// **'Destination Account'**
   String get destinationAccount;
+
+  /// No description provided for @toAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get toAccount;
 
   /// No description provided for @payee.
   ///

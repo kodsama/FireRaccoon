@@ -1125,7 +1125,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sourceAccount => '来源账户';
 
   @override
+  String get fromAccount => '来自';
+
+  @override
   String get destinationAccount => '目标账户';
+
+  @override
+  String get toAccount => '转到';
 
   @override
   String get payee => '收款人';
