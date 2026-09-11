@@ -2750,9 +2750,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tooltipFieldAmount => 'Montant principal dans la devise choisie.';
 
   @override
-  String get tooltipFieldCurrency => 'Devise principale de cette ligne.';
-
-  @override
   String get tooltipFieldForeignAmount =>
       'Montant facultatif dans une autre devise.';
 

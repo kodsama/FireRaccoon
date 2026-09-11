@@ -1498,7 +1498,6 @@
   "disconnectConfirmMessage": "这将从本设备的钥匙串中删除服务器地址和个人访问令牌。重新连接时需要再次输入。",
   "tooltipFieldDate": "交易日期和时间。",
   "tooltipFieldAmount": "所选货币下的主金额。",
-  "tooltipFieldCurrency": "该分录的主货币。",
   "tooltipFieldForeignAmount": "可选的外币金额。",
   "tooltipFieldForeignCurrency": "外币金额使用的货币。",
   "tooltipFieldBudget": "将该分录关联到预算。",

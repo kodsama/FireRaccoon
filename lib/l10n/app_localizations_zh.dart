@@ -2678,9 +2678,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipFieldAmount => '所选货币下的主金额。';
 
   @override
-  String get tooltipFieldCurrency => '该分录的主货币。';
-
-  @override
   String get tooltipFieldForeignAmount => '可选的外币金额。';
 
   @override

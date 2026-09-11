@@ -2737,9 +2737,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tooltipFieldAmount => 'Huvudbelopp i vald valuta.';
 
   @override
-  String get tooltipFieldCurrency => 'Primär valuta för den här raden.';
-
-  @override
   String get tooltipFieldForeignAmount => 'Valfritt belopp i annan valuta.';
 
   @override

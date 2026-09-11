@@ -1498,7 +1498,6 @@
   "disconnectConfirmMessage": "Cela supprime l'URL du serveur et le jeton d'accès personnel du porte-clés de cet appareil. Vous devrez les saisir à nouveau pour vous reconnecter.",
   "tooltipFieldDate": "Date et heure de la transaction.",
   "tooltipFieldAmount": "Montant principal dans la devise choisie.",
-  "tooltipFieldCurrency": "Devise principale de cette ligne.",
   "tooltipFieldForeignAmount": "Montant facultatif dans une autre devise.",
   "tooltipFieldForeignCurrency": "Devise utilisée pour le montant étranger.",
   "tooltipFieldBudget": "Associer cette ligne à un budget.",

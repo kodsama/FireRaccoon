@@ -18,6 +18,7 @@ import '../theme/app_theme.dart';
 import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
+import 'amount_currency_suffix.dart';
 import 'autocomplete_text_field.dart';
 import 'budget_create_dialog.dart';
 import 'category_form_dialog.dart';
@@ -840,7 +841,17 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
         controller: split.amountController,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         suggestions: const [],
-        decoration: _fieldDecoration(l10n, l10n.amount),
+        // The currency sits in the field the figure is in. It used to be a
+        // row of its own under the optional fields, where an amount in krona
+        // and an amount in euro looked exactly alike.
+        decoration: AmountCurrencySuffix.decorate(
+          _fieldDecoration(l10n, l10n.amount),
+          AmountCurrencySuffix(
+            code: split.currencyCode,
+            currencies: currencies,
+            onChanged: (code) => setState(() => split.currencyCode = code),
+          ),
+        ),
         onChanged: (_) => setState(() {}),
       ),
     );
@@ -989,19 +1000,6 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       ),
     );
 
-    final currencyField = _withTooltip(
-      l10n.tooltipFieldCurrency,
-      _currencyDropdown(
-        label: l10n.defaultCurrency,
-        value: split.currencyCode,
-        currencies: currencies,
-        onChanged: (code) {
-          if (code == null) return;
-          setState(() => split.currencyCode = code);
-        },
-      ),
-    );
-
     final dateField = _buildDateField(l10n, format);
 
     final tagsField = _withTooltip(
@@ -1015,8 +1013,6 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
     );
 
     final optionalFields = <Widget>[
-      currencyField,
-      _gapBox(compact: compact),
       _withTooltip(
         l10n.tooltipFieldPiggyBank,
         DropdownButtonFormField<String?>(

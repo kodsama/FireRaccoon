@@ -2737,9 +2737,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tooltipFieldAmount => 'Main amount in the selected currency.';
 
   @override
-  String get tooltipFieldCurrency => 'Primary currency of this split.';
-
-  @override
   String get tooltipFieldForeignAmount =>
       'Optional amount in another currency.';
 

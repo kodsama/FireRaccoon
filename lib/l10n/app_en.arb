@@ -1575,7 +1575,6 @@
   "disconnectConfirmMessage": "This deletes the server URL and the personal access token from this device's keychain. You will have to enter them again to reconnect.",
   "tooltipFieldDate": "Date and time of the transaction.",
   "tooltipFieldAmount": "Main amount in the selected currency.",
-  "tooltipFieldCurrency": "Primary currency of this split.",
   "tooltipFieldForeignAmount": "Optional amount in another currency.",
   "tooltipFieldForeignCurrency": "Currency used for foreign amount.",
   "tooltipFieldBudget": "Assign this split to a budget.",

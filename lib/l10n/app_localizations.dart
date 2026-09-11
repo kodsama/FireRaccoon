@@ -5008,12 +5008,6 @@ abstract class AppLocalizations {
   /// **'Main amount in the selected currency.'**
   String get tooltipFieldAmount;
 
-  /// No description provided for @tooltipFieldCurrency.
-  ///
-  /// In en, this message translates to:
-  /// **'Primary currency of this split.'**
-  String get tooltipFieldCurrency;
-
   /// No description provided for @tooltipFieldForeignAmount.
   ///
   /// In en, this message translates to:

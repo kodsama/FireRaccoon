@@ -1498,7 +1498,6 @@
   "disconnectConfirmMessage": "このデバイスのキーチェーンからサーバー URL と個人アクセストークンを削除します。再接続するには再度入力する必要があります。",
   "tooltipFieldDate": "取引の日付と時刻。",
   "tooltipFieldAmount": "選択した通貨での主な金額。",
-  "tooltipFieldCurrency": "この分割の主通貨。",
   "tooltipFieldForeignAmount": "別通貨での任意金額。",
   "tooltipFieldForeignCurrency": "外貨金額に使用する通貨。",
   "tooltipFieldBudget": "この分割を予算に割り当てる。",

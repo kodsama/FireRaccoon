@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- An amount carries the currency it is in, inside the field and changeable
+  there, on a transaction and on a recurring rule alike. The currency was a
+  row of its own, behind the optional fields on a transaction and above the
+  amount on a rule, so a figure in krona and a figure in euro read exactly
+  alike until somebody went looking. The picker shows the code where there is
+  room for three letters and says which currency that is when it opens
 - A transaction is laid out in pairs on a wide panel: amount beside date, the
   other party beside the account the money moved through, budget beside tags,
   then category beside the description. The date used to take a whole row for

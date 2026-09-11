@@ -1498,7 +1498,6 @@
   "disconnectConfirmMessage": "Detta tar bort serveradressen och den personliga åtkomsttoken från enhetens nyckelring. Du måste ange dem igen för att ansluta på nytt.",
   "tooltipFieldDate": "Datum och tid för transaktionen.",
   "tooltipFieldAmount": "Huvudbelopp i vald valuta.",
-  "tooltipFieldCurrency": "Primär valuta för den här raden.",
   "tooltipFieldForeignAmount": "Valfritt belopp i annan valuta.",
   "tooltipFieldForeignCurrency": "Valuta för det utländska beloppet.",
   "tooltipFieldBudget": "Koppla raden till en budget.",

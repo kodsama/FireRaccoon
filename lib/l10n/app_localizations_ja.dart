@@ -2682,9 +2682,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipFieldAmount => '選択した通貨での主な金額。';
 
   @override
-  String get tooltipFieldCurrency => 'この分割の主通貨。';
-
-  @override
   String get tooltipFieldForeignAmount => '別通貨での任意金額。';
 
   @override

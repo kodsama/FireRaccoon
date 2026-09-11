@@ -1498,7 +1498,6 @@
   "disconnectConfirmMessage": "Isto apaga o URL do servidor e o token de acesso pessoal do porta-chaves deste dispositivo. Terá de os introduzir novamente para reconectar.",
   "tooltipFieldDate": "Data e hora da transação.",
   "tooltipFieldAmount": "Montante principal na moeda selecionada.",
-  "tooltipFieldCurrency": "Moeda principal desta linha.",
   "tooltipFieldForeignAmount": "Montante opcional noutra moeda.",
   "tooltipFieldForeignCurrency": "Moeda usada no montante estrangeiro.",
   "tooltipFieldBudget": "Associar esta linha a um orçamento.",
