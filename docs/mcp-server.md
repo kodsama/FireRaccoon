@@ -126,7 +126,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `set_transaction_reconciled` | Mark reconciled or unreconciled | yes |
 | `store_reconciliation` | Store an account reconciliation with optional correction | yes |
 | `create_transaction` | Create a transaction, one leg or several | yes |
-| `update_transaction` | Update a transaction; omitted fields keep their value, and on a split group the bookkeeping reaches every leg | yes |
+| `update_transaction` | Update a transaction; omitted fields keep their value, the bookkeeping reaches every leg of a split group, and `splits` reaches one leg by its journal id | yes |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides | yes |
 | `delete_transaction` | Delete a transaction group and its splits | yes |
 | `export_firefly_data` | Snapshot of every entity the API exposes, for taking before a bulk change |  |
@@ -358,7 +358,7 @@ it when the ledger has none, in the reconciled account's currency, because a
 name Firefly cannot resolve is a refusal and there was otherwise no way to
 write a correction at all.
 
-### A split group is edited as a group
+### A split group is edited whole or a leg at a time
 
 Firefly identifies one leg of a group by `transaction_journal_id`, and treats a
 leg that carries none as a new split, deleting the journals the update did not
@@ -374,9 +374,19 @@ one leg stays with it, so amounts, descriptions and accounts are untouched. A
 "Interest" with one string would be worse than the bug being fixed; pass
 `group_title` to be explicit about it.
 
-Editing one leg on its own is not exposed. It needs the leg's own id in the
-argument, and a documented rule that a leg left out of the list is deleted,
-which is a larger change than a schema line.
+Editing one leg on its own takes `splits`, where each entry names its leg by
+the `journal_id` `get_transaction` reports for it and states only what changes.
+That is what a loan whose amortisation and interest belong to different
+categories needs, and what a split paying for someone else needs: one leg
+carrying a budget beside one that must carry none. A group-level field cannot
+be passed in the same call, since it would have to mean every leg and one leg
+at once; `date`, `type` and `group_title` still belong to the group.
+
+A leg the list leaves out is left exactly as it is. The whole group goes back
+out either way, each leg carrying its own id, so the rule that a missing leg is
+deleted never comes into play, and legs cannot be added or removed this way.
+The readback reports a leg Firefly declined as `splits[0].budget_id`, and a
+group that came back without a journal the call named as `splits[0]`.
 
 ### Removing a value, not just changing it
 
@@ -400,7 +410,11 @@ Firefly will not move the money on a reconciled transaction, and the payload
 drops those fields rather than arguing, so a correction reported success and
 changed nothing. Changing `amount`, `foreign_amount`, `currency_code` or either
 account on a reconciled transaction is now refused; pass `reconciled: false` in
-the same call to release it and make the change together.
+the same call to release it and make the change together. On a split group that
+release reaches every leg, which is what makes it work there at all: the flag
+used to stop at the group while each leg stayed reconciled, and the amounts it
+was meant to free were dropped from the payload anyway. A leg names its own
+`reconciled` inside `splits`.
 
 A copy is still never reconciled, whatever the original was.
 
