@@ -34,19 +34,34 @@ import '../router/route_query.dart';
 /// the full width (stacking cards vertically).
 const double kSidebarBreakpoint = 768;
 
+/// Whether the sidebar is the full menu or the narrow rail, remembered.
+///
+/// The menu is furniture: somebody who works in the rail wants the rail
+/// tomorrow too, and having to collapse it on every launch is the kind of
+/// thing that is noticed daily and reported never.
 class SidebarExpandedNotifier extends Notifier<bool> {
+  static const _prefsKey = 'sidebarExpanded';
+
   @override
-  bool build() => true;
-  void toggle() => state = !state;
+  bool build() =>
+      ref.watch(sharedPreferencesProvider).getBool(_prefsKey) ?? true;
+
+  Future<void> toggle() async {
+    state = !state;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, state);
+  }
 }
 
 final sidebarExpandedProvider = NotifierProvider<SidebarExpandedNotifier, bool>(
   SidebarExpandedNotifier.new,
 );
 
+/// Which menu groups are open, remembered between launches.
 class ExpandedSidebarGroupsNotifier extends Notifier<Set<String>> {
-  @override
-  Set<String> build() => {
+  static const _prefsKey = 'expandedSidebarGroups';
+
+  /// Open on a menu nobody has collapsed anything on yet.
+  static const _initiallyOpen = {
     'group_accounts',
     'group_budgets',
     'group_stats',
@@ -57,12 +72,24 @@ class ExpandedSidebarGroupsNotifier extends Notifier<Set<String>> {
     'details',
   };
 
-  void toggleGroup(String groupId) {
-    if (state.contains(groupId)) {
-      state = Set.from(state)..remove(groupId);
-    } else {
-      state = Set.from(state)..add(groupId);
-    }
+  @override
+  Set<String> build() {
+    // Nothing stored is a first run; a stored empty list is somebody who
+    // collapsed every group, and springing them back open would undo exactly
+    // the work this is here to keep.
+    final stored = ref
+        .watch(sharedPreferencesProvider)
+        .getStringList(_prefsKey);
+    return stored == null ? _initiallyOpen : stored.toSet();
+  }
+
+  Future<void> toggleGroup(String groupId) async {
+    final open = Set<String>.from(state);
+    if (!open.remove(groupId)) open.add(groupId);
+    state = open;
+    await ref
+        .read(sharedPreferencesProvider)
+        .setStringList(_prefsKey, open.toList());
   }
 }
 
