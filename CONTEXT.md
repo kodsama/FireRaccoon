@@ -45,7 +45,7 @@ code comments, ADRs, and MCP descriptions.
 
 ## Agent access
 
-MCP tools are the supported agent API: 65 of them, 34 write-gated, covering
+MCP tools are the supported agent API: 67 of them, 36 write-gated, covering
 accounts, transactions, budgets and their limits, categories, tags, bills, piggy
 banks, recurrences, currencies, search, reconciliation, backups and restores,
 and the on-device projection. The rich account prognosis is the one engine

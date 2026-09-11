@@ -1288,6 +1288,7 @@ x-mcp:
       - create_tag
       - update_tag
       - delete_tag
+      - merge_tags
       - create_account
       - delete_account
       - create_budget
@@ -1581,13 +1582,30 @@ x-mcp:
       mapsTo: POST /api/v1/tags
       required: [tag]
     update_tag:
-      description: Rename a tag
+      description: >
+        Rename a tag, or refuse when another tag already carries the name,
+        which Firefly will not allow and merge_tags exists for.
       mapsTo: PUT /api/v1/tags/{tagId}
       required: [tag_id, tag]
     delete_tag:
       description: Delete a tag
       mapsTo: DELETE /api/v1/tags/{tagId}
       required: [tag_id]
+    merge_tags:
+      description: >
+        Move every transaction from one tag onto another and remove the tag
+        left empty. Firefly has no merge endpoint and refuses a rename onto a
+        name already in use. Tags sit on a leg, so only the legs carrying the
+        tag are rewritten. Writes nothing while dry_run is true, which is the
+        default, and takes one write per transaction group otherwise.
+      mapsTo: GET /api/v1/tags/{tagId}/transactions
+      required: [from_tag, into_tag]
+      inputSchema:
+        type: object
+        properties:
+          from_tag: { type: string }
+          into_tag: { type: string }
+          dry_run: { type: boolean, default: true }
     get_currencies:
       description: List currencies and which are enabled
       mapsTo: GET /api/v1/currencies

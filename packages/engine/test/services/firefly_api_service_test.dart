@@ -818,6 +818,40 @@ void main() {
       expect(transactions, hasLength(1));
     });
 
+    test('getTagTransactions asks the tag for its own rows', () async {
+      final client = MockClient((request) async {
+        // Firefly takes a tag or its id in the same path segment, so the id
+        // every other tag call uses works here too.
+        expect(request.url.path, '/api/v1/tags/11/transactions');
+        return jsonHttpResponse(
+          transactionsPageBody(items: [transactionItem()]),
+        );
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      expect(await service.getTagTransactions('11'), hasLength(1));
+    });
+
+    test('wraps network failures in getTagTransactions', () async {
+      final client = MockClient((_) async => throw Exception('socket'));
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await expectLater(
+        service.getTagTransactions('11'),
+        throwsA(
+          predicate((Object e) => e.toString().contains('Network error')),
+        ),
+      );
+    });
+
     test('deleteBudget succeeds on 204', () async {
       final client = MockClient((request) async {
         expect(request.method, 'DELETE');

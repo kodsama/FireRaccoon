@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every leg of the group. The whole group still goes back out with each leg
   carrying its own id, so nothing is deleted, and the readback names a leg
   Firefly declined as `splits[0].budget_id`
+- `merge_tags` moves every transaction from one tag onto another and removes
+  the tag it empties. Firefly has no merge endpoint and refuses a rename onto a
+  name already in use, so two tags meaning the same thing had nowhere to go and
+  one of them stayed in the list forever. A tag sits on a leg rather than on
+  the group around it, so only the legs carrying it are rewritten and the rest
+  of a split keeps its own tags. It writes once per transaction group and
+  reports the rows without writing while `dry_run` is true, which is the
+  default
 
 ### Changed
 
@@ -29,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `backup_id` the rest of the backup tools take rather than the manifest's
   `id`. `list_backups` still carries whole manifests in its rows, since a list
   of them cannot be flattened
+- `update_tag` refuses a name another tag already carries before it writes,
+  and names `merge_tags` as the way to fold the two together. Firefly answers
+  such a rename with a 422 saying the name is in use, which is true and says
+  nothing about what to do instead
 
 ### Fixed
 

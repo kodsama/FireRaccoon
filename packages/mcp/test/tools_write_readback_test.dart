@@ -946,6 +946,192 @@ void main() {
       expect('${result['error']}', contains('splits[0]'));
     });
   });
+
+  group('merging a tag', () {
+    /// A ledger holding Vacances beside Holidays, and what a merge does to it.
+    Map<String, Object?> taggedGroup(String id) => {
+      'id': id,
+      'type': 'transactions',
+      'attributes': {
+        'group_title': 'Summer',
+        'transactions': [
+          {
+            'transaction_journal_id': '${id}1',
+            'type': 'withdrawal',
+            'date': '2026-07-14',
+            'amount': '120.00',
+            'description': 'Hotel',
+            'source_name': 'Checking',
+            'destination_name': 'Hotel',
+            'currency_code': 'EUR',
+            'currency_symbol': '€',
+            'tags': const ['Shared'],
+          },
+          {
+            'transaction_journal_id': '${id}2',
+            'type': 'withdrawal',
+            'date': '2026-07-14',
+            'amount': '80.00',
+            'description': 'Flights',
+            'source_name': 'Checking',
+            'destination_name': 'Airline',
+            'currency_code': 'EUR',
+            'currency_symbol': '€',
+            'tags': const ['Vacances'],
+          },
+        ],
+      },
+    };
+
+    MockClient ledger({
+      required List<Map<String, Object?>> carrying,
+      List<Map<String, Object?>>? writes,
+      List<String>? deletes,
+    }) => MockClient((request) async {
+      final path = request.url.path;
+      if (request.method == 'GET' && path == '/api/v1/tags') {
+        return jsonHttpResponse({
+          'data': [
+            {
+              'id': '11',
+              'type': 'tags',
+              'attributes': {'tag': 'Vacances'},
+            },
+            {
+              'id': '12',
+              'type': 'tags',
+              'attributes': {'tag': 'Holidays'},
+            },
+          ],
+        });
+      }
+      if (request.method == 'GET' && path == '/api/v1/tags/11/transactions') {
+        return jsonHttpResponse(
+          transactionsPageBody(items: carrying, total: carrying.length),
+        );
+      }
+      if (request.method == 'PUT' && path.startsWith('/api/v1/transactions/')) {
+        final body = jsonDecode(request.body) as Map<String, Object?>;
+        writes?.add(body);
+        return jsonHttpResponse(
+          transactionEnvelope({
+            'id': path.split('/').last,
+            'type': 'transactions',
+            'attributes': {
+              'group_title': body['group_title'],
+              'transactions': body['transactions'],
+            },
+          }),
+        );
+      }
+      if (request.method == 'DELETE' && path == '/api/v1/tags/11') {
+        deletes?.add('11');
+        return http.Response('', 204);
+      }
+      return http.Response('unexpected ${request.method} $path', 500);
+    });
+
+    test('a dry run reports the rows and writes nothing', () async {
+      final writes = <Map<String, Object?>>[];
+      final deletes = <String>[];
+
+      final result = await _tool(
+        'merge_tags',
+        ledger(
+          carrying: [taggedGroup('97'), taggedGroup('98')],
+          writes: writes,
+          deletes: deletes,
+        ),
+      ).run({'from_tag': 'Vacances', 'into_tag': 'Holidays'});
+
+      expect(result['ok'], isTrue);
+      expect(result['dry_run'], isTrue);
+      expect(result['transaction_count'], 2);
+      // One leg of each group carries it. The other is somebody else's row.
+      expect(result['leg_count'], 2);
+      expect(result['transaction_ids'], ['97', '98']);
+      expect(result['tag_removed'], isFalse);
+      expect('${result['next']}', contains('dry_run false'));
+      expect(writes, isEmpty);
+      expect(deletes, isEmpty);
+    });
+
+    test('the rows move, the other legs do not, and the tag goes', () async {
+      final writes = <Map<String, Object?>>[];
+      final deletes = <String>[];
+
+      final result = await _tool(
+        'merge_tags',
+        ledger(carrying: [taggedGroup('97')], writes: writes, deletes: deletes),
+      ).run({'from_tag': 'Vacances', 'into_tag': 'Holidays', 'dry_run': false});
+
+      expect(result['ok'], isTrue);
+      expect(result['tag_removed'], isTrue);
+      expect(deletes, ['11']);
+      final legs = (writes.single['transactions']! as List)
+          .cast<Map<String, Object?>>();
+      // Both legs go back out with their own ids, or Firefly deletes the one
+      // the write left out.
+      expect(legs.map((leg) => leg['transaction_journal_id']), ['971', '972']);
+      expect(legs[0]['tags'], ['Shared']);
+      expect(legs[1]['tags'], ['Holidays']);
+    });
+
+    test('a tag nothing carries only needs deleting', () async {
+      final result = await _tool(
+        'merge_tags',
+        ledger(carrying: const []),
+      ).run({'from_tag': '11', 'into_tag': '12'});
+
+      expect(result['transaction_count'], 0);
+      expect('${result['next']}', contains('delete_tag'));
+    });
+
+    test('more rows than fit are counted whole and listed short', () async {
+      final result = await _tool(
+        'merge_tags',
+        ledger(carrying: [for (var i = 0; i < 101; i++) taggedGroup('$i')]),
+      ).run({'from_tag': 'Vacances', 'into_tag': 'Holidays'});
+
+      expect(result['transaction_count'], 101);
+      expect(result['transaction_ids'], hasLength(100));
+      expect(result['transaction_ids_truncated'], 1);
+    });
+
+    test('what cannot be merged is refused before any write', () async {
+      final refusals = <String, Map<String, Object?>>{
+        'from_tag is required': {'from_tag': '  ', 'into_tag': 'Holidays'},
+        'into_tag is required': {'from_tag': 'Vacances', 'into_tag': ''},
+        'No tag "Ferie"': {'from_tag': 'Ferie', 'into_tag': 'Holidays'},
+        // A name nothing carries yet is a rename, which costs one write
+        // instead of one per row.
+        'update_tag': {'from_tag': 'Vacances', 'into_tag': 'Ferie'},
+        'cannot be merged into itself': {
+          'from_tag': 'Vacances',
+          'into_tag': '11',
+        },
+      };
+
+      for (final entry in refusals.entries) {
+        final writes = <Map<String, Object?>>[];
+        final deletes = <String>[];
+
+        final result = await _tool(
+          'merge_tags',
+          ledger(
+            carrying: [taggedGroup('97')],
+            writes: writes,
+            deletes: deletes,
+          ),
+        ).run({...entry.value, 'dry_run': false});
+
+        expect(result['ok'], isFalse, reason: entry.key);
+        expect('${result['error']}', contains(entry.key));
+        expect(writes, isEmpty, reason: entry.key);
+        expect(deletes, isEmpty, reason: entry.key);
+      }
+    });
+  });
 }
 
 /// Firefly's answer to a group update: the legs it was sent, read back.
