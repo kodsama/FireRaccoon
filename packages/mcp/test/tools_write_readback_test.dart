@@ -574,6 +574,379 @@ void main() {
     });
   });
 
+  group('editing one leg of a split group', () {
+    // A loan payment as the ledger holds one: an amortisation leg carrying the
+    // housing budget, and two interest legs carrying nothing.
+    Map<String, Object?> loanGroup({
+      bool reconciled = false,
+      bool foreign = false,
+    }) => {
+      'id': '1',
+      'type': 'transactions',
+      'attributes': {
+        'group_title': 'Beijersparksgatan loan',
+        'transactions': [
+          {
+            'transaction_journal_id': '811',
+            'type': 'withdrawal',
+            'date': '2026-11-01',
+            'amount': '3400.00',
+            'description': 'Beijersparksgatan loan 1 amortisation',
+            'source_name': 'Common account',
+            'destination_name': 'Handelsbanken',
+            'category_id': '791',
+            'category_name': 'Loan > Reimbursement',
+            'budget_id': '19',
+            'currency_code': 'EUR',
+            'currency_symbol': '€',
+            'reconciled': reconciled,
+          },
+          {
+            'transaction_journal_id': '812',
+            'type': 'withdrawal',
+            'date': '2026-11-01',
+            'amount': '3464.00',
+            'description': 'Beijersparksgatan loan 1 interest',
+            'source_name': 'Common account',
+            'destination_name': 'Handelsbanken',
+            'currency_code': 'EUR',
+            'currency_symbol': '€',
+            'reconciled': reconciled,
+            if (foreign) 'foreign_amount': '340.00',
+            if (foreign) 'foreign_currency_code': 'SEK',
+          },
+          {
+            'transaction_journal_id': '813',
+            'type': 'withdrawal',
+            'date': '2026-11-01',
+            'amount': '3016.00',
+            'description': 'Beijersparksgatan loan 2 interest',
+            'source_name': 'Common account',
+            'destination_name': 'Handelsbanken',
+            'currency_code': 'EUR',
+            'currency_symbol': '€',
+            'reconciled': reconciled,
+          },
+        ],
+      },
+    };
+
+    List<Map<String, Object?>> legsOf(Map<String, Object?> body) => [
+      for (final leg in body['transactions'] as List)
+        leg as Map<String, Object?>,
+    ];
+
+    test('a category reaches the legs named and no others', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(),
+        onWrite: () => transactionEnvelope(_storedGroup(recorder.body!)),
+      );
+
+      final result = await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'splits': [
+          {'journal_id': '812', 'category_name': 'Loan > Interest'},
+          {'journal_id': '813', 'category_name': 'Loan > Interest'},
+        ],
+      });
+
+      expect(result['ok'], isTrue);
+      final legs = legsOf(recorder.body!);
+      // Every leg goes back out. Firefly deletes the journals an update does
+      // not name, so a payload carrying only the two interest legs would take
+      // the amortisation with it.
+      expect(legs.map((leg) => leg['transaction_journal_id']), [
+        '811',
+        '812',
+        '813',
+      ]);
+      expect(legs[0]['category_name'], 'Loan > Reimbursement');
+      expect(legs[0]['category_id'], '791');
+      expect(legs[1]['category_name'], 'Loan > Interest');
+      expect(legs[2]['category_name'], 'Loan > Interest');
+      // A name replaces the id it stands in for on a leg too, or Firefly would
+      // resolve the id and discard the name.
+      expect(legs[1].containsKey('category_id'), isFalse);
+      // Each leg keeps its own figure and wording.
+      expect(legs[0]['amount'], '3400.00');
+      expect(legs[1]['amount'], '3464.00');
+      expect(legs[1]['description'], 'Beijersparksgatan loan 1 interest');
+    });
+
+    test('a budget lands on one leg and leaves the rest budget-less', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(),
+        onWrite: () => transactionEnvelope(_storedGroup(recorder.body!)),
+      );
+
+      final result = await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'splits': [
+          {'journal_id': '812', 'budget_id': '19'},
+        ],
+      });
+
+      expect(result['ok'], isTrue);
+      final legs = legsOf(recorder.body!);
+      expect(legs[0]['budget_id'], '19');
+      expect(legs[1]['budget_id'], '19');
+      // What the group-level write had no way to do: a leg that must carry no
+      // budget, beside one that must.
+      expect(legs[2].containsKey('budget_id'), isFalse);
+    });
+
+    test('a leg description is its own, not the group title', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(),
+        onWrite: () => transactionEnvelope(_storedGroup(recorder.body!)),
+      );
+
+      final result = await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'group_title': 'Beijersparksgatan, November',
+        'splits': [
+          {'journal_id': '813', 'description': 'Interets du pret 2'},
+        ],
+      });
+
+      expect(result['ok'], isTrue);
+      final body = recorder.body!;
+      expect(body['group_title'], 'Beijersparksgatan, November');
+      final legs = legsOf(body);
+      expect(legs[2]['description'], 'Interets du pret 2');
+      expect(legs[0]['description'], 'Beijersparksgatan loan 1 amortisation');
+      expect(legs[1]['description'], 'Beijersparksgatan loan 1 interest');
+    });
+
+    test('an empty value on a leg clears that leg only', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(),
+        onWrite: () => transactionEnvelope(_storedGroup(recorder.body!)),
+      );
+
+      await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'splits': [
+          {'journal_id': '811', 'budget_id': ''},
+        ],
+      });
+
+      final legs = legsOf(recorder.body!);
+      // An explicit empty is the only thing Firefly reads as a removal.
+      expect(legs[0]['budget_id'], '');
+      expect(legs[1].containsKey('budget_id'), isFalse);
+    });
+
+    test('releasing a reconciled group reaches every leg', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(reconciled: true),
+        onWrite: () => transactionEnvelope(_storedGroup(recorder.body!)),
+      );
+
+      final result = await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'reconciled': false});
+
+      expect(result['ok'], isTrue);
+      for (final leg in legsOf(recorder.body!)) {
+        // The flag stopped at the group, so every leg stayed reconciled and
+        // the payload dropped the amounts it was meant to release.
+        expect(leg['reconciled'], isFalse);
+        expect(leg['amount'], isNotNull);
+      }
+    });
+
+    test('a journal the group does not hold is refused', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(),
+        onWrite: () => throw StateError('must not reach the server'),
+      );
+
+      final result = await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'splits': [
+          {'journal_id': '999', 'category_name': 'Loan > Interest'},
+        ],
+      });
+
+      expect(result['code'], 'bad_input');
+      expect('${result['error']}', contains('811, 812, 813'));
+      expect(recorder.body, isNull);
+    });
+
+    test('a leg naming no journal is refused', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(),
+        onWrite: () => throw StateError('must not reach the server'),
+      );
+
+      final result = await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'splits': [
+          {'category_name': 'Loan > Interest'},
+        ],
+      });
+
+      expect(result['code'], 'bad_input');
+      expect('${result['error']}', contains('journal_id is required'));
+      expect(recorder.body, isNull);
+    });
+
+    test('a group-level field beside splits is refused', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(),
+        onWrite: () => throw StateError('must not reach the server'),
+      );
+
+      // Ambiguous on its face: category_name at the top level means every leg,
+      // and inside splits it means one.
+      final result = await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'category_name': 'Loan > Interest',
+        'splits': [
+          {'journal_id': '812', 'budget_id': '19'},
+        ],
+      });
+
+      expect(result['code'], 'bad_input');
+      expect('${result['error']}', contains('category_name'));
+      expect(recorder.body, isNull);
+    });
+
+    test('a leg Firefly declined is named in the answer', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(),
+        // The group exactly as it was: accepted, stored nothing. What a budget
+        // on a deposit leg does.
+        onWrite: () => transactionEnvelope(loanGroup()),
+      );
+
+      final result = await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'splits': [
+          {'journal_id': '812', 'budget_id': '19'},
+        ],
+      });
+
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'not_applied');
+      expect('${result['error']}', contains('splits[0].budget_id'));
+    });
+
+    test(
+      'what a leg cannot be asked for is refused, nothing written',
+      () async {
+        final refusals = <String, (Map<String, Object?>, List<Object?>)>{
+          'must be an object': (loanGroup(), ['not a leg']),
+          'more than once': (
+            loanGroup(),
+            [
+              {'journal_id': '812', 'budget_id': '19'},
+              {'journal_id': '812', 'notes': 'twice'},
+            ],
+          ),
+          'amount must be greater than zero': (
+            loanGroup(),
+            [
+              {'journal_id': '812', 'amount': 0},
+            ],
+          ),
+          'foreign_amount must be greater than zero': (
+            loanGroup(),
+            [
+              {'journal_id': '812', 'foreign_amount': 0},
+            ],
+          ),
+          'description cannot be emptied': (
+            loanGroup(),
+            [
+              {'journal_id': '812', 'description': '  '},
+            ],
+          ),
+          'is reconciled': (
+            loanGroup(reconciled: true),
+            [
+              {'journal_id': '812', 'amount': 100},
+            ],
+          ),
+          'rate cannot be derived': (
+            loanGroup(foreign: true),
+            [
+              {'journal_id': '812', 'amount': 100},
+            ],
+          ),
+        };
+
+        for (final entry in refusals.entries) {
+          final recorder = _Recorder();
+          final client = recorder.client(
+            transaction: entry.value.$1,
+            onWrite: () => throw StateError('must not reach the server'),
+          );
+
+          final result = await _tool(
+            'update_transaction',
+            client,
+          ).run({'transaction_id': '1', 'splits': entry.value.$2});
+
+          expect(result['code'], 'bad_input', reason: entry.key);
+          expect('${result['error']}', contains(entry.key));
+          expect(recorder.body, isNull, reason: entry.key);
+        }
+      },
+    );
+
+    test('an amount or a flag the server kept is reported per leg', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(),
+        onWrite: () => transactionEnvelope(loanGroup()),
+      );
+
+      final result = await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'splits': [
+          {'journal_id': '811', 'amount': 1000},
+          {'journal_id': '812', 'reconciled': true},
+        ],
+      });
+
+      expect(result['code'], 'not_applied');
+      expect('${result['error']}', contains('splits[0].amount'));
+      expect('${result['error']}', contains('splits[1].reconciled'));
+    });
+
+    test('a group rebuilt under new ids is reported, not called ok', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: loanGroup(),
+        // What a destroyed and recreated group looks like from here: the same
+        // values, none of the journals the call named.
+        onWrite: () => transactionEnvelope(_renumbered(loanGroup())),
+      );
+
+      final result = await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'splits': [
+          {'journal_id': '812', 'category_name': 'Loan > Interest'},
+        ],
+      });
+
+      expect(result['code'], 'not_applied');
+      expect('${result['error']}', contains('splits[0]'));
+    });
+  });
+
   group('merging a tag', () {
     /// A ledger holding Vacances beside Holidays, and what a merge does to it.
     Map<String, Object?> taggedGroup(String id) => {
@@ -759,6 +1132,34 @@ void main() {
       }
     });
   });
+}
+
+/// Firefly's answer to a group update: the legs it was sent, read back.
+Map<String, Object?> _storedGroup(Map<String, Object?> body) => {
+  'id': '1',
+  'type': 'transactions',
+  'attributes': {
+    'group_title': body['group_title'],
+    'transactions': body['transactions'],
+  },
+};
+
+/// The same group with every journal id changed, as a rebuild would leave it.
+Map<String, Object?> _renumbered(Map<String, Object?> group) {
+  final attrs = group['attributes']! as Map<String, Object?>;
+  return {
+    ...group,
+    'attributes': {
+      ...attrs,
+      'transactions': [
+        for (final leg in attrs['transactions']! as List)
+          {
+            ...leg as Map<String, Object?>,
+            'transaction_journal_id': '9${leg['transaction_journal_id']}',
+          },
+      ],
+    },
+  };
 }
 
 /// The same item with a different category, for a server that took the change.

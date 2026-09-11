@@ -1106,13 +1106,16 @@ void main() {
       ).run({});
 
       expect(result['ok'], isTrue);
-      final export = result['export'] as Map<String, Object?>;
-      final counts = export['counts'] as Map<String, Object?>;
+      // Top level, the same place get_accounts and get_transactions put them:
+      // the rows used to sit under an `export` wrapper of their own.
+      final counts = result['counts'] as Map<String, Object?>;
       expect(counts['accounts'], greaterThan(0));
       expect(counts['transactions'], greaterThan(0));
-      expect(export['transactions'], isA<List<Object?>>());
+      expect(result['transactions'], isA<List<Object?>>());
+      expect(result['accounts'], isA<List<Object?>>());
+      expect(result.containsKey('export'), isFalse);
       // A snapshot that read like a backup would be worse than none.
-      expect(export['excludes'], contains('database'));
+      expect(result['excludes'], contains('database'));
     });
 
     test('export_firefly_data counts_only leaves the rows out', () async {
@@ -1121,14 +1124,13 @@ void main() {
         client: fireflyMockClient(),
       ).run({'counts_only': true});
 
-      final export = result['export'] as Map<String, Object?>;
       expect(result['counts_only'], isTrue);
-      expect((export['counts'] as Map)['accounts'], greaterThan(0));
-      expect(export.containsKey('transactions'), isFalse);
-      expect(export.containsKey('accounts'), isFalse);
+      expect((result['counts'] as Map)['accounts'], greaterThan(0));
+      expect(result.containsKey('transactions'), isFalse);
+      expect(result.containsKey('accounts'), isFalse);
       // The receipt still says what a full snapshot would and would not hold.
-      expect(export['excludes'], contains('database'));
-      expect(export['covers'], contains('transactions'));
+      expect(result['excludes'], contains('database'));
+      expect(result['covers'], contains('transactions'));
     });
 
     test('export_firefly_data refuses an inverted window', () async {

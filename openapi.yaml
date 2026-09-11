@@ -1355,7 +1355,9 @@ x-mcp:
     get_transaction:
       description: >
         Fetch a single transaction by its group id. Not the journal id: Firefly
-        answers 401 for a journal id passed here.
+        answers 401 for a journal id passed here. A split group comes back with
+        every leg under splits, each carrying the journal_id update_transaction
+        names a leg by; a listing reports split_count and no legs.
       mapsTo: GET /api/v1/transactions/{transactionId}
       required: [transaction_id]
     set_transaction_reconciled:
@@ -1441,7 +1443,11 @@ x-mcp:
       mapsTo: POST /api/v1/transactions
       required: [type, date, amount, description]
     update_transaction:
-      description: Update a transaction; omitted fields keep their current value
+      description: >
+        Update a transaction; omitted fields keep their current value. Stated at
+        the top level the bookkeeping fields reach every leg of a split group;
+        splits[] reaches one leg, named by the journal_id get_transaction
+        reports for it, and leaves the legs it does not name alone.
       mapsTo: PUT /api/v1/transactions/{transactionId}
       required: [transaction_id]
     duplicate_transaction:
