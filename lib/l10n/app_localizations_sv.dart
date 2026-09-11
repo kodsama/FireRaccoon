@@ -2334,6 +2334,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tags => 'Tags';
 
   @override
+  String get addTag => 'Lägg till en tagg';
+
+  @override
   String get subscription => 'Subscription';
 
   @override
@@ -2754,7 +2757,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get tooltipFieldTags =>
-      'Taggar separerade med kommatecken för snabb filtrering.';
+      'Taggar för snabb filtrering. Enter lägger till en, krysset tar bort den.';
 
   @override
   String get tooltipFieldSubscription => 'Koppla raden till ett abonnemang.';

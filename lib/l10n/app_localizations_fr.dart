@@ -2342,6 +2342,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tags => 'Tags';
 
   @override
+  String get addTag => 'Ajouter un tag';
+
+  @override
   String get subscription => 'Subscription';
 
   @override
@@ -2768,7 +2771,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tooltipFieldTags =>
-      'Tags séparés par des virgules pour filtrer vite.';
+      'Tags pour filtrer vite. Entrée en ajoute un, la croix l\'enlève.';
 
   @override
   String get tooltipFieldSubscription =>

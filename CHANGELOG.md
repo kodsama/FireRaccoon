@@ -30,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Tags are chips on a transaction and on a recurring rule, rather than a
+  comma-separated string. Each carries a cross that takes it off, tapping one
+  puts it back in the box to retype, and a tag typed and then left sitting
+  there is kept rather than dropped on save. Getting the commas right was the
+  person's problem before, and taking the middle tag out of three meant editing
+  a string in the middle
 - `export_firefly_data` answers with its collections at the top level instead
   of under an `export` key of their own, so the accounts and transactions of a
   snapshot sit where the tool for each already puts them. `create_backup` and

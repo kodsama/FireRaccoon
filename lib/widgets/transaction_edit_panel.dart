@@ -22,6 +22,7 @@ import 'autocomplete_text_field.dart';
 import 'budget_create_dialog.dart';
 import 'category_form_dialog.dart';
 import 'payee_form_dialog.dart';
+import 'tag_input_field.dart';
 
 class TransactionEditPanel extends ConsumerStatefulWidget {
   final Transaction transaction;
@@ -1008,11 +1009,11 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       _gapBox(compact: compact),
       _withTooltip(
         l10n.tooltipFieldTags,
-        AutocompleteTextField(
+        TagInputField(
           controller: split.tagsController,
-          tagMode: true,
           suggestions: tags,
-          decoration: _fieldDecoration(l10n, l10n.tags),
+          label: l10n.tags,
+          addHint: l10n.addTag,
         ),
       ),
       _gapBox(compact: compact),

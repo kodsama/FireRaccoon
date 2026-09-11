@@ -2341,6 +2341,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tags => 'Tags';
 
   @override
+  String get addTag => 'Adicionar uma etiqueta';
+
+  @override
   String get subscription => 'Subscription';
 
   @override
@@ -2761,7 +2764,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tooltipFieldTags =>
-      'Etiquetas separadas por vírgulas para filtrar rápido.';
+      'Etiquetas para filtrar rápido. Enter adiciona uma, o X retira-a.';
 
   @override
   String get tooltipFieldSubscription =>

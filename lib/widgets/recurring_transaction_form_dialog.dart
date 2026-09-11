@@ -12,6 +12,7 @@ import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
 import 'autocomplete_text_field.dart';
+import 'tag_input_field.dart';
 import 'tooltip_helpers.dart';
 
 Future<bool?> showRecurringTransactionFormDialog({
@@ -1156,11 +1157,11 @@ class _RecurringTransactionFormDialogState
           },
         ),
         const SizedBox(height: 16),
-        AutocompleteTextField(
+        TagInputField(
           controller: _tagsController,
-          tagMode: true,
           suggestions: tags,
-          decoration: _fieldDecoration(l10n.tags),
+          label: l10n.tags,
+          addHint: l10n.addTag,
         ),
         const SizedBox(height: 16),
         AutocompleteTextField(

@@ -2289,6 +2289,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tags => 'タグ';
 
   @override
+  String get addTag => 'タグを追加';
+
+  @override
   String get subscription => 'サブスクリプション';
 
   @override
@@ -2697,7 +2700,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipFieldPiggyBank => 'この分割を貯金箱にリンク。';
 
   @override
-  String get tooltipFieldTags => 'クイックフィルター用のカンマ区切りタグ。';
+  String get tooltipFieldTags => 'すばやく絞り込むためのタグ。Enter で追加し、× で外します。';
 
   @override
   String get tooltipFieldSubscription => 'この分割をサブスクリプションにリンク。';

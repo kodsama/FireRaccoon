@@ -2336,6 +2336,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tags => 'Tags';
 
   @override
+  String get addTag => 'Add a tag';
+
+  @override
   String get subscription => 'Subscription';
 
   @override
@@ -2753,7 +2756,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tooltipFieldPiggyBank => 'Link this split to a piggy bank.';
 
   @override
-  String get tooltipFieldTags => 'Comma-separated tags for quick filtering.';
+  String get tooltipFieldTags =>
+      'Tags for quick filtering. Enter adds one, the cross takes it off.';
 
   @override
   String get tooltipFieldSubscription => 'Link this split to a subscription.';

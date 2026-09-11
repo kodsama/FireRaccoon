@@ -4294,6 +4294,12 @@ abstract class AppLocalizations {
   /// **'Tags'**
   String get tags;
 
+  /// No description provided for @addTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a tag'**
+  String get addTag;
+
   /// No description provided for @subscription.
   ///
   /// In en, this message translates to:
@@ -5041,7 +5047,7 @@ abstract class AppLocalizations {
   /// No description provided for @tooltipFieldTags.
   ///
   /// In en, this message translates to:
-  /// **'Comma-separated tags for quick filtering.'**
+  /// **'Tags for quick filtering. Enter adds one, the cross takes it off.'**
   String get tooltipFieldTags;
 
   /// No description provided for @tooltipFieldSubscription.
