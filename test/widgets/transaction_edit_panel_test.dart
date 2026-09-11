@@ -151,7 +151,7 @@ void main() {
     final sourceController = fieldWith('Wallet').controller!;
     final destinationController = fieldWith('Savings').controller!;
 
-    await tester.tap(find.byIcon(LucideIcons.arrowUpDown));
+    await tester.tap(find.byIcon(LucideIcons.arrowLeftRight));
     await pumpScreen(tester);
 
     // The same two controllers, holding each other's value.
@@ -159,12 +159,14 @@ void main() {
     expect(destinationController.text, 'Wallet');
   });
 
-  testWidgets('a withdrawal offers no account exchange', (tester) async {
+  testWidgets('a withdrawal can be turned round into a deposit', (
+    tester,
+  ) async {
     configureLargeScreen(tester);
     addTearDown(tester.view.resetPhysicalSize);
 
     final withdrawal = Transaction(
-      id: 'no-swap',
+      id: 'turn-1',
       type: 'withdrawal',
       date: DateTime(2026, 7, 1),
       amount: 45,
@@ -182,6 +184,7 @@ void main() {
           child: SingleChildScrollView(
             child: TransactionEditPanel(
               transaction: withdrawal,
+              embedded: false,
               onCancel: () {},
               onSave: (_) async {},
             ),
@@ -189,11 +192,67 @@ void main() {
         ),
       ),
     );
-    await pumpScreen(tester);
+    await tester.pumpAndSettle();
 
-    // Exchanging the ends of a withdrawal would make it a deposit, which is a
-    // different transaction rather than the same one reversed.
-    expect(find.byIcon(LucideIcons.arrowUpDown), findsNothing);
+    TextField fieldWith(String value) => tester
+        .widgetList<TextField>(find.byType(TextField))
+        .firstWhere((field) => field.controller?.text == value);
+    final source = fieldWith('Checking').controller!;
+    final destination = fieldWith('Coop').controller!;
+
+    // Money out of Checking to Coop, read as a payee and an asset account,
+    // with the amount marked as leaving.
+    expect(find.text('Payee'), findsOneWidget);
+    expect(find.text('\u2212 '), findsOneWidget);
+
+    await tester.tap(find.byIcon(LucideIcons.arrowLeftRight));
+    await tester.pumpAndSettle();
+
+    // Coop paid Checking instead. The accounts trade places so the payer is
+    // where a payer belongs, which changing the type alone would not do.
+    expect(source.text, 'Coop');
+    expect(destination.text, 'Checking');
+    expect(find.text('Revenue account'), findsOneWidget);
+    expect(find.text('Payee'), findsNothing);
+    expect(find.text('+ '), findsOneWidget);
+  });
+
+  testWidgets('a locked type has nothing to turn round', (tester) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: Transaction(
+                id: 'locked-1',
+                type: 'withdrawal',
+                date: DateTime(2026, 7, 1),
+                amount: 45,
+                description: 'Groceries',
+                sourceName: 'Checking',
+                destinationName: 'Coop',
+                categoryName: 'Food',
+                currencySymbol: 'kr',
+                currencyCode: 'SEK',
+              ),
+              isCreating: true,
+              lockedType: 'withdrawal',
+              embedded: false,
+              onCancel: () {},
+              onSave: (_) async {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The flow that opened this already decided, so the panel does not offer
+    // to undecide it.
+    expect(find.byIcon(LucideIcons.arrowLeftRight), findsNothing);
   });
 
   testWidgets('withdrawal leads with Payee and says which currency', (
@@ -351,17 +410,35 @@ void main() {
         )
         .dy;
 
-    // Amount beside date, the payee beside the account it came out of, the
-    // two classifications together, then the one long line. The date used to
-    // take a whole row of its own for eight characters.
+    // Amount, date and category on one row, the payee beside the account the
+    // money moved through, then the description across the width a sentence
+    // needs, then budget and tags.
     expect(labelY('Amount'), labelY('Date'));
+    expect(labelY('Date'), labelY('Category'));
     expect(labelY('Payee'), labelY('Asset account'));
     expect(labelY('Budget'), labelY('Tags'));
-    expect(labelY('Category'), labelY('Description'));
 
     expect(labelY('Amount'), lessThan(labelY('Payee')));
-    expect(labelY('Payee'), lessThan(labelY('Budget')));
-    expect(labelY('Budget'), lessThan(labelY('Category')));
+    expect(labelY('Payee'), lessThan(labelY('Description')));
+    expect(labelY('Description'), lessThan(labelY('Budget')));
+
+    double width(String label) => tester
+        .getSize(
+          find
+              .ancestor(
+                of: find.text(label),
+                matching: find.byType(InputDecorator),
+              )
+              .first,
+        )
+        .width;
+
+    // The two small fields share the left half, so the category's edge lines
+    // up with the tag column under it. The account row sits a few pixels
+    // narrower either side, where the arrow between the two of them goes.
+    expect(width('Category'), closeTo(width('Tags'), 1));
+    expect(width('Asset account'), closeTo(width('Tags'), 24));
+    expect(width('Description'), greaterThan(width('Category') * 1.9));
   });
 
   testWidgets('a deposit leads with whoever paid', (tester) async {

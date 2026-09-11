@@ -2715,6 +2715,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tooltipSwapTransferAccounts => 'Trocar as duas contas.';
 
   @override
+  String get tooltipTurnDirectionRound =>
+      'Inverter o sentido: o dinheiro passa a ir ao contrário.';
+
+  @override
   String get disconnectConfirmTitle => 'Desconectar o Firefly III';
 
   @override

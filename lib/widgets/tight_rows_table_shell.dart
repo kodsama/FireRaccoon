@@ -46,14 +46,61 @@ class TightRowsTableShell extends StatelessWidget {
           ),
         );
 
+        // Published so content inside a row can hold itself to the window
+        // instead of the table; see [FitToTightRowsViewport].
+        final published = TightRowsViewport(
+          width: constraints.maxWidth,
+          child: table,
+        );
         if (width > constraints.maxWidth + 0.5) {
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: table,
+            child: published,
           );
         }
-        return table;
+        return published;
       },
+    );
+  }
+}
+
+/// The width of the shell's own viewport, which is not the width of the table
+/// when the table is the wider of the two.
+class TightRowsViewport extends InheritedWidget {
+  const TightRowsViewport({
+    super.key,
+    required this.width,
+    required super.child,
+  });
+
+  final double width;
+
+  static double? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<TightRowsViewport>()?.width;
+
+  @override
+  bool updateShouldNotify(TightRowsViewport oldWidget) =>
+      oldWidget.width != width;
+}
+
+/// Holds [child] to the shell's viewport when the table around it is wider.
+///
+/// A tight-rows table is as wide as its columns need and pans when the window
+/// is narrower. A form opened inside a row has no columns to line up with, so
+/// laying it out at the table's width pushed half of every field past the
+/// right edge, where it read as a panel that would not resize with the window.
+class FitToTightRowsViewport extends StatelessWidget {
+  const FitToTightRowsViewport({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final viewport = TightRowsViewport.maybeOf(context);
+    if (viewport == null) return child;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: SizedBox(width: viewport, child: child),
     );
   }
 }

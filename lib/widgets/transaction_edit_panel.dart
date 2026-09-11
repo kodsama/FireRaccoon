@@ -156,6 +156,33 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
     });
   }
 
+  /// Turns a payment round: the money moves the other way now, so the two
+  /// accounts trade places and the type goes with them.
+  ///
+  /// Every leg at once. A group shares one type, and flipping it while only
+  /// one leg's accounts moved would leave the rest paying the payee from the
+  /// payee.
+  void _turnDirectionRound() {
+    setState(() {
+      for (final split in _splits) {
+        final wasSource = split.sourceController.text;
+        split.sourceController.text = split.destinationController.text;
+        split.destinationController.text = wasSource;
+      }
+      _type = _type == 'withdrawal' ? 'deposit' : 'withdrawal';
+    });
+  }
+
+  /// Which way the money goes, in the field the figure is in.
+  ///
+  /// A transfer moves money between two accounts of the person's own, so it
+  /// is neither in nor out and carries no sign.
+  String? get _amountSign => switch (_type) {
+    'withdrawal' => '\u2212 ',
+    'deposit' => '+ ',
+    _ => null,
+  };
+
   late String _type;
   late DateTime _date;
   late List<_SplitDraft> _splits;
@@ -845,7 +872,15 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
         // row of its own under the optional fields, where an amount in krona
         // and an amount in euro looked exactly alike.
         decoration: AmountCurrencySuffix.decorate(
-          _fieldDecoration(l10n, l10n.amount),
+          _fieldDecoration(l10n, l10n.amount).copyWith(
+            prefixText: _amountSign,
+            prefixStyle: TextStyle(
+              // The colour the lists use for money coming in, so the two read
+              // the same way round.
+              color: _type == 'deposit' ? colors.success : colors.text,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           AmountCurrencySuffix(
             code: split.currencyCode,
             currencies: currencies,
@@ -928,26 +963,42 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
           )
         : sourceField;
 
-    // Only a transfer has two ends worth exchanging. Swapping a withdrawal
-    // would turn money spent into money earned, which is a different
-    // transaction rather than the same one the other way round.
-    final swapAccountsButton = _type != 'transfer'
-        ? null
-        : Tooltip(
-            message: l10n.tooltipSwapTransferAccounts,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(8),
-              onTap: () => _swapTransferAccounts(split),
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: Icon(
-                  LucideIcons.arrowUpDown,
-                  size: 14,
-                  color: context.colors.text3,
-                ),
-              ),
-            ),
-          );
+    Widget exchangeButton({
+      required String message,
+      required VoidCallback onTap,
+      required IconData icon,
+    }) => Tooltip(
+      message: message,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Icon(icon, size: 14, color: colors.text3),
+        ),
+      ),
+    );
+
+    // A transfer exchanges its two ends and stays a transfer. Anything else
+    // turns round: money spent becomes money earned, so the type goes with
+    // the accounts. Editing offers no type selector at all, and changing the
+    // type on its own would leave the payee standing where the payer belongs.
+    //
+    // A locked type is a decision the flow that opened this already made, so
+    // there is nothing here to turn round.
+    final Widget? swapAccountsButton = switch (_type) {
+      'transfer' => exchangeButton(
+        message: l10n.tooltipSwapTransferAccounts,
+        icon: wide ? LucideIcons.arrowLeftRight : LucideIcons.arrowUpDown,
+        onTap: () => _swapTransferAccounts(split),
+      ),
+      _ when widget.lockedType != null => null,
+      _ => exchangeButton(
+        message: l10n.tooltipTurnDirectionRound,
+        icon: wide ? LucideIcons.arrowLeftRight : LucideIcons.arrowUpDown,
+        onTap: _turnDirectionRound,
+      ),
+    };
 
     final categoryField = _withTooltip(
       l10n.tooltipFieldCategory,
@@ -1159,11 +1210,29 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       ],
     );
 
+    // The amount and the date are a few characters each, so they share the
+    // left half and the category takes the right. Nested inside one half
+    // rather than cut into thirds, so the category's edge lines up with the
+    // columns under it.
+    final headRow = pair(
+      datedHere
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: amountField),
+                SizedBox(width: rowGap),
+                Expanded(child: dateField),
+              ],
+            )
+          : amountField,
+      categoryField,
+    );
+
     final coreFields = wide
         ? Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (datedHere) pair(amountField, dateField) else amountField,
+              headRow,
               _gapBox(compact: compact),
               pair(
                 counterpartyField,
@@ -1171,9 +1240,11 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
                 between: swapAccountsButton,
               ),
               _gapBox(compact: compact),
-              pair(budgetField, tagsField),
+              // A description runs to a sentence, so it gets the width a
+              // sentence needs rather than half a row.
+              descriptionField,
               _gapBox(compact: compact),
-              pair(categoryField, descriptionField),
+              pair(budgetField, tagsField),
             ],
           )
         : Column(
@@ -1182,6 +1253,8 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
               amountField,
               _gapBox(compact: compact),
               if (datedHere) ...[dateField, _gapBox(compact: compact)],
+              categoryField,
+              _gapBox(compact: compact),
               counterpartyField,
               if (swapAccountsButton == null)
                 _gapBox(compact: compact)
@@ -1192,13 +1265,11 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
                 ),
               ownAccountField,
               _gapBox(compact: compact),
+              descriptionField,
+              _gapBox(compact: compact),
               budgetField,
               _gapBox(compact: compact),
               tagsField,
-              _gapBox(compact: compact),
-              categoryField,
-              _gapBox(compact: compact),
-              descriptionField,
             ],
           );
 

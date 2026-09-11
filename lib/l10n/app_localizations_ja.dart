@@ -2653,6 +2653,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipSwapTransferAccounts => '2つの口座を入れ替えます。';
 
   @override
+  String get tooltipTurnDirectionRound => '向きを入れ替えます。お金の流れが逆になります。';
+
+  @override
   String get disconnectConfirmTitle => 'Firefly III の接続を解除';
 
   @override

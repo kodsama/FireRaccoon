@@ -30,6 +30,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The arrow between the two accounts turns a payment round. Money out becomes
+  money in, the two accounts trade places so the payer stands where a payer
+  belongs, and the type goes with them. Editing a transaction offered no type
+  selector at all, and changing the type on its own would have left the payee
+  paying itself. A transfer still just exchanges its two ends, and a flow that
+  opened the panel with the type already decided does not offer to undecide it
+- The amount says which way the money goes: a minus for what leaves, a plus in
+  the colour the lists use for what arrives, and nothing on a transfer, which
+  moves money between two accounts of your own
 - An amount carries the currency it is in, inside the field and changeable
   there, on a transaction and on a recurring rule alike. The currency was a
   row of its own, behind the optional fields on a transaction and above the
