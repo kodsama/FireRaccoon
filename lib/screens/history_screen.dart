@@ -15,6 +15,7 @@ import '../providers/undo_history_provider.dart' as undo;
 import '../providers/theme_provider.dart';
 import '../providers/view_mode_provider.dart';
 import '../router/history_route.dart';
+import '../widgets/history_entry_details.dart';
 import '../theme/app_theme.dart';
 import '../utils/json_file_store.dart';
 
@@ -308,73 +309,41 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                         );
                         final isCurrent = absoluteIndex == history.cursor;
                         if (tight) {
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
+                          return InkWell(
+                            onTap: () => showHistoryEntryDetails(
+                              context: context,
+                              entry: entry,
                             ),
-                            color: isCurrent ? colors.surface2 : null,
-                            child: Row(
-                              children: [
-                                SizedBox(
-                                  width: 180,
-                                  child: Text(
-                                    entry.type.localizedLabel(l10n),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 13,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    entry.details,
-                                    style: TextStyle(
-                                      color: colors.text2,
-                                      fontSize: 13,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  dateFormat.format(
-                                    entry.timestampUtc.toLocal(),
-                                  ),
-                                  style: TextStyle(
-                                    color: colors.text3,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }
-                        return Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: isCurrent ? colors.surface2 : colors.surface,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: isCurrent
-                                  ? colors.accent.acc
-                                  : colors.border,
-                            ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
+                              color: isCurrent ? colors.surface2 : null,
+                              child: Row(
                                 children: [
-                                  Expanded(
+                                  SizedBox(
+                                    width: 180,
                                     child: Text(
                                       entry.type.localizedLabel(l10n),
                                       style: const TextStyle(
                                         fontWeight: FontWeight.w700,
+                                        fontSize: 13,
                                       ),
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
+                                  Expanded(
+                                    child: Text(
+                                      entry.details,
+                                      style: TextStyle(
+                                        color: colors.text2,
+                                        fontSize: 13,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
                                   Text(
                                     dateFormat.format(
                                       entry.timestampUtc.toLocal(),
@@ -386,12 +355,59 @@ class _HistoryScreenState extends ConsumerState<HistoryScreen> {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 6),
-                              Text(
-                                entry.details,
-                                style: TextStyle(color: colors.text2),
+                            ),
+                          );
+                        }
+                        return InkWell(
+                          onTap: () => showHistoryEntryDetails(
+                            context: context,
+                            entry: entry,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: isCurrent
+                                  ? colors.surface2
+                                  : colors.surface,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: isCurrent
+                                    ? colors.accent.acc
+                                    : colors.border,
                               ),
-                            ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        entry.type.localizedLabel(l10n),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                    Text(
+                                      dateFormat.format(
+                                        entry.timestampUtc.toLocal(),
+                                      ),
+                                      style: TextStyle(
+                                        color: colors.text3,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  entry.details,
+                                  style: TextStyle(color: colors.text2),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },

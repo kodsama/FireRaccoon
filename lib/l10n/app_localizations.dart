@@ -5536,6 +5536,42 @@ abstract class AppLocalizations {
   /// **'No history entries match your filters.'**
   String get noHistoryEntriesMatchFilters;
 
+  /// No description provided for @historyEntryWhatChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'What changed'**
+  String get historyEntryWhatChanged;
+
+  /// No description provided for @historyEntryNothingRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was recorded for this change.'**
+  String get historyEntryNothingRecorded;
+
+  /// No description provided for @historyEntryRevert.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert this change'**
+  String get historyEntryRevert;
+
+  /// No description provided for @historyEntryReverted.
+  ///
+  /// In en, this message translates to:
+  /// **'Change reverted'**
+  String get historyEntryReverted;
+
+  /// No description provided for @historyEntryRevertFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not revert this change: {error}'**
+  String historyEntryRevertFailed(String error);
+
+  /// No description provided for @historyEntryCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'{before} (cleared)'**
+  String historyEntryCleared(String before);
+
   /// No description provided for @historyExportedTo.
   ///
   /// In en, this message translates to:

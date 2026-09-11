@@ -1735,6 +1735,26 @@
   "searchHistory": "Search history",
   "allActions": "All actions",
   "noHistoryEntriesMatchFilters": "No history entries match your filters.",
+  "historyEntryWhatChanged": "What changed",
+  "historyEntryNothingRecorded": "Nothing was recorded for this change.",
+  "historyEntryRevert": "Revert this change",
+  "historyEntryReverted": "Change reverted",
+  "historyEntryRevertFailed": "Could not revert this change: {error}",
+  "@historyEntryRevertFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "historyEntryCleared": "{before} (cleared)",
+  "@historyEntryCleared": {
+    "placeholders": {
+      "before": {
+        "type": "String"
+      }
+    }
+  },
   "historyExportedTo": "History exported to {path}",
   "@historyExportedTo": {
     "placeholders": {

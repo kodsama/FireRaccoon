@@ -3050,6 +3050,29 @@ class AppLocalizationsEn extends AppLocalizations {
       'No history entries match your filters.';
 
   @override
+  String get historyEntryWhatChanged => 'What changed';
+
+  @override
+  String get historyEntryNothingRecorded =>
+      'Nothing was recorded for this change.';
+
+  @override
+  String get historyEntryRevert => 'Revert this change';
+
+  @override
+  String get historyEntryReverted => 'Change reverted';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return 'Could not revert this change: $error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before (cleared)';
+  }
+
+  @override
   String historyExportedTo(String path) {
     return 'History exported to $path';
   }

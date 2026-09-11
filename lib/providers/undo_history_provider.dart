@@ -388,6 +388,48 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
     }
   }
 
+  /// Takes one change back wherever it sits in the list, and records the
+  /// taking-back as a change of its own.
+  ///
+  /// [undo] walks the cursor back a step at a time, so reaching something from
+  /// last week means undoing everything done since. This leaves the rest
+  /// alone, which is why it is recorded rather than erased: the list stays a
+  /// record of what happened, in the order it happened, and the revert can
+  /// itself be undone.
+  Future<void> revert(String entryId) async {
+    final index = state.entries.indexWhere((entry) => entry.id == entryId);
+    if (index < 0) return;
+    final entry = state.entries[index];
+
+    _replaying = true;
+    final Transaction? recreated;
+    try {
+      recreated = await _apply(entry.type, entry.undoPayload);
+    } finally {
+      _replaying = false;
+    }
+
+    // Recreating a row gives it a new id, so the entry has to be pointed at
+    // the row that now exists before it is used as anybody's payload again.
+    final reverted = recreated == null
+        ? entry
+        : _remapEntryTransactionId(entry, recreated.id);
+    if (recreated != null) {
+      final entries = List.of(state.entries);
+      entries[index] = reverted;
+      state = state.copyWith(entries: entries);
+    }
+
+    record(
+      title: 'Reverted: ${reverted.title}',
+      details: 'Reverted: ${reverted.details}',
+      type: reverted.type,
+      // Undoing a revert is doing the thing again, so the two sides swap.
+      undoPayload: reverted.redoPayload,
+      redoPayload: reverted.undoPayload,
+    );
+  }
+
   Future<void> redo() async {
     if (!state.canRedo) return;
     final target = state.cursor + 1;
