@@ -173,16 +173,6 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
     });
   }
 
-  /// Which way the money goes, in the field the figure is in.
-  ///
-  /// A transfer moves money between two accounts of the person's own, so it
-  /// is neither in nor out and carries no sign.
-  String? get _amountSign => switch (_type) {
-    'withdrawal' => '\u2212 ',
-    'deposit' => '+ ',
-    _ => null,
-  };
-
   late String _type;
   late DateTime _date;
   late List<_SplitDraft> _splits;
@@ -859,16 +849,12 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
         // The currency sits in the field the figure is in. It used to be a
         // row of its own under the optional fields, where an amount in krona
         // and an amount in euro looked exactly alike.
+        // No sign on the figure: From and To say which way it goes, and a
+        // minus beside them would be the same thing said twice. A list row
+        // has no such pair and keeps its sign, against whichever account is
+        // being looked at.
         decoration: AmountCurrencySuffix.decorate(
-          _fieldDecoration(l10n, l10n.amount).copyWith(
-            prefixText: _amountSign,
-            prefixStyle: TextStyle(
-              // The colour the lists use for money coming in, so the two read
-              // the same way round.
-              color: _type == 'deposit' ? colors.success : colors.text,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
+          _fieldDecoration(l10n, l10n.amount),
           AmountCurrencySuffix(
             code: split.currencyCode,
             currencies: currencies,
