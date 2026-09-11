@@ -6,9 +6,57 @@ import 'package:fireraccoon/providers/undo_history_provider.dart';
 import 'package:fireraccoon/router/history_route.dart';
 import 'package:fireraccoon/screens/history_screen.dart';
 
+import 'package:fireraccoon/providers/view_mode_provider.dart';
+
 import '../helpers/screen_test_app.dart';
 
 void main() {
+  testWidgets('tight rows reach the history too', (tester) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const HistoryScreen(),
+        initialLocation: HistoryRoute.location(),
+        viewMode: ViewMode.tight,
+        extraRoutes: [
+          GoRoute(
+            path: HistoryRoute.path,
+            builder: (context, state) => const HistoryScreen(),
+          ),
+        ],
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final container = ProviderScope.containerOf(
+      tester.element(find.byType(HistoryScreen)),
+    );
+    container
+        .read(undoHistoryProvider.notifier)
+        .record(
+          title: 'Subscription created',
+          details: 'Created subscription "Rent"',
+          type: UndoActionType.billCreate,
+          undoPayload: const {'billId': '1'},
+          redoPayload: const {'name': 'Rent'},
+        );
+    await tester.pumpAndSettle();
+
+    // The mode is chosen once in the header, so a list that ignored it was
+    // the odd one out rather than a list with nothing to say.
+    final row = find.ancestor(
+      of: find.text('Created subscription "Rent"'),
+      matching: find.byType(Row),
+    );
+    expect(row, findsWidgets);
+    expect(
+      tester.getTopLeft(find.text('Created subscription "Rent"')).dy,
+      closeTo(tester.getTopLeft(find.text('Subscription created')).dy, 1),
+    );
+  });
+
   testWidgets('HistoryScreen shows undo entries and supports undo', (
     tester,
   ) async {
