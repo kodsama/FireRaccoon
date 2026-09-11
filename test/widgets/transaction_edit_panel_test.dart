@@ -200,11 +200,9 @@ void main() {
     final source = fieldWith('Checking').controller!;
     final destination = fieldWith('Coop').controller!;
 
-    // Money out of Checking and off to Coop, with the amount marked as
-    // leaving.
+    // Money out of Checking and off to Coop.
     expect(source.text, 'Checking');
     expect(destination.text, 'Coop');
-    expect(find.text('\u2212 '), findsOneWidget);
 
     await tester.tap(find.byIcon(LucideIcons.arrowLeftRight));
     await tester.pumpAndSettle();
@@ -213,7 +211,9 @@ void main() {
     // To still read the way the money moves.
     expect(source.text, 'Coop');
     expect(destination.text, 'Checking');
-    expect(find.text('+ '), findsOneWidget);
+    // The pair says the direction, so the figure carries no sign of its own.
+    expect(find.text('+ '), findsNothing);
+    expect(find.text('\u2212 '), findsNothing);
   });
 
   testWidgets('a locked type has nothing to turn round', (tester) async {
