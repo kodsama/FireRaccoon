@@ -4927,7 +4927,11 @@ List<McpTool> buildTools({
         'properties': {
           'period': {
             'type': 'string',
-            'enum': _strList(DashboardPeriod.values.map((p) => p.name)),
+            // Listed, not derived through _strList: that takes a JSON value off
+            // an argument map and answers const [] to anything that is not a
+            // List, so an Iterable of enum names came out empty and the enum
+            // matched nothing a caller could pass.
+            'enum': [for (final period in DashboardPeriod.values) period.name],
             'default': 'thisMonth',
           },
           'period_label': {

@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `get_dashboard_kpis` would not take a period. Its enum of periods was built
+  through a helper that reads a JSON list off an argument map and answers an
+  empty list to anything else, so the schema offered an enum no value could
+  satisfy and the parameter could not be passed at all
+
 ## [0.7.0] - 2026-09-10
 
 ### Added
