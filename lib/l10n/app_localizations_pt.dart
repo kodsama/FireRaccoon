@@ -1150,7 +1150,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sourceAccount => 'Conta de origem';
 
   @override
+  String get fromAccount => 'De';
+
+  @override
   String get destinationAccount => 'Conta de destino';
+
+  @override
+  String get toAccount => 'Para';
 
   @override
   String get payee => 'Entidade';

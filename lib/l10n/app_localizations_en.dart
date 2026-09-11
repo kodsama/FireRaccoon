@@ -1146,7 +1146,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceAccount => 'Source Account';
 
   @override
+  String get fromAccount => 'From';
+
+  @override
   String get destinationAccount => 'Destination Account';
+
+  @override
+  String get toAccount => 'To';
 
   @override
   String get payee => 'Payee';

@@ -386,18 +386,6 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
     return [selected, ...filtered];
   }
 
-  String _sourceAccountLabel(AppLocalizations l10n) => switch (_type) {
-    'deposit' => l10n.revenueAccount,
-    'withdrawal' => l10n.assetAccount,
-    _ => l10n.sourceAccount,
-  };
-
-  String _destinationAccountLabel(AppLocalizations l10n) => switch (_type) {
-    'deposit' => l10n.assetAccount,
-    'withdrawal' => l10n.payee,
-    _ => l10n.destinationAccount,
-  };
-
   String _panelTitle(AppLocalizations l10n) {
     if (widget.isCreating) {
       return switch (_type) {
@@ -907,7 +895,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       AutocompleteTextField(
         controller: split.sourceController,
         suggestions: AutocompleteSuggestions.accountNames(sourceAccounts),
-        decoration: _fieldDecoration(l10n, _sourceAccountLabel(l10n)),
+        decoration: _fieldDecoration(l10n, l10n.fromAccount),
         onChanged: (_) => setState(() {}),
       ),
     );
@@ -920,7 +908,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
       AutocompleteTextField(
         controller: split.destinationController,
         suggestions: AutocompleteSuggestions.accountNames(destinationAccounts),
-        decoration: _fieldDecoration(l10n, _destinationAccountLabel(l10n)),
+        decoration: _fieldDecoration(l10n, l10n.toAccount),
         onChanged: (_) => setState(() {}),
         onCreateNew: _type == 'withdrawal'
             ? (typed) async {
@@ -945,7 +933,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
             AutocompleteTextField(
               controller: split.sourceController,
               suggestions: AutocompleteSuggestions.accountNames(sourceAccounts),
-              decoration: _fieldDecoration(l10n, _sourceAccountLabel(l10n)),
+              decoration: _fieldDecoration(l10n, l10n.fromAccount),
               onChanged: (_) => setState(() {}),
               onCreateNew: (typed) async {
                 final created = await showPayeeFormDialog(
@@ -1184,17 +1172,6 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
     // title, so a leg of a split pairs its amount with nothing.
     final datedHere = _splits.length == 1;
 
-    // The other party leads and the account it moved through follows, which
-    // reads the same for a withdrawal and a deposit though the two sit on
-    // opposite ends of the journal. A transfer has two accounts of its own,
-    // so it keeps source before destination and offers the exchange between
-    // them.
-    final (counterpartyField, ownAccountField) = switch (_type) {
-      'deposit' => (sourceFieldWithCreate, destinationField),
-      'transfer' => (sourceField, destinationField),
-      _ => (destinationField, sourceField),
-    };
-
     Widget pair(Widget left, Widget right, {Widget? between}) => Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1234,9 +1211,12 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
             children: [
               headRow,
               _gapBox(compact: compact),
+              // Where the money came from on the left and where it went on
+              // the right, whatever the type: read left to right, the row is
+              // the sentence the transaction makes.
               pair(
-                counterpartyField,
-                ownAccountField,
+                sourceFieldWithCreate,
+                destinationField,
                 between: swapAccountsButton,
               ),
               _gapBox(compact: compact),
@@ -1255,7 +1235,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
               if (datedHere) ...[dateField, _gapBox(compact: compact)],
               categoryField,
               _gapBox(compact: compact),
-              counterpartyField,
+              sourceFieldWithCreate,
               if (swapAccountsButton == null)
                 _gapBox(compact: compact)
               else
@@ -1263,7 +1243,7 @@ class _TransactionEditPanelState extends ConsumerState<TransactionEditPanel> {
                   alignment: Alignment.centerLeft,
                   child: swapAccountsButton,
                 ),
-              ownAccountField,
+              destinationField,
               _gapBox(compact: compact),
               descriptionField,
               _gapBox(compact: compact),
