@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `update_transaction` takes `splits`, so one leg of a split group can be
+  changed without touching the others. Each entry names its leg by the
+  `journal_id` `get_transaction` reports for it and states only what changes;
+  a leg the list leaves out keeps everything it has. This is what a loan whose
+  amortisation and interest sit in different categories needs, and what a split
+  that pays for someone else needs: a leg carrying a budget beside a leg that
+  must carry none. Both were unwritable while every bookkeeping field reached
+  every leg of the group. The whole group still goes back out with each leg
+  carrying its own id, so nothing is deleted, and the readback names a leg
+  Firefly declined as `splits[0].budget_id`
+
 ### Changed
 
 - `export_firefly_data` answers with its collections at the top level instead
@@ -17,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `reconciled: false` on a split group left every leg reconciled. It is the
+  documented way to release a transaction and move its money in one call, and
+  on a group the flag stopped at the top level: Firefly kept each leg
+  reconciled and dropped the amounts the call was releasing them for
 - `get_dashboard_kpis` would not take a period. Its enum of periods was built
   through a helper that reads a JSON list off an argument map and answers an
   empty list to anything else, so the schema offered an enum no value could
