@@ -247,6 +247,109 @@ void main() {
     expect(descriptionY, lessThan(currencyY));
   });
 
+  testWidgets('the fields sit in pairs down the panel', (tester) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final withdrawal = Transaction(
+      id: 'pairs',
+      type: 'withdrawal',
+      date: DateTime(2026, 7, 1),
+      amount: 45,
+      description: 'Groceries',
+      sourceName: 'Checking',
+      destinationName: 'Coop',
+      categoryName: 'Food',
+      currencySymbol: 'kr',
+      currencyCode: 'SEK',
+      tags: const ['Shared'],
+    );
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: withdrawal,
+              embedded: false,
+              onCancel: () {},
+              onSave: (_) async {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The field the label belongs to, not the label: an empty field keeps its
+    // label in the middle while a filled one floats it to the top, so two
+    // labels on one row do not share a y.
+    double labelY(String label) => tester
+        .getTopLeft(
+          find
+              .ancestor(
+                of: find.text(label),
+                matching: find.byType(InputDecorator),
+              )
+              .first,
+        )
+        .dy;
+
+    // Amount beside date, the payee beside the account it came out of, the
+    // two classifications together, then the one long line. The date used to
+    // take a whole row of its own for eight characters.
+    expect(labelY('Amount'), labelY('Date'));
+    expect(labelY('Payee'), labelY('Asset account'));
+    expect(labelY('Budget'), labelY('Tags'));
+    expect(labelY('Category'), labelY('Description'));
+
+    expect(labelY('Amount'), lessThan(labelY('Payee')));
+    expect(labelY('Payee'), lessThan(labelY('Budget')));
+    expect(labelY('Budget'), lessThan(labelY('Category')));
+  });
+
+  testWidgets('a deposit leads with whoever paid', (tester) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final deposit = Transaction(
+      id: 'deposit-pairs',
+      type: 'deposit',
+      date: DateTime(2026, 7, 1),
+      amount: 25000,
+      description: 'Salary',
+      sourceName: 'Employer',
+      destinationName: 'Checking',
+      categoryName: '',
+      currencySymbol: 'kr',
+      currencyCode: 'SEK',
+    );
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Material(
+          child: SingleChildScrollView(
+            child: TransactionEditPanel(
+              transaction: deposit,
+              embedded: false,
+              onCancel: () {},
+              onSave: (_) async {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // The payer is the source of a deposit and the destination of a
+    // withdrawal, so the pair is ordered by what it means and not by which
+    // end of the journal it sits on.
+    final payer = tester.getTopLeft(find.text('Revenue account'));
+    final account = tester.getTopLeft(find.text('Asset account'));
+    expect(payer.dy, account.dy);
+    expect(payer.dx, lessThan(account.dx));
+  });
+
   testWidgets('withdrawal destination field offers expense accounts', (
     tester,
   ) async {
