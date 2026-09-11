@@ -250,6 +250,117 @@ void main() {
       expect(transfer.splits.single.notes, 'fireraccoon:linked_journal:buy');
     });
 
+    test('a refund is netted off, and the legs go with it', () {
+      final payment = _account(id: '10', name: 'Allkonto');
+      final card = _account(id: '20', name: 'Platinum', role: 'ccAsset');
+
+      final transfer = buildCreditCardPaybackTransfer(
+        paymentAccount: payment,
+        creditCard: card,
+        paybackDate: DateTime(2026, 7, 31),
+        purchases: [
+          _tx(
+            id: 'buy-1',
+            type: 'withdrawal',
+            amount: 1000,
+            source: 'Platinum',
+            destination: 'Store',
+          ),
+          _tx(
+            id: 'buy-2',
+            type: 'withdrawal',
+            amount: 200,
+            source: 'Platinum',
+            destination: 'Hotel',
+          ),
+          _tx(
+            id: 'back',
+            type: 'deposit',
+            amount: 200,
+            source: 'Hotel',
+            destination: 'Platinum',
+          ),
+        ],
+      );
+
+      // The bank bills the difference and that is what leaves the account, so
+      // no leg is true on its own any more.
+      expect(transfer.amount, 1000);
+      expect(transfer.splits, isEmpty);
+      expect(transfer.sourceId, '10');
+      expect(transfer.destinationId, '20');
+      expect(transfer.reconciled, isTrue);
+      // Every row it settles is still named, the refund included.
+      expect(
+        transfer.notes,
+        'fireraccoon:linked_journal:buy-1\n'
+        'fireraccoon:linked_journal:buy-2\n'
+        'fireraccoon:linked_journal:back',
+      );
+    });
+
+    test('a refund worth the whole bill leaves nothing to pay', () {
+      final payment = _account(id: '10', name: 'Allkonto');
+      final card = _account(id: '20', name: 'Platinum', role: 'ccAsset');
+
+      expect(
+        () => buildCreditCardPaybackTransfer(
+          paymentAccount: payment,
+          creditCard: card,
+          paybackDate: DateTime(2026, 7, 31),
+          purchases: [
+            _tx(
+              id: 'buy',
+              type: 'withdrawal',
+              amount: 200,
+              source: 'Platinum',
+              destination: 'Hotel',
+            ),
+            _tx(
+              id: 'back',
+              type: 'deposit',
+              amount: 200,
+              source: 'Hotel',
+              destination: 'Platinum',
+            ),
+          ],
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
+    test('a payment already made is skipped, not netted', () {
+      final payment = _account(id: '10', name: 'Allkonto');
+      final card = _account(id: '20', name: 'Platinum', role: 'ccAsset');
+
+      final transfer = buildCreditCardPaybackTransfer(
+        paymentAccount: payment,
+        creditCard: card,
+        paybackDate: DateTime(2026, 7, 31),
+        purchases: [
+          _tx(
+            id: 'buy',
+            type: 'withdrawal',
+            amount: 300,
+            source: 'Platinum',
+            destination: 'Store',
+          ),
+          _tx(
+            id: 'paid',
+            type: 'transfer',
+            amount: 100,
+            source: 'Allkonto',
+            destination: 'Platinum',
+          ),
+        ],
+      );
+
+      // Money from another account of your own is a payment, not a refund, and
+      // the split shape survives it.
+      expect(transfer.amount, 300);
+      expect(transfer.splits, hasLength(1));
+    });
+
     test('throws when no eligible purchases', () {
       final payment = _account(id: '10', name: 'Allkonto');
       final card = _account(id: '20', name: 'Platinum', role: 'ccAsset');

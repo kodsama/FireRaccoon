@@ -19,7 +19,7 @@ code comments, ADRs, and MCP descriptions.
 | **Projection** | Coarse on-device forecast (`ProjectionService` / MCP `run_projection`) |
 | **Prognosis** | Rich account forecast in the UI (`AccountPrognosisService`) |
 | **Write-ahead** | Materializing upcoming recurrence occurrences as future transactions |
-| **Reconciliation** | Marking journals reconciled and optionally posting a correction; for `ccAsset` accounts, also creating a multi-split payback transfer |
+| **Reconciliation** | Marking journals reconciled and optionally posting a correction; for `ccAsset` accounts, also creating a payback transfer, one leg per purchase or a single netted leg when refunds are among them |
 | **Agent key** | Credential an MCP client presents (`frcn_…`); bound to a person, stored with its digest so the owner can read it back, revocable |
 | **Backup** | Snapshot plus Firefly's CSV export, kept under an id naming the moment it was taken; optionally sealed with a password; covers ledger data, never the database, attachments or `APP_KEY` |
 

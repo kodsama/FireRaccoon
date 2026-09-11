@@ -11,6 +11,17 @@ bool isCreditCardPurchase(Transaction transaction, String cardName) {
   return signedAmountForAccount(transaction, cardName) < 0;
 }
 
+/// True when [transaction] puts money back on the card from outside: a refund
+/// from a shop, not a payment from another account of the person's own.
+///
+/// A payment into the card is a transfer between two of their accounts and is
+/// the thing being built here, so it is left out either way. A refund is not:
+/// the bank nets it off the statement, and so must this.
+bool isCreditCardRefund(Transaction transaction, String cardName) {
+  return transaction.type != 'transfer' &&
+      signedAmountForAccount(transaction, cardName) > 0;
+}
+
 /// Absolute amount to repay for [transaction] on [cardName].
 double creditCardPaybackAmount(Transaction transaction, String cardName) {
   return signedAmountForAccount(transaction, cardName).abs();
@@ -41,6 +52,13 @@ String creditCardPaybackLinkNote(String journalId) =>
 /// Each eligible purchase becomes one transfer split from [paymentAccount] to
 /// [creditCard] on [paybackDate], preserving description/category/tags and a
 /// machine-readable link note.
+///
+/// A refund among them is netted off instead, and the whole thing collapses to
+/// one leg for what is actually owed. Firefly wants every split of a transfer
+/// to share one source and one destination, so a refund cannot be a leg going
+/// the other way, and leaving it out altogether was the bug: the payback came
+/// out larger than the bill by the size of the refund, and the card kept a
+/// credit nobody had.
 Transaction buildCreditCardPaybackTransfer({
   required Account paymentAccount,
   required Account creditCard,
@@ -53,6 +71,9 @@ Transaction buildCreditCardPaybackTransfer({
   if (eligible.isEmpty) {
     throw ArgumentError('No eligible credit card purchases to pay back');
   }
+  final refunds = purchases
+      .where((purchase) => isCreditCardRefund(purchase, creditCard.name))
+      .toList();
 
   final splits = <Transaction>[
     for (final purchase in eligible)
@@ -76,6 +97,16 @@ Transaction buildCreditCardPaybackTransfer({
       ),
   ];
 
+  if (refunds.isNotEmpty) {
+    return _nettedPayback(
+      paymentAccount: paymentAccount,
+      creditCard: creditCard,
+      paybackDate: paybackDate,
+      charges: eligible,
+      refunds: refunds,
+    );
+  }
+
   final first = splits.first;
   return Transaction(
     id: '',
@@ -96,5 +127,54 @@ Transaction buildCreditCardPaybackTransfer({
     reconciled: true,
     groupTitle: '${creditCard.name} Payback',
     splits: splits,
+  );
+}
+
+/// One leg for what is left to pay once the refunds are taken off.
+///
+/// The legs go, because none of them is true on its own any more: what left
+/// the account is the difference. Every row it settles is still named in the
+/// notes, refunds included, so the link back is not lost with them.
+Transaction _nettedPayback({
+  required Account paymentAccount,
+  required Account creditCard,
+  required DateTime paybackDate,
+  required List<Transaction> charges,
+  required List<Transaction> refunds,
+}) {
+  final owed =
+      charges.fold<double>(
+        0,
+        (sum, charge) => sum + creditCardPaybackAmount(charge, creditCard.name),
+      ) -
+      refunds.fold<double>(
+        0,
+        (sum, refund) => sum + creditCardPaybackAmount(refund, creditCard.name),
+      );
+  if (owed <= 0.005) {
+    throw ArgumentError(
+      'The refunds in this selection are worth as much as the purchases, so '
+      'there is nothing left to pay back',
+    );
+  }
+
+  return Transaction(
+    id: '',
+    type: 'transfer',
+    date: paybackDate,
+    amount: owed,
+    description: '${creditCard.name} Payback',
+    sourceName: paymentAccount.name,
+    destinationName: creditCard.name,
+    sourceId: paymentAccount.id,
+    destinationId: creditCard.id,
+    categoryName: '',
+    currencySymbol: creditCard.currencySymbol,
+    currencyCode: creditCard.currencyCode,
+    notes: [
+      for (final settled in [...charges, ...refunds])
+        creditCardPaybackLinkNote(settled.id),
+    ].join('\n'),
+    reconciled: true,
   );
 }
