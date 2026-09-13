@@ -622,6 +622,17 @@ List<String> _unappliedTransactionFields(
       'category_name',
     if (stated('category_id') && saved.categoryId != text('category_id'))
       'category_id',
+    if (stated('source_name') &&
+        saved.sourceName.toLowerCase() != text('source_name').toLowerCase())
+      'source_name',
+    if (stated('source_id') && saved.sourceId != text('source_id')) 'source_id',
+    if (stated('destination_name') &&
+        saved.destinationName.toLowerCase() !=
+            text('destination_name').toLowerCase())
+      'destination_name',
+    if (stated('destination_id') &&
+        saved.destinationId != text('destination_id'))
+      'destination_id',
     if (stated('budget_id') && saved.budgetId != text('budget_id')) 'budget_id',
     if (stated('notes') && (saved.notes ?? '').trim() != text('notes')) 'notes',
     if (args['amount'] is num &&
@@ -671,6 +682,17 @@ List<String> _unappliedSplitFields(List<Object?> legs, Transaction saved) {
       split.categoryName.toLowerCase() == text('category_name').toLowerCase(),
     );
     check('category_id', split.categoryId == text('category_id'));
+    check(
+      'source_name',
+      split.sourceName.toLowerCase() == text('source_name').toLowerCase(),
+    );
+    check('source_id', split.sourceId == text('source_id'));
+    check(
+      'destination_name',
+      split.destinationName.toLowerCase() ==
+          text('destination_name').toLowerCase(),
+    );
+    check('destination_id', split.destinationId == text('destination_id'));
     check('budget_id', split.budgetId == text('budget_id'));
     check('notes', (split.notes ?? '').trim() == text('notes'));
     if (leg['amount'] is num &&
@@ -695,13 +717,11 @@ Transaction _splitFromArgs(
 }) {
   String? pick(String key) => (leg[key] as String?) ?? (args[key] as String?);
 
-  // A leg naming its own category must not inherit the group's id, which
-  // Firefly would resolve in preference to the name.
-  String? pickCategoryId() =>
-      (leg['category_id'] as String?) ??
-      (_replacesId(leg, 'category_name', 'category_id')
-          ? null
-          : args['category_id'] as String?);
+  // A leg naming its own category or account must not inherit the group's
+  // id, which Firefly would resolve in preference to the name.
+  String? pickId(String nameKey, String idKey) =>
+      (leg[idKey] as String?) ??
+      (_replacesId(leg, nameKey, idKey) ? null : args[idKey] as String?);
 
   final amount = (leg['amount'] as num?)?.toDouble();
   if (amount == null || amount <= 0) {
@@ -723,9 +743,9 @@ Transaction _splitFromArgs(
     categoryName: pick('category_name') ?? '',
     currencySymbol: currencySymbol,
     currencyCode: (leg['currency_code'] as String?) ?? currencyCode,
-    sourceId: pick('source_id'),
-    destinationId: pick('destination_id'),
-    categoryId: pickCategoryId(),
+    sourceId: pickId('source_name', 'source_id'),
+    destinationId: pickId('destination_name', 'destination_id'),
+    categoryId: pickId('category_name', 'category_id'),
     budgetId: pick('budget_id'),
     billId: pick('bill_id'),
     notes: pick('notes'),
@@ -855,20 +875,21 @@ Transaction _patchSplit(
     );
   }
 
+  // Empty rather than null: toSplitJson leaves an empty id out, so Firefly
+  // resolves the name it was given instead of the id that name replaces.
+  String? replacing(String nameKey, String idKey) =>
+      _replacesId(patch, nameKey, idKey) ? '' : patch[idKey] as String?;
+
   return split.copyWith(
     date: date,
     amount: amount,
     description: patch['description'] as String?,
-    sourceId: patch['source_id'] as String?,
+    sourceId: replacing('source_name', 'source_id'),
     sourceName: patch['source_name'] as String?,
-    destinationId: patch['destination_id'] as String?,
+    destinationId: replacing('destination_name', 'destination_id'),
     destinationName: patch['destination_name'] as String?,
     categoryName: patch['category_name'] as String?,
-    // Empty rather than null: toSplitJson leaves an empty id out, so Firefly
-    // resolves the name it was given instead of the id that name replaces.
-    categoryId: _replacesId(patch, 'category_name', 'category_id')
-        ? ''
-        : patch['category_id'] as String?,
+    categoryId: replacing('category_name', 'category_id'),
     budgetId: patch['budget_id'] as String?,
     billId: patch['bill_id'] as String?,
     notes: patch['notes'] as String?,
@@ -1099,17 +1120,20 @@ Transaction _transactionFromArgs(
         '',
     currencySymbol: currencySymbol,
     currencyCode: leadingLeg?.currencyCode ?? currencyCode,
+    // A name the caller stated wins over the id it replaces. Sending the new
+    // name beside the old id left Firefly resolving the id and discarding the
+    // name, so recategorising by name reported success and changed nothing,
+    // and so did moving a payee by name: the stored id rode along and won.
     sourceId:
         leadingLeg?.sourceId ??
         (args['source_id'] as String?) ??
-        base?.sourceId,
+        (_replacesId(args, 'source_name', 'source_id') ? null : base?.sourceId),
     destinationId:
         leadingLeg?.destinationId ??
         (args['destination_id'] as String?) ??
-        base?.destinationId,
-    // A name the caller stated wins over the id it replaces. Sending the new
-    // name beside the old id left Firefly resolving the id and discarding the
-    // name, so recategorising by name reported success and changed nothing.
+        (_replacesId(args, 'destination_name', 'destination_id')
+            ? null
+            : base?.destinationId),
     categoryId:
         leadingLeg?.categoryId ??
         (args['category_id'] as String?) ??
