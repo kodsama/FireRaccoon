@@ -80,6 +80,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `update_transaction` dropped a payee given by name. The stored journal
+  carries the id of each account, and the call merged that id with the new
+  name and sent both, so Firefly resolved the id and discarded the name: the
+  description and category in the same call moved, the payer stayed, and the
+  answer was `ok: true`. A name stated without an id now drops the stored id
+  for that side, on a leg named in `splits` as well, and a leg of a create that
+  names its own account no longer inherits the group's id. An account Firefly
+  kept regardless is reported as `not_applied`
 - `reconciled: false` on a split group left every leg reconciled. It is the
   documented way to release a transaction and move its money in one call, and
   on a group the flag stopped at the top level: Firefly kept each leg

@@ -400,6 +400,18 @@ there: `notes`, `category_name`, `category_id`, `budget_name`, `budget_id`,
 `bill_id`, `piggy_bank_id` and `tags`. Omitting the field still leaves it
 exactly as it was.
 
+### A name replaces the id beside it
+
+Firefly resolves an id in preference to a name. An update that named a
+category while the stored id rode along changed nothing and answered 200, and
+so did one that moved a payee by name: the description and category in the
+same call landed, the payer stayed, and nothing in the answer said so. A name
+stated without its id now drops the stored id for that side, on the group and
+on a leg named in `splits` alike, and a leg of a create that names its own
+account no longer inherits the group's id. An account Firefly kept regardless
+comes back as `not_applied`, naming `source_name`, `destination_name` or the id
+that did not land, the way every other declined field is reported.
+
 ### Reconciliation survives an edit
 
 `update_transaction` keeps whatever `reconciled` the transaction already had
