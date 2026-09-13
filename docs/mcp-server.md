@@ -130,11 +130,11 @@ are described under [Importing a statement](#importing-a-statement).
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides | yes |
 | `delete_transaction` | Delete a transaction group and its splits | yes |
 | `export_firefly_data` | Snapshot of every entity the API exposes, for taking before a bulk change |  |
-| `create_backup` | Take a backup: the snapshot a restore reads plus Firefly's own CSV export, named by the moment it was taken, sealed when given a password | yes |
-| `list_backups` | Backups this FireRaccoon holds, newest first |  |
+| `create_backup` | Take a backup: the snapshot a restore reads plus Firefly's own CSV export, named by the moment it was taken, sealed when given a password; `complete` says the snapshot was written and `failed_exports` names any CSV Firefly could not produce | yes |
+| `list_backups` | Backups this FireRaccoon holds, newest first, each stamped in the zone it was taken in |  |
 | `get_backup` | One manifest, or a file inside a backup, truncated at `max_bytes` |  |
 | `delete_backup` | Remove one backup and everything in it | yes |
-| `verify_backup` | Check a backup's own files, then how far the ledger has moved from it |  |
+| `verify_backup` | Check a backup's own files, then how far the ledger has moved from it; an export that was never written is listed under `never_written`, not counted as damage |  |
 | `restore_backup` | Plan or apply putting a backup back, taking a fresh one first | yes |
 | `find_incomplete_transactions` | Transactions missing a description, category, budget, tags, payee, notes or piggy bank |  |
 | `search_transactions` | Full-text search, for matching statement lines |  |

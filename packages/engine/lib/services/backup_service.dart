@@ -63,13 +63,20 @@ String backupIdFor(DateTime takenAt) {
 
 /// RFC 3339 with the offset kept, which is what makes a stamp readable a year
 /// later from another machine in another zone.
-String backupTimestampFor(DateTime takenAt) {
-  final at = takenAt.isUtc ? takenAt.toUtc() : takenAt;
-  final offset = at.timeZoneOffset;
+///
+/// [offset] renders the moment in a zone other than the one [takenAt] is in.
+/// A manifest read back holds its moment as a UTC instant, since that is all a
+/// parsed timestamp can be, and stamped from that alone the same backup read
+/// `+02:00` from `create_backup` and `Z` from `list_backups`.
+String backupTimestampFor(DateTime takenAt, {Duration? offset}) {
+  final at = offset == null
+      ? (takenAt.isUtc ? takenAt.toUtc() : takenAt)
+      : takenAt.toUtc().add(offset);
+  offset ??= at.timeZoneOffset;
   final sign = offset.isNegative ? '-' : '+';
   final minutes = offset.inMinutes.abs();
   String two(int value) => value.toString().padLeft(2, '0');
-  final zone = at.isUtc
+  final zone = at.isUtc && minutes == 0
       ? 'Z'
       : '$sign${two(minutes ~/ 60)}:${two(minutes % 60)}';
   return '${at.year.toString().padLeft(4, '0')}-${two(at.month)}-'
@@ -219,16 +226,32 @@ class BackupManifest {
 
   bool get encrypted => seal != null;
 
-  /// True when every part was written, so a caller can tell a whole backup from
-  /// one that lost a data set on the way.
-  bool get complete => entries.every((entry) => entry.ok);
+  /// True when the snapshot a restore reads was written.
+  ///
+  /// The CSV half is Firefly's own export and a restore never opens it, so a
+  /// data set Firefly cannot produce is listed in [failedExports] rather than
+  /// counted here. Firefly 6.6.6 answers its piggy-bank export with a 500 of
+  /// its own, which had every backup reading incomplete while all of them
+  /// were restorable.
+  bool get complete =>
+      entries.any((entry) => entry.name == kBackupSnapshotFile && entry.ok);
+
+  /// Exports Firefly could not produce, by the name each would have had.
+  List<String> get failedExports => [
+    for (final entry in entries)
+      if (!entry.ok && entry.name != kBackupSnapshotFile) entry.name,
+  ];
+
+  /// The moment taken, stamped in the zone it was taken in.
+  String get takenAtStamp =>
+      backupTimestampFor(takenAt, offset: timeZoneOffset);
 
   int get totalBytes => entries.fold(0, (total, entry) => total + entry.bytes);
 
   Map<String, Object?> toJson() => {
     'schema_version': schemaVersion,
     'id': id,
-    'taken_at': backupTimestampFor(takenAt),
+    'taken_at': takenAtStamp,
     'timezone': {
       'name': timeZoneName,
       'offset_minutes': timeZoneOffset.inMinutes,
@@ -238,6 +261,7 @@ class BackupManifest {
     'transactions_from': transactionsFrom?.toIso8601String(),
     'transactions_to': transactionsTo?.toIso8601String(),
     'complete': complete,
+    'failed_exports': failedExports,
     'encrypted': encrypted,
     if (seal != null) 'encryption': seal!.toJson(),
     'total_bytes': totalBytes,
@@ -251,12 +275,19 @@ class BackupManifest {
 class BackupIntegrity {
   const BackupIntegrity({
     required this.problems,
+    this.neverWritten = const [],
     this.readableFiles = 0,
     this.manifest,
   });
 
   /// Everything wrong with it, one line each. Empty means intact.
   final List<String> problems;
+
+  /// Parts the manifest says were never written, with the reason recorded at
+  /// the time. Not a problem with the backup: it is exactly what its manifest
+  /// describes, and the snapshot a restore reads is checked like any other
+  /// part.
+  final List<String> neverWritten;
   final int readableFiles;
   final BackupManifest? manifest;
 
@@ -266,6 +297,7 @@ class BackupIntegrity {
     'intact': intact,
     'readable_files': readableFiles,
     'problems': problems,
+    'never_written': neverWritten,
   };
 }
 
@@ -497,10 +529,11 @@ class BackupService {
       return const BackupIntegrity(problems: ['No manifest to check against']);
     }
     final problems = <String>[];
+    final neverWritten = <String>[];
     var readable = 0;
     for (final entry in manifest.entries) {
       if (!entry.ok) {
-        problems.add('${entry.name} was never written: ${entry.error}');
+        neverWritten.add('${entry.name}: ${entry.error}');
         continue;
       }
       final bytes = await _store.get(backupId, entry.name);
@@ -534,6 +567,7 @@ class BackupService {
     }
     return BackupIntegrity(
       problems: problems,
+      neverWritten: neverWritten,
       readableFiles: readable,
       manifest: manifest,
     );
