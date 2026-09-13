@@ -80,6 +80,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Every backup read `complete: false` because Firefly 6.6.6 answers its own
+  piggy-bank CSV export with a 500, and `complete` meant every part written.
+  A restore reads the snapshot and never opens a CSV, so `complete` now says
+  whether the snapshot was written and the exports Firefly could not produce
+  are named under `failed_exports`, with the reason still under
+  `entries[].error`. `verify_backup` lists such an export under
+  `never_written` rather than calling a backup that is exactly what its
+  manifest describes damaged. `create_backup` and `list_backups` also stamp
+  `taken_at` the same way now: a manifest read back holds its moment as a UTC
+  instant, and the stamp is rendered in the recorded zone instead of in
+  whatever zone the instant happened to be in
 - `update_transaction` dropped a payee given by name. The stored journal
   carries the id of each account, and the call merged that id with the new
   name and sent both, so Firefly resolved the id and discarded the name: the

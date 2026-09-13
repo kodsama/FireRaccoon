@@ -3156,8 +3156,13 @@ List<McpTool> buildTools({
           ..._manifestFields(manifest),
           if (!manifest.complete)
             'warning':
-                'Some data sets could not be read; see entries[].error. The '
-                'snapshot is what a restore needs, so check it is there.',
+                'The snapshot could not be written; see entries[].error. '
+                'Nothing can be restored from this backup.'
+          else if (manifest.failedExports.isNotEmpty)
+            'warning':
+                'Firefly could not export ${manifest.failedExports.join(', ')}; '
+                'see entries[].error. The snapshot a restore reads is '
+                'complete.',
         };
       },
     ),
@@ -3165,7 +3170,9 @@ List<McpTool> buildTools({
       name: 'list_backups',
       description:
           'Backups this FireRaccoon holds, newest first, with what each one '
-          'covers and whether every part of it was written.',
+          'covers, whether the snapshot a restore reads was written '
+          '(complete), and which CSV exports Firefly could not produce '
+          '(failed_exports).',
       inputSchema: {'type': 'object', 'properties': <String, Object?>{}},
       run: (args) async {
         final service = backupService();
@@ -3272,8 +3279,10 @@ List<McpTool> buildTools({
       name: 'verify_backup',
       description:
           'Check a backup two ways and write nothing. First whether it is still '
-          'the backup its manifest describes: every part present, the sizes '
-          'unchanged, and a sealed one opening with the password given. Then '
+          'the backup its manifest describes: every part written present, the '
+          'sizes unchanged, and a sealed one opening with the password given; '
+          'an export Firefly could not produce at the time is listed under '
+          'never_written rather than counted against it. Then '
           'how far the ledger has moved since it was taken, counted by row. A '
           'backup that is intact and finds no differences is one you can trust '
           'to put things back.',
@@ -3315,7 +3324,7 @@ List<McpTool> buildTools({
         final result = <String, Object?>{
           'ok': true,
           'backup_id': id,
-          'taken_at': backupTimestampFor(manifest.takenAt),
+          'taken_at': manifest.takenAtStamp,
           'encrypted': manifest.encrypted,
           'integrity': integrity.toJson(),
         };

@@ -128,8 +128,30 @@ void main() {
       final result = await tool.run({});
 
       expect(result['ok'], isTrue);
+      expect(result['warning'], contains('csv/rules.csv'));
       expect(result['warning'], contains('entries[].error'));
-      expect(result['complete'], isFalse);
+      // The snapshot a restore reads is there, so the backup is complete and
+      // the export Firefly refused is named on its own.
+      expect(result['complete'], isTrue);
+      expect(result['failed_exports'], ['csv/rules.csv']);
+    });
+
+    test('list_backups stamps taken_at the way create_backup did', () async {
+      final client = fireflyMockClient();
+      final created = await _tool(
+        'create_backup',
+        client: client,
+        backups: store,
+      ).run({});
+
+      final listed = await _tool(
+        'list_backups',
+        client: client,
+        backups: store,
+      ).run({});
+
+      final row = (listed['backups']! as List).single as Map;
+      expect(row['taken_at'], created['taken_at']);
     });
 
     test('list_backups reports what is there, newest first', () async {
