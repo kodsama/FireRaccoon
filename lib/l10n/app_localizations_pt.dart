@@ -935,6 +935,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Compras reconciliadas e transferência de reembolso criada';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return 'Pagamentos deste cartão sem ligação ao que liquidaram: $count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases =>
       'Selecione pelo menos uma compra no cartão';
 

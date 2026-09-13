@@ -932,6 +932,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Purchases reconciled and payback transfer created';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return 'Paybacks on this card with no link to what they settled: $count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases =>
       'Select at least one credit card purchase';
 

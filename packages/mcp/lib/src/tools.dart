@@ -319,53 +319,59 @@ Map<String, Object?> _transactionSplitJson(Transaction split) => {
 Map<String, Object?> _transactionJson(
   Transaction transaction, {
   bool withSplits = false,
-}) => {
-  'id': transaction.id,
-  // One leg of a split is only addressable by its journal id; the group id
-  // reaches the whole group. match_statement reports a leg, so a caller acting
-  // on its output needs the id that identifies one.
-  'journal_id': transaction.journalId,
-  'type': transaction.type,
-  'date': _dateOnly(transaction.date),
-  'amount': transaction.totalAmount,
-  // A group's title, not whichever leg Firefly happened to return first.
-  // The order is not stable between reads, so this changed on its own and
-  // looked briefly as though a write had corrupted the row. The legs carry
-  // their own descriptions in `splits`.
-  'description': transaction.isSplitGroup
-      ? (transaction.groupTitle ?? transaction.description)
-      : transaction.description,
-  'group_title': transaction.groupTitle,
-  'source_id': transaction.sourceId,
-  'source_name': transaction.sourceName,
-  'destination_id': transaction.destinationId,
-  'destination_name': transaction.destinationName,
-  'category_id': transaction.categoryId,
-  'category_name': transaction.categoryName,
-  'budget_id': transaction.budgetId,
-  'budget_name': transaction.budgetName,
-  'bill_id': transaction.billId,
-  'bill_name': transaction.billName,
-  'tags': transaction.tags,
-  // Deliberately carried, unlike on an account. A transaction note is what
-  // records where a row came from, such as the raw bank text an import kept so
-  // the origin stays traceable, and an agent reading transactions needs it.
-  // Account notes are unbounded free text on an entity that appears in every
-  // payee row, which is why _accountJson does not carry them.
-  'notes': transaction.notes,
-  'currency_symbol': transaction.currencySymbol,
-  'currency_code': transaction.currencyCode,
-  'foreign_amount': transaction.foreignAmount,
-  'foreign_currency_code': transaction.foreignCurrencyCode,
-  'split_count': transaction.resolvedSplits().length,
-  if (withSplits && transaction.isSplitGroup)
-    'splits': [
-      for (final split in transaction.resolvedSplits())
-        _transactionSplitJson(split),
-    ],
-  'reconciled': transaction.isReconciled,
-  'partially_reconciled': transaction.isPartiallyReconciled,
-};
+}) {
+  // What a card payback settles, read from the link note each of its legs
+  // carries. Only a payback has any, so the key is left off everything else.
+  final settles = paybackSettledIds(transaction);
+  return {
+    'id': transaction.id,
+    // One leg of a split is only addressable by its journal id; the group id
+    // reaches the whole group. match_statement reports a leg, so a caller acting
+    // on its output needs the id that identifies one.
+    'journal_id': transaction.journalId,
+    'type': transaction.type,
+    'date': _dateOnly(transaction.date),
+    'amount': transaction.totalAmount,
+    // A group's title, not whichever leg Firefly happened to return first.
+    // The order is not stable between reads, so this changed on its own and
+    // looked briefly as though a write had corrupted the row. The legs carry
+    // their own descriptions in `splits`.
+    'description': transaction.isSplitGroup
+        ? (transaction.groupTitle ?? transaction.description)
+        : transaction.description,
+    'group_title': transaction.groupTitle,
+    'source_id': transaction.sourceId,
+    'source_name': transaction.sourceName,
+    'destination_id': transaction.destinationId,
+    'destination_name': transaction.destinationName,
+    'category_id': transaction.categoryId,
+    'category_name': transaction.categoryName,
+    'budget_id': transaction.budgetId,
+    'budget_name': transaction.budgetName,
+    'bill_id': transaction.billId,
+    'bill_name': transaction.billName,
+    'tags': transaction.tags,
+    // Deliberately carried, unlike on an account. A transaction note is what
+    // records where a row came from, such as the raw bank text an import kept so
+    // the origin stays traceable, and an agent reading transactions needs it.
+    // Account notes are unbounded free text on an entity that appears in every
+    // payee row, which is why _accountJson does not carry them.
+    'notes': transaction.notes,
+    'currency_symbol': transaction.currencySymbol,
+    'currency_code': transaction.currencyCode,
+    'foreign_amount': transaction.foreignAmount,
+    'foreign_currency_code': transaction.foreignCurrencyCode,
+    'split_count': transaction.resolvedSplits().length,
+    if (withSplits && transaction.isSplitGroup)
+      'splits': [
+        for (final split in transaction.resolvedSplits())
+          _transactionSplitJson(split),
+      ],
+    'reconciled': transaction.isReconciled,
+    'partially_reconciled': transaction.isPartiallyReconciled,
+    if (settles.isNotEmpty) 'settles': settles,
+  };
+}
 
 ReconciledFilter _reconciledFilterFromArgs(Map<String, Object?> args) {
   final raw = args['reconciled'];
@@ -2754,6 +2760,123 @@ List<McpTool> buildTools({
         return {
           'ok': true,
           'transaction': _transactionJson(transaction, withSplits: true),
+        };
+      },
+    ),
+    McpTool(
+      name: 'get_card_settlements',
+      description:
+          'What the paybacks on a credit card (an account with role ccAsset) '
+          'settle, read from the link note each payback leg carries, and what '
+          'they leave unsettled: purchases and refunds dated before the last '
+          'payback that no payback links. A payback carrying no links, such as '
+          'one written by hand, is listed with linked:false. Both spellings of '
+          'the link note are read. Pass a date window to bound the read; '
+          'without one the whole account is read. A linked row from before '
+          'the window is named under settles_outside_window rather than '
+          'fetched.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['account_id'],
+        'properties': {
+          'account_id': {
+            'type': 'string',
+            'description': 'The card: an account with role ccAsset.',
+          },
+          'start_date': {
+            'type': 'string',
+            'description': 'YYYY-MM-DD, inclusive.',
+          },
+          'end_date': {
+            'type': 'string',
+            'description': 'YYYY-MM-DD, inclusive.',
+          },
+          'max_rows': {
+            'type': 'integer',
+            'default': 200,
+            'description':
+                'Ceiling on the unsettled rows listed, 1..2000. Counts stay '
+                'whole.',
+          },
+        },
+      },
+      run: (args) async {
+        final accountId = (args['account_id'] as String?)?.trim() ?? '';
+        if (accountId.isEmpty) return _badInput('account_id is required');
+        final DateTime? start;
+        final DateTime? inclusiveEnd;
+        try {
+          start = _optionalDate(args['start_date'], 'start_date');
+          inclusiveEnd = _optionalDate(args['end_date'], 'end_date');
+        } on ArgumentError catch (e) {
+          return _badInput('${e.message}');
+        }
+        if (start != null &&
+            inclusiveEnd != null &&
+            inclusiveEnd.isBefore(start)) {
+          return _badInput('end_date must not precede start_date');
+        }
+        final max = ((args['max_rows'] as num?)?.toInt() ?? 200).clamp(1, 2000);
+        final api = service();
+        final card = await api.getAccount(accountId);
+        if (!isCreditCardAccount(card)) {
+          return _badInput(
+            'account $accountId (${card.name}) has role ${card.role}; a '
+            'payback settles a credit card, which is an account with role '
+            'ccAsset',
+          );
+        }
+        final transactions = await api.getAccountTransactions(
+          accountId,
+          start: start,
+          end: inclusiveEnd?.add(const Duration(days: 1)),
+        );
+        final result = analyseCardSettlements(
+          card: card,
+          transactions: transactions,
+        );
+        Map<String, Object?> row(Transaction transaction) => {
+          'transaction_id': transaction.id,
+          'date': _dateOnly(transaction.date),
+          'amount': transaction.totalAmount,
+          'description': transaction.isSplitGroup
+              ? (transaction.groupTitle ?? transaction.description)
+              : transaction.description,
+        };
+        return {
+          'ok': true,
+          'account': {
+            'id': card.id,
+            'name': card.name,
+            'currency_code': card.currencyCode,
+          },
+          'window': {
+            'start': start == null ? null : _dateOnly(start),
+            'end': inclusiveEnd == null ? null : _dateOnly(inclusiveEnd),
+          },
+          'last_payback': result.lastPayback == null
+              ? null
+              : row(result.lastPayback!),
+          'paybacks': [
+            for (final settlement in result.paybacks)
+              {
+                ...row(settlement.payback),
+                'linked': settlement.linked,
+                'settles': [for (final t in settlement.settles) row(t)],
+                'settles_outside_window': settlement.notFetched,
+              },
+          ],
+          'unsettled': [
+            for (final transaction in result.unsettled.take(max))
+              {...row(transaction), 'type': transaction.type},
+          ],
+          if (result.unsettled.length > max)
+            'unsettled_truncated': result.unsettled.length - max,
+          'counts': {
+            'paybacks': result.paybacks.length,
+            'unlinked_paybacks': result.unlinkedPaybacks.length,
+            'unsettled': result.unsettled.length,
+          },
         };
       },
     ),

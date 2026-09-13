@@ -466,6 +466,7 @@
     }
   },
   "balanceCheckPaybackReconciled": "已对账消费并创建还款转账",
+  "balanceCheckUnlinkedPaybacks": "此卡上没有关联所结清消费的还款：{count}",
   "balanceCheckNoEligiblePurchases": "请至少选择一笔信用卡消费",
   "tooltipBalanceCheckMode": "将账单余额与 Firefly 进行比较",
   "tooltipBalanceCheckIncludePending": "包含在余额核对中",

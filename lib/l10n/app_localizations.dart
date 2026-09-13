@@ -1822,6 +1822,12 @@ abstract class AppLocalizations {
   /// **'Purchases reconciled and payback transfer created'**
   String get balanceCheckPaybackReconciled;
 
+  /// No description provided for @balanceCheckUnlinkedPaybacks.
+  ///
+  /// In en, this message translates to:
+  /// **'Paybacks on this card with no link to what they settled: {count}'**
+  String balanceCheckUnlinkedPaybacks(int count);
+
   /// No description provided for @balanceCheckNoEligiblePurchases.
   ///
   /// In en, this message translates to:

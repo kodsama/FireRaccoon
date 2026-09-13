@@ -466,6 +466,7 @@
     }
   },
   "balanceCheckPaybackReconciled": "Köp avstämda och återbetalningsöverföring skapad",
+  "balanceCheckUnlinkedPaybacks": "Återbetalningar på kortet utan koppling till vad de täckte: {count}",
   "balanceCheckNoEligiblePurchases": "Välj minst ett kreditkortsköp",
   "tooltipBalanceCheckMode": "Jämför kontoutdragssaldo med Firefly",
   "tooltipBalanceCheckIncludePending": "Inkludera i saldokontroll",

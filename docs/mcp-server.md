@@ -108,7 +108,7 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 
 ## Available tools
 
-65 tools, 34 of which write. The two that carry a bank import lead the table and
+68 tools, 36 of which write. The two that carry a bank import lead the table and
 are described under [Importing a statement](#importing-a-statement).
 
 | Tool | Description | Writes |
@@ -123,6 +123,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `get_accounts` | List accounts with balances |  |
 | `get_transactions` | Transactions, filterable by account, date window, and reconciled state |  |
 | `get_transaction` | One transaction by group ID, with the legs of a split group |  |
+| `get_card_settlements` | What the paybacks on a credit card settle, read from their link notes, and the purchases and refunds no payback links |  |
 | `set_transaction_reconciled` | Mark reconciled or unreconciled | yes |
 | `store_reconciliation` | Store an account reconciliation with optional correction | yes |
 | `create_transaction` | Create a transaction, one leg or several | yes |
@@ -358,6 +359,28 @@ Firefly only ever creates from its own interface. `store_reconciliation` makes
 it when the ledger has none, in the reconciled account's currency, because a
 name Firefly cannot resolve is a refusal and there was otherwise no way to
 write a correction at all.
+
+### What a card payback settles
+
+Every leg of a payback the app writes carries a link note,
+`fireraccoon:linked_journal:<id>`, naming the purchase it settles, and a netted
+payback names every row it settles, refunds included. Nothing read those notes
+back until now, which is how a year of paybacks written by hand as single
+untitled legs went unnoticed: the app never compared purchases against
+paybacks.
+
+`get_card_settlements` reads them. Given a card, an account with role
+`ccAsset`, it lists every payback oldest first with the rows its notes settle,
+and under `unsettled` the purchases and refunds dated before the last payback
+that no payback links. A payback carrying no links comes back with
+`linked: false`, which is what a hand-written one looks like. A linked row from
+before the window that was read is named under `settles_outside_window` rather
+than fetched. Rows written before the raccoon rename spell the note
+`fireracoon:` with one `c`, and both spellings are read. `get_transaction`
+lists the same ids under `settles` on any transaction whose legs carry a link.
+
+The reconciliation panel in the app shows the same gap while a payback is being
+prepared: when older paybacks on the card link to nothing, it says how many.
 
 ### A split group is edited whole or a leg at a time
 

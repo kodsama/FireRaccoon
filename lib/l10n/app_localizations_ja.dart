@@ -924,6 +924,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get balanceCheckPaybackReconciled => '購入を照合し、返済振替を作成しました';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return '済した購入へのリンクがないこのカードの返済: $count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases => 'クレジットカードの購入を1件以上選択してください';
 
   @override

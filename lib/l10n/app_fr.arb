@@ -466,6 +466,7 @@
     }
   },
   "balanceCheckPaybackReconciled": "Achats rapprochés et virement de remboursement créé",
+  "balanceCheckUnlinkedPaybacks": "Remboursements de cette carte sans lien vers ce qu’ils règlent : {count}",
   "balanceCheckNoEligiblePurchases": "Sélectionnez au moins un achat par carte",
   "tooltipBalanceCheckMode": "Comparez le solde de votre relevé avec Firefly",
   "tooltipBalanceCheckIncludePending": "Inclure dans la vérification du solde",

@@ -934,6 +934,11 @@ class AppLocalizationsSv extends AppLocalizations {
       'Köp avstämda och återbetalningsöverföring skapad';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return 'Återbetalningar på kortet utan koppling till vad de täckte: $count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases => 'Välj minst ett kreditkortsköp';
 
   @override

@@ -26,6 +26,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every leg of the group. The whole group still goes back out with each leg
   carrying its own id, so nothing is deleted, and the readback names a leg
   Firefly declined as `splits[0].budget_id`
+- `get_card_settlements` reads the link notes on a card's paybacks back.
+  Every leg of a payback the app writes names the purchase it settles, and a
+  netted one names every row, refunds included, but nothing read the notes,
+  so no view could say which purchases a payback settled or which purchases
+  no payback had settled yet, and a year of paybacks written by hand as single
+  untitled legs went unnoticed. The tool lists each payback with the rows it
+  settles, marks one carrying no links as `linked: false`, and lists under
+  `unsettled` the purchases and refunds dated before the last payback that no
+  payback links. `get_transaction` lists the same ids under `settles`. Rows
+  from before the raccoon rename spell the note with one `c`, and both
+  spellings are read. The reconciliation panel says how many older paybacks
+  on the card link to nothing while a new one is being prepared
 - `update_transaction` takes `keep_reconciled`, so an amount or an account on
   a reconciled row can change in one call. Firefly will not move the money on
   a reconciled journal, and following the guard meant two writes, release with

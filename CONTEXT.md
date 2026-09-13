@@ -20,6 +20,7 @@ code comments, ADRs, and MCP descriptions.
 | **Prognosis** | Rich account forecast in the UI (`AccountPrognosisService`) |
 | **Write-ahead** | Materializing upcoming recurrence occurrences as future transactions |
 | **Reconciliation** | Marking journals reconciled and optionally posting a correction; for `ccAsset` accounts, also creating a payback transfer, one leg per purchase or a single netted leg when refunds are among them |
+| **Link note** | `fireraccoon:linked_journal:<id>` on a payback leg, naming the purchase or refund it settles; rows from before the rename spell it `fireracoon:` and readers take both |
 | **Agent key** | Credential an MCP client presents (`frcn_…`); bound to a person, stored with its digest so the owner can read it back, revocable |
 | **Backup** | Snapshot plus Firefly's CSV export, kept under an id naming the moment it was taken; optionally sealed with a password; covers ledger data, never the database, attachments or `APP_KEY` |
 
@@ -45,7 +46,7 @@ code comments, ADRs, and MCP descriptions.
 
 ## Agent access
 
-MCP tools are the supported agent API: 67 of them, 36 write-gated, covering
+MCP tools are the supported agent API: 68 of them, 36 write-gated, covering
 accounts, transactions, budgets and their limits, categories, tags, bills, piggy
 banks, recurrences, currencies, search, reconciliation, backups and restores,
 and the on-device projection. The rich account prognosis is the one engine
