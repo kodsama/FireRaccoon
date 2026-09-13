@@ -17,12 +17,16 @@ McpTool _tool(String name, MockClient client) => buildTools(
 /// Captures the write body while answering the reads a tool makes first.
 class _Recorder {
   Map<String, Object?>? body;
+  final bodies = <Map<String, Object?>>[];
 
+  /// [refuseWrites] names writes by their position, first write 1, that
+  /// Firefly answers with a 500.
   MockClient client({
     required Map<String, Object?> Function() onWrite,
     Map<String, Object?>? transaction,
     Map<String, Object?>? budgets,
     List<Object?>? limits,
+    Set<int> refuseWrites = const {},
   }) {
     return MockClient((request) async {
       final path = request.url.path;
@@ -67,6 +71,10 @@ class _Recorder {
       }
       if (request.method == 'PUT' || request.method == 'POST') {
         body = jsonDecode(request.body) as Map<String, Object?>;
+        bodies.add(body!);
+        if (refuseWrites.contains(bodies.length)) {
+          return jsonHttpResponse({'message': 'refused'}, status: 500);
+        }
         return jsonHttpResponse(onWrite());
       }
       return http.Response('unexpected ${request.method} $path', 500);
@@ -76,6 +84,32 @@ class _Recorder {
 
 Map<String, Object?> _leg(Map<String, Object?> body) =>
     ((body['transactions'] as List).first) as Map<String, Object?>;
+
+List<Map<String, Object?>> _legsOfItem(Map<String, Object?> item) =>
+    ((item['attributes'] as Map)['transactions'] as List)
+        .cast<Map<String, Object?>>();
+
+/// A group as Firefly stores it after [body]: each sent leg, found by its
+/// journal id, with the fields it sent written over what was there.
+Map<String, Object?> _echoGroup(
+  Map<String, Object?> item,
+  Map<String, Object?> body,
+) {
+  final sent = {
+    for (final leg in body['transactions'] as List)
+      '${(leg as Map)['transaction_journal_id']}': leg.cast<String, Object?>(),
+  };
+  return {
+    ...item,
+    'attributes': {
+      ...item['attributes'] as Map,
+      'transactions': [
+        for (final leg in _legsOfItem(item))
+          {...leg, ...?sent[leg['transaction_journal_id']]},
+      ],
+    },
+  };
+}
 
 void main() {
   group('a category named on an update', () {
@@ -227,6 +261,154 @@ void main() {
       expect(named['destination_name'], 'Shop');
       expect(named.containsKey('destination_id'), isFalse);
       expect(named['source_id'], '5');
+    });
+  });
+
+  group('keeping a row reconciled through a change', () {
+    // Moving an account on a reconciled row took two calls: release it with
+    // the change, then set the flag back. Between them the row sat
+    // unreconciled, and a run that died there left it that way.
+    Map<String, Object?> reconciledRow() =>
+        transactionItem(reconciled: true, sourceId: '5', destinationId: '9');
+
+    test('releases, changes and reconciles again in one call', () async {
+      var current = reconciledRow();
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: current,
+        onWrite: () {
+          current = storedAfterWrite(
+            id: '1',
+            sent: _leg(recorder.body!),
+            previous: current,
+          );
+          return transactionEnvelope(current);
+        },
+      );
+
+      final result = await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'keep_reconciled': true, 'source_id': '6'});
+
+      expect(recorder.bodies, hasLength(2));
+      final released = _leg(recorder.bodies[0]);
+      expect(released['reconciled'], isFalse);
+      expect(released['source_id'], '6');
+      // The second write puts the flag back and resends none of the money.
+      final restored = _leg(recorder.bodies[1]);
+      expect(restored['reconciled'], isTrue);
+      expect(restored.containsKey('amount'), isFalse);
+      expect(restored.containsKey('source_id'), isFalse);
+      expect(result['ok'], isTrue);
+      expect(result['steps'], ['released', 'changed', 'reconciled']);
+      final transaction = result['transaction'] as Map;
+      expect(transaction['reconciled'], isTrue);
+      expect(transaction['source_id'], '6');
+    });
+
+    test('a row that was not reconciled takes one write', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: transactionItem(sourceId: '5'),
+        onWrite: () => transactionEnvelope(transactionItem(sourceId: '6')),
+      );
+
+      final result = await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'keep_reconciled': true, 'source_id': '6'});
+
+      expect(recorder.bodies, hasLength(1));
+      expect(result['ok'], isTrue);
+      expect(result.containsKey('steps'), isFalse);
+    });
+
+    test('refuses reconciled beside it, on the row or on a leg', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: reconciledRow(),
+        onWrite: () => transactionEnvelope(reconciledRow()),
+      );
+      final tool = _tool('update_transaction', client);
+
+      final onRow = await tool.run({
+        'transaction_id': '1',
+        'keep_reconciled': true,
+        'reconciled': false,
+      });
+      final onLeg = await tool.run({
+        'transaction_id': '1',
+        'keep_reconciled': true,
+        'splits': [
+          {'journal_id': '811', 'reconciled': false},
+        ],
+      });
+      final notBool = await tool.run({
+        'transaction_id': '1',
+        'keep_reconciled': 'yes',
+      });
+
+      expect(onRow['code'], 'bad_input');
+      expect(onLeg['code'], 'bad_input');
+      expect(notBool['code'], 'bad_input');
+      expect(recorder.bodies, isEmpty);
+    });
+
+    test('says so when the flag could not be put back', () async {
+      var current = reconciledRow();
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: current,
+        refuseWrites: const {2},
+        onWrite: () {
+          current = storedAfterWrite(
+            id: '1',
+            sent: _leg(recorder.body!),
+            previous: current,
+          );
+          return transactionEnvelope(current);
+        },
+      );
+
+      final result = await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'keep_reconciled': true, 'source_id': '6'});
+
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'left_unreconciled');
+      expect(result['error'], contains('set_transaction_reconciled'));
+      expect(result['steps'], ['released', 'changed']);
+      // What is stored is reported: the change landed, the flag did not.
+      final transaction = result['transaction'] as Map;
+      expect(transaction['source_id'], '6');
+      expect(transaction['reconciled'], isFalse);
+    });
+
+    test('a flag Firefly accepted and did not store is reported', () async {
+      var current = reconciledRow();
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: current,
+        onWrite: () {
+          final sent = {..._leg(recorder.body!)};
+          // The second write is answered with the row still released.
+          if (recorder.bodies.length == 2) sent.remove('reconciled');
+          current = storedAfterWrite(id: '1', sent: sent, previous: current);
+          return transactionEnvelope(current);
+        },
+      );
+
+      final result = await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'keep_reconciled': true, 'source_id': '6'});
+
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'not_applied');
+      expect(result['error'], contains('reconciled'));
+      expect(result['steps'], ['released', 'changed', 'reconciled']);
     });
   });
 
@@ -826,6 +1008,44 @@ void main() {
       expect(legs[0]['destination_name'], 'Nordea');
       expect(legs[0].containsKey('destination_id'), isFalse);
       expect(legs[1]['destination_name'], 'Handelsbanken');
+    });
+
+    test('a partly reconciled group gets each leg its own flag back', () async {
+      // Two legs checked against a statement, the third not yet. The release
+      // reaches only the leg being changed, and the restore gives every leg
+      // back what it had rather than reconciling the whole group.
+      var current = loanGroup(reconciled: true);
+      _legsOfItem(current)[2]['reconciled'] = false;
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: current,
+        onWrite: () {
+          current = _echoGroup(current, recorder.body!);
+          return transactionEnvelope(current);
+        },
+      );
+
+      final result = await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'keep_reconciled': true,
+        'splits': [
+          {'journal_id': '811', 'amount': 3500},
+        ],
+      });
+
+      final released = legsOf(recorder.bodies[0]);
+      expect(released[0]['reconciled'], isFalse);
+      expect(released[0]['amount'], '3500.00');
+      expect(released[1]['reconciled'], isTrue);
+      expect(released[2]['reconciled'], isFalse);
+      final restored = legsOf(recorder.bodies[1]);
+      expect(
+        [for (final leg in restored) leg['reconciled']],
+        [true, true, false],
+      );
+      expect(result['ok'], isTrue);
+      expect(result['steps'], ['released', 'changed', 'reconciled']);
+      expect((result['transaction'] as Map)['partially_reconciled'], isTrue);
     });
 
     test('a leg description is its own, not the group title', () async {

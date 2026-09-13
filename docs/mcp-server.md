@@ -126,7 +126,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `set_transaction_reconciled` | Mark reconciled or unreconciled | yes |
 | `store_reconciliation` | Store an account reconciliation with optional correction | yes |
 | `create_transaction` | Create a transaction, one leg or several | yes |
-| `update_transaction` | Update a transaction; omitted fields keep their value, the bookkeeping reaches every leg of a split group, and `splits` reaches one leg by its journal id | yes |
+| `update_transaction` | Update a transaction; omitted fields keep their value, the bookkeeping reaches every leg of a split group, `splits` reaches one leg by its journal id, and `keep_reconciled` releases and re-reconciles a row around a change | yes |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides | yes |
 | `delete_transaction` | Delete a transaction group and its splits | yes |
 | `export_firefly_data` | Snapshot of every entity the API exposes, for taking before a bulk change |  |
@@ -428,6 +428,17 @@ release reaches every leg, which is what makes it work there at all: the flag
 used to stop at the group while each leg stayed reconciled, and the amounts it
 was meant to free were dropped from the payload anyway. A leg names its own
 `reconciled` inside `splits`.
+
+Releasing a row to move its money and then reconciling it again took two
+calls, and between them the row sat unreconciled, so a run that died there
+left it that way. `keep_reconciled: true` does both from one call: the release
+goes out with the change, and once Firefly has stored it a second write puts
+back the flag each leg had, so a partly reconciled group comes back partly
+reconciled rather than whole. The answer lists the steps under `steps`. A
+second write Firefly refused comes back as `left_unreconciled` with the
+transaction as it now stands, so the caller knows exactly which row to finish
+with `set_transaction_reconciled`. It cannot be passed beside `reconciled`,
+since one says what the flag should become and the other says to keep it.
 
 A copy is still never reconciled, whatever the original was.
 

@@ -26,6 +26,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   every leg of the group. The whole group still goes back out with each leg
   carrying its own id, so nothing is deleted, and the readback names a leg
   Firefly declined as `splits[0].budget_id`
+- `update_transaction` takes `keep_reconciled`, so an amount or an account on
+  a reconciled row can change in one call. Firefly will not move the money on
+  a reconciled journal, and following the guard meant two writes, release with
+  the change and then set the flag back, with the row sitting unreconciled in
+  between: at eight seconds a write that doubled a batch, and a run that died
+  in the middle left the row that way. The release now goes out with the
+  change and a second write puts back the flag each leg had, so a partly
+  reconciled group comes back partly reconciled. The answer lists the steps,
+  and a second write Firefly refused comes back as `left_unreconciled` naming
+  the row to finish
 - `merge_tags` moves every transaction from one tag onto another and removes
   the tag it empties. Firefly has no merge endpoint and refuses a rename onto a
   name already in use, so two tags meaning the same thing had nowhere to go and

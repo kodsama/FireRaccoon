@@ -69,7 +69,7 @@ live in `CONTEXT.md`.
 | `set_transaction_reconciled` | Mark reconciled or unreconciled |
 | `store_reconciliation` | Reconcile an account; optional correction, and a payback transfer for `ccAsset` |
 | `create_transaction` | Create a transaction, one leg or several |
-| `update_transaction` | Update a transaction; omitted fields keep their value, and `splits` changes one leg of a group without touching the others |
+| `update_transaction` | Update a transaction; omitted fields keep their value, `splits` changes one leg of a group without touching the others, and `keep_reconciled` releases and re-reconciles a row around a change |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides |
 | `delete_transaction` | Delete a transaction group and every split in it |
 | `export_firefly_data` | Snapshot of every entity the API exposes, for taking before a bulk change |

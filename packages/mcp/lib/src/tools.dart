@@ -761,6 +761,64 @@ Transaction _splitFromArgs(
   );
 }
 
+/// Whether [args] state `reconciled` anywhere an update reads it.
+bool _statesReconciled(Map<String, Object?> args) =>
+    args.containsKey('reconciled') ||
+    (args['splits'] is List &&
+        (args['splits'] as List).any(
+          (leg) => leg is Map && leg.containsKey('reconciled'),
+        ));
+
+/// [args] with `reconciled: false` on whatever the update writes: each leg
+/// named in `splits`, or the whole transaction. A leg the list leaves out
+/// keeps its flag, since nothing about it changes.
+Map<String, Object?> _releasedArgs(Map<String, Object?> args) {
+  final released = {...args}..remove('keep_reconciled');
+  final legs = args['splits'];
+  if (legs is List) {
+    released['splits'] = [
+      for (final leg in legs)
+        if (leg is Map<String, Object?>) {...leg, 'reconciled': false} else leg,
+    ];
+  } else {
+    released['reconciled'] = false;
+  }
+  return released;
+}
+
+/// [saved] with each leg carrying the flag the same leg had on [before],
+/// matched by journal id, or by position for a leg that has none.
+Transaction _withReconciledFrom(Transaction saved, Transaction before) {
+  final priorLegs = before.resolvedSplits();
+  final byJournal = {
+    for (final leg in priorLegs) ?leg.journalId: leg.reconciled,
+  };
+  final legs = [
+    for (final (index, leg) in saved.resolvedSplits().indexed)
+      leg.copyWith(
+        reconciled:
+            byJournal[leg.journalId] ??
+            (index < priorLegs.length
+                ? priorLegs[index].reconciled
+                : before.reconciled),
+      ),
+  ];
+  return saved.copyWith(
+    reconciled: legs.first.reconciled,
+    splits: saved.splits.isEmpty ? null : legs,
+  );
+}
+
+bool _reconciledFlagsDiffer(Transaction a, Transaction b) {
+  final legsA = a.resolvedSplits();
+  final legsB = b.resolvedSplits();
+  if (legsA.length != legsB.length) return true;
+  for (var i = 0; i < legsA.length; i++) {
+    if (legsA[i].reconciled != legsB[i].reconciled) return true;
+  }
+  return false;
+}
+
 /// The legs of [base] with each patch in [legs] applied to the one it names.
 ///
 /// Every leg goes back out, changed or not. Firefly reads the list it is sent
@@ -2926,7 +2984,11 @@ List<McpTool> buildTools({
           'every leg of a split group, each leg keeps its own amount, '
           'description and accounts, and a description renames the group. Pass '
           'splits instead to change one leg on its own, naming it by its '
-          'journal_id; a leg the list leaves out is left exactly as it is.',
+          'journal_id; a leg the list leaves out is left exactly as it is. '
+          'A reconciled transaction will not take an amount or an account '
+          'change: pass reconciled:false with it to release the row, or '
+          'keep_reconciled:true to release it, store the change and mark it '
+          'reconciled again in this one call.',
       inputSchema: {
         'type': 'object',
         'required': ['transaction_id'],
@@ -2942,6 +3004,15 @@ List<McpTool> buildTools({
             'description': 'Title for a multi-leg group.',
           },
           ..._updateSplitsFieldSchema(),
+          'keep_reconciled': {
+            'type': 'boolean',
+            'description':
+                'Release a reconciled transaction for this change and put '
+                'each leg\'s flag back once it is stored, in two writes from '
+                'one call. Cannot be passed beside reconciled. The answer '
+                'lists the steps taken, and a second write that failed comes '
+                'back as left_unreconciled.',
+          },
         },
       },
       run: (args) async {
@@ -2949,13 +3020,31 @@ List<McpTool> buildTools({
         if (id == null || id.isEmpty) {
           return _badInput('transaction_id is required');
         }
+        final keep = args['keep_reconciled'];
+        if (keep != null && keep is! bool) {
+          return _badInput('keep_reconciled must be a boolean');
+        }
+        if (keep == true && _statesReconciled(args)) {
+          return _badInput(
+            'keep_reconciled puts back the flag each leg has, so reconciled '
+            'cannot be passed beside it, at the top level or on a leg',
+          );
+        }
         final api = service();
         // Merged over what is stored, so a one-field edit cannot blank the rest.
         final existing = await api.getTransaction(id);
+        // Firefly will not move the money on a reconciled journal, so the row
+        // is released in the same write as the change and the flag goes back
+        // on in a second one. Doing it here rather than in two calls halves
+        // the round trips of a batch and leaves no gap a run can die in
+        // without saying so.
+        final releasing =
+            keep == true &&
+            existing.resolvedSplits().any((leg) => leg.reconciled);
         final Transaction updated;
         try {
           updated = _transactionFromArgs(
-            args,
+            releasing ? _releasedArgs(args) : args,
             base: existing,
             id: id,
             isUpdate: true,
@@ -2963,8 +3052,33 @@ List<McpTool> buildTools({
         } on ArgumentError catch (e) {
           return _badInput('${e.message}');
         }
-        final saved = await api.updateTransaction(updated);
-        final ignored = _unappliedTransactionFields(args, saved);
+        var saved = await api.updateTransaction(updated);
+        final steps = <String>[];
+        final ignored = <String>[];
+        if (releasing) {
+          steps.addAll(['released', 'changed']);
+          final restored = _withReconciledFrom(saved, existing);
+          try {
+            saved = await api.updateTransaction(restored);
+          } on Object catch (error) {
+            return {
+              'ok': false,
+              'code': 'left_unreconciled',
+              'error':
+                  'The change was stored, but marking the transaction '
+                  'reconciled again failed: $error. Call '
+                  'set_transaction_reconciled with reconciled:true to finish.',
+              'transaction_id': saved.id,
+              'transaction': _transactionJson(saved, withSplits: true),
+              'steps': steps,
+            };
+          }
+          steps.add('reconciled');
+          if (_reconciledFlagsDiffer(saved, restored)) {
+            ignored.add('reconciled');
+          }
+        }
+        ignored.addAll(_unappliedTransactionFields(args, saved));
         return {
           'ok': ignored.isEmpty,
           if (ignored.isNotEmpty) 'code': 'not_applied',
@@ -2976,6 +3090,7 @@ List<McpTool> buildTools({
                 'transaction as it now stands is in `transaction`.',
           'transaction_id': saved.id,
           'transaction': _transactionJson(saved, withSplits: true),
+          if (releasing) 'steps': steps,
         };
       },
     ),

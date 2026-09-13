@@ -1449,6 +1449,8 @@ x-mcp:
         the top level the bookkeeping fields reach every leg of a split group;
         splits[] reaches one leg, named by the journal_id get_transaction
         reports for it, and leaves the legs it does not name alone.
+        keep_reconciled releases a reconciled row for the change and puts each
+        leg's flag back in a second write from the same call.
       mapsTo: PUT /api/v1/transactions/{transactionId}
       required: [transaction_id]
     duplicate_transaction:
