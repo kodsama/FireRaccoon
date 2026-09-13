@@ -7,6 +7,7 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
 
@@ -130,6 +131,35 @@ void main() {
     expect(find.textContaining('Parts missing'), findsOneWidget);
     expect(find.textContaining('3 transactions, 2 accounts'), findsOneWidget);
     expect(find.textContaining('2 files, 2.0 kB'), findsOneWidget);
+    // The snapshot a restore reads is there, so no alarm: Firefly 6.6.6
+    // refuses one of its own exports on every backup.
+    expect(find.byIcon(LucideIcons.triangleAlert), findsNothing);
+    expect(find.byIcon(LucideIcons.archive), findsOneWidget);
+  });
+
+  testWidgets('a backup whose snapshot failed is flagged', (tester) async {
+    final store = _MemoryBackupStore();
+    await store.put(
+      '20260101T000000+0000',
+      kBackupManifestFile,
+      utf8.encode(
+        jsonEncode({
+          'id': '20260101T000000+0000',
+          'taken_at': '2026-01-01T12:00:00Z',
+          'timezone': {'name': 'UTC', 'offset_minutes': 0},
+          'counts': {'transactions': 3, 'accounts': 2},
+          'entries': [
+            {'name': 'snapshot.json', 'bytes': 0, 'error': 'timed out'},
+            {'name': 'csv/rules.csv', 'bytes': 2048},
+          ],
+        }),
+      ),
+    );
+
+    await _pump(tester, store: store);
+
+    expect(find.textContaining('Parts missing'), findsOneWidget);
+    expect(find.byIcon(LucideIcons.triangleAlert), findsOneWidget);
   });
 
   testWidgets('deleting asks first and then removes it', (tester) async {

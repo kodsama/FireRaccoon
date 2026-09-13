@@ -48,7 +48,8 @@ class ReconciliationService {
   }
 
   /// Marks [journalsToReconcile] reconciled and creates a Platinum-style
-  /// multi-split payback transfer from [paymentAccount] to [creditCard].
+  /// payback transfer from [paymentAccount] to [creditCard]: one leg per
+  /// purchase, or a single netted leg when a refund is among them.
   /// Makes the `<account> reconciliation` account a correction refers to, if
   /// Firefly has not.
   ///

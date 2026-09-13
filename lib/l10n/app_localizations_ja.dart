@@ -924,6 +924,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get balanceCheckPaybackReconciled => '購入を照合し、返済振替を作成しました';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return '済した購入へのリンクがないこのカードの返済: $count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases => 'クレジットカードの購入を1件以上選択してください';
 
   @override
@@ -1126,7 +1131,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get sourceAccount => '送金元口座';
 
   @override
+  String get fromAccount => '出金元';
+
+  @override
   String get destinationAccount => '送金先口座';
+
+  @override
+  String get toAccount => '入金先';
 
   @override
   String get payee => '支払先';
@@ -2289,6 +2300,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tags => 'タグ';
 
   @override
+  String get addTag => 'タグを追加';
+
+  @override
   String get subscription => 'サブスクリプション';
 
   @override
@@ -2650,6 +2664,9 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipSwapTransferAccounts => '2つの口座を入れ替えます。';
 
   @override
+  String get tooltipTurnDirectionRound => '向きを入れ替えます。お金の流れが逆になります。';
+
+  @override
   String get disconnectConfirmTitle => 'Firefly III の接続を解除';
 
   @override
@@ -2679,9 +2696,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipFieldAmount => '選択した通貨での主な金額。';
 
   @override
-  String get tooltipFieldCurrency => 'この分割の主通貨。';
-
-  @override
   String get tooltipFieldForeignAmount => '別通貨での任意金額。';
 
   @override
@@ -2697,7 +2711,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipFieldPiggyBank => 'この分割を貯金箱にリンク。';
 
   @override
-  String get tooltipFieldTags => 'クイックフィルター用のカンマ区切りタグ。';
+  String get tooltipFieldTags => 'すばやく絞り込むためのタグ。Enter で追加し、× で外します。';
 
   @override
   String get tooltipFieldSubscription => 'この分割をサブスクリプションにリンク。';
@@ -2954,6 +2968,28 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get noHistoryEntriesMatchFilters => 'フィルターに一致する履歴エントリはありません。';
+
+  @override
+  String get historyEntryWhatChanged => '変更内容';
+
+  @override
+  String get historyEntryNothingRecorded => 'この変更には記録がありません。';
+
+  @override
+  String get historyEntryRevert => 'この変更を取り消す';
+
+  @override
+  String get historyEntryReverted => '変更を取り消しました';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return 'この変更を取り消せませんでした: $error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before（消去）';
+  }
 
   @override
   String historyExportedTo(String path) {

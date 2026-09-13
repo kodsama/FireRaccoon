@@ -357,8 +357,10 @@ Map<String, Object?> storedAfterWrite({
   }
   // Firefly resolves a name it was given and reports the id it landed on, so a
   // name sent without an id cannot come back beside the id it replaced.
-  if (sent.containsKey('category_name') && !sent.containsKey('category_id')) {
-    leg['category_id'] = '99';
+  for (final side in const ['category', 'source', 'destination']) {
+    if (sent.containsKey('${side}_name') && !sent.containsKey('${side}_id')) {
+      leg['${side}_id'] = '99';
+    }
   }
 
   return {

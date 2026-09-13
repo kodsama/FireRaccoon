@@ -17,6 +17,7 @@ class CreditCardPaybackFields {
     required this.onPaybackDateChanged,
     required this.paybackTotal,
     required this.hasEligiblePurchases,
+    this.unlinkedPaybackCount = 0,
   });
 
   final List<Account> paymentAccounts;
@@ -26,6 +27,11 @@ class CreditCardPaybackFields {
   final ValueChanged<DateTime> onPaybackDateChanged;
   final double paybackTotal;
   final bool hasEligiblePurchases;
+
+  /// Paybacks already on the card whose legs link to no purchase, such as
+  /// ones written by hand. Nothing compared purchases against paybacks
+  /// before, which is how a year of them went unnoticed.
+  final int unlinkedPaybackCount;
 
   bool get isReady =>
       hasEligiblePurchases &&
@@ -306,6 +312,17 @@ class _AccountBalanceCheckPanelState extends State<AccountBalanceCheckPanel> {
               SizedBox(height: widget.compact ? 8 : 10),
               Text(
                 l10n.balanceCheckNoEligiblePurchases,
+                style: TextStyle(
+                  color: colors.warning,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+            if (payback.unlinkedPaybackCount > 0) ...[
+              SizedBox(height: widget.compact ? 8 : 10),
+              Text(
+                l10n.balanceCheckUnlinkedPaybacks(payback.unlinkedPaybackCount),
                 style: TextStyle(
                   color: colors.warning,
                   fontSize: 12,

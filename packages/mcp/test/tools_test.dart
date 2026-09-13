@@ -139,6 +139,28 @@ void main() {
       }
     });
 
+    test('no tool schema offers an enum nothing can satisfy', () {
+      // An empty enum validates no value at all, so the argument carrying it
+      // cannot be passed. get_dashboard_kpis shipped with one for a year: its
+      // periods went through a helper that answers const [] to anything that
+      // is not a List, and an Iterable of enum names is not.
+      void walk(String tool, String path, Object? schema) {
+        if (schema is Map) {
+          final values = schema['enum'];
+          if (values is List) {
+            expect(values, isNotEmpty, reason: '$tool $path matches nothing');
+          }
+          for (final entry in schema.entries) {
+            walk(tool, '$path/${entry.key}', entry.value);
+          }
+        }
+      }
+
+      for (final tool in _tools()) {
+        walk(tool.name, '', tool.inputSchema);
+      }
+    });
+
     test('the injected target serves reads', () async {
       final tool = _tool('get_accounts', client: fireflyMockClient());
 
@@ -1297,6 +1319,19 @@ void main() {
         client: fireflyMockClient(),
       ).run({'period_label': 'January'});
       expect((result['kpis'] as Map)['period_label'], 'January');
+    });
+
+    test('the period enum lists every period it computes', () async {
+      final tool = _tool('get_dashboard_kpis', client: fireflyMockClient());
+      final period =
+          ((tool.inputSchema['properties'] as Map)['period'] as Map)['enum'];
+
+      expect(period, [for (final p in DashboardPeriod.values) p.name]);
+      // Offered and accepted have to be the same list, so a period a caller
+      // reads off the schema is one the tool will take.
+      for (final name in period! as List) {
+        expect(await tool.run({'period': name}), containsPair('ok', true));
+      }
     });
 
     test('bad_input on invalid period', () async {

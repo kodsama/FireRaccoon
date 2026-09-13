@@ -935,6 +935,11 @@ class AppLocalizationsPt extends AppLocalizations {
       'Compras reconciliadas e transferência de reembolso criada';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return 'Pagamentos deste cartão sem ligação ao que liquidaram: $count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases =>
       'Selecione pelo menos uma compra no cartão';
 
@@ -1150,7 +1155,13 @@ class AppLocalizationsPt extends AppLocalizations {
   String get sourceAccount => 'Conta de origem';
 
   @override
+  String get fromAccount => 'De';
+
+  @override
   String get destinationAccount => 'Conta de destino';
+
+  @override
+  String get toAccount => 'Para';
 
   @override
   String get payee => 'Entidade';
@@ -2341,6 +2352,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tags => 'Tags';
 
   @override
+  String get addTag => 'Adicionar uma etiqueta';
+
+  @override
   String get subscription => 'Subscription';
 
   @override
@@ -2712,6 +2726,10 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tooltipSwapTransferAccounts => 'Trocar as duas contas.';
 
   @override
+  String get tooltipTurnDirectionRound =>
+      'Inverter o sentido: o dinheiro passa a ir ao contrário.';
+
+  @override
   String get disconnectConfirmTitle => 'Desconectar o Firefly III';
 
   @override
@@ -2741,9 +2759,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tooltipFieldAmount => 'Montante principal na moeda selecionada.';
 
   @override
-  String get tooltipFieldCurrency => 'Moeda principal desta linha.';
-
-  @override
   String get tooltipFieldForeignAmount => 'Montante opcional noutra moeda.';
 
   @override
@@ -2761,7 +2776,7 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get tooltipFieldTags =>
-      'Etiquetas separadas por vírgulas para filtrar rápido.';
+      'Etiquetas para filtrar rápido. Enter adiciona uma, o X retira-a.';
 
   @override
   String get tooltipFieldSubscription =>
@@ -3049,6 +3064,29 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get noHistoryEntriesMatchFilters =>
       'Nenhuma entrada corresponde aos filtros.';
+
+  @override
+  String get historyEntryWhatChanged => 'O que mudou';
+
+  @override
+  String get historyEntryNothingRecorded =>
+      'Nada foi registado para esta alteração.';
+
+  @override
+  String get historyEntryRevert => 'Reverter esta alteração';
+
+  @override
+  String get historyEntryReverted => 'Alteração revertida';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return 'Não foi possível reverter esta alteração: $error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before (limpo)';
+  }
 
   @override
   String historyExportedTo(String path) {

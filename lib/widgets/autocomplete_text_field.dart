@@ -20,6 +20,7 @@ class AutocompleteTextField extends StatelessWidget {
     super.key,
     required this.controller,
     required this.suggestions,
+    this.focusNode,
     this.decoration,
     this.onChanged,
     this.onSelected,
@@ -40,6 +41,10 @@ class AutocompleteTextField extends StatelessWidget {
 
   final TextEditingController controller;
   final List<String> suggestions;
+
+  /// Supply one to move focus here from elsewhere, as the tag field does when
+  /// a chip is tapped to be retyped. Left null, the type-ahead owns its own.
+  final FocusNode? focusNode;
   final InputDecoration? decoration;
   final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onSelected;
@@ -68,6 +73,7 @@ class AutocompleteTextField extends StatelessWidget {
   Widget build(BuildContext context) {
     return TypeAheadField<String>(
       controller: controller,
+      focusNode: focusNode,
       showOnFocus: showOnFocus,
       hideOnEmpty: hideOnEmpty && onCreateNew == null,
       emptyBuilder: onCreateNew != null ? null : emptyBuilder,

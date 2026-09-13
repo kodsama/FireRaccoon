@@ -240,6 +240,7 @@ void main() {
 
       expect(find.text('Payment account'), findsOneWidget);
       expect(find.text('Payback date'), findsOneWidget);
+      expect(find.textContaining('no link to what they settled'), findsNothing);
 
       final button = tester.widget<FilledButton>(find.byType(FilledButton));
       expect(button.onPressed, isNull);
@@ -249,6 +250,41 @@ void main() {
       expect(reconcileTapped, isFalse);
     },
   );
+
+  testWidgets('credit-card payback warns about paybacks that link nothing', (
+    tester,
+  ) async {
+    final format = LocaleFormatting(const Locale('en'));
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: AccountBalanceCheckPanel(
+          expectedBalance: 0,
+          currencySymbol: 'kr',
+          format: format,
+          onReconcile: () {},
+          creditCardPayback: CreditCardPaybackFields(
+            paymentAccounts: [_paymentAccount()],
+            selectedPaymentAccountId: 'pay',
+            onPaymentAccountChanged: (_) {},
+            paybackDate: DateTime(2026, 7, 31),
+            onPaybackDateChanged: (_) {},
+            paybackTotal: 100,
+            hasEligiblePurchases: true,
+            unlinkedPaybackCount: 2,
+          ),
+        ),
+      ),
+    );
+    await pumpScreen(tester);
+    await tester.enterText(find.byType(TextField), '0');
+    await tester.pump();
+
+    expect(
+      find.textContaining('no link to what they settled: 2'),
+      findsOneWidget,
+    );
+  });
 
   testWidgets(
     'credit-card payback enables reconcile when payment account ready',

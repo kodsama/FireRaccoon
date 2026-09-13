@@ -108,6 +108,32 @@ void main() {
         matches(RegExp(r'^2026-09-01T22:27:36[+-]\d{2}:\d{2}$')),
       );
     });
+
+    test('a moment read back is stamped in the zone it was taken in', () {
+      // A parsed timestamp is a UTC instant whatever offset it carried, so
+      // the manifest's own offset is what puts the wall clock back.
+      expect(
+        backupTimestampFor(
+          DateTime.utc(2026, 9, 1, 20, 27, 36),
+          offset: const Duration(hours: 2),
+        ),
+        '2026-09-01T22:27:36+02:00',
+      );
+      expect(
+        backupTimestampFor(
+          DateTime.utc(2026, 9, 1, 20, 27, 36),
+          offset: const Duration(hours: -5, minutes: -30),
+        ),
+        '2026-09-01T14:57:36-05:30',
+      );
+      expect(
+        backupTimestampFor(
+          DateTime.utc(2026, 9, 1, 20, 27, 36),
+          offset: Duration.zero,
+        ),
+        '2026-09-01T20:27:36Z',
+      );
+    });
   });
 
   group('manifest', () {
@@ -147,7 +173,13 @@ void main() {
       expect(restored.transactionsTo, DateTime.utc(2026, 5, 20));
       expect(restored.schemaVersion, kBackupSchemaVersion);
       expect(restored.complete, isTrue);
+      expect(restored.failedExports, isEmpty);
       expect(restored.totalBytes, 42);
+      // The same moment stamps the same way before and after the trip. It
+      // used to come back in UTC, so create_backup and list_backups gave two
+      // spellings of one field.
+      expect(manifest.takenAtStamp, '2026-09-01T22:27:36+02:00');
+      expect(restored.toJson()['taken_at'], manifest.toJson()['taken_at']);
     });
 
     test('reads an empty object without inventing values', () {
@@ -164,7 +196,9 @@ void main() {
       expect(manifest.takenAt, DateTime.fromMillisecondsSinceEpoch(0));
     });
 
-    test('a part that failed leaves the backup incomplete', () {
+    test('an export Firefly could not produce leaves the backup complete', () {
+      // A restore reads the snapshot and never opens a CSV, so the export
+      // Firefly refused is named rather than counted against the backup.
       final manifest = BackupManifest.fromJson({
         'entries': [
           {'name': 'snapshot.json', 'bytes': 10},
@@ -172,9 +206,23 @@ void main() {
         ],
       });
 
-      expect(manifest.complete, isFalse);
+      expect(manifest.complete, isTrue);
+      expect(manifest.failedExports, ['csv/rules.csv']);
+      expect(manifest.toJson()['failed_exports'], ['csv/rules.csv']);
       expect(manifest.totalBytes, 10);
       expect(manifest.entries.last.ok, isFalse);
+    });
+
+    test('a snapshot that failed leaves the backup incomplete', () {
+      final manifest = BackupManifest.fromJson({
+        'entries': [
+          {'name': 'snapshot.json', 'bytes': 0, 'error': 'timed out'},
+          {'name': 'csv/rules.csv', 'bytes': 30, 'rows': 2},
+        ],
+      });
+
+      expect(manifest.complete, isFalse);
+      expect(manifest.failedExports, isEmpty);
     });
   });
 
@@ -316,7 +364,8 @@ void main() {
       expect(rules.ok, isFalse);
       expect(rules.error, contains('500'));
       expect(rules.bytes, 0);
-      expect(manifest.complete, isFalse);
+      expect(manifest.complete, isTrue);
+      expect(manifest.failedExports, ['csv/rules.csv']);
       // The part that failed is absent rather than written empty.
       expect(store.backups[manifest.id]!.containsKey('csv/rules.csv'), isFalse);
       expect(store.backups[manifest.id]!.containsKey('snapshot.json'), isTrue);
@@ -685,19 +734,27 @@ void main() {
       expect(wrong.problems.first, contains('would not open'));
     });
 
-    test('a data set that never made it is named again', () async {
-      final store = _MemoryBackupStore();
-      final service = BackupService(
-        _serviceWith(_ledger(failingExports: {'rules'})),
-        store,
-      );
-      final manifest = await service.create();
+    test(
+      'a data set that never made it is named, not held against it',
+      () async {
+        // The backup on disk is exactly what its manifest describes, and the
+        // snapshot a restore reads is there. Counting the export as damage kept
+        // every backup on a Firefly that refuses one export reading broken.
+        final store = _MemoryBackupStore();
+        final service = BackupService(
+          _serviceWith(_ledger(failingExports: {'rules'})),
+          store,
+        );
+        final manifest = await service.create();
 
-      final check = await service.check(manifest.id);
+        final check = await service.check(manifest.id);
 
-      expect(check.intact, isFalse);
-      expect(check.problems.single, contains('was never written'));
-    });
+        expect(check.intact, isTrue);
+        expect(check.problems, isEmpty);
+        expect(check.neverWritten.single, startsWith('csv/rules.csv: '));
+        expect(check.toJson()['never_written'], check.neverWritten);
+      },
+    );
 
     test('a backup that is not there cannot be checked', () async {
       final service = BackupService(

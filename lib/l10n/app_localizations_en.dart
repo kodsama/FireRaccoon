@@ -932,6 +932,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Purchases reconciled and payback transfer created';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return 'Paybacks on this card with no link to what they settled: $count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases =>
       'Select at least one credit card purchase';
 
@@ -1146,7 +1151,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sourceAccount => 'Source Account';
 
   @override
+  String get fromAccount => 'From';
+
+  @override
   String get destinationAccount => 'Destination Account';
+
+  @override
+  String get toAccount => 'To';
 
   @override
   String get payee => 'Payee';
@@ -2336,6 +2347,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tags => 'Tags';
 
   @override
+  String get addTag => 'Add a tag';
+
+  @override
   String get subscription => 'Subscription';
 
   @override
@@ -2705,6 +2719,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tooltipSwapTransferAccounts => 'Swap the two accounts.';
 
   @override
+  String get tooltipTurnDirectionRound =>
+      'Turn it round: the money goes the other way.';
+
+  @override
   String get disconnectConfirmTitle => 'Disconnect Firefly III';
 
   @override
@@ -2734,9 +2752,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tooltipFieldAmount => 'Main amount in the selected currency.';
 
   @override
-  String get tooltipFieldCurrency => 'Primary currency of this split.';
-
-  @override
   String get tooltipFieldForeignAmount =>
       'Optional amount in another currency.';
 
@@ -2753,7 +2768,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tooltipFieldPiggyBank => 'Link this split to a piggy bank.';
 
   @override
-  String get tooltipFieldTags => 'Comma-separated tags for quick filtering.';
+  String get tooltipFieldTags =>
+      'Tags for quick filtering. Enter adds one, the cross takes it off.';
 
   @override
   String get tooltipFieldSubscription => 'Link this split to a subscription.';
@@ -3037,6 +3053,29 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get noHistoryEntriesMatchFilters =>
       'No history entries match your filters.';
+
+  @override
+  String get historyEntryWhatChanged => 'What changed';
+
+  @override
+  String get historyEntryNothingRecorded =>
+      'Nothing was recorded for this change.';
+
+  @override
+  String get historyEntryRevert => 'Revert this change';
+
+  @override
+  String get historyEntryReverted => 'Change reverted';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return 'Could not revert this change: $error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before (cleared)';
+  }
 
   @override
   String historyExportedTo(String path) {

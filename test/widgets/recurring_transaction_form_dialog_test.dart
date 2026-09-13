@@ -25,6 +25,35 @@ Future<void> _fillMandatoryFields(WidgetTester tester) async {
 void main() {
   setUp(allowDialogLayoutOverflow);
 
+  testWidgets('the amount says which currency the rule is in', (tester) async {
+    configureDialogTestSurface(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Consumer(
+          builder: (context, ref, _) {
+            return ElevatedButton(
+              onPressed: () => showRecurringTransactionFormDialog(
+                context: context,
+                ref: ref,
+              ),
+              child: const Text('Open Dialog'),
+            );
+          },
+        ),
+        fireflyService: buildDialogFireflyService(),
+      ),
+    );
+    await settleIgnoringOverflow(tester);
+    await _openCreateDialog(tester);
+
+    // On the amount, not on a row of its own above it, where a rule in krona
+    // and a rule in euro read exactly alike.
+    expect(find.text('EUR'), findsOneWidget);
+    expect(find.text('Default Currency'), findsNothing);
+  });
+
   testWidgets('showRecurringTransactionFormDialog creates a recurrence', (
     tester,
   ) async {

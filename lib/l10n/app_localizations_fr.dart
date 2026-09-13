@@ -937,6 +937,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Achats rapprochés et virement de remboursement créé';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return 'Remboursements de cette carte sans lien vers ce qu’ils règlent : $count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases =>
       'Sélectionnez au moins un achat par carte';
 
@@ -1153,7 +1158,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get sourceAccount => 'Compte source';
 
   @override
+  String get fromAccount => 'De';
+
+  @override
   String get destinationAccount => 'Compte destination';
+
+  @override
+  String get toAccount => 'Vers';
 
   @override
   String get payee => 'Bénéficiaire';
@@ -2342,6 +2353,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tags => 'Tags';
 
   @override
+  String get addTag => 'Ajouter un tag';
+
+  @override
   String get subscription => 'Subscription';
 
   @override
@@ -2718,6 +2732,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tooltipSwapTransferAccounts => 'Échanger les deux comptes.';
 
   @override
+  String get tooltipTurnDirectionRound =>
+      'Inverser le sens : l\'argent va dans l\'autre sens.';
+
+  @override
   String get disconnectConfirmTitle => 'Déconnecter Firefly III';
 
   @override
@@ -2747,9 +2765,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tooltipFieldAmount => 'Montant principal dans la devise choisie.';
 
   @override
-  String get tooltipFieldCurrency => 'Devise principale de cette ligne.';
-
-  @override
   String get tooltipFieldForeignAmount =>
       'Montant facultatif dans une autre devise.';
 
@@ -2768,7 +2783,7 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get tooltipFieldTags =>
-      'Tags séparés par des virgules pour filtrer vite.';
+      'Tags pour filtrer vite. Entrée en ajoute un, la croix l\'enlève.';
 
   @override
   String get tooltipFieldSubscription =>
@@ -3060,6 +3075,29 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get noHistoryEntriesMatchFilters =>
       'Aucune entrée ne correspond à vos filtres.';
+
+  @override
+  String get historyEntryWhatChanged => 'Ce qui a changé';
+
+  @override
+  String get historyEntryNothingRecorded =>
+      'Rien n\'a été enregistré pour ce changement.';
+
+  @override
+  String get historyEntryRevert => 'Annuler ce changement';
+
+  @override
+  String get historyEntryReverted => 'Changement annulé';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return 'Impossible d\'annuler ce changement : $error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before (vidé)';
+  }
 
   @override
   String historyExportedTo(String path) {

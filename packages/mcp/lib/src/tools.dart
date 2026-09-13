@@ -91,6 +91,7 @@ const List<String> _writeToolNames = [
   'create_tag',
   'update_tag',
   'delete_tag',
+  'merge_tags',
   'create_account',
   'delete_account',
   'create_budget',
@@ -178,6 +179,14 @@ Map<String, Object?> _sealed(BackupPasswordException error) => {
   'code': 'password_required',
   'error': '$error',
 };
+
+/// A manifest as a tool reports it: its own fields, with the id left to
+/// `backup_id` beside them.
+///
+/// `list_backups` keeps whole manifests in its rows, since a list of them
+/// cannot be flattened, and that is the one place `id` stays.
+Map<String, Object?> _manifestFields(BackupManifest manifest) =>
+    manifest.toJson()..remove('id');
 
 Map<String, Object?> _backupsUnavailable() => {
   'ok': false,
@@ -310,53 +319,59 @@ Map<String, Object?> _transactionSplitJson(Transaction split) => {
 Map<String, Object?> _transactionJson(
   Transaction transaction, {
   bool withSplits = false,
-}) => {
-  'id': transaction.id,
-  // One leg of a split is only addressable by its journal id; the group id
-  // reaches the whole group. match_statement reports a leg, so a caller acting
-  // on its output needs the id that identifies one.
-  'journal_id': transaction.journalId,
-  'type': transaction.type,
-  'date': _dateOnly(transaction.date),
-  'amount': transaction.totalAmount,
-  // A group's title, not whichever leg Firefly happened to return first.
-  // The order is not stable between reads, so this changed on its own and
-  // looked briefly as though a write had corrupted the row. The legs carry
-  // their own descriptions in `splits`.
-  'description': transaction.isSplitGroup
-      ? (transaction.groupTitle ?? transaction.description)
-      : transaction.description,
-  'group_title': transaction.groupTitle,
-  'source_id': transaction.sourceId,
-  'source_name': transaction.sourceName,
-  'destination_id': transaction.destinationId,
-  'destination_name': transaction.destinationName,
-  'category_id': transaction.categoryId,
-  'category_name': transaction.categoryName,
-  'budget_id': transaction.budgetId,
-  'budget_name': transaction.budgetName,
-  'bill_id': transaction.billId,
-  'bill_name': transaction.billName,
-  'tags': transaction.tags,
-  // Deliberately carried, unlike on an account. A transaction note is what
-  // records where a row came from, such as the raw bank text an import kept so
-  // the origin stays traceable, and an agent reading transactions needs it.
-  // Account notes are unbounded free text on an entity that appears in every
-  // payee row, which is why _accountJson does not carry them.
-  'notes': transaction.notes,
-  'currency_symbol': transaction.currencySymbol,
-  'currency_code': transaction.currencyCode,
-  'foreign_amount': transaction.foreignAmount,
-  'foreign_currency_code': transaction.foreignCurrencyCode,
-  'split_count': transaction.resolvedSplits().length,
-  if (withSplits && transaction.isSplitGroup)
-    'splits': [
-      for (final split in transaction.resolvedSplits())
-        _transactionSplitJson(split),
-    ],
-  'reconciled': transaction.isReconciled,
-  'partially_reconciled': transaction.isPartiallyReconciled,
-};
+}) {
+  // What a card payback settles, read from the link note each of its legs
+  // carries. Only a payback has any, so the key is left off everything else.
+  final settles = paybackSettledIds(transaction);
+  return {
+    'id': transaction.id,
+    // One leg of a split is only addressable by its journal id; the group id
+    // reaches the whole group. match_statement reports a leg, so a caller acting
+    // on its output needs the id that identifies one.
+    'journal_id': transaction.journalId,
+    'type': transaction.type,
+    'date': _dateOnly(transaction.date),
+    'amount': transaction.totalAmount,
+    // A group's title, not whichever leg Firefly happened to return first.
+    // The order is not stable between reads, so this changed on its own and
+    // looked briefly as though a write had corrupted the row. The legs carry
+    // their own descriptions in `splits`.
+    'description': transaction.isSplitGroup
+        ? (transaction.groupTitle ?? transaction.description)
+        : transaction.description,
+    'group_title': transaction.groupTitle,
+    'source_id': transaction.sourceId,
+    'source_name': transaction.sourceName,
+    'destination_id': transaction.destinationId,
+    'destination_name': transaction.destinationName,
+    'category_id': transaction.categoryId,
+    'category_name': transaction.categoryName,
+    'budget_id': transaction.budgetId,
+    'budget_name': transaction.budgetName,
+    'bill_id': transaction.billId,
+    'bill_name': transaction.billName,
+    'tags': transaction.tags,
+    // Deliberately carried, unlike on an account. A transaction note is what
+    // records where a row came from, such as the raw bank text an import kept so
+    // the origin stays traceable, and an agent reading transactions needs it.
+    // Account notes are unbounded free text on an entity that appears in every
+    // payee row, which is why _accountJson does not carry them.
+    'notes': transaction.notes,
+    'currency_symbol': transaction.currencySymbol,
+    'currency_code': transaction.currencyCode,
+    'foreign_amount': transaction.foreignAmount,
+    'foreign_currency_code': transaction.foreignCurrencyCode,
+    'split_count': transaction.resolvedSplits().length,
+    if (withSplits && transaction.isSplitGroup)
+      'splits': [
+        for (final split in transaction.resolvedSplits())
+          _transactionSplitJson(split),
+      ],
+    'reconciled': transaction.isReconciled,
+    'partially_reconciled': transaction.isPartiallyReconciled,
+    if (settles.isNotEmpty) 'settles': settles,
+  };
+}
 
 ReconciledFilter _reconciledFilterFromArgs(Map<String, Object?> args) {
   final raw = args['reconciled'];
@@ -403,6 +418,19 @@ Future<FireflyCurrency?> _currencyByCode(
   return (await api.getCurrencies())
       .where((currency) => currency.code.toUpperCase() == wanted)
       .firstOrNull;
+}
+
+/// The tag in [tags] that [value] names, by id or by name, or null for none.
+///
+/// Firefly's own tag routes take either in the same path segment, and somebody
+/// reconciling two tags is thinking of their names, not their ids.
+Tag? _tagNamed(List<Tag> tags, String value) {
+  final wanted = value.trim();
+  if (wanted.isEmpty) return null;
+  return tags.where((tag) => tag.id == wanted).firstOrNull ??
+      tags
+          .where((tag) => tag.name.toLowerCase() == wanted.toLowerCase())
+          .firstOrNull;
 }
 
 Map<String, Object?> _budgetJson(Budget budget, {FireflyCurrency? primary}) => {
@@ -509,6 +537,52 @@ bool _isEmptyValue(Object? value) {
   return false;
 }
 
+/// Fields an empty value erases rather than leaves alone.
+///
+/// An empty string, or an empty tag list, is how a caller says "remove this".
+/// Left to the ordinary path it was indistinguishable from not mentioning the
+/// field at all, so a note could be set but never taken away.
+const _clearableFields = {
+  'notes',
+  'category_name',
+  'category_id',
+  'budget_name',
+  'budget_id',
+  'bill_id',
+  'piggy_bank_id',
+  'tags',
+};
+
+/// Which of [_clearableFields] the caller emptied, for a group or for one leg.
+Set<String> _clearedFields(Map<String, Object?> args) => {
+  for (final field in _clearableFields)
+    if (args.containsKey(field) && _isEmptyValue(args[field])) field,
+};
+
+/// Fields belonging to a leg rather than to the group around it.
+///
+/// An update states one of these at the top level to reach every leg, or
+/// inside `splits` to reach the leg it names. Both in the same call would have
+/// to mean both.
+const _legOwnedFields = [
+  'description',
+  'amount',
+  'currency_code',
+  'foreign_amount',
+  'foreign_currency_code',
+  'source_id',
+  'source_name',
+  'destination_id',
+  'destination_name',
+  'category_id',
+  'category_name',
+  'budget_id',
+  'bill_id',
+  'notes',
+  'tags',
+  'reconciled',
+];
+
 /// Whether [args] states [nameKey] as the replacement for [idKey].
 ///
 /// Firefly resolves an id in preference to a name, so an id the caller never
@@ -531,9 +605,10 @@ List<String> _unappliedTransactionFields(
   Map<String, Object?> args,
   Transaction saved,
 ) {
-  // A restated group is compared leg by leg or not at all: the top-level
-  // fields mirror the first leg, so they say nothing about the rest.
-  if (args['splits'] is List) return const [];
+  // A call that named legs is compared leg by leg: the top-level fields mirror
+  // the first leg, so they say nothing about the rest.
+  final legs = args['splits'];
+  if (legs is List) return _unappliedSplitFields(legs, saved);
 
   bool stated(String key) => args.containsKey(key) && !_isEmptyValue(args[key]);
   String text(String key) => '${args[key]}'.trim();
@@ -553,6 +628,17 @@ List<String> _unappliedTransactionFields(
       'category_name',
     if (stated('category_id') && saved.categoryId != text('category_id'))
       'category_id',
+    if (stated('source_name') &&
+        saved.sourceName.toLowerCase() != text('source_name').toLowerCase())
+      'source_name',
+    if (stated('source_id') && saved.sourceId != text('source_id')) 'source_id',
+    if (stated('destination_name') &&
+        saved.destinationName.toLowerCase() !=
+            text('destination_name').toLowerCase())
+      'destination_name',
+    if (stated('destination_id') &&
+        saved.destinationId != text('destination_id'))
+      'destination_id',
     if (stated('budget_id') && saved.budgetId != text('budget_id')) 'budget_id',
     if (stated('notes') && (saved.notes ?? '').trim() != text('notes')) 'notes',
     if (args['amount'] is num &&
@@ -571,6 +657,61 @@ List<String> _unappliedTransactionFields(
   return missed;
 }
 
+/// The same readback for legs the caller named, against the legs that came
+/// back, reported as `splits[i].field`.
+///
+/// A budget on a deposit is the standing example: Firefly answers 200, stores
+/// nothing, and only the leg itself says so.
+List<String> _unappliedSplitFields(List<Object?> legs, Transaction saved) {
+  final byJournal = {
+    for (final split in saved.resolvedSplits()) split.journalId: split,
+  };
+  final missed = <String>[];
+  for (final (index, leg) in legs.indexed) {
+    if (leg is! Map<String, Object?>) continue;
+    final split = byJournal['${leg['journal_id'] ?? ''}'.trim()];
+    if (split == null) {
+      // The group came back without the leg the call named at all, which is
+      // what a group rebuilt under new ids looks like from here.
+      missed.add('splits[$index]');
+      continue;
+    }
+    bool stated(String key) => leg.containsKey(key) && !_isEmptyValue(leg[key]);
+    String text(String key) => '${leg[key]}'.trim();
+    void check(String key, bool applied) {
+      if (stated(key) && !applied) missed.add('splits[$index].$key');
+    }
+
+    check('description', split.description.trim() == text('description'));
+    check(
+      'category_name',
+      split.categoryName.toLowerCase() == text('category_name').toLowerCase(),
+    );
+    check('category_id', split.categoryId == text('category_id'));
+    check(
+      'source_name',
+      split.sourceName.toLowerCase() == text('source_name').toLowerCase(),
+    );
+    check('source_id', split.sourceId == text('source_id'));
+    check(
+      'destination_name',
+      split.destinationName.toLowerCase() ==
+          text('destination_name').toLowerCase(),
+    );
+    check('destination_id', split.destinationId == text('destination_id'));
+    check('budget_id', split.budgetId == text('budget_id'));
+    check('notes', (split.notes ?? '').trim() == text('notes'));
+    if (leg['amount'] is num &&
+        ((leg['amount'] as num).toDouble() - split.amount).abs() > 0.005) {
+      missed.add('splits[$index].amount');
+    }
+    if (leg['reconciled'] is bool && split.reconciled != leg['reconciled']) {
+      missed.add('splits[$index].reconciled');
+    }
+  }
+  return missed;
+}
+
 Transaction _splitFromArgs(
   Map<String, Object?> leg,
   Map<String, Object?> args, {
@@ -582,13 +723,11 @@ Transaction _splitFromArgs(
 }) {
   String? pick(String key) => (leg[key] as String?) ?? (args[key] as String?);
 
-  // A leg naming its own category must not inherit the group's id, which
-  // Firefly would resolve in preference to the name.
-  String? pickCategoryId() =>
-      (leg['category_id'] as String?) ??
-      (_replacesId(leg, 'category_name', 'category_id')
-          ? null
-          : args['category_id'] as String?);
+  // A leg naming its own category or account must not inherit the group's
+  // id, which Firefly would resolve in preference to the name.
+  String? pickId(String nameKey, String idKey) =>
+      (leg[idKey] as String?) ??
+      (_replacesId(leg, nameKey, idKey) ? null : args[idKey] as String?);
 
   final amount = (leg['amount'] as num?)?.toDouble();
   if (amount == null || amount <= 0) {
@@ -610,9 +749,9 @@ Transaction _splitFromArgs(
     categoryName: pick('category_name') ?? '',
     currencySymbol: currencySymbol,
     currencyCode: (leg['currency_code'] as String?) ?? currencyCode,
-    sourceId: pick('source_id'),
-    destinationId: pick('destination_id'),
-    categoryId: pickCategoryId(),
+    sourceId: pickId('source_name', 'source_id'),
+    destinationId: pickId('destination_name', 'destination_id'),
+    categoryId: pickId('category_name', 'category_id'),
     budgetId: pick('budget_id'),
     billId: pick('bill_id'),
     notes: pick('notes'),
@@ -628,11 +767,210 @@ Transaction _splitFromArgs(
   );
 }
 
+/// Whether [args] state `reconciled` anywhere an update reads it.
+bool _statesReconciled(Map<String, Object?> args) =>
+    args.containsKey('reconciled') ||
+    (args['splits'] is List &&
+        (args['splits'] as List).any(
+          (leg) => leg is Map && leg.containsKey('reconciled'),
+        ));
+
+/// [args] with `reconciled: false` on whatever the update writes: each leg
+/// named in `splits`, or the whole transaction. A leg the list leaves out
+/// keeps its flag, since nothing about it changes.
+Map<String, Object?> _releasedArgs(Map<String, Object?> args) {
+  final released = {...args}..remove('keep_reconciled');
+  final legs = args['splits'];
+  if (legs is List) {
+    released['splits'] = [
+      for (final leg in legs)
+        if (leg is Map<String, Object?>) {...leg, 'reconciled': false} else leg,
+    ];
+  } else {
+    released['reconciled'] = false;
+  }
+  return released;
+}
+
+/// [saved] with each leg carrying the flag the same leg had on [before],
+/// matched by journal id, or by position for a leg that has none.
+Transaction _withReconciledFrom(Transaction saved, Transaction before) {
+  final priorLegs = before.resolvedSplits();
+  final byJournal = {
+    for (final leg in priorLegs) ?leg.journalId: leg.reconciled,
+  };
+  final legs = [
+    for (final (index, leg) in saved.resolvedSplits().indexed)
+      leg.copyWith(
+        reconciled:
+            byJournal[leg.journalId] ??
+            (index < priorLegs.length
+                ? priorLegs[index].reconciled
+                : before.reconciled),
+      ),
+  ];
+  return saved.copyWith(
+    reconciled: legs.first.reconciled,
+    splits: saved.splits.isEmpty ? null : legs,
+  );
+}
+
+bool _reconciledFlagsDiffer(Transaction a, Transaction b) {
+  final legsA = a.resolvedSplits();
+  final legsB = b.resolvedSplits();
+  if (legsA.length != legsB.length) return true;
+  for (var i = 0; i < legsA.length; i++) {
+    if (legsA[i].reconciled != legsB[i].reconciled) return true;
+  }
+  return false;
+}
+
+/// The legs of [base] with each patch in [legs] applied to the one it names.
+///
+/// Every leg goes back out, changed or not. Firefly reads the list it is sent
+/// as the whole group and deletes any journal missing from it, so a call
+/// carrying only the leg it edits would take the rest of the group with it.
+List<Transaction> _patchedSplits(
+  Transaction base,
+  List<Object?> legs, {
+  required DateTime date,
+}) {
+  final existing = base.resolvedSplits();
+  final patches = <String, (int, Map<String, Object?>)>{};
+  for (final (index, leg) in legs.indexed) {
+    if (leg is! Map<String, Object?>) {
+      throw ArgumentError('splits[$index] must be an object');
+    }
+    final journalId = '${leg['journal_id'] ?? ''}'.trim();
+    if (journalId.isEmpty) {
+      throw ArgumentError(
+        'splits[$index].journal_id is required: an update names the leg it '
+        'changes, and get_transaction reports one id per leg under splits',
+      );
+    }
+    if (!existing.any((split) => split.journalId == journalId)) {
+      throw ArgumentError(
+        'splits[$index].journal_id $journalId is not a leg of transaction '
+        '${base.id}; its legs are '
+        '${existing.map((split) => split.journalId).join(', ')}',
+      );
+    }
+    if (patches.containsKey(journalId)) {
+      throw ArgumentError('splits names journal $journalId more than once');
+    }
+    patches[journalId] = (index, leg);
+  }
+
+  final patched = <Transaction>[];
+  for (final split in existing) {
+    final patch = patches[split.journalId];
+    patched.add(
+      patch == null
+          ? split.copyWith(date: date)
+          : _patchSplit(split, patch.$2, index: patch.$1, date: date),
+    );
+  }
+  return patched;
+}
+
+/// One leg with the fields [patch] states written over it.
+///
+/// A leg of a create inherits what it omits from the group's arguments. A leg
+/// of an update keeps what it already has instead: the caller is naming the
+/// one thing to change, not restating the row.
+Transaction _patchSplit(
+  Transaction split,
+  Map<String, Object?> patch, {
+  required int index,
+  required DateTime date,
+}) {
+  final amount = (patch['amount'] as num?)?.toDouble();
+  if (patch.containsKey('amount') && (amount == null || amount <= 0)) {
+    throw ArgumentError('splits[$index].amount must be greater than zero');
+  }
+  final foreignAmount = (patch['foreign_amount'] as num?)?.toDouble();
+  if (patch.containsKey('foreign_amount') &&
+      (foreignAmount == null || foreignAmount <= 0)) {
+    throw ArgumentError(
+      'splits[$index].foreign_amount must be greater than zero',
+    );
+  }
+  // Firefly refuses a leg with no description, and an empty one here reads as
+  // an attempt to clear a field that cannot be cleared.
+  if (patch.containsKey('description') &&
+      '${patch['description'] ?? ''}'.trim().isEmpty) {
+    throw ArgumentError('splits[$index].description cannot be emptied');
+  }
+
+  // Firefly will not move the money on a reconciled journal, and toSplitJson
+  // drops those fields rather than arguing, so the change would report success
+  // and do nothing at all.
+  final reconciled = (patch['reconciled'] as bool?) ?? split.reconciled;
+  if (reconciled) {
+    final touched = const [
+      'amount',
+      'foreign_amount',
+      'currency_code',
+      'source_id',
+      'source_name',
+      'destination_id',
+      'destination_name',
+    ].where(patch.containsKey).toList();
+    if (touched.isNotEmpty) {
+      throw ArgumentError(
+        'splits[$index] is reconciled, so ${touched.join(', ')} cannot change; '
+        'pass reconciled:false on the same leg to release it first',
+      );
+    }
+  }
+  // Nobody can derive the rate from the local amount alone, so pairing a new
+  // figure with the stored foreign one would invent one and record it as fact.
+  if (amount != null &&
+      foreignAmount == null &&
+      split.foreignAmount != null &&
+      amount != split.amount) {
+    final was = [
+      split.foreignAmount!.toStringAsFixed(2),
+      ?split.foreignCurrencyCode,
+    ].join(' ');
+    throw ArgumentError(
+      'splits[$index].amount overrides a leg carrying a foreign amount of '
+      '$was; pass foreign_amount too, since the rate cannot be derived',
+    );
+  }
+
+  // Empty rather than null: toSplitJson leaves an empty id out, so Firefly
+  // resolves the name it was given instead of the id that name replaces.
+  String? replacing(String nameKey, String idKey) =>
+      _replacesId(patch, nameKey, idKey) ? '' : patch[idKey] as String?;
+
+  return split.copyWith(
+    date: date,
+    amount: amount,
+    description: patch['description'] as String?,
+    sourceId: replacing('source_name', 'source_id'),
+    sourceName: patch['source_name'] as String?,
+    destinationId: replacing('destination_name', 'destination_id'),
+    destinationName: patch['destination_name'] as String?,
+    categoryName: patch['category_name'] as String?,
+    categoryId: replacing('category_name', 'category_id'),
+    budgetId: patch['budget_id'] as String?,
+    billId: patch['bill_id'] as String?,
+    notes: patch['notes'] as String?,
+    currencyCode: patch['currency_code'] as String?,
+    foreignAmount: foreignAmount,
+    foreignCurrencyCode: patch['foreign_currency_code'] as String?,
+    reconciled: patch['reconciled'] as bool?,
+    tags: patch.containsKey('tags') ? _strList(patch['tags']) : null,
+    clearedFields: _clearedFields(patch),
+  );
+}
+
 Transaction _transactionFromArgs(
   Map<String, Object?> args, {
   Transaction? base,
   String id = '0',
-  bool carryReconciled = false,
+  bool isUpdate = false,
 }) {
   final type = (args['type'] as String?) ?? base?.type;
   if (type == null ||
@@ -653,6 +991,19 @@ Transaction _transactionFromArgs(
   final legs = statedLegs is List ? statedLegs : const [];
   final copyingGroup = legs.isEmpty && (base?.isSplitGroup ?? false);
 
+  // A field either reaches every leg or names one, and an update stating both
+  // would have to mean both.
+  if (isUpdate && legs.isNotEmpty) {
+    final overlapping = _legOwnedFields.where(args.containsKey).toList();
+    if (overlapping.isNotEmpty) {
+      throw ArgumentError(
+        '${overlapping.join(', ')} cannot be passed beside splits; state each '
+        'on the legs it belongs to. date, type and group_title still apply to '
+        'the whole group',
+      );
+    }
+  }
+
   // A single amount says nothing about how to divide it across legs, and
   // guessing is how a mortgage's fixed amortisation gets scaled along with its
   // interest. The caller restates the legs or leaves them alone.
@@ -667,27 +1018,12 @@ Transaction _transactionFromArgs(
       (args['currency_code'] as String?) ?? base?.currencyCode ?? '';
   final currencySymbol = base?.currencySymbol ?? '';
 
-  // An empty string, or an empty tag list, is how a caller says "remove this".
-  // Left to the ordinary path it was indistinguishable from not mentioning the
-  // field at all, so a note could be set but never taken away.
-  const clearable = {
-    'notes': 'notes',
-    'category_name': 'category_name',
-    'category_id': 'category_id',
-    'budget_name': 'budget_name',
-    'budget_id': 'budget_id',
-    'bill_id': 'bill_id',
-    'piggy_bank_id': 'piggy_bank_id',
-    'tags': 'tags',
-  };
-  final cleared = <String>{
-    for (final entry in clearable.entries)
-      if (args.containsKey(entry.key) && _isEmptyValue(args[entry.key]))
-        entry.value,
-  };
+  final cleared = _clearedFields(args);
 
   final splits = <Transaction>[
-    if (legs.isNotEmpty)
+    if (isUpdate && legs.isNotEmpty)
+      ..._patchedSplits(base!, legs, date: date)
+    else if (legs.isNotEmpty)
       for (final (index, leg) in legs.indexed)
         _splitFromArgs(
           leg is Map<String, Object?>
@@ -714,7 +1050,13 @@ Transaction _transactionFromArgs(
         split.copyWith(
           id: '0',
           date: date,
-          reconciled: carryReconciled && split.reconciled,
+          // An update carries each leg's own flag unless the call states one
+          // for the group, which is what makes `reconciled: false` release a
+          // split group before its money moves. A copy is never reconciled,
+          // whatever the original was.
+          reconciled: isUpdate
+              ? (args['reconciled'] as bool?) ?? split.reconciled
+              : false,
           categoryName: args['category_name'] as String?,
           // Empty rather than null: toSplitJson leaves an empty id out, so
           // Firefly resolves the name it was given instead of the id that
@@ -768,12 +1110,12 @@ Transaction _transactionFromArgs(
 
   final reconciled =
       (args['reconciled'] as bool?) ??
-      (carryReconciled ? base?.reconciled ?? false : false);
+      (isUpdate ? base?.reconciled ?? false : false);
 
   // Firefly will not move the money on a reconciled transaction, and
   // toSplitJson drops those fields rather than arguing, so the change would
   // report success and do nothing at all.
-  if (reconciled && carryReconciled) {
+  if (reconciled && isUpdate) {
     final touched = const [
       'amount',
       'foreign_amount',
@@ -842,17 +1184,20 @@ Transaction _transactionFromArgs(
         '',
     currencySymbol: currencySymbol,
     currencyCode: leadingLeg?.currencyCode ?? currencyCode,
+    // A name the caller stated wins over the id it replaces. Sending the new
+    // name beside the old id left Firefly resolving the id and discarding the
+    // name, so recategorising by name reported success and changed nothing,
+    // and so did moving a payee by name: the stored id rode along and won.
     sourceId:
         leadingLeg?.sourceId ??
         (args['source_id'] as String?) ??
-        base?.sourceId,
+        (_replacesId(args, 'source_name', 'source_id') ? null : base?.sourceId),
     destinationId:
         leadingLeg?.destinationId ??
         (args['destination_id'] as String?) ??
-        base?.destinationId,
-    // A name the caller stated wins over the id it replaces. Sending the new
-    // name beside the old id left Firefly resolving the id and discarding the
-    // name, so recategorising by name reported success and changed nothing.
+        (_replacesId(args, 'destination_name', 'destination_id')
+            ? null
+            : base?.destinationId),
     categoryId:
         leadingLeg?.categoryId ??
         (args['category_id'] as String?) ??
@@ -877,6 +1222,29 @@ Transaction _transactionFromArgs(
   );
 }
 
+/// What one leg carries, shared by the create and the update leg schemas.
+Map<String, Object?> _splitLegProperties() => {
+  'amount': {'type': 'number', 'exclusiveMinimum': 0},
+  'description': {'type': 'string'},
+  'currency_code': {'type': 'string'},
+  'foreign_amount': {'type': 'number', 'exclusiveMinimum': 0},
+  'foreign_currency_code': {'type': 'string'},
+  'source_id': {'type': 'string'},
+  'source_name': {'type': 'string'},
+  'destination_id': {'type': 'string'},
+  'destination_name': {'type': 'string'},
+  'category_id': {'type': 'string'},
+  'category_name': {'type': 'string'},
+  'budget_id': {'type': 'string'},
+  'bill_id': {'type': 'string'},
+  'notes': {'type': 'string'},
+  'tags': {
+    'type': 'array',
+    'items': {'type': 'string'},
+  },
+  'reconciled': {'type': 'boolean'},
+};
+
 /// The `splits` argument create and duplicate accept.
 ///
 /// A leg takes the group's values for anything it omits, so the account and the
@@ -899,26 +1267,43 @@ Map<String, Object?> _splitsFieldSchema() => {
       'type': 'object',
       'required': ['amount'],
       'properties': {
-        'amount': {'type': 'number', 'exclusiveMinimum': 0},
-        'description': {'type': 'string'},
+        ..._splitLegProperties(),
         'type': {
           'type': 'string',
           'enum': ['withdrawal', 'deposit', 'transfer'],
         },
-        'currency_code': {'type': 'string'},
-        'source_id': {'type': 'string'},
-        'source_name': {'type': 'string'},
-        'destination_id': {'type': 'string'},
-        'destination_name': {'type': 'string'},
-        'category_id': {'type': 'string'},
-        'category_name': {'type': 'string'},
-        'budget_id': {'type': 'string'},
-        'bill_id': {'type': 'string'},
-        'notes': {'type': 'string'},
-        'tags': {
-          'type': 'array',
-          'items': {'type': 'string'},
+      },
+    },
+  },
+};
+
+/// The `splits` argument an update accepts, which names legs rather than
+/// restating them.
+///
+/// Bookkeeping stated for a group lands on every leg of it, which is right for
+/// a card bill and wrong for a loan whose amortisation and interest belong to
+/// different categories, or for a split that pays for someone else and must
+/// carry no budget. Naming the leg is how those are written.
+Map<String, Object?> _updateSplitsFieldSchema() => {
+  'splits': {
+    'type': 'array',
+    'minItems': 1,
+    'description':
+        'Legs to change, each naming itself by the journal_id get_transaction '
+        'reports for it. A leg the list leaves out keeps everything it has, '
+        'and so does any field a named leg does not mention. Legs cannot be '
+        'added or removed this way.',
+    'items': {
+      'type': 'object',
+      'required': ['journal_id'],
+      'properties': {
+        'journal_id': {
+          'type': 'string',
+          'description':
+              "The leg's own id, as splits[].journal_id on get_transaction "
+              'reports it. Not the group id.',
         },
+        ..._splitLegProperties(),
       },
     },
   },
@@ -2350,7 +2735,10 @@ List<McpTool> buildTools({
       name: 'get_transaction',
       description:
           'Fetch a single Firefly III transaction by its transaction group ID '
-          '(the id returned by get_transactions, not a journal ID).',
+          '(the id returned by get_transactions, not a journal ID). A split '
+          'group comes back with every leg under splits, each carrying the '
+          'journal_id update_transaction names a leg by. A listing reports '
+          'split_count and no legs, so this is where they are read.',
       inputSchema: {
         'type': 'object',
         'required': ['transaction_id'],
@@ -2372,6 +2760,123 @@ List<McpTool> buildTools({
         return {
           'ok': true,
           'transaction': _transactionJson(transaction, withSplits: true),
+        };
+      },
+    ),
+    McpTool(
+      name: 'get_card_settlements',
+      description:
+          'What the paybacks on a credit card (an account with role ccAsset) '
+          'settle, read from the link note each payback leg carries, and what '
+          'they leave unsettled: purchases and refunds dated before the last '
+          'payback that no payback links. A payback carrying no links, such as '
+          'one written by hand, is listed with linked:false. Both spellings of '
+          'the link note are read. Pass a date window to bound the read; '
+          'without one the whole account is read. A linked row from before '
+          'the window is named under settles_outside_window rather than '
+          'fetched.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['account_id'],
+        'properties': {
+          'account_id': {
+            'type': 'string',
+            'description': 'The card: an account with role ccAsset.',
+          },
+          'start_date': {
+            'type': 'string',
+            'description': 'YYYY-MM-DD, inclusive.',
+          },
+          'end_date': {
+            'type': 'string',
+            'description': 'YYYY-MM-DD, inclusive.',
+          },
+          'max_rows': {
+            'type': 'integer',
+            'default': 200,
+            'description':
+                'Ceiling on the unsettled rows listed, 1..2000. Counts stay '
+                'whole.',
+          },
+        },
+      },
+      run: (args) async {
+        final accountId = (args['account_id'] as String?)?.trim() ?? '';
+        if (accountId.isEmpty) return _badInput('account_id is required');
+        final DateTime? start;
+        final DateTime? inclusiveEnd;
+        try {
+          start = _optionalDate(args['start_date'], 'start_date');
+          inclusiveEnd = _optionalDate(args['end_date'], 'end_date');
+        } on ArgumentError catch (e) {
+          return _badInput('${e.message}');
+        }
+        if (start != null &&
+            inclusiveEnd != null &&
+            inclusiveEnd.isBefore(start)) {
+          return _badInput('end_date must not precede start_date');
+        }
+        final max = ((args['max_rows'] as num?)?.toInt() ?? 200).clamp(1, 2000);
+        final api = service();
+        final card = await api.getAccount(accountId);
+        if (!isCreditCardAccount(card)) {
+          return _badInput(
+            'account $accountId (${card.name}) has role ${card.role}; a '
+            'payback settles a credit card, which is an account with role '
+            'ccAsset',
+          );
+        }
+        final transactions = await api.getAccountTransactions(
+          accountId,
+          start: start,
+          end: inclusiveEnd?.add(const Duration(days: 1)),
+        );
+        final result = analyseCardSettlements(
+          card: card,
+          transactions: transactions,
+        );
+        Map<String, Object?> row(Transaction transaction) => {
+          'transaction_id': transaction.id,
+          'date': _dateOnly(transaction.date),
+          'amount': transaction.totalAmount,
+          'description': transaction.isSplitGroup
+              ? (transaction.groupTitle ?? transaction.description)
+              : transaction.description,
+        };
+        return {
+          'ok': true,
+          'account': {
+            'id': card.id,
+            'name': card.name,
+            'currency_code': card.currencyCode,
+          },
+          'window': {
+            'start': start == null ? null : _dateOnly(start),
+            'end': inclusiveEnd == null ? null : _dateOnly(inclusiveEnd),
+          },
+          'last_payback': result.lastPayback == null
+              ? null
+              : row(result.lastPayback!),
+          'paybacks': [
+            for (final settlement in result.paybacks)
+              {
+                ...row(settlement.payback),
+                'linked': settlement.linked,
+                'settles': [for (final t in settlement.settles) row(t)],
+                'settles_outside_window': settlement.notFetched,
+              },
+          ],
+          'unsettled': [
+            for (final transaction in result.unsettled.take(max))
+              {...row(transaction), 'type': transaction.type},
+          ],
+          if (result.unsettled.length > max)
+            'unsettled_truncated': result.unsettled.length - max,
+          'counts': {
+            'paybacks': result.paybacks.length,
+            'unlinked_paybacks': result.unlinkedPaybacks.length,
+            'unsettled': result.unsettled.length,
+          },
         };
       },
     ),
@@ -2414,7 +2919,9 @@ List<McpTool> buildTools({
           'Store an account reconciliation: mark transactions reconciled and '
           'optionally create a correction transaction. For credit-card '
           '(ccAsset) accounts, pass payment_account_id and payback_date to '
-          'also create a multi-split payback transfer. Not atomic — a mid-loop '
+          'also create a payback transfer: one leg per purchase, or a single '
+          'netted leg when the selection holds refunds too. Not atomic — a '
+          'mid-loop '
           'failure leaves already-updated journals reconciled; the error '
           'message reports how many journals were updated.',
       inputSchema: {
@@ -2596,9 +3103,15 @@ List<McpTool> buildTools({
       writes: true,
       description:
           'Update fields on an existing transaction. Anything omitted keeps its '
-          'current value. On a split group the bookkeeping fields apply to '
-          'every leg, each leg keeps its own amount, description and accounts, '
-          'and a description renames the group.',
+          'current value. Stated at the top level, the bookkeeping fields reach '
+          'every leg of a split group, each leg keeps its own amount, '
+          'description and accounts, and a description renames the group. Pass '
+          'splits instead to change one leg on its own, naming it by its '
+          'journal_id; a leg the list leaves out is left exactly as it is. '
+          'A reconciled transaction will not take an amount or an account '
+          'change: pass reconciled:false with it to release the row, or '
+          'keep_reconciled:true to release it, store the change and mark it '
+          'reconciled again in this one call.',
       inputSchema: {
         'type': 'object',
         'required': ['transaction_id'],
@@ -2613,6 +3126,16 @@ List<McpTool> buildTools({
             'type': 'string',
             'description': 'Title for a multi-leg group.',
           },
+          ..._updateSplitsFieldSchema(),
+          'keep_reconciled': {
+            'type': 'boolean',
+            'description':
+                'Release a reconciled transaction for this change and put '
+                'each leg\'s flag back once it is stored, in two writes from '
+                'one call. Cannot be passed beside reconciled. The answer '
+                'lists the steps taken, and a second write that failed comes '
+                'back as left_unreconciled.',
+          },
         },
       },
       run: (args) async {
@@ -2620,22 +3143,65 @@ List<McpTool> buildTools({
         if (id == null || id.isEmpty) {
           return _badInput('transaction_id is required');
         }
+        final keep = args['keep_reconciled'];
+        if (keep != null && keep is! bool) {
+          return _badInput('keep_reconciled must be a boolean');
+        }
+        if (keep == true && _statesReconciled(args)) {
+          return _badInput(
+            'keep_reconciled puts back the flag each leg has, so reconciled '
+            'cannot be passed beside it, at the top level or on a leg',
+          );
+        }
         final api = service();
         // Merged over what is stored, so a one-field edit cannot blank the rest.
         final existing = await api.getTransaction(id);
+        // Firefly will not move the money on a reconciled journal, so the row
+        // is released in the same write as the change and the flag goes back
+        // on in a second one. Doing it here rather than in two calls halves
+        // the round trips of a batch and leaves no gap a run can die in
+        // without saying so.
+        final releasing =
+            keep == true &&
+            existing.resolvedSplits().any((leg) => leg.reconciled);
         final Transaction updated;
         try {
           updated = _transactionFromArgs(
-            args,
+            releasing ? _releasedArgs(args) : args,
             base: existing,
             id: id,
-            carryReconciled: true,
+            isUpdate: true,
           );
         } on ArgumentError catch (e) {
           return _badInput('${e.message}');
         }
-        final saved = await api.updateTransaction(updated);
-        final ignored = _unappliedTransactionFields(args, saved);
+        var saved = await api.updateTransaction(updated);
+        final steps = <String>[];
+        final ignored = <String>[];
+        if (releasing) {
+          steps.addAll(['released', 'changed']);
+          final restored = _withReconciledFrom(saved, existing);
+          try {
+            saved = await api.updateTransaction(restored);
+          } on Object catch (error) {
+            return {
+              'ok': false,
+              'code': 'left_unreconciled',
+              'error':
+                  'The change was stored, but marking the transaction '
+                  'reconciled again failed: $error. Call '
+                  'set_transaction_reconciled with reconciled:true to finish.',
+              'transaction_id': saved.id,
+              'transaction': _transactionJson(saved, withSplits: true),
+              'steps': steps,
+            };
+          }
+          steps.add('reconciled');
+          if (_reconciledFlagsDiffer(saved, restored)) {
+            ignored.add('reconciled');
+          }
+        }
+        ignored.addAll(_unappliedTransactionFields(args, saved));
         return {
           'ok': ignored.isEmpty,
           if (ignored.isNotEmpty) 'code': 'not_applied',
@@ -2647,6 +3213,7 @@ List<McpTool> buildTools({
                 'transaction as it now stands is in `transaction`.',
           'transaction_id': saved.id,
           'transaction': _transactionJson(saved, withSplits: true),
+          if (releasing) 'steps': steps,
         };
       },
     ),
@@ -2777,7 +3344,11 @@ List<McpTool> buildTools({
                 value is List && key != 'covers' && key != 'excludes',
           );
         }
-        return {'ok': true, 'counts_only': countsOnly, 'export': json};
+        // Spread, not nested under `export`: every collection here is the
+        // same list its own tool answers with, and a caller that reads
+        // `accounts` off get_accounts should not have to reach through a
+        // wrapper for the same rows.
+        return {'ok': true, 'counts_only': countsOnly, ...json};
       },
     ),
     McpTool(
@@ -2814,11 +3385,22 @@ List<McpTool> buildTools({
         );
         return {
           'ok': true,
-          'backup': manifest.toJson(),
+          // The manifest itself, not a `backup` object holding it, which is
+          // where every other tool's own fields are. Named `backup_id` rather
+          // than the manifest's `id`, because that is what the rest of the
+          // backup tools take, and one value under two names in one answer is
+          // worse than either.
+          'backup_id': manifest.id,
+          ..._manifestFields(manifest),
           if (!manifest.complete)
             'warning':
-                'Some data sets could not be read; see entries[].error. The '
-                'snapshot is what a restore needs, so check it is there.',
+                'The snapshot could not be written; see entries[].error. '
+                'Nothing can be restored from this backup.'
+          else if (manifest.failedExports.isNotEmpty)
+            'warning':
+                'Firefly could not export ${manifest.failedExports.join(', ')}; '
+                'see entries[].error. The snapshot a restore reads is '
+                'complete.',
         };
       },
     ),
@@ -2826,7 +3408,9 @@ List<McpTool> buildTools({
       name: 'list_backups',
       description:
           'Backups this FireRaccoon holds, newest first, with what each one '
-          'covers and whether every part of it was written.',
+          'covers, whether the snapshot a restore reads was written '
+          '(complete), and which CSV exports Firefly could not produce '
+          '(failed_exports).',
       inputSchema: {'type': 'object', 'properties': <String, Object?>{}},
       run: (args) async {
         final service = backupService();
@@ -2878,7 +3462,7 @@ List<McpTool> buildTools({
         if (manifest == null) return _notFound('No backup $id');
         final file = (args['file'] as String?)?.trim();
         if (file == null || file.isEmpty) {
-          return {'ok': true, 'backup': manifest.toJson()};
+          return {'ok': true, 'backup_id': id, ..._manifestFields(manifest)};
         }
         final String? contents;
         try {
@@ -2933,8 +3517,10 @@ List<McpTool> buildTools({
       name: 'verify_backup',
       description:
           'Check a backup two ways and write nothing. First whether it is still '
-          'the backup its manifest describes: every part present, the sizes '
-          'unchanged, and a sealed one opening with the password given. Then '
+          'the backup its manifest describes: every part written present, the '
+          'sizes unchanged, and a sealed one opening with the password given; '
+          'an export Firefly could not produce at the time is listed under '
+          'never_written rather than counted against it. Then '
           'how far the ledger has moved since it was taken, counted by row. A '
           'backup that is intact and finds no differences is one you can trust '
           'to put things back.',
@@ -2976,7 +3562,7 @@ List<McpTool> buildTools({
         final result = <String, Object?>{
           'ok': true,
           'backup_id': id,
-          'taken_at': backupTimestampFor(manifest.takenAt),
+          'taken_at': manifest.takenAtStamp,
           'encrypted': manifest.encrypted,
           'integrity': integrity.toJson(),
         };
@@ -4288,7 +4874,11 @@ List<McpTool> buildTools({
     McpTool(
       name: 'update_tag',
       writes: true,
-      description: 'Rename a tag, and optionally replace its description.',
+      description:
+          'Rename a tag, and optionally replace its description. A name '
+          'another tag already carries is refused before the write, since '
+          'Firefly will not hold two: merge_tags folds the two together '
+          'instead.',
       inputSchema: {
         'type': 'object',
         'required': ['tag_id', 'tag'],
@@ -4303,7 +4893,28 @@ List<McpTool> buildTools({
         final tag = (args['tag'] as String?)?.trim();
         if (id == null || id.isEmpty) return _badInput('tag_id is required');
         if (tag == null || tag.isEmpty) return _badInput('tag is required');
-        final updated = await service().updateTag(
+        final api = service();
+        // Firefly answers this rename with a 422 saying the name is in use,
+        // which is true and says nothing about what to do instead. Matched
+        // exactly: whether a name differing only in case collides is the
+        // database's business, and refusing one here that Firefly would have
+        // taken would be worse than letting it answer.
+        final taken = (await api.getTags())
+            .where((existing) => existing.name == tag)
+            .firstOrNull;
+        if (taken != null && taken.id != id) {
+          return {
+            'ok': false,
+            'code': 'name_taken',
+            'error':
+                'Tag ${taken.id} already carries the name "${taken.name}", '
+                'and Firefly will not hold two of them.',
+            'remedy':
+                'merge_tags moves every transaction from one of them onto the '
+                'other and removes the one it empties.',
+          };
+        }
+        final updated = await api.updateTag(
           id,
           tag,
           description: args['description'] as String?,
@@ -4330,6 +4941,95 @@ List<McpTool> buildTools({
         if (id == null || id.isEmpty) return _badInput('tag_id is required');
         await service().deleteTag(id);
         return {'ok': true, 'tag_id': id, 'deleted': true};
+      },
+    ),
+    McpTool(
+      name: 'merge_tags',
+      writes: true,
+      description:
+          'Move every transaction from one tag onto another and remove the tag '
+          'left empty, which is how two tags meaning the same thing become '
+          'one. Firefly has no merge endpoint and refuses a rename onto a name '
+          'already in use, so the rows have to be moved before the tag can go. '
+          'A tag sits on a leg rather than on the group around it, so only the '
+          'legs carrying it are rewritten and the rest of a split is left '
+          'alone. Both tags are named by name or by id. Nothing is written '
+          'while dry_run is true, which is the default. One write per '
+          'transaction group: a tag on hundreds of rows takes minutes.',
+      inputSchema: {
+        'type': 'object',
+        'required': ['from_tag', 'into_tag'],
+        'properties': {
+          'from_tag': {
+            'type': 'string',
+            'description':
+                'The tag to empty and then remove, by name or id. Its '
+                'description goes with it.',
+          },
+          'into_tag': {
+            'type': 'string',
+            'description': 'The tag to keep, by name or id. It must exist.',
+          },
+          'dry_run': {
+            'type': 'boolean',
+            'default': true,
+            'description': 'Report the rows and write nothing.',
+          },
+        },
+      },
+      run: (args) async {
+        final from = (args['from_tag'] as String?)?.trim() ?? '';
+        final into = (args['into_tag'] as String?)?.trim() ?? '';
+        if (from.isEmpty) return _badInput('from_tag is required');
+        if (into.isEmpty) return _badInput('into_tag is required');
+
+        final api = service();
+        final tags = await api.getTags();
+        final source = _tagNamed(tags, from);
+        final target = _tagNamed(tags, into);
+        if (source == null) {
+          return _notFound('No tag "$from". get_tags lists what there is.');
+        }
+        if (target == null) {
+          // Merging into a name nothing carries is a rename, and a rename is
+          // one write rather than one per row.
+          return _notFound(
+            'No tag "$into" to merge into. Nothing carries that name yet, so '
+            'this is a rename: update_tag does it in a single write.',
+          );
+        }
+
+        final dryRun = args['dry_run'] as bool? ?? true;
+        final TagMergeResult merged;
+        try {
+          merged = await TagMergeService(api)
+              .merge(from: source, into: target, dryRun: dryRun);
+        } on ArgumentError catch (e) {
+          return _badInput('${e.message}');
+        }
+
+        // A tag on thousands of rows would otherwise answer with thousands of
+        // ids. The counts stay whole.
+        const reported = 100;
+        final ids = merged.transactionIds;
+        return {
+          'ok': true,
+          'dry_run': merged.dryRun,
+          'from': {'id': merged.from.id, 'name': merged.from.name},
+          'into': {'id': merged.into.id, 'name': merged.into.name},
+          'transaction_count': ids.length,
+          'leg_count': merged.legs,
+          'transaction_ids': ids.take(reported).toList(),
+          if (ids.length > reported)
+            'transaction_ids_truncated': ids.length - reported,
+          'tag_removed': merged.tagRemoved,
+          if (merged.dryRun)
+            'next': ids.isEmpty
+                ? 'No transaction carries ${merged.from.name}, so delete_tag '
+                      'is all this needs.'
+                : 'Call again with dry_run false to move them and remove '
+                      '${merged.from.name}.',
+        };
       },
     ),
     McpTool(
@@ -4927,7 +5627,11 @@ List<McpTool> buildTools({
         'properties': {
           'period': {
             'type': 'string',
-            'enum': _strList(DashboardPeriod.values.map((p) => p.name)),
+            // Listed, not derived through _strList: that takes a JSON value off
+            // an argument map and answers const [] to anything that is not a
+            // List, so an Iterable of enum names came out empty and the enum
+            // matched nothing a caller could pass.
+            'enum': [for (final period in DashboardPeriod.values) period.name],
             'default': 'thisMonth',
           },
           'period_label': {

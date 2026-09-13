@@ -53,3 +53,4 @@ export 'utils/transaction_splits.dart';
 export 'utils/reconciliation.dart';
 export 'utils/credit_card_payback.dart';
 export 'services/reconciliation_service.dart';
+export 'services/tag_merge_service.dart';

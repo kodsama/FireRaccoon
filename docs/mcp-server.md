@@ -108,7 +108,7 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 
 ## Available tools
 
-65 tools, 34 of which write. The two that carry a bank import lead the table and
+68 tools, 36 of which write. The two that carry a bank import lead the table and
 are described under [Importing a statement](#importing-a-statement).
 
 | Tool | Description | Writes |
@@ -123,18 +123,19 @@ are described under [Importing a statement](#importing-a-statement).
 | `get_accounts` | List accounts with balances |  |
 | `get_transactions` | Transactions, filterable by account, date window, and reconciled state |  |
 | `get_transaction` | One transaction by group ID, with the legs of a split group |  |
+| `get_card_settlements` | What the paybacks on a credit card settle, read from their link notes, and the purchases and refunds no payback links |  |
 | `set_transaction_reconciled` | Mark reconciled or unreconciled | yes |
 | `store_reconciliation` | Store an account reconciliation with optional correction | yes |
 | `create_transaction` | Create a transaction, one leg or several | yes |
-| `update_transaction` | Update a transaction; omitted fields keep their value, and on a split group the bookkeeping reaches every leg | yes |
+| `update_transaction` | Update a transaction; omitted fields keep their value, the bookkeeping reaches every leg of a split group, `splits` reaches one leg by its journal id, and `keep_reconciled` releases and re-reconciles a row around a change | yes |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides | yes |
 | `delete_transaction` | Delete a transaction group and its splits | yes |
 | `export_firefly_data` | Snapshot of every entity the API exposes, for taking before a bulk change |  |
-| `create_backup` | Take a backup: the snapshot a restore reads plus Firefly's own CSV export, named by the moment it was taken, sealed when given a password | yes |
-| `list_backups` | Backups this FireRaccoon holds, newest first |  |
+| `create_backup` | Take a backup: the snapshot a restore reads plus Firefly's own CSV export, named by the moment it was taken, sealed when given a password; `complete` says the snapshot was written and `failed_exports` names any CSV Firefly could not produce | yes |
+| `list_backups` | Backups this FireRaccoon holds, newest first, each stamped in the zone it was taken in |  |
 | `get_backup` | One manifest, or a file inside a backup, truncated at `max_bytes` |  |
 | `delete_backup` | Remove one backup and everything in it | yes |
-| `verify_backup` | Check a backup's own files, then how far the ledger has moved from it |  |
+| `verify_backup` | Check a backup's own files, then how far the ledger has moved from it; an export that was never written is listed under `never_written`, not counted as damage |  |
 | `restore_backup` | Plan or apply putting a backup back, taking a fresh one first | yes |
 | `find_incomplete_transactions` | Transactions missing a description, category, budget, tags, payee, notes or piggy bank |  |
 | `search_transactions` | Full-text search, for matching statement lines |  |
@@ -160,8 +161,9 @@ are described under [Importing a statement](#importing-a-statement).
 | `delete_category` | Delete a category | yes |
 | `get_tags` | List tags |  |
 | `create_tag` | Create a tag | yes |
-| `update_tag` | Rename a tag | yes |
+| `update_tag` | Rename a tag, or refuse and point at `merge_tags` when another tag has the name | yes |
 | `delete_tag` | Delete a tag | yes |
+| `merge_tags` | Move every transaction from one tag onto another and remove the tag left empty; reports the rows and writes nothing unless `dry_run` is false | yes |
 | `get_bills` | List bills with amount ranges |  |
 | `create_bill` | Create a bill | yes |
 | `update_bill` | Update a bill; omitted fields keep their value | yes |
@@ -358,7 +360,29 @@ it when the ledger has none, in the reconciled account's currency, because a
 name Firefly cannot resolve is a refusal and there was otherwise no way to
 write a correction at all.
 
-### A split group is edited as a group
+### What a card payback settles
+
+Every leg of a payback the app writes carries a link note,
+`fireraccoon:linked_journal:<id>`, naming the purchase it settles, and a netted
+payback names every row it settles, refunds included. Nothing read those notes
+back until now, which is how a year of paybacks written by hand as single
+untitled legs went unnoticed: the app never compared purchases against
+paybacks.
+
+`get_card_settlements` reads them. Given a card, an account with role
+`ccAsset`, it lists every payback oldest first with the rows its notes settle,
+and under `unsettled` the purchases and refunds dated before the last payback
+that no payback links. A payback carrying no links comes back with
+`linked: false`, which is what a hand-written one looks like. A linked row from
+before the window that was read is named under `settles_outside_window` rather
+than fetched. Rows written before the raccoon rename spell the note
+`fireracoon:` with one `c`, and both spellings are read. `get_transaction`
+lists the same ids under `settles` on any transaction whose legs carry a link.
+
+The reconciliation panel in the app shows the same gap while a payback is being
+prepared: when older paybacks on the card link to nothing, it says how many.
+
+### A split group is edited whole or a leg at a time
 
 Firefly identifies one leg of a group by `transaction_journal_id`, and treats a
 leg that carries none as a new split, deleting the journals the update did not
@@ -374,9 +398,19 @@ one leg stays with it, so amounts, descriptions and accounts are untouched. A
 "Interest" with one string would be worse than the bug being fixed; pass
 `group_title` to be explicit about it.
 
-Editing one leg on its own is not exposed. It needs the leg's own id in the
-argument, and a documented rule that a leg left out of the list is deleted,
-which is a larger change than a schema line.
+Editing one leg on its own takes `splits`, where each entry names its leg by
+the `journal_id` `get_transaction` reports for it and states only what changes.
+That is what a loan whose amortisation and interest belong to different
+categories needs, and what a split paying for someone else needs: one leg
+carrying a budget beside one that must carry none. A group-level field cannot
+be passed in the same call, since it would have to mean every leg and one leg
+at once; `date`, `type` and `group_title` still belong to the group.
+
+A leg the list leaves out is left exactly as it is. The whole group goes back
+out either way, each leg carrying its own id, so the rule that a missing leg is
+deleted never comes into play, and legs cannot be added or removed this way.
+The readback reports a leg Firefly declined as `splits[0].budget_id`, and a
+group that came back without a journal the call named as `splits[0]`.
 
 ### Removing a value, not just changing it
 
@@ -389,6 +423,18 @@ there: `notes`, `category_name`, `category_id`, `budget_name`, `budget_id`,
 `bill_id`, `piggy_bank_id` and `tags`. Omitting the field still leaves it
 exactly as it was.
 
+### A name replaces the id beside it
+
+Firefly resolves an id in preference to a name. An update that named a
+category while the stored id rode along changed nothing and answered 200, and
+so did one that moved a payee by name: the description and category in the
+same call landed, the payer stayed, and nothing in the answer said so. A name
+stated without its id now drops the stored id for that side, on the group and
+on a leg named in `splits` alike, and a leg of a create that names its own
+account no longer inherits the group's id. An account Firefly kept regardless
+comes back as `not_applied`, naming `source_name`, `destination_name` or the id
+that did not land, the way every other declined field is reported.
+
 ### Reconciliation survives an edit
 
 `update_transaction` keeps whatever `reconciled` the transaction already had
@@ -400,7 +446,22 @@ Firefly will not move the money on a reconciled transaction, and the payload
 drops those fields rather than arguing, so a correction reported success and
 changed nothing. Changing `amount`, `foreign_amount`, `currency_code` or either
 account on a reconciled transaction is now refused; pass `reconciled: false` in
-the same call to release it and make the change together.
+the same call to release it and make the change together. On a split group that
+release reaches every leg, which is what makes it work there at all: the flag
+used to stop at the group while each leg stayed reconciled, and the amounts it
+was meant to free were dropped from the payload anyway. A leg names its own
+`reconciled` inside `splits`.
+
+Releasing a row to move its money and then reconciling it again took two
+calls, and between them the row sat unreconciled, so a run that died there
+left it that way. `keep_reconciled: true` does both from one call: the release
+goes out with the change, and once Firefly has stored it a second write puts
+back the flag each leg had, so a partly reconciled group comes back partly
+reconciled rather than whole. The answer lists the steps under `steps`. A
+second write Firefly refused comes back as `left_unreconciled` with the
+transaction as it now stands, so the caller knows exactly which row to finish
+with `set_transaction_reconciled`. It cannot be passed beside `reconciled`,
+since one says what the flag should become and the other says to keep it.
 
 A copy is still never reconciled, whatever the original was.
 
@@ -416,6 +477,28 @@ account's own.
 `foreign_amount` comes with it: the rate cannot be read off the local figure,
 carrying the old one over would pair this month's amount with last month's rate,
 and scaling it would invent a rate and record it as fact.
+
+### Two tags that mean the same thing
+
+Firefly has no merge endpoint, and it refuses a rename onto a name already in
+use with a 422 saying so, which leaves a duplicate tag with nowhere to go:
+`Vacances` sits beside `Holidays` and neither can absorb the other.
+`update_tag` now refuses that rename itself, before the write, and names the
+tag already holding the name.
+
+`merge_tags` moves the rows instead. Every leg carrying `from_tag` is rewritten
+to carry `into_tag`, and the tag it emptied is deleted. A tag belongs to a
+journal rather than to the group around it, so the legs of a split that do not
+carry it keep their own tags, and a leg already carrying both ends up with one.
+Either tag can be named by name or by id, since Firefly's own tag route takes
+either.
+
+It writes once per transaction group and reports nothing but counts while
+`dry_run` is true, which is the default. It is not atomic: a failure part way
+leaves the groups already written carrying the new tag, keeps the old tag in
+place, and says how many moved, because running it again moves what is left.
+Merging into a name nothing carries yet is refused rather than guessed at,
+because that is a rename, and `update_tag` does a rename in one write.
 
 ## Managing keys
 

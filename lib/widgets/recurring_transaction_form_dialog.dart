@@ -11,7 +11,9 @@ import '../theme/app_theme.dart';
 import '../utils/app_feedback.dart';
 import '../utils/autocomplete_suggestions.dart';
 import '../utils/locale_formatting.dart';
+import 'amount_currency_suffix.dart';
 import 'autocomplete_text_field.dart';
+import 'tag_input_field.dart';
 import 'tooltip_helpers.dart';
 
 Future<bool?> showRecurringTransactionFormDialog({
@@ -977,49 +979,21 @@ class _RecurringTransactionFormDialogState
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 16),
-        currenciesAsync.when(
-          loading: () => const LinearProgressIndicator(),
-          error: (_, _) => AutocompleteTextField(
-            readOnly: true,
-            suggestions: [_currencyCode],
-            decoration: _fieldDecoration(l10n.defaultCurrency),
-            controller: TextEditingController(text: _currencyCode),
-          ),
-          data: (currencies) {
-            final items = currencies.isEmpty
-                ? [
-                    DropdownMenuItem(
-                      value: _currencyCode,
-                      child: Text(_currencyCode),
-                    ),
-                  ]
-                : currencies
-                      .map(
-                        (c) => DropdownMenuItem(
-                          value: c.code,
-                          child: Text('${c.name} (${c.symbol})'),
-                        ),
-                      )
-                      .toList();
-            if (!items.any((i) => i.value == _currencyCode)) {
-              _currencyCode = items.first.value!;
-            }
-            return DropdownButtonFormField<String>(
-              initialValue: _currencyCode,
-              decoration: _fieldDecoration(l10n.defaultCurrency),
-              items: items,
-              onChanged: (value) {
-                if (value != null) setState(() => _currencyCode = value);
-              },
-            );
-          },
-        ),
-        const SizedBox(height: 16),
         AutocompleteTextField(
           controller: _amountController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           suggestions: const [],
-          decoration: _fieldDecoration(l10n.amount),
+          // The currency belongs in the field the figure is in. It had a row
+          // of its own above this one, where a rule in krona and a rule in
+          // euro read exactly alike.
+          decoration: AmountCurrencySuffix.decorate(
+            _fieldDecoration(l10n.amount),
+            AmountCurrencySuffix(
+              code: _currencyCode,
+              currencies: currenciesAsync.value ?? const [],
+              onChanged: (code) => setState(() => _currencyCode = code),
+            ),
+          ),
           onChanged: (_) => setState(() {}),
         ),
         const SizedBox(height: 16),
@@ -1156,11 +1130,11 @@ class _RecurringTransactionFormDialogState
           },
         ),
         const SizedBox(height: 16),
-        AutocompleteTextField(
+        TagInputField(
           controller: _tagsController,
-          tagMode: true,
           suggestions: tags,
-          decoration: _fieldDecoration(l10n.tags),
+          label: l10n.tags,
+          addHint: l10n.addTag,
         ),
         const SizedBox(height: 16),
         AutocompleteTextField(

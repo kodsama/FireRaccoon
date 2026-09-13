@@ -7,6 +7,131 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-09-13
+
+### Added
+
+- A history entry opens on what it changed. Both sides of a change are stored,
+  so the detail is the exact difference between them, field by field, as it
+  was and as it became, and it can be taken back from there: any entry, not
+  only the last one. Reaching something from last week through undo meant
+  undoing everything done since, which is somebody's work. Taking one change
+  back is recorded as a change of its own, so the list stays a record of what
+  happened in the order it happened, and the revert can itself be undone
+- `update_transaction` takes `splits`, so one leg of a split group can be
+  changed without touching the others. Each entry names its leg by the
+  `journal_id` `get_transaction` reports for it and states only what changes;
+  a leg the list leaves out keeps everything it has. This is what a loan whose
+  amortisation and interest sit in different categories needs, and what a split
+  that pays for someone else needs: a leg carrying a budget beside a leg that
+  must carry none. Both were unwritable while every bookkeeping field reached
+  every leg of the group. The whole group still goes back out with each leg
+  carrying its own id, so nothing is deleted, and the readback names a leg
+  Firefly declined as `splits[0].budget_id`
+- `get_card_settlements` reads the link notes on a card's paybacks back.
+  Every leg of a payback the app writes names the purchase it settles, and a
+  netted one names every row, refunds included, but nothing read the notes,
+  so no view could say which purchases a payback settled or which purchases
+  no payback had settled yet, and a year of paybacks written by hand as single
+  untitled legs went unnoticed. The tool lists each payback with the rows it
+  settles, marks one carrying no links as `linked: false`, and lists under
+  `unsettled` the purchases and refunds dated before the last payback that no
+  payback links. `get_transaction` lists the same ids under `settles`. Rows
+  from before the raccoon rename spell the note with one `c`, and both
+  spellings are read. The reconciliation panel says how many older paybacks
+  on the card link to nothing while a new one is being prepared
+- `update_transaction` takes `keep_reconciled`, so an amount or an account on
+  a reconciled row can change in one call. Firefly will not move the money on
+  a reconciled journal, and following the guard meant two writes, release with
+  the change and then set the flag back, with the row sitting unreconciled in
+  between: at eight seconds a write that doubled a batch, and a run that died
+  in the middle left the row that way. The release now goes out with the
+  change and a second write puts back the flag each leg had, so a partly
+  reconciled group comes back partly reconciled. The answer lists the steps,
+  and a second write Firefly refused comes back as `left_unreconciled` naming
+  the row to finish
+- `merge_tags` moves every transaction from one tag onto another and removes
+  the tag it empties. Firefly has no merge endpoint and refuses a rename onto a
+  name already in use, so two tags meaning the same thing had nowhere to go and
+  one of them stayed in the list forever. A tag sits on a leg rather than on
+  the group around it, so only the legs carrying it are rewritten and the rest
+  of a split keeps its own tags. It writes once per transaction group and
+  reports the rows without writing while `dry_run` is true, which is the
+  default
+
+### Changed
+
+- The arrow between the two accounts turns a payment round. Money out becomes
+  money in, the two accounts trade places so the payer stands where a payer
+  belongs, and the type goes with them. Editing a transaction offered no type
+  selector at all, and changing the type on its own would have left the payee
+  paying itself. A transfer still just exchanges its two ends, and a flow that
+  opened the panel with the type already decided does not offer to undecide it
+- The amount says which way the money goes: a minus for what leaves, a plus in
+  the colour the lists use for what arrives, and nothing on a transfer, which
+  moves money between two accounts of your own
+- An amount carries the currency it is in, inside the field and changeable
+  there, on a transaction and on a recurring rule alike. The currency was a
+  row of its own, behind the optional fields on a transaction and above the
+  amount on a rule, so a figure in krona and a figure in euro read exactly
+  alike until somebody went looking. The picker shows the code where there is
+  room for three letters and says which currency that is when it opens
+- A transaction is laid out in pairs on a wide panel: amount beside date, the
+  other party beside the account the money moved through, budget beside tags,
+  then category beside the description. The date used to take a whole row for
+  eight characters of value while the accounts sat on rows of their own. The
+  account pair is ordered by what each end means rather than by which side of
+  the journal it is, so a deposit leads with whoever paid just as a withdrawal
+  leads with the payee, and a transfer keeps the exchange arrow between its two
+  accounts
+- Tags are chips on a transaction and on a recurring rule, rather than a
+  comma-separated string. Each carries a cross that takes it off, tapping one
+  puts it back in the box to retype, and a tag typed and then left sitting
+  there is kept rather than dropped on save. Getting the commas right was the
+  person's problem before, and taking the middle tag out of three meant editing
+  a string in the middle
+- `export_firefly_data` answers with its collections at the top level instead
+  of under an `export` key of their own, so the accounts and transactions of a
+  snapshot sit where the tool for each already puts them. `create_backup` and
+  `get_backup` answer with the manifest's own fields the same way, under the
+  `backup_id` the rest of the backup tools take rather than the manifest's
+  `id`. `list_backups` still carries whole manifests in its rows, since a list
+  of them cannot be flattened
+- `update_tag` refuses a name another tag already carries before it writes,
+  and names `merge_tags` as the way to fold the two together. Firefly answers
+  such a rename with a 422 saying the name is in use, which is true and says
+  nothing about what to do instead
+
+### Fixed
+
+- Every backup read `complete: false` because Firefly 6.6.6 answers its own
+  piggy-bank CSV export with a 500, and `complete` meant every part written.
+  A restore reads the snapshot and never opens a CSV, so `complete` now says
+  whether the snapshot was written and the exports Firefly could not produce
+  are named under `failed_exports`, with the reason still under
+  `entries[].error`. `verify_backup` lists such an export under
+  `never_written` rather than calling a backup that is exactly what its
+  manifest describes damaged. `create_backup` and `list_backups` also stamp
+  `taken_at` the same way now: a manifest read back holds its moment as a UTC
+  instant, and the stamp is rendered in the recorded zone instead of in
+  whatever zone the instant happened to be in
+- `update_transaction` dropped a payee given by name. The stored journal
+  carries the id of each account, and the call merged that id with the new
+  name and sent both, so Firefly resolved the id and discarded the name: the
+  description and category in the same call moved, the payer stayed, and the
+  answer was `ok: true`. A name stated without an id now drops the stored id
+  for that side, on a leg named in `splits` as well, and a leg of a create that
+  names its own account no longer inherits the group's id. An account Firefly
+  kept regardless is reported as `not_applied`
+- `reconciled: false` on a split group left every leg reconciled. It is the
+  documented way to release a transaction and move its money in one call, and
+  on a group the flag stopped at the top level: Firefly kept each leg
+  reconciled and dropped the amounts the call was releasing them for
+- `get_dashboard_kpis` would not take a period. Its enum of periods was built
+  through a helper that reads a JSON list off an argument map and answers an
+  empty list to anything else, so the schema offered an enum no value could
+  satisfy and the parameter could not be passed at all
+
 ## [0.7.0] - 2026-09-10
 
 ### Added

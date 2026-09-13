@@ -923,6 +923,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get balanceCheckPaybackReconciled => '已对账消费并创建还款转账';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return '此卡上没有关联所结清消费的还款：$count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases => '请至少选择一笔信用卡消费';
 
   @override
@@ -1125,7 +1130,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sourceAccount => '来源账户';
 
   @override
+  String get fromAccount => '来自';
+
+  @override
   String get destinationAccount => '目标账户';
+
+  @override
+  String get toAccount => '转到';
 
   @override
   String get payee => '收款人';
@@ -2288,6 +2299,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tags => '标签';
 
   @override
+  String get addTag => '添加标签';
+
+  @override
   String get subscription => '订阅';
 
   @override
@@ -2648,6 +2662,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipSwapTransferAccounts => '交换两个账户。';
 
   @override
+  String get tooltipTurnDirectionRound => '调转方向：钱款反向流动。';
+
+  @override
   String get disconnectConfirmTitle => '断开 Firefly III 连接';
 
   @override
@@ -2675,9 +2692,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipFieldAmount => '所选货币下的主金额。';
 
   @override
-  String get tooltipFieldCurrency => '该分录的主货币。';
-
-  @override
   String get tooltipFieldForeignAmount => '可选的外币金额。';
 
   @override
@@ -2693,7 +2707,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipFieldPiggyBank => '将该分录关联到存钱罐。';
 
   @override
-  String get tooltipFieldTags => '用逗号分隔标签，便于快速筛选。';
+  String get tooltipFieldTags => '用于快速筛选的标签。回车添加，叉号移除。';
 
   @override
   String get tooltipFieldSubscription => '将该分录关联到订阅。';
@@ -2949,6 +2963,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get noHistoryEntriesMatchFilters => '没有符合筛选条件的历史条目。';
+
+  @override
+  String get historyEntryWhatChanged => '变更内容';
+
+  @override
+  String get historyEntryNothingRecorded => '此次变更没有记录。';
+
+  @override
+  String get historyEntryRevert => '撤销此变更';
+
+  @override
+  String get historyEntryReverted => '变更已撤销';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return '无法撤销此变更：$error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before（已清除）';
+  }
 
   @override
   String historyExportedTo(String path) {

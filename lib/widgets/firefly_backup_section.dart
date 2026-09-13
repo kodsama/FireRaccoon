@@ -380,7 +380,10 @@ class _BackupTile extends ConsumerWidget {
           ),
           l10n.backupSize(manifest.entries.length, kilobytes),
           if (manifest.encrypted) l10n.backupEncryptedBadge,
-          if (!manifest.complete) l10n.backupIncomplete,
+          // The warning icon is for a backup nothing can be restored from. An
+          // export Firefly could not produce is worth a word, not an alarm.
+          if (!manifest.complete || manifest.failedExports.isNotEmpty)
+            l10n.backupIncomplete,
         ].join(' · '),
       ),
       trailing: PopupMenuButton<String>(

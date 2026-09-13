@@ -934,6 +934,11 @@ class AppLocalizationsSv extends AppLocalizations {
       'Köp avstämda och återbetalningsöverföring skapad';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return 'Återbetalningar på kortet utan koppling till vad de täckte: $count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases => 'Välj minst ett kreditkortsköp';
 
   @override
@@ -1144,7 +1149,13 @@ class AppLocalizationsSv extends AppLocalizations {
   String get sourceAccount => 'Källkonto';
 
   @override
+  String get fromAccount => 'Från';
+
+  @override
   String get destinationAccount => 'Målkonto';
+
+  @override
+  String get toAccount => 'Till';
 
   @override
   String get payee => 'Mottagare';
@@ -2334,6 +2345,9 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tags => 'Tags';
 
   @override
+  String get addTag => 'Lägg till en tagg';
+
+  @override
   String get subscription => 'Subscription';
 
   @override
@@ -2705,6 +2719,10 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tooltipSwapTransferAccounts => 'Byt plats på de två kontona.';
 
   @override
+  String get tooltipTurnDirectionRound =>
+      'Vänd riktningen: pengarna går andra vägen.';
+
+  @override
   String get disconnectConfirmTitle => 'Koppla från Firefly III';
 
   @override
@@ -2734,9 +2752,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tooltipFieldAmount => 'Huvudbelopp i vald valuta.';
 
   @override
-  String get tooltipFieldCurrency => 'Primär valuta för den här raden.';
-
-  @override
   String get tooltipFieldForeignAmount => 'Valfritt belopp i annan valuta.';
 
   @override
@@ -2754,7 +2769,7 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get tooltipFieldTags =>
-      'Taggar separerade med kommatecken för snabb filtrering.';
+      'Taggar för snabb filtrering. Enter lägger till en, krysset tar bort den.';
 
   @override
   String get tooltipFieldSubscription => 'Koppla raden till ett abonnemang.';
@@ -3034,6 +3049,29 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get noHistoryEntriesMatchFilters => 'Inga poster matchar filtren.';
+
+  @override
+  String get historyEntryWhatChanged => 'Vad som ändrades';
+
+  @override
+  String get historyEntryNothingRecorded =>
+      'Inget registrerades för den här ändringen.';
+
+  @override
+  String get historyEntryRevert => 'Ångra den här ändringen';
+
+  @override
+  String get historyEntryReverted => 'Ändringen är ångrad';
+
+  @override
+  String historyEntryRevertFailed(String error) {
+    return 'Kunde inte ångra ändringen: $error';
+  }
+
+  @override
+  String historyEntryCleared(String before) {
+    return '$before (rensat)';
+  }
 
   @override
   String historyExportedTo(String path) {

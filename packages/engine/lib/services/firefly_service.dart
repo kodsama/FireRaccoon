@@ -136,6 +136,9 @@ abstract class FireflyService {
   });
   Future<void> deleteCategory(String categoryId);
   Future<List<Tag>> getTags();
+
+  /// Every transaction carrying the tag, whichever leg carries it.
+  Future<List<Transaction>> getTagTransactions(String tagId);
   Future<Tag> createTag(String tag, {String? description});
   Future<Tag> updateTag(String tagId, String tag, {String? description});
   Future<void> deleteTag(String tagId);

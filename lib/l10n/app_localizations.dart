@@ -1822,6 +1822,12 @@ abstract class AppLocalizations {
   /// **'Purchases reconciled and payback transfer created'**
   String get balanceCheckPaybackReconciled;
 
+  /// No description provided for @balanceCheckUnlinkedPaybacks.
+  ///
+  /// In en, this message translates to:
+  /// **'Paybacks on this card with no link to what they settled: {count}'**
+  String balanceCheckUnlinkedPaybacks(int count);
+
   /// No description provided for @balanceCheckNoEligiblePurchases.
   ///
   /// In en, this message translates to:
@@ -2194,11 +2200,23 @@ abstract class AppLocalizations {
   /// **'Source Account'**
   String get sourceAccount;
 
+  /// No description provided for @fromAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get fromAccount;
+
   /// No description provided for @destinationAccount.
   ///
   /// In en, this message translates to:
   /// **'Destination Account'**
   String get destinationAccount;
+
+  /// No description provided for @toAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get toAccount;
 
   /// No description provided for @payee.
   ///
@@ -4294,6 +4312,12 @@ abstract class AppLocalizations {
   /// **'Tags'**
   String get tags;
 
+  /// No description provided for @addTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a tag'**
+  String get addTag;
+
   /// No description provided for @subscription.
   ///
   /// In en, this message translates to:
@@ -4954,6 +4978,12 @@ abstract class AppLocalizations {
   /// **'Swap the two accounts.'**
   String get tooltipSwapTransferAccounts;
 
+  /// No description provided for @tooltipTurnDirectionRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn it round: the money goes the other way.'**
+  String get tooltipTurnDirectionRound;
+
   /// No description provided for @disconnectConfirmTitle.
   ///
   /// In en, this message translates to:
@@ -5002,12 +5032,6 @@ abstract class AppLocalizations {
   /// **'Main amount in the selected currency.'**
   String get tooltipFieldAmount;
 
-  /// No description provided for @tooltipFieldCurrency.
-  ///
-  /// In en, this message translates to:
-  /// **'Primary currency of this split.'**
-  String get tooltipFieldCurrency;
-
   /// No description provided for @tooltipFieldForeignAmount.
   ///
   /// In en, this message translates to:
@@ -5041,7 +5065,7 @@ abstract class AppLocalizations {
   /// No description provided for @tooltipFieldTags.
   ///
   /// In en, this message translates to:
-  /// **'Comma-separated tags for quick filtering.'**
+  /// **'Tags for quick filtering. Enter adds one, the cross takes it off.'**
   String get tooltipFieldTags;
 
   /// No description provided for @tooltipFieldSubscription.
@@ -5517,6 +5541,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'No history entries match your filters.'**
   String get noHistoryEntriesMatchFilters;
+
+  /// No description provided for @historyEntryWhatChanged.
+  ///
+  /// In en, this message translates to:
+  /// **'What changed'**
+  String get historyEntryWhatChanged;
+
+  /// No description provided for @historyEntryNothingRecorded.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing was recorded for this change.'**
+  String get historyEntryNothingRecorded;
+
+  /// No description provided for @historyEntryRevert.
+  ///
+  /// In en, this message translates to:
+  /// **'Revert this change'**
+  String get historyEntryRevert;
+
+  /// No description provided for @historyEntryReverted.
+  ///
+  /// In en, this message translates to:
+  /// **'Change reverted'**
+  String get historyEntryReverted;
+
+  /// No description provided for @historyEntryRevertFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not revert this change: {error}'**
+  String historyEntryRevertFailed(String error);
+
+  /// No description provided for @historyEntryCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'{before} (cleared)'**
+  String historyEntryCleared(String before);
 
   /// No description provided for @historyExportedTo.
   ///

@@ -16,6 +16,7 @@ class FakeFireflyService implements FireflyService {
     this.transactionPages = const {},
     this.accountTransactionPages = const {},
     this.budgetTransactions = const {},
+    this.tagTransactions = const {},
     this.balancesByDate = const {},
   }) : _primaryCurrency =
            primaryCurrency ??
@@ -38,6 +39,7 @@ class FakeFireflyService implements FireflyService {
   final Map<int, TransactionPageResult> transactionPages;
   final Map<String, Map<int, TransactionPageResult>> accountTransactionPages;
   final Map<String, List<Transaction>> budgetTransactions;
+  final Map<String, List<Transaction>> tagTransactions;
 
   /// Balance per account per `yyyy-MM-dd`, for the dated reads. Firefly
   /// answers those from the ledger, so a fake that ignored the date could
@@ -490,6 +492,12 @@ class FakeFireflyService implements FireflyService {
   Future<List<Tag>> getTags() async {
     _maybeThrow();
     return tags;
+  }
+
+  @override
+  Future<List<Transaction>> getTagTransactions(String tagId) async {
+    _maybeThrow();
+    return tagTransactions[tagId] ?? const [];
   }
 
   @override

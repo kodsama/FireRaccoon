@@ -473,6 +473,14 @@
     }
   },
   "balanceCheckPaybackReconciled": "Purchases reconciled and payback transfer created",
+  "balanceCheckUnlinkedPaybacks": "Paybacks on this card with no link to what they settled: {count}",
+  "@balanceCheckUnlinkedPaybacks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "balanceCheckNoEligiblePurchases": "Select at least one credit card purchase",
   "tooltipBalanceCheckMode": "Compare your statement balance with Firefly",
   "tooltipBalanceCheckIncludePending": "Include in balance check",
@@ -591,7 +599,9 @@
   "accounts": "Accounts",
   "description": "Description",
   "sourceAccount": "Source Account",
+  "fromAccount": "From",
   "destinationAccount": "Destination Account",
+  "toAccount": "To",
   "payee": "Payee",
   "savingNotSupported": "Saving is not supported in read-only mode.",
   "transactionDateCategory": "{category} · {date}",
@@ -1351,6 +1361,7 @@
   "piggyBank": "Piggy bank",
   "noPiggyBank": "(no piggy bank)",
   "tags": "Tags",
+  "addTag": "Add a tag",
   "subscription": "Subscription",
   "interestDate": "Interest date",
   "attachments": "Attachments",
@@ -1566,6 +1577,7 @@
   "tooltipFieldSourceAccount": "Account money comes from.",
   "tooltipFieldDestinationAccount": "Account money goes to.",
   "tooltipSwapTransferAccounts": "Swap the two accounts.",
+  "tooltipTurnDirectionRound": "Turn it round: the money goes the other way.",
   "disconnectConfirmTitle": "Disconnect Firefly III",
   "connectionFailedNotFirefly": "That address answered, but not with the Firefly III API. Check the server URL: a user interface address, or one behind a sign-in page, answers every path with a web page.",
   "connectionFailedUnauthorized": "The server answered and refused the token. Check the personal access token.",
@@ -1574,13 +1586,12 @@
   "disconnectConfirmMessage": "This deletes the server URL and the personal access token from this device's keychain. You will have to enter them again to reconnect.",
   "tooltipFieldDate": "Date and time of the transaction.",
   "tooltipFieldAmount": "Main amount in the selected currency.",
-  "tooltipFieldCurrency": "Primary currency of this split.",
   "tooltipFieldForeignAmount": "Optional amount in another currency.",
   "tooltipFieldForeignCurrency": "Currency used for foreign amount.",
   "tooltipFieldBudget": "Assign this split to a budget.",
   "tooltipFieldCategory": "Category for reporting and filters.",
   "tooltipFieldPiggyBank": "Link this split to a piggy bank.",
-  "tooltipFieldTags": "Comma-separated tags for quick filtering.",
+  "tooltipFieldTags": "Tags for quick filtering. Enter adds one, the cross takes it off.",
   "tooltipFieldSubscription": "Link this split to a subscription.",
   "tooltipFieldInterestDate": "Optional interest or booking date.",
   "tooltipFieldAttachments": "Attachments are shown but not uploaded yet.",
@@ -1732,6 +1743,26 @@
   "searchHistory": "Search history",
   "allActions": "All actions",
   "noHistoryEntriesMatchFilters": "No history entries match your filters.",
+  "historyEntryWhatChanged": "What changed",
+  "historyEntryNothingRecorded": "Nothing was recorded for this change.",
+  "historyEntryRevert": "Revert this change",
+  "historyEntryReverted": "Change reverted",
+  "historyEntryRevertFailed": "Could not revert this change: {error}",
+  "@historyEntryRevertFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "historyEntryCleared": "{before} (cleared)",
+  "@historyEntryCleared": {
+    "placeholders": {
+      "before": {
+        "type": "String"
+      }
+    }
+  },
   "historyExportedTo": "History exported to {path}",
   "@historyExportedTo": {
     "placeholders": {

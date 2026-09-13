@@ -50,7 +50,7 @@ See `docs/adr/0002-local-vs-server-mode.md` and `docs/deployment.md`.
 
 Accounts, transactions, budgets, budget limits, categories, tags, bills, piggy
 banks, recurrences, currencies, reconciliation, and the on-device projection:
-59 tools, 31 of them write-gated. The rich account prognosis behind the UI is
+68 tools, 36 of them write-gated. The rich account prognosis behind the UI is
 the one engine capability with no tool
 (`docs/adr/0001-projection-vs-prognosis.md`). `get_capabilities` returns the
 live catalog and the write-gated names a `viewer` key is refused. Domain terms
@@ -66,10 +66,11 @@ live in `CONTEXT.md`.
 | `get_accounts` | List accounts with balances; pass types to reach payees |
 | `get_transactions` | Transactions, filterable by account, date window, and reconciled state |
 | `get_transaction` | One transaction by group ID, with the legs of a split group; Firefly answers 401 for a journal ID |
+| `get_card_settlements` | What the paybacks on a credit card settle, read from their link notes, and the purchases and refunds no payback links |
 | `set_transaction_reconciled` | Mark reconciled or unreconciled |
 | `store_reconciliation` | Reconcile an account; optional correction, and a payback transfer for `ccAsset` |
 | `create_transaction` | Create a transaction, one leg or several |
-| `update_transaction` | Update a transaction; omitted fields keep their value |
+| `update_transaction` | Update a transaction; omitted fields keep their value, `splits` changes one leg of a group without touching the others, and `keep_reconciled` releases and re-reconciles a row around a change |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides |
 | `delete_transaction` | Delete a transaction group and every split in it |
 | `export_firefly_data` | Snapshot of every entity the API exposes, for taking before a bulk change |
@@ -104,8 +105,9 @@ live in `CONTEXT.md`.
 | `delete_category` | Delete a category |
 | `get_tags` | List tags |
 | `create_tag` | Create a tag |
-| `update_tag` | Rename a tag, and optionally replace its description |
+| `update_tag` | Rename a tag, and optionally replace its description; refused when another tag carries the name |
 | `delete_tag` | Delete a tag |
+| `merge_tags` | Move every transaction from one tag onto another and remove the tag left empty; reports the rows and writes nothing unless `dry_run` is false |
 | `get_bills` | List bills with their amount ranges |
 | `create_bill` | Create a bill |
 | `update_bill` | Update a bill; omitted fields keep their value |
