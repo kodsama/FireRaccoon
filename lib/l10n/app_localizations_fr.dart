@@ -937,6 +937,11 @@ class AppLocalizationsFr extends AppLocalizations {
       'Achats rapprochés et virement de remboursement créé';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return 'Remboursements de cette carte sans lien vers ce qu’ils règlent : $count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases =>
       'Sélectionnez au moins un achat par carte';
 

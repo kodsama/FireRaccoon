@@ -923,6 +923,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get balanceCheckPaybackReconciled => '已对账消费并创建还款转账';
 
   @override
+  String balanceCheckUnlinkedPaybacks(int count) {
+    return '此卡上没有关联所结清消费的还款：$count';
+  }
+
+  @override
   String get balanceCheckNoEligiblePurchases => '请至少选择一笔信用卡消费';
 
   @override

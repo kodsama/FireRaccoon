@@ -466,6 +466,7 @@
     }
   },
   "balanceCheckPaybackReconciled": "Compras reconciliadas e transferência de reembolso criada",
+  "balanceCheckUnlinkedPaybacks": "Pagamentos deste cartão sem ligação ao que liquidaram: {count}",
   "balanceCheckNoEligiblePurchases": "Selecione pelo menos uma compra no cartão",
   "tooltipBalanceCheckMode": "Compare o saldo do extrato com o Firefly",
   "tooltipBalanceCheckIncludePending": "Incluir na verificação de saldo",

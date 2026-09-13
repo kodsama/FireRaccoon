@@ -894,6 +894,15 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
       (sum, transaction) =>
           sum + creditCardPaybackAmount(transaction, filterAccount!),
     );
+    final unlinkedPaybackCount = isCreditCard
+        ? allTransactions
+              .where(
+                (transaction) =>
+                    isCreditCardPayback(transaction, filteredAccount) &&
+                    paybackSettledIds(transaction).isEmpty,
+              )
+              .length
+        : 0;
 
     final showBalanceCheck =
         filterAccount != null && balance != null && _balanceCheckMode;
@@ -1218,6 +1227,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                           paybackTotal: paybackTotal,
                           hasEligiblePurchases:
                               eligiblePaybackPurchases.isNotEmpty,
+                          unlinkedPaybackCount: unlinkedPaybackCount,
                         )
                       : null,
                 ),

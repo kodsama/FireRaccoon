@@ -466,6 +466,7 @@
     }
   },
   "balanceCheckPaybackReconciled": "購入を照合し、返済振替を作成しました",
+  "balanceCheckUnlinkedPaybacks": "済した購入へのリンクがないこのカードの返済: {count}",
   "balanceCheckNoEligiblePurchases": "クレジットカードの購入を1件以上選択してください",
   "tooltipBalanceCheckMode": "明細書の残高と Firefly を比較",
   "tooltipBalanceCheckIncludePending": "残高比較に含める",

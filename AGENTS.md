@@ -50,7 +50,7 @@ See `docs/adr/0002-local-vs-server-mode.md` and `docs/deployment.md`.
 
 Accounts, transactions, budgets, budget limits, categories, tags, bills, piggy
 banks, recurrences, currencies, reconciliation, and the on-device projection:
-67 tools, 36 of them write-gated. The rich account prognosis behind the UI is
+68 tools, 36 of them write-gated. The rich account prognosis behind the UI is
 the one engine capability with no tool
 (`docs/adr/0001-projection-vs-prognosis.md`). `get_capabilities` returns the
 live catalog and the write-gated names a `viewer` key is refused. Domain terms
@@ -66,6 +66,7 @@ live in `CONTEXT.md`.
 | `get_accounts` | List accounts with balances; pass types to reach payees |
 | `get_transactions` | Transactions, filterable by account, date window, and reconciled state |
 | `get_transaction` | One transaction by group ID, with the legs of a split group; Firefly answers 401 for a journal ID |
+| `get_card_settlements` | What the paybacks on a credit card settle, read from their link notes, and the purchases and refunds no payback links |
 | `set_transaction_reconciled` | Mark reconciled or unreconciled |
 | `store_reconciliation` | Reconcile an account; optional correction, and a payback transfer for `ccAsset` |
 | `create_transaction` | Create a transaction, one leg or several |

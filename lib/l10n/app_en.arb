@@ -473,6 +473,14 @@
     }
   },
   "balanceCheckPaybackReconciled": "Purchases reconciled and payback transfer created",
+  "balanceCheckUnlinkedPaybacks": "Paybacks on this card with no link to what they settled: {count}",
+  "@balanceCheckUnlinkedPaybacks": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "balanceCheckNoEligiblePurchases": "Select at least one credit card purchase",
   "tooltipBalanceCheckMode": "Compare your statement balance with Firefly",
   "tooltipBalanceCheckIncludePending": "Include in balance check",

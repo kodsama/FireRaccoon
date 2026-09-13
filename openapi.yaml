@@ -1360,6 +1360,15 @@ x-mcp:
         names a leg by; a listing reports split_count and no legs.
       mapsTo: GET /api/v1/transactions/{transactionId}
       required: [transaction_id]
+    get_card_settlements:
+      description: >
+        What the paybacks on a credit card settle, read from the link note each
+        payback leg carries, and the purchases and refunds dated before the
+        last payback that no payback links. A payback with no links, such as
+        one written by hand, is listed with linked false. Both spellings of the
+        link note are read.
+      mapsTo: GET /api/v1/accounts/{accountId}/transactions
+      required: [account_id]
     set_transaction_reconciled:
       description: Mark a transaction reconciled or unreconciled
       mapsTo: PUT /api/v1/transactions/{transactionId}
