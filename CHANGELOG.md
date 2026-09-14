@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-14
+
 ### Added
 
 - The piggy-bank CSV is written from the API when Firefly cannot export it.
