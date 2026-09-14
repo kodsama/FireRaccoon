@@ -377,6 +377,8 @@ void main() {
       final correction = buildReconciliationCorrection(
         accountId: '5',
         accountName: 'Checking',
+        reconciliationAccountId: '77',
+        reconciliationAccountName: 'Checking reconciliation (EUR)',
         currencyCode: 'EUR',
         currencySymbol: '€',
         gap: 12.5,
@@ -387,12 +389,12 @@ void main() {
       expect(correction.amount, 12.5);
       expect(correction.destinationId, '5');
       expect(correction.destinationName, 'Checking');
-      // The other side carries neither a name nor an id, which is how Firefly
-      // is asked to put it against its own reconciliation account for this
-      // one. A name it cannot find is a refusal, and the name it uses carries
-      // the currency, so guessing it was refused either way.
-      expect(correction.sourceName, isEmpty);
-      expect(correction.sourceId, isNull);
+      // Both sides are named. Leaving the far one empty is how Firefly's own
+      // interface asks the factory to fill it in, and the REST layer turns an
+      // absent name into an empty string before the validator sees it, so the
+      // request built zero journals instead.
+      expect(correction.sourceId, '77');
+      expect(correction.sourceName, 'Checking reconciliation (EUR)');
     });
   });
 
@@ -477,6 +479,8 @@ void main() {
       final correction = buildReconciliationCorrection(
         accountId: '5',
         accountName: 'Checking',
+        reconciliationAccountId: '77',
+        reconciliationAccountName: 'Checking reconciliation (EUR)',
         currencyCode: 'EUR',
         currencySymbol: '€',
         gap: -12.5,
@@ -485,8 +489,78 @@ void main() {
 
       expect(correction.sourceId, '5');
       expect(correction.sourceName, 'Checking');
-      expect(correction.destinationId, isNull);
-      expect(correction.destinationName, isEmpty);
+      expect(correction.destinationId, '77');
+      expect(correction.destinationName, 'Checking reconciliation (EUR)');
+    });
+  });
+
+  group('findReconciliationAccount', () {
+    Account reconciliation(String id, String name) => Account(
+      id: id,
+      name: name,
+      type: 'reconciliation',
+      role: '',
+      currentBalance: 0,
+      currencySymbol: '€',
+      currencyCode: 'EUR',
+    );
+
+    test('takes the name this Firefly writes, currency and all', () {
+      final found = findReconciliationAccount(
+        [
+          reconciliation('1', 'Savings reconciliation (EUR)'),
+          reconciliation('2', 'Checking reconciliation (EUR)'),
+        ],
+        accountName: 'Checking',
+        currencyCode: 'EUR',
+      );
+
+      expect(found?.id, '2');
+    });
+
+    test('takes the bare name an older Firefly wrote', () {
+      // An account keeps the name it was made with, so a ledger running since
+      // 2020 holds both spellings.
+      final found = findReconciliationAccount(
+        [reconciliation('3', 'Checking reconciliation')],
+        accountName: 'Checking',
+        currencyCode: 'SEK',
+      );
+
+      expect(found?.id, '3');
+    });
+
+    test('takes a suffix in another currency over nothing', () {
+      // Firefly names it in the instance's primary currency when the account
+      // carries none of its own.
+      final found = findReconciliationAccount(
+        [reconciliation('4', 'Checking reconciliation (USD)')],
+        accountName: 'Checking',
+        currencyCode: 'EUR',
+      );
+
+      expect(found?.id, '4');
+    });
+
+    test('does not take another account with a longer name', () {
+      final found = findReconciliationAccount(
+        [reconciliation('5', 'Checking 2 reconciliation (EUR)')],
+        accountName: 'Checking',
+        currencyCode: 'EUR',
+      );
+
+      expect(found, isNull);
+    });
+
+    test('answers nothing when Firefly has made none', () {
+      expect(
+        findReconciliationAccount(
+          const <Account>[],
+          accountName: 'Checking',
+          currencyCode: 'EUR',
+        ),
+        isNull,
+      );
     });
   });
 }

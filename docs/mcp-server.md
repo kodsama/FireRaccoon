@@ -354,19 +354,27 @@ credit card is not one of these: `store_reconciliation` builds that payback from
 the purchases it settles, which is what keeps the group title and the per-leg
 links identical to what the app writes.
 
-A correction names only the account being reconciled. Firefly puts the other
-side against its own `<account> reconciliation (<currency>)`, finds it or makes
-it on the spot, and a side carrying neither a name nor an id is how its
-interface asks for that. FireRaccoon used to name that account itself, from a
-guess that left the currency out; a name Firefly cannot find is a refusal, so
-the correction failed on every account the interface had ever reconciled, and
-its API refuses to create one in any case. `get_accounts` takes
-`reconciliation` among its types, which is how to see what Firefly made.
+A correction names both sides: the account being reconciled, and the account
+Firefly keeps for it. That second one is read rather than guessed, with
+`GET /api/v1/accounts?type=reconciliation`, and matched by the names Firefly
+gives them: `<account> reconciliation (<currency>)` on 6.6.6, and the bare
+`<account> reconciliation` an older version wrote, since an account keeps the
+name it was made with. `get_accounts` takes `reconciliation` among its types,
+which is how to read the same list.
 
-Firefly will not put a reconciliation account against anything but an asset
-account, so a correction on a liability is refused. The rows are marked before
-the correction, so that half stands: the call answers `ok` with the
-reconciliation done and names the unwritten correction under `warning`.
+Neither shortcut works. Guessing the name misses the currency, and a name
+Firefly cannot resolve is a refusal. Leaving the far side empty is what
+Firefly's own interface does, and its journal factory fills the account in,
+but the REST layer turns an absent name into an empty string before the
+validator sees it: the side never reads as unstated, so Firefly searches for an
+account called nothing and answers `Created zero transaction journals`.
+
+Firefly makes these only from its own interface and its API refuses to create
+the type, so an account it has never reconciled has nothing for a correction to
+name. Reconcile that account once in Firefly and the correction can be written.
+Until then, and for any account Firefly will not reconcile at all, the rows are
+still marked: the call answers `ok` with the reconciliation done and names the
+unwritten correction under `warning`.
 
 A credit card gets the same gap and correction as any other account, computed
 over the statement window from `start_balance`, `end_balance` and the rows
