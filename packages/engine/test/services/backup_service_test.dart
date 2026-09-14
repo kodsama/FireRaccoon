@@ -42,6 +42,7 @@ MockClient _ledger({
   List<Uri>? record,
   Set<String> failingExports = const {},
   List<Map<String, Object?>>? transactions,
+  List<Map<String, Object?>> piggyBanks = const [],
 }) {
   return MockClient((request) async {
     record?.add(request.url);
@@ -52,6 +53,9 @@ MockClient _ledger({
         return jsonHttpResponse('{"message":"no"}', status: 500);
       }
       return jsonHttpResponse('id,name\n1,$dataset\n');
+    }
+    if (path.endsWith('/piggy-banks')) {
+      return jsonHttpResponse({'data': piggyBanks});
     }
     if (path.endsWith('/about/user')) {
       return jsonHttpResponse(userBody());
@@ -213,6 +217,31 @@ void main() {
       expect(manifest.entries.last.ok, isFalse);
     });
 
+    test('an entry FireRaccoon wrote in place of an export says so', () {
+      final manifest = BackupManifest.fromJson({
+        'entries': [
+          {'name': 'snapshot.json', 'bytes': 10},
+          {
+            'name': 'csv/piggy-banks.csv',
+            'bytes': 80,
+            'rows': 1,
+            'source': 'fireraccoon',
+            'export_error': 'HTTP 500',
+          },
+        ],
+      });
+
+      expect(manifest.failedExports, isEmpty);
+      final written = manifest.entries.last;
+      expect(written.ok, isTrue);
+      expect(written.source, kBackupSourceFireRaccoon);
+      expect(written.exportError, 'HTTP 500');
+      expect(written.toJson(), containsPair('source', 'fireraccoon'));
+      expect(written.toJson(), containsPair('export_error', 'HTTP 500'));
+      // Absent means Firefly's own columns, on the snapshot and every export.
+      expect(manifest.entries.first.toJson().keys, isNot(contains('source')));
+    });
+
     test('a snapshot that failed leaves the backup incomplete', () {
       final manifest = BackupManifest.fromJson({
         'entries': [
@@ -369,6 +398,62 @@ void main() {
       // The part that failed is absent rather than written empty.
       expect(store.backups[manifest.id]!.containsKey('csv/rules.csv'), isFalse);
       expect(store.backups[manifest.id]!.containsKey('snapshot.json'), isTrue);
+    });
+
+    test('writes the piggy banks itself when Firefly cannot', () async {
+      // Since 0.8.0 such a backup was complete with failed_exports naming the
+      // file, which was honest and still left it out of every backup for as
+      // long as this Firefly version is installed.
+      final store = _MemoryBackupStore();
+      final service = BackupService(
+        _serviceWith(
+          _ledger(
+            failingExports: {'piggy-banks'},
+            piggyBanks: [
+              {
+                'id': '4',
+                'attributes': {
+                  'name': 'New Laptop',
+                  'target_amount': '2500.00',
+                  'current_amount': '100.00',
+                  'currency_code': 'EUR',
+                  'start_date': '2026-01-01T00:00:00+00:00',
+                  'accounts': [
+                    {
+                      'account_id': '5',
+                      'name': 'Checking',
+                      'current_amount': '100.00',
+                    },
+                  ],
+                },
+              },
+            ],
+          ),
+        ),
+        store,
+      );
+
+      final manifest = await service.create(takenAt: DateTime.utc(2026, 9, 1));
+
+      final piggies = manifest.entries.firstWhere(
+        (e) => e.name == 'csv/piggy-banks.csv',
+      );
+      expect(piggies.ok, isTrue);
+      expect(piggies.source, kBackupSourceFireRaccoon);
+      expect(piggies.exportError, contains('500'));
+      expect(piggies.rows, 1);
+      expect(manifest.failedExports, isEmpty);
+      expect(manifest.toJson()['failed_exports'], isEmpty);
+      expect(
+        utf8.decode(store.backups[manifest.id]!['csv/piggy-banks.csv']!),
+        startsWith('piggy_bank_id,name,'),
+      );
+      // Firefly's own exports are not marked.
+      final rules = manifest.entries.firstWhere(
+        (e) => e.name == 'csv/rules.csv',
+      );
+      expect(rules.source, isNull);
+      expect(rules.exportError, isNull);
     });
 
     test('reports what it is reading and how far along it is', () async {

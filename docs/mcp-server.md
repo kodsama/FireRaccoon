@@ -131,7 +131,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides | yes |
 | `delete_transaction` | Delete a transaction group and its splits | yes |
 | `export_firefly_data` | Snapshot of every entity the API exposes, for taking before a bulk change |  |
-| `create_backup` | Take a backup: the snapshot a restore reads plus Firefly's own CSV export, named by the moment it was taken, sealed when given a password; `complete` says the snapshot was written and `failed_exports` names any CSV Firefly could not produce | yes |
+| `create_backup` | Take a backup: the snapshot a restore reads plus Firefly's own CSV export, named by the moment it was taken, sealed when given a password; `complete` says the snapshot was written and `failed_exports` names any CSV Firefly could not produce, the piggy-bank CSV Firefly 6.6.6 refuses being written from the API instead and marked `source: fireraccoon` on its entry | yes |
 | `list_backups` | Backups this FireRaccoon holds, newest first, each stamped in the zone it was taken in |  |
 | `get_backup` | One manifest, or a file inside a backup, truncated at `max_bytes` |  |
 | `delete_backup` | Remove one backup and everything in it | yes |

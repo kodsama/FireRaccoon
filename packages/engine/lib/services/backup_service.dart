@@ -44,6 +44,10 @@ const String kBackupManifestFile = 'manifest.json';
 const String kBackupSnapshotFile = 'snapshot.json';
 const String kBackupCsvDirectory = 'csv';
 
+/// [BackupEntry.source] of a CSV FireRaccoon wrote from the API in place of
+/// an export Firefly refused.
+const String kBackupSourceFireRaccoon = 'fireraccoon';
+
 /// Names a backup by the moment it was taken, in the zone it was taken in.
 ///
 /// `20260901T222736+0200`. The offset is part of the name rather than a field
@@ -91,6 +95,8 @@ class BackupEntry {
     this.rows,
     this.error,
     this.sha256,
+    this.source,
+    this.exportError,
   });
 
   factory BackupEntry.fromJson(Map<String, Object?> json) => BackupEntry(
@@ -99,6 +105,8 @@ class BackupEntry {
     rows: (json['rows'] as num?)?.toInt(),
     error: json['error'] as String?,
     sha256: json['sha256'] as String?,
+    source: json['source'] as String?,
+    exportError: json['export_error'] as String?,
   );
 
   /// Path inside the backup, e.g. `snapshot.json` or `csv/rules.csv`.
@@ -117,6 +125,16 @@ class BackupEntry {
   /// checked without its password.
   final String? sha256;
 
+  /// Who laid the columns out, when it was not Firefly: [kBackupSourceFireRaccoon]
+  /// on a CSV written from the API in place of an export Firefly refused.
+  /// Absent on Firefly's own exports and on the snapshot, so a reader of any
+  /// entry without it knows to expect Firefly's columns.
+  final String? source;
+
+  /// Why Firefly's own export was not used, kept beside [source] so the
+  /// manifest says on which instance and version this happened.
+  final String? exportError;
+
   bool get ok => error == null;
 
   Map<String, Object?> toJson() => {
@@ -125,6 +143,8 @@ class BackupEntry {
     if (rows != null) 'rows': rows,
     if (error != null) 'error': error,
     if (sha256 != null) 'sha256': sha256,
+    if (source != null) 'source': source,
+    if (exportError != null) 'export_error': exportError,
   };
 }
 
@@ -232,11 +252,13 @@ class BackupManifest {
   /// data set Firefly cannot produce is listed in [failedExports] rather than
   /// counted here. Firefly 6.6.6 answers its piggy-bank export with a 500 of
   /// its own, which had every backup reading incomplete while all of them
-  /// were restorable.
+  /// were restorable; that one file is now written from the API instead, and
+  /// its entry says so under `source`.
   bool get complete =>
       entries.any((entry) => entry.name == kBackupSnapshotFile && entry.ok);
 
-  /// Exports Firefly could not produce, by the name each would have had.
+  /// Exports Firefly could not produce and nothing wrote in their place, by
+  /// the name each would have had.
   List<String> get failedExports => [
     for (final entry in entries)
       if (!entry.ok && entry.name != kBackupSnapshotFile) entry.name,
@@ -401,6 +423,10 @@ class BackupService {
                 file.contents,
                 rows: file.rowCount,
                 cipher: cipher,
+                source: file.writtenByFireRaccoon
+                    ? kBackupSourceFireRaccoon
+                    : null,
+                exportError: file.exportError,
               )
             : BackupEntry(name: name, bytes: 0, error: file.error),
       );
@@ -594,6 +620,8 @@ class BackupService {
     String contents, {
     int? rows,
     BackupCipher? cipher,
+    String? source,
+    String? exportError,
   }) async {
     final plain = utf8.encode(contents);
     final bytes = cipher == null ? plain : await cipher.seal(name, plain);
@@ -605,6 +633,8 @@ class BackupService {
       bytes: bytes.length,
       rows: rows,
       sha256: sha256.convert(bytes).toString(),
+      source: source,
+      exportError: exportError,
     );
   }
 
