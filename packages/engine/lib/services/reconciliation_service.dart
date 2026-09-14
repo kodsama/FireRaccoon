@@ -22,7 +22,7 @@ class ReconciliationService {
     double tolerance = 0.005,
   }) async {
     final reconciled = await _markReconciled(journalsToReconcile);
-    final correction = createCorrection
+    final corrected = createCorrection
         ? await _correct(
             accountId: accountId,
             accountName: accountName,
@@ -32,11 +32,12 @@ class ReconciliationService {
             gap: gap,
             tolerance: tolerance,
           )
-        : null;
+        : const (correction: null, error: null);
 
     return ReconciliationStoreResult(
       reconciled: reconciled,
-      correction: correction,
+      correction: corrected.correction,
+      correctionError: corrected.error,
     );
   }
 
@@ -78,7 +79,7 @@ class ReconciliationService {
       ),
     );
     final corrected = correction == null
-        ? null
+        ? const (correction: null, error: null)
         : await _correct(
             accountId: creditCard.id,
             accountName: creditCard.name,
@@ -91,14 +92,27 @@ class ReconciliationService {
 
     return ReconciliationStoreResult(
       reconciled: reconciled,
-      correction: corrected,
+      correction: corrected.correction,
       payback: payback,
+      correctionError: corrected.error,
     );
   }
 
   /// The correction for [gap] on [endDate], or nothing when the gap is within
   /// [tolerance].
-  Future<Transaction?> _correct({
+  ///
+  /// Nothing is made first. Firefly resolves the account the other side goes
+  /// against, and makes it when the ledger has none, which is why the
+  /// correction names only the account being reconciled. Making it here meant
+  /// guessing the name Firefly uses, and a create its API refuses outright:
+  /// asset, expense, revenue, cash and liabilities are the only types it
+  /// takes.
+  ///
+  /// A refusal comes back rather than up. Firefly will not put a
+  /// reconciliation account against anything but an asset account, so a
+  /// liability leaves the journals marked and the correction unwritten, and
+  /// that is worth reporting as what it is.
+  Future<({Transaction? correction, String? error})> _correct({
     required String accountId,
     required String accountName,
     required String currencyCode,
@@ -107,48 +121,22 @@ class ReconciliationService {
     required double gap,
     required double tolerance,
   }) async {
-    if (gap.abs() <= tolerance) return null;
-    await _ensureReconciliationAccount(
-      accountName: accountName,
-      currencyCode: currencyCode,
-    );
-    return _api.createTransaction(
-      buildReconciliationCorrection(
-        accountId: accountId,
-        accountName: accountName,
-        currencyCode: currencyCode,
-        currencySymbol: currencySymbol,
-        gap: gap,
-        endDate: endDate,
-      ),
-    );
-  }
-
-  /// Makes the `<account> reconciliation` account a correction refers to, if
-  /// Firefly has not.
-  ///
-  /// Firefly creates one only from its own interface, so on a ledger that has
-  /// never reconciled this account there is nothing for the correction to name
-  /// and the write is refused. Nothing in the API surface made one either,
-  /// which left the correction impossible rather than merely awkward.
-  ///
-  /// Asked for by type, because a plain account read covers asset and
-  /// liability only and would not see an existing one.
-  Future<void> _ensureReconciliationAccount({
-    required String accountName,
-    required String currencyCode,
-  }) async {
-    final wanted = reconciliationAccountName(accountName);
-    final existing = await _api.getAccounts(types: const ['reconciliation']);
-    final already = existing.any(
-      (account) => account.name.toLowerCase() == wanted.toLowerCase(),
-    );
-    if (already) return;
-    await _api.createAccount(
-      name: wanted,
-      type: 'reconciliation',
-      currencyCode: currencyCode,
-    );
+    if (gap.abs() <= tolerance) return (correction: null, error: null);
+    try {
+      final correction = await _api.createTransaction(
+        buildReconciliationCorrection(
+          accountId: accountId,
+          accountName: accountName,
+          currencyCode: currencyCode,
+          currencySymbol: currencySymbol,
+          gap: gap,
+          endDate: endDate,
+        ),
+      );
+      return (correction: correction, error: null);
+    } on Object catch (error) {
+      return (correction: null, error: '$error');
+    }
   }
 
   Future<List<Transaction>> _markReconciled(

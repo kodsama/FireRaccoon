@@ -386,6 +386,13 @@ void main() {
       expect(correction.type, 'reconciliation');
       expect(correction.amount, 12.5);
       expect(correction.destinationId, '5');
+      expect(correction.destinationName, 'Checking');
+      // The other side carries neither a name nor an id, which is how Firefly
+      // is asked to put it against its own reconciliation account for this
+      // one. A name it cannot find is a refusal, and the name it uses carries
+      // the currency, so guessing it was refused either way.
+      expect(correction.sourceName, isEmpty);
+      expect(correction.sourceId, isNull);
     });
   });
 
@@ -477,7 +484,9 @@ void main() {
       );
 
       expect(correction.sourceId, '5');
+      expect(correction.sourceName, 'Checking');
       expect(correction.destinationId, isNull);
+      expect(correction.destinationName, isEmpty);
     });
   });
 }

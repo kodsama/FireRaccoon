@@ -63,12 +63,12 @@ live in `CONTEXT.md`.
 | `get_current_user` | Authenticated Firefly user |
 | `get_primary_currency` | Instance default currency |
 | `set_primary_currency` | Change the default currency |
-| `get_accounts` | List accounts with balances; pass types to reach payees |
+| `get_accounts` | List accounts with balances; pass types to reach payees, or `reconciliation` for what Firefly keeps for a correction |
 | `get_transactions` | Transactions, filterable by account, date window, and reconciled state |
 | `get_transaction` | One transaction by group ID, with the legs of a split group; Firefly answers 401 for a journal ID |
 | `get_card_settlements` | What the paybacks on a credit card settle, read from their link notes, and the purchases and refunds no payback links |
 | `set_transaction_reconciled` | Mark reconciled or unreconciled |
-| `store_reconciliation` | Reconcile an account; optional correction, and a payback transfer for `ccAsset` |
+| `store_reconciliation` | Reconcile an account; optional correction against the account Firefly keeps for it, and a payback transfer for `ccAsset` |
 | `create_transaction` | Create a transaction, one leg or several |
 | `update_transaction` | Update a transaction; omitted fields keep their value, `splits` changes one leg of a group without touching the others, and `keep_reconciled` releases and re-reconciles a row around a change |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides |

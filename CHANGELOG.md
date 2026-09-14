@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A correction could not be written on any account Firefly's own interface had
+  ever reconciled, which is most of them. It puts the other side of a
+  correction against `<account> reconciliation (<currency>)`, and
+  FireRaccoon named that account itself from a guess that left the currency
+  out. Firefly searches for the name it is given and refuses the write when it
+  finds none, so the correction was refused, and the account FireRaccoon then
+  tried to create was refused too: its API takes asset, expense, revenue, cash
+  and liabilities and no other type. A correction now names only the account
+  being reconciled and leaves the other side carrying neither a name nor an
+  id, which is how Firefly is asked to resolve its own account for it and make
+  one where the ledger has none, exactly as its interface does. `create_account`
+  and `update_account` no longer offer a `reconciliation` type they could never
+  write, and `get_accounts` takes `reconciliation` among its types so the
+  accounts a correction goes against can be read back
+- `store_reconciliation` marks the rows before it writes the correction, so a
+  correction Firefly refuses, which is any against an account that is not an
+  asset account, used to report the whole call as failed and say nothing about
+  the reconciliation that had happened. The rows stay marked, the call answers
+  `ok`, and the unwritten correction is named under `warning` with the reason
+
 ## [0.9.0] - 2026-09-14
 
 ### Added

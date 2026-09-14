@@ -120,12 +120,12 @@ are described under [Importing a statement](#importing-a-statement).
 | `get_current_user` | Authenticated Firefly user profile |  |
 | `get_primary_currency` | Instance default currency |  |
 | `set_primary_currency` | Change the default currency | yes |
-| `get_accounts` | List accounts with balances |  |
+| `get_accounts` | List accounts with balances; pass types to reach payees, or `reconciliation` to see what Firefly keeps for a correction |  |
 | `get_transactions` | Transactions, filterable by account, date window, and reconciled state |  |
 | `get_transaction` | One transaction by group ID, with the legs of a split group |  |
 | `get_card_settlements` | What the paybacks on a credit card settle, read from their link notes, and the purchases and refunds no payback links |  |
 | `set_transaction_reconciled` | Mark reconciled or unreconciled | yes |
-| `store_reconciliation` | Reconcile an account against a statement: mark the rows, write the correction the balances call for, and on a credit card the payback transfer too | yes |
+| `store_reconciliation` | Reconcile an account against a statement: mark the rows, write the correction the balances call for against the account Firefly keeps for it, and on a credit card the payback transfer too | yes |
 | `create_transaction` | Create a transaction, one leg or several | yes |
 | `update_transaction` | Update a transaction; omitted fields keep their value, the bookkeeping reaches every leg of a split group, `splits` reaches one leg by its journal id, and `keep_reconciled` releases and re-reconciles a row around a change | yes |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides | yes |
@@ -354,11 +354,19 @@ credit card is not one of these: `store_reconciliation` builds that payback from
 the purchases it settles, which is what keeps the group title and the per-leg
 links identical to what the app writes.
 
-A correction puts its other side against `<account> reconciliation`, an account
-Firefly only ever creates from its own interface. `store_reconciliation` makes
-it when the ledger has none, in the reconciled account's currency, because a
-name Firefly cannot resolve is a refusal and there was otherwise no way to
-write a correction at all.
+A correction names only the account being reconciled. Firefly puts the other
+side against its own `<account> reconciliation (<currency>)`, finds it or makes
+it on the spot, and a side carrying neither a name nor an id is how its
+interface asks for that. FireRaccoon used to name that account itself, from a
+guess that left the currency out; a name Firefly cannot find is a refusal, so
+the correction failed on every account the interface had ever reconciled, and
+its API refuses to create one in any case. `get_accounts` takes
+`reconciliation` among its types, which is how to see what Firefly made.
+
+Firefly will not put a reconciliation account against anything but an asset
+account, so a correction on a liability is refused. The rows are marked before
+the correction, so that half stands: the call answers `ok` with the
+reconciliation done and names the unwritten correction under `warning`.
 
 A credit card gets the same gap and correction as any other account, computed
 over the statement window from `start_balance`, `end_balance` and the rows

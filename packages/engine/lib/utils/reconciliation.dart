@@ -220,15 +220,15 @@ double computeReconciliationGap({
 }
 
 /// Builds a reconciliation correction transaction for [gap] on [endDate].
-/// The account Firefly puts the other side of a correction against.
 ///
-/// Firefly names these `<account> reconciliation` and only ever creates one
-/// from its own interface. A correction refers to it by name, and a name
-/// Firefly cannot resolve is a refusal, so whatever writes a correction has to
-/// make sure it exists first.
-String reconciliationAccountName(String accountName) =>
-    '$accountName reconciliation';
-
+/// Only the reconciled account is named. Firefly puts the other side against
+/// its own `<account> reconciliation (<currency>)` account, finds it or makes
+/// it on the spot, and a side left carrying neither a name nor an id is how
+/// its interface asks for exactly that. Given a name it searches for an
+/// account that already exists and refuses the write when it finds none, and
+/// the name guessed here left the currency out, so the correction was refused
+/// on every account that had ever been reconciled and refused again on every
+/// account that had not.
 Transaction buildReconciliationCorrection({
   required String accountId,
   required String accountName,
@@ -237,18 +237,19 @@ Transaction buildReconciliationCorrection({
   required double gap,
   required DateTime endDate,
 }) {
-  final amount = gap.abs();
-  final reconciliationAccount = reconciliationAccountName(accountName);
+  // A gap above zero is a statement holding more than the ledger does, so the
+  // money arrives: the account is the destination, and the side Firefly fills
+  // in is the source.
   final isShort = gap > 0;
 
   return Transaction(
     id: '',
     type: 'reconciliation',
     date: endDate,
-    amount: amount,
+    amount: gap.abs(),
     description: 'Reconciliation of $accountName',
-    sourceName: isShort ? reconciliationAccount : accountName,
-    destinationName: isShort ? accountName : reconciliationAccount,
+    sourceName: isShort ? '' : accountName,
+    destinationName: isShort ? accountName : '',
     categoryName: '',
     currencySymbol: currencySymbol,
     currencyCode: currencyCode,
@@ -262,6 +263,7 @@ class ReconciliationStoreResult {
     required this.reconciled,
     this.correction,
     this.payback,
+    this.correctionError,
   });
 
   final List<Transaction> reconciled;
@@ -269,4 +271,13 @@ class ReconciliationStoreResult {
 
   /// Multi-split credit-card payback transfer, when created.
   final Transaction? payback;
+
+  /// Why the correction was not written, null when there was nothing to
+  /// correct or the correction went in.
+  ///
+  /// The journals are marked before the correction, and that half stands
+  /// whatever happens to this one. Reporting the whole call as failed would
+  /// hide a reconciliation that did happen and invite a caller to run it
+  /// again.
+  final String? correctionError;
 }

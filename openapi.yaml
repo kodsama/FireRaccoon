@@ -1377,11 +1377,14 @@ x-mcp:
       description: >
         Reconcile an account against a statement: mark the rows reconciled
         and write a correction for the gap the balances leave, dated
-        end_date. A ccAsset account gets the same gap and correction; pass
+        end_date. The correction names only this account, and Firefly puts
+        the other side against the reconciliation account it keeps for it. A
+        ccAsset account gets the same gap and correction; pass
         payment_account_id and payback_date together to also create the
         credit-card payback transfer, one leg per purchase or a single netted
         leg when the selection holds refunds, or neither to reconcile a card
-        whose purchases were already paid back.
+        whose purchases were already paid back. A correction Firefly refuses
+        comes back under warning with the rows still reconciled.
       required:
         - account_id
         - start_date
