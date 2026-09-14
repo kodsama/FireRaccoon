@@ -553,10 +553,39 @@ const _clearableFields = {
   'tags',
 };
 
+/// The other half of a name and id pair naming one thing.
+///
+/// Firefly resolves whichever half still carries a value, so emptying one and
+/// sending the stored other back removed nothing and answered ok: a category
+/// could be changed but not taken off. Emptying either half clears both.
+const _pairedField = {
+  'category_name': 'category_id',
+  'category_id': 'category_name',
+};
+
 /// Which of [_clearableFields] the caller emptied, for a group or for one leg.
-Set<String> _clearedFields(Map<String, Object?> args) => {
+Set<String> _statedClears(Map<String, Object?> args) => {
   for (final field in _clearableFields)
     if (args.containsKey(field) && _isEmptyValue(args[field])) field,
+};
+
+/// What an empty value has to erase on the wire, the other half of a pair
+/// included.
+Set<String> _clearedFields(Map<String, Object?> args) => {
+  for (final field in _statedClears(args)) ...[field, ?_pairedField[field]],
+};
+
+/// Whether [saved] still carries [field] after a call asked for it to go.
+bool _stillCarries(String field, Transaction saved) => switch (field) {
+  'category_name' => saved.categoryName.trim().isNotEmpty,
+  'category_id' => (saved.categoryId ?? '').isNotEmpty,
+  'budget_name' => (saved.budgetName ?? '').trim().isNotEmpty,
+  'budget_id' => (saved.budgetId ?? '').isNotEmpty,
+  'bill_id' => (saved.billId ?? '').isNotEmpty,
+  'piggy_bank_id' => (saved.piggyBankId ?? '').isNotEmpty,
+  'notes' => (saved.notes ?? '').trim().isNotEmpty,
+  'tags' => saved.tags.isNotEmpty,
+  _ => false,
 };
 
 /// Fields belonging to a leg rather than to the group around it.
@@ -646,6 +675,11 @@ List<String> _unappliedTransactionFields(
       'amount',
     if (args['reconciled'] is bool && saved.reconciled != args['reconciled'])
       'reconciled',
+    // A removal is stated by emptying a field, so the checks above skip it.
+    // What came back still carrying the value is the same kind of silent
+    // refusal, and worth the same report.
+    for (final field in _statedClears(args))
+      if (_stillCarries(field, saved)) field,
   ];
 
   if (stated('date')) {
@@ -707,6 +741,9 @@ List<String> _unappliedSplitFields(List<Object?> legs, Transaction saved) {
     }
     if (leg['reconciled'] is bool && split.reconciled != leg['reconciled']) {
       missed.add('splits[$index].reconciled');
+    }
+    for (final field in _statedClears(leg)) {
+      if (_stillCarries(field, split)) missed.add('splits[$index].$field');
     }
   }
   return missed;

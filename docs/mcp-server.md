@@ -443,6 +443,15 @@ there: `notes`, `category_name`, `category_id`, `budget_name`, `budget_id`,
 `bill_id`, `piggy_bank_id` and `tags`. Omitting the field still leaves it
 exactly as it was.
 
+A category is named twice, by `category_name` and `category_id`, and Firefly
+resolves whichever half still carries a value. Emptying one of them therefore
+clears both: sending the stored other half back was how a removal reported
+success and left the category exactly where it was, and getting it off needed
+both fields emptied in the same call. Either one alone is enough. A removal the
+ledger did not take comes back the way any unapplied field does, as
+`code: not_applied` naming the field the caller emptied, with the row as it now
+stands.
+
 ### A name replaces the id beside it
 
 Firefly resolves an id in preference to a name. An update that named a

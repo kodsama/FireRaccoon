@@ -154,6 +154,152 @@ void main() {
     });
   });
 
+  group('taking a category off a transaction', () {
+    // The stored leg carries category_id 7 and "Food". Firefly resolves
+    // whichever half of the pair still has a value, so clearing one and
+    // sending the other back answered ok and kept the category: removing it
+    // needed both halves emptied, which no caller could be expected to guess.
+    test('an empty id clears the name beside it', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: transactionItem(),
+        onWrite: () => transactionEnvelope(transactionItem()),
+      );
+
+      await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'category_id': ''});
+
+      final leg = _leg(recorder.body!);
+      expect(leg['category_id'], '');
+      expect(leg['category_name'], '');
+    });
+
+    test('an empty name clears the id beside it', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: transactionItem(),
+        onWrite: () => transactionEnvelope(transactionItem()),
+      );
+
+      await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'category_name': ''});
+
+      final leg = _leg(recorder.body!);
+      expect(leg['category_id'], '');
+      expect(leg['category_name'], '');
+    });
+
+    test('one leg of a group is cleared on its own', () async {
+      final group = {
+        'id': '1',
+        'type': 'transactions',
+        'attributes': {
+          'group_title': 'Weekly shop',
+          'transactions': [
+            {
+              'transaction_journal_id': '811',
+              'type': 'withdrawal',
+              'date': '2026-01-15',
+              'amount': '45.00',
+              'description': 'Groceries',
+              'source_name': 'Checking',
+              'destination_name': 'Store',
+              'category_id': '7',
+              'category_name': 'Food',
+              'currency_code': 'EUR',
+              'currency_symbol': '\u20ac',
+              'reconciled': false,
+            },
+            {
+              'transaction_journal_id': '812',
+              'type': 'withdrawal',
+              'date': '2026-01-15',
+              'amount': '5.00',
+              'description': 'Bag',
+              'source_name': 'Checking',
+              'destination_name': 'Store',
+              'category_id': '7',
+              'category_name': 'Food',
+              'currency_code': 'EUR',
+              'currency_symbol': '\u20ac',
+              'reconciled': false,
+            },
+          ],
+        },
+      };
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: group,
+        onWrite: () => transactionEnvelope(_echoGroup(group, recorder.body!)),
+      );
+
+      await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'splits': [
+          {'journal_id': '811', 'category_id': ''},
+        ],
+      });
+
+      final legs = (recorder.body!['transactions'] as List)
+          .cast<Map<String, Object?>>();
+      final cleared = legs.singleWhere(
+        (leg) => leg['transaction_journal_id'] == '811',
+      );
+      expect(cleared['category_id'], '');
+      expect(cleared['category_name'], '');
+      // A leg the call left out keeps what it had.
+      final untouched = legs.singleWhere(
+        (leg) => leg['transaction_journal_id'] == '812',
+      );
+      expect(untouched['category_name'], 'Food');
+    });
+
+    test('a category that survived the clear is reported', () async {
+      // Firefly answers 200 to a write it declined in part, and a removal
+      // that did not remove is that same silent refusal.
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: transactionItem(),
+        onWrite: () => transactionEnvelope(transactionItem()),
+      );
+
+      final result = await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'category_id': ''});
+
+      // The row comes back still carrying the category, so the removal did
+      // not happen and saying ok would be the payee-by-name bug again.
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'not_applied');
+      expect('${result['error']}', contains('category_id'));
+      // Only the half the caller emptied is named: the other went along to
+      // keep Firefly from resolving it, and was never asked for.
+      expect('${result['error']}', isNot(contains('category_name')));
+      expect(result['transaction'], isNotNull);
+    });
+
+    test('a clear that took is not reported', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: transactionItem(),
+        onWrite: () => transactionEnvelope(_withoutCategory(transactionItem())),
+      );
+
+      final result = await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'category_name': ''});
+
+      expect(result['ok'], isTrue);
+      expect(result.containsKey('code'), isFalse);
+    });
+  });
+
   group('a payee named on an update', () {
     // The stored deposit names revenue account 5 by id. The same preference
     // for an id over a name that kept a category in place kept the payer: the
@@ -1509,6 +1655,22 @@ Map<String, Object?> _renumbered(Map<String, Object?> group) {
             'transaction_journal_id': '9${leg['transaction_journal_id']}',
           },
       ],
+    },
+  };
+}
+
+/// The same item with no category, for a server that took the removal.
+Map<String, Object?> _withoutCategory(Map<String, Object?> item) {
+  final attrs = item['attributes'] as Map<String, Object?>;
+  final legs = attrs['transactions'] as List;
+  final leg = {...(legs.first as Map<String, Object?>)};
+  leg['category_name'] = null;
+  leg['category_id'] = null;
+  return {
+    ...item,
+    'attributes': {
+      ...attrs,
+      'transactions': [leg, ...legs.skip(1)],
     },
   };
 }
