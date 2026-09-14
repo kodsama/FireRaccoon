@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The piggy-bank CSV is written from the API when Firefly cannot export it.
+  Firefly 6.6.6 answers `GET /api/v1/data/export/piggy-banks` with a 500 of
+  its own, from reading a repetition its repository has declared end-of-life,
+  and the lines are unchanged on `develop`, so since 0.8.0 every backup was
+  complete with `failed_exports` naming the file and the file was still
+  missing. `GET /api/v1/piggy-banks` carries everything the CSV would, so
+  `csv/piggy-banks.csv` is built from that, one row per account a piggy bank
+  saves on, and its manifest entry carries `source: fireraccoon` and the
+  export's error under `export_error`, so a reader knows whose columns to
+  expect and why. `failed_exports` is empty on a healthy instance
+
 ### Fixed
 
 - `store_reconciliation` on a credit card took the payback alone and never
