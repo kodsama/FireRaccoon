@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-09-14
+
+### Added
+
+- The piggy-bank CSV is written from the API when Firefly cannot export it.
+  Firefly 6.6.6 answers `GET /api/v1/data/export/piggy-banks` with a 500 of
+  its own, from reading a repetition its repository has declared end-of-life,
+  and the lines are unchanged on `develop`, so since 0.8.0 every backup was
+  complete with `failed_exports` naming the file and the file was still
+  missing. `GET /api/v1/piggy-banks` carries everything the CSV would, so
+  `csv/piggy-banks.csv` is built from that, one row per account a piggy bank
+  saves on, and its manifest entry carries `source: fireraccoon` and the
+  export's error under `export_error`, so a reader knows whose columns to
+  expect and why. `failed_exports` is empty on a healthy instance
+
+### Fixed
+
+- `store_reconciliation` on a credit card took the payback alone and never
+  computed a gap, whatever `start_balance`, `end_balance` and
+  `create_correction` said, so a card whose ledger had been a fixed amount
+  off the bank's closing balance since before the imported history could not
+  be put right through MCP. The card path now computes the gap over the
+  statement window the way the asset path does, with the payback dated after
+  the close and no part of it, and writes the correction against
+  `<account> reconciliation`. `payment_account_id` and `payback_date` go
+  together and can both be left out, so a statement whose purchases were paid
+  back long ago is reconciled and corrected without a second payback for
+  them, which is how such an offset gets one correction at the first
+  statement that proves it. Half a payback, or one asked for on an account
+  that is not a card, is refused rather than ignored
+
 ## [0.8.0] - 2026-09-13
 
 ### Added

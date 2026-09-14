@@ -2916,14 +2916,20 @@ List<McpTool> buildTools({
       name: 'store_reconciliation',
       writes: true,
       description:
-          'Store an account reconciliation: mark transactions reconciled and '
-          'optionally create a correction transaction. For credit-card '
-          '(ccAsset) accounts, pass payment_account_id and payback_date to '
-          'also create a payback transfer: one leg per purchase, or a single '
-          'netted leg when the selection holds refunds too. Not atomic — a '
-          'mid-loop '
-          'failure leaves already-updated journals reconciled; the error '
-          'message reports how many journals were updated.',
+          'Reconcile an account against a statement: mark transaction_ids '
+          'reconciled and, when end_balance is not start_balance plus the '
+          'selected rows, write a correction for the difference dated '
+          'end_date against <account> reconciliation, made if Firefly has '
+          'none. A credit card (ccAsset) gets the same gap and correction. '
+          'Pass payment_account_id and payback_date together to also create '
+          'its payback transfer, one leg per purchase or a single netted leg '
+          'when the selection holds refunds, dated after the close and no '
+          'part of the gap. Omit both to reconcile and correct a card whose '
+          'purchases were already paid back, which is how an offset carried '
+          'since before the imported history gets one correction at the '
+          'first statement that proves it. Not atomic: a mid-loop failure '
+          'leaves already-updated journals reconciled, and the error message '
+          'reports how many journals were updated.',
       inputSchema: {
         'type': 'object',
         'required': [
@@ -2954,14 +2960,15 @@ List<McpTool> buildTools({
           'payment_account_id': {
             'type': 'string',
             'description':
-                'Asset account funding a credit-card payback transfer '
-                '(required with payback_date for ccAsset accounts).',
+                'Asset account funding a credit-card payback transfer. Goes '
+                'with payback_date; omit both to reconcile a card without '
+                'one.',
           },
           'payback_date': {
             'type': 'string',
             'description':
-                'Payback transfer date YYYY-MM-DD (required with '
-                'payment_account_id for ccAsset accounts).',
+                'Payback transfer date YYYY-MM-DD. Goes with '
+                'payment_account_id.',
           },
         },
       },
@@ -3000,18 +3007,25 @@ List<McpTool> buildTools({
           return _badInput('account_id not found');
         }
 
-        final journals = <Transaction>[];
-        for (final id in transactionIds) {
-          journals.add(await api.getTransaction(id));
-        }
-
-        if (isCreditCardAccount(account)) {
-          if (paymentAccountId == null ||
-              paymentAccountId.isEmpty ||
-              paybackDateRaw == null) {
+        // The payback is an addition to the reconciliation, not a stand-in
+        // for it, and one a card does not always want: a statement whose
+        // purchases were paid back long ago still has rows to reconcile and
+        // a gap to correct. Both fields or neither.
+        ({Account account, DateTime date})? payback;
+        final hasPaymentAccount =
+            paymentAccountId != null && paymentAccountId.isNotEmpty;
+        if (hasPaymentAccount || paybackDateRaw != null) {
+          if (!isCreditCardAccount(account)) {
             return _badInput(
-              'payment_account_id and payback_date are required for '
-              'credit-card accounts',
+              'payment_account_id and payback_date apply to credit-card '
+              '(ccAsset) accounts only',
+            );
+          }
+          if (!hasPaymentAccount || paybackDateRaw == null) {
+            return _badInput(
+              'payment_account_id and payback_date go together: pass both '
+              'for a payback transfer, or neither to reconcile the card '
+              'without one',
             );
           }
           final paybackDate = DateTime.tryParse(paybackDateRaw);
@@ -3024,20 +3038,12 @@ List<McpTool> buildTools({
           if (paymentAccount == null) {
             return _badInput('payment_account_id not found');
           }
-          final result = await ReconciliationService(api)
-              .storeCreditCardPayback(
-                journalsToReconcile: journals,
-                creditCard: account,
-                paymentAccount: paymentAccount,
-                paybackDate: paybackDate,
-              );
-          return {
-            'ok': true,
-            'reconciled_count': result.reconciled.length,
-            'payback': result.payback == null
-                ? null
-                : _transactionJson(result.payback!),
-          };
+          payback = (account: paymentAccount, date: paybackDate);
+        }
+
+        final journals = <Transaction>[];
+        for (final id in transactionIds) {
+          journals.add(await api.getTransaction(id));
         }
 
         final gap = computeReconciliationGap(
@@ -3048,16 +3054,27 @@ List<McpTool> buildTools({
           startDate: startDate,
           endDate: endDate,
         );
-        final result = await ReconciliationService(api).store(
-          journalsToReconcile: journals,
-          accountId: account.id,
-          accountName: account.name,
-          currencyCode: account.currencyCode,
-          currencySymbol: account.currencySymbol,
-          endDate: endDate,
-          gap: gap,
-          createCorrection: createCorrection,
-        );
+        final reconciliation = ReconciliationService(api);
+        final result = payback == null
+            ? await reconciliation.store(
+                journalsToReconcile: journals,
+                accountId: account.id,
+                accountName: account.name,
+                currencyCode: account.currencyCode,
+                currencySymbol: account.currencySymbol,
+                endDate: endDate,
+                gap: gap,
+                createCorrection: createCorrection,
+              )
+            : await reconciliation.storeCreditCardPayback(
+                journalsToReconcile: journals,
+                creditCard: account,
+                paymentAccount: payback.account,
+                paybackDate: payback.date,
+                correction: createCorrection
+                    ? (gap: gap, endDate: endDate)
+                    : null,
+              );
 
         return {
           'ok': true,
@@ -3066,6 +3083,10 @@ List<McpTool> buildTools({
           'correction': result.correction == null
               ? null
               : _transactionJson(result.correction!),
+          if (isCreditCardAccount(account))
+            'payback': result.payback == null
+                ? null
+                : _transactionJson(result.payback!),
         };
       },
     ),

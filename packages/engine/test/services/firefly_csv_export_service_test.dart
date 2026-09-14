@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -10,14 +12,19 @@ FireflyApiService _serviceWith(MockClient client) => FireflyApiService(
   readRetryBaseDelayMs: 0,
 );
 
-/// Answers every export with a one-row CSV naming the data set it came from.
+/// Answers every export with a one-row CSV naming the data set it came from,
+/// and the piggy-bank endpoint with [piggyBanks] when given.
 MockClient _exports({
   List<Uri>? record,
   Map<String, String> bodies = const {},
   Set<String> failing = const {},
+  Map<String, Object?>? piggyBanks,
 }) {
   return MockClient((request) async {
     record?.add(request.url);
+    if (piggyBanks != null && request.url.path == '/api/v1/piggy-banks') {
+      return http.Response(jsonEncode(piggyBanks), 200);
+    }
     final dataset = request.url.pathSegments.last;
     if (failing.contains(dataset)) {
       return http.Response('{"message":"boom"}', 500);
@@ -241,6 +248,128 @@ void main() {
         files.firstWhere((f) => f.dataset == FireflyCsvDataset.bills).rowCount,
         0,
       );
+    });
+
+    test('writes the piggy banks from the API when Firefly cannot', () async {
+      // Firefly 6.6.6 answers its piggy-bank export with a 500 of its own,
+      // unchanged on develop, so the file was missing from every backup and
+      // would have stayed missing. The endpoint carries everything the CSV
+      // would.
+      final service = FireflyCsvExportService(
+        _serviceWith(
+          _exports(
+            failing: {'piggy-banks'},
+            piggyBanks: {
+              'data': [
+                {
+                  'id': '4',
+                  'attributes': {
+                    'name': 'New Laptop',
+                    'target_amount': '2500.00',
+                    'current_amount': '100.00',
+                    'currency_code': 'EUR',
+                    'start_date': '2026-01-01T00:00:00+00:00',
+                    'target_date': '2026-12-24T00:00:00+00:00',
+                    'order': 3,
+                    'active': true,
+                    'notes': 'Says "soon", maybe',
+                    'object_group_title': 'Gear',
+                    'accounts': [
+                      {
+                        'account_id': '5',
+                        'name': 'Checking',
+                        'current_amount': '100.00',
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ),
+        ),
+      );
+
+      final files = await service.exportAll(
+        from: DateTime(2026, 1, 1),
+        to: DateTime(2026, 12, 31),
+      );
+
+      final piggies = files.firstWhere(
+        (f) => f.dataset == FireflyCsvDataset.piggyBanks,
+      );
+      expect(piggies.ok, isTrue);
+      expect(piggies.writtenByFireRaccoon, isTrue);
+      expect(piggies.exportError, contains('500'));
+      expect(piggies.rowCount, 1);
+      expect(
+        piggies.contents,
+        'piggy_bank_id,name,account_id,account_name,account_current_amount,'
+        'currency_code,target_amount,current_amount,start_date,target_date,'
+        'order,active,notes,object_group_title\n'
+        '4,New Laptop,5,Checking,100.00,EUR,2500.00,100.00,2026-01-01,'
+        '2026-12-24,3,true,"Says ""soon"", maybe",Gear\n',
+      );
+      // Every other file is still Firefly's own.
+      expect(files.where((f) => f.writtenByFireRaccoon).length, 1);
+    });
+
+    test('a piggy bank on two accounts is a row per account', () async {
+      PiggyBank piggy(String id, List<PiggyBankAccountLink> accounts) =>
+          PiggyBank(
+            id: id,
+            name: 'Trip',
+            targetAmount: 900,
+            currentAmount: 300,
+            currencyCode: 'SEK',
+            currencySymbol: 'kr',
+            startDate: DateTime(2026, 3, 1),
+            accounts: accounts,
+          );
+
+      final csv = piggyBanksCsv([
+        piggy('1', const [
+          PiggyBankAccountLink(
+            accountId: '5',
+            name: 'Checking',
+            currentAmount: 200,
+          ),
+          PiggyBankAccountLink(
+            accountId: '7',
+            name: 'Savings',
+            currentAmount: 100,
+          ),
+        ]),
+        // One with no account keeps its row, columns empty, and no target
+        // date is an empty field rather than a made-up one.
+        piggy('2', const []),
+      ]);
+
+      expect(csv.split('\n').skip(1).where((l) => l.isNotEmpty), [
+        '1,Trip,5,Checking,200.00,SEK,900.00,300.00,2026-03-01,,0,true,,',
+        '1,Trip,7,Savings,100.00,SEK,900.00,300.00,2026-03-01,,0,true,,',
+        '2,Trip,,,,SEK,900.00,300.00,2026-03-01,,0,true,,',
+      ]);
+    });
+
+    test('reports the piggy banks missing when the API fails too', () async {
+      // Without piggy banks to answer with, the endpoint falls through to the
+      // same 500 the export gave.
+      final service = FireflyCsvExportService(
+        _serviceWith(_exports(failing: {'piggy-banks'})),
+      );
+
+      final files = await service.exportAll(
+        from: DateTime(2026, 1, 1),
+        to: DateTime(2026, 12, 31),
+      );
+
+      final piggies = files.firstWhere(
+        (f) => f.dataset == FireflyCsvDataset.piggyBanks,
+      );
+      expect(piggies.ok, isFalse);
+      expect(piggies.writtenByFireRaccoon, isFalse);
+      expect(piggies.error, contains('500'));
+      expect(piggies.error, contains('in its place'));
     });
   });
 }

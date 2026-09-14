@@ -1375,10 +1375,13 @@ x-mcp:
       required: [transaction_id, reconciled]
     store_reconciliation:
       description: >
-        Store account reconciliation and optional correction transaction.
-        For ccAsset accounts, pass payment_account_id and payback_date to
-        create a credit-card payback transfer, one leg per purchase or a
-        single netted leg when the selection holds refunds.
+        Reconcile an account against a statement: mark the rows reconciled
+        and write a correction for the gap the balances leave, dated
+        end_date. A ccAsset account gets the same gap and correction; pass
+        payment_account_id and payback_date together to also create the
+        credit-card payback transfer, one leg per purchase or a single netted
+        leg when the selection holds refunds, or neither to reconcile a card
+        whose purchases were already paid back.
       required:
         - account_id
         - start_date

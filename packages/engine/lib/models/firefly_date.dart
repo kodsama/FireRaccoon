@@ -17,3 +17,10 @@ DateTime? parseFireflyDate(Object? value) {
 }
 
 final _offsetSuffix = RegExp(r'(?:Z|[+-]\d{2}:?\d{2})$');
+
+/// Writes a day the way Firefly reads one, `YYYY-MM-DD`, from the calendar
+/// fields alone so the zone the value sits in cannot move it.
+String formatFireflyDate(DateTime date) =>
+    '${date.year.toString().padLeft(4, '0')}-'
+    '${date.month.toString().padLeft(2, '0')}-'
+    '${date.day.toString().padLeft(2, '0')}';

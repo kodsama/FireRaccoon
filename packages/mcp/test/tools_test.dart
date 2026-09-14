@@ -1042,53 +1042,147 @@ void main() {
       expect(result['correction'], isNull);
     });
 
-    test('credit card requires payback fields', () async {
-      final result =
-          await _tool('store_reconciliation', client: fireflyMockClient()).run({
-            ...reconciliationArgs(),
-            'account_id': '6',
-            'transaction_ids': ['3'],
-          });
-      expect(result['code'], 'bad_input');
-    });
+    Map<String, Object?> cardArgs() => {
+      ...reconciliationArgs(),
+      'account_id': '6',
+      'transaction_ids': ['3'],
+      // One 40.00 purchase between the two, so the ledger closes at -140 and
+      // the bank's -200 is 60 of debt the ledger does not carry.
+      'start_balance': -100.0,
+      'end_balance': -200.0,
+    };
+
+    Map<String, Object?> cardPaybackArgs() => {
+      ...cardArgs(),
+      'payment_account_id': '5',
+      'payback_date': '2026-01-31',
+    };
+
+    /// The type of every leg written, in the order it was written.
+    List<Object?> legTypes(List<String> bodies) => [
+      for (final body in bodies.map(jsonDecode).whereType<Map>())
+        for (final leg in (body['transactions'] as List? ?? const []))
+          (leg as Map)['type'],
+    ];
 
     test('credit card validates payback date and payment account', () async {
       final tool = _tool('store_reconciliation', client: fireflyMockClient());
       expect(
         (await tool.run({
-          ...reconciliationArgs(),
-          'account_id': '6',
-          'transaction_ids': ['3'],
-          'payment_account_id': '5',
+          ...cardPaybackArgs(),
           'payback_date': 'not-a-date',
         }))['code'],
         'bad_input',
       );
       expect(
         (await tool.run({
-          ...reconciliationArgs(),
-          'account_id': '6',
-          'transaction_ids': ['3'],
+          ...cardPaybackArgs(),
           'payment_account_id': 'missing',
-          'payback_date': '2026-01-31',
         }))['code'],
         'bad_input',
       );
     });
 
-    test('credit card payback succeeds', () async {
-      final result =
-          await _tool('store_reconciliation', client: fireflyMockClient()).run({
-            ...reconciliationArgs(),
-            'account_id': '6',
-            'transaction_ids': ['3'],
-            'payment_account_id': '5',
-            'payback_date': '2026-01-31',
-          });
+    test('credit card payback carries the gap and its correction', () async {
+      // The card path took the payback only, and reported no gap however far
+      // the balances were from the rows, so a card whose ledger sat a fixed
+      // amount off the bank's for years could not be put right through it.
+      final bodies = <String>[];
+      final result = await _tool(
+        'store_reconciliation',
+        client: fireflyMockClient(recordBodies: bodies),
+      ).run(cardPaybackArgs());
+
       expect(result['ok'], isTrue);
       expect(result['reconciled_count'], 1);
+      expect(result['gap'], closeTo(-60, 0.001));
       expect(result['payback'], isA<Map<String, Object?>>());
+      expect(result['correction'], isA<Map<String, Object?>>());
+      // The purchase marked, the payback, then the correction.
+      expect(legTypes(bodies), ['withdrawal', 'transfer', 'reconciliation']);
+      final correction = bodies
+          .map(jsonDecode)
+          .whereType<Map>()
+          .expand((body) => (body['transactions'] as List? ?? const []))
+          .cast<Map>()
+          .last;
+      expect(correction['amount'], '60.00');
+      expect(correction['source_name'], 'Credit Card');
+      expect(correction['destination_name'], 'Credit Card reconciliation');
     });
+
+    test('a card whose statement adds up gets no correction', () async {
+      final result = await _tool(
+        'store_reconciliation',
+        client: fireflyMockClient(),
+      ).run({...cardPaybackArgs(), 'end_balance': -140.0});
+
+      expect(result['ok'], isTrue);
+      expect(result['gap'], closeTo(0, 0.001));
+      expect(result['payback'], isA<Map<String, Object?>>());
+      expect(result['correction'], isNull);
+    });
+
+    test('create_correction false keeps the card payback only', () async {
+      final result = await _tool(
+        'store_reconciliation',
+        client: fireflyMockClient(),
+      ).run({...cardPaybackArgs(), 'create_correction': false});
+
+      expect(result['ok'], isTrue);
+      expect(result['gap'], closeTo(-60, 0.001));
+      expect(result['payback'], isA<Map<String, Object?>>());
+      expect(result['correction'], isNull);
+    });
+
+    test(
+      'a card without payback fields is corrected like any account',
+      () async {
+        // A statement whose purchases were paid back long ago still has rows
+        // to reconcile and a gap to correct, and a second payback for them
+        // would be wrong. Requiring the payback fields made that impossible.
+        final bodies = <String>[];
+        final result = await _tool(
+          'store_reconciliation',
+          client: fireflyMockClient(recordBodies: bodies),
+        ).run(cardArgs());
+
+        expect(result['ok'], isTrue);
+        expect(result['reconciled_count'], 1);
+        expect(result['gap'], closeTo(-60, 0.001));
+        expect(result['correction'], isA<Map<String, Object?>>());
+        expect(result['payback'], isNull);
+        expect(legTypes(bodies), ['withdrawal', 'reconciliation']);
+      },
+    );
+
+    test('one payback field without the other is refused', () async {
+      final tool = _tool('store_reconciliation', client: fireflyMockClient());
+      expect(
+        (await tool.run({...cardArgs(), 'payment_account_id': '5'}))['code'],
+        'bad_input',
+      );
+      expect(
+        (await tool.run({...cardArgs(), 'payback_date': '2026-01-31'}))['code'],
+        'bad_input',
+      );
+    });
+
+    test(
+      'payback fields on an account that is not a card are refused',
+      () async {
+        final result =
+            await _tool(
+              'store_reconciliation',
+              client: fireflyMockClient(),
+            ).run({
+              ...reconciliationArgs(),
+              'payment_account_id': '5',
+              'payback_date': '2026-01-31',
+            });
+        expect(result['code'], 'bad_input');
+      },
+    );
   });
 
   group('get_budgets', () {

@@ -1,18 +1,33 @@
 import '../models/firefly_csv_dataset.dart';
+import '../models/firefly_date.dart';
+import '../models/piggy_bank.dart';
 import 'firefly_service.dart';
 
-/// One data set as Firefly exported it, or the reason it is missing.
+/// One data set as Firefly exported it, as FireRaccoon wrote it in place of an
+/// export Firefly refused, or the reason it is missing.
 class FireflyCsvFile {
   const FireflyCsvFile.written(this.dataset, this.contents)
     : error = null,
-      chunks = 1;
+      chunks = 1,
+      exportError = null;
 
   const FireflyCsvFile.chunked(this.dataset, this.contents, this.chunks)
-    : error = null;
+    : error = null,
+      exportError = null;
 
   const FireflyCsvFile.failed(this.dataset, this.error)
     : contents = '',
-      chunks = 0;
+      chunks = 0,
+      exportError = null;
+
+  /// Written by FireRaccoon from the API after Firefly's own export failed
+  /// with [exportError].
+  const FireflyCsvFile.fromApi(
+    this.dataset,
+    this.contents, {
+    required String this.exportError,
+  }) : error = null,
+       chunks = 1;
 
   final FireflyCsvDataset dataset;
   final String contents;
@@ -23,7 +38,14 @@ class FireflyCsvFile {
   /// Why this data set is missing, null when it is not.
   final String? error;
 
+  /// Why Firefly's own export was not used, on a file FireRaccoon wrote from
+  /// the API in its place. Null on one Firefly exported and on one missing.
+  final String? exportError;
+
   bool get ok => error == null;
+
+  /// True when the columns are FireRaccoon's rather than Firefly's.
+  bool get writtenByFireRaccoon => exportError != null;
 
   /// Rows below the header, which is what tells an empty export from a full one.
   ///
@@ -103,10 +125,42 @@ class FireflyCsvExportService {
           onChunk?.call();
         }
       } on Object catch (error) {
-        files.add(FireflyCsvFile.failed(dataset, '$error'));
+        files.add(await _inPlaceOf(dataset, '$error'));
       }
     }
     return files;
+  }
+
+  /// The data set read from the API when Firefly cannot export it, else the
+  /// failure as it stands.
+  ///
+  /// Firefly 6.6.6 answers its piggy-bank export with a 500 of its own: the
+  /// exporter reads each piggy bank's repetition, and the repository throws
+  /// on that unless overruled, which the exporter never does. The lines are
+  /// unchanged on `develop`, so no upgrade is going to bring the file back.
+  /// The piggy-bank endpoint carries everything the CSV would, so the file
+  /// is written from that and marked as FireRaccoon's, which tells a reader
+  /// whose columns to expect.
+  Future<FireflyCsvFile> _inPlaceOf(
+    FireflyCsvDataset dataset,
+    String error,
+  ) async {
+    if (dataset != FireflyCsvDataset.piggyBanks) {
+      return FireflyCsvFile.failed(dataset, error);
+    }
+    try {
+      return FireflyCsvFile.fromApi(
+        dataset,
+        piggyBanksCsv(await _api.getPiggyBanks()),
+        exportError: error,
+      );
+    } on Object catch (apiError) {
+      return FireflyCsvFile.failed(
+        dataset,
+        '$error; nor could the piggy banks be read from the API in its '
+        'place: $apiError',
+      );
+    }
   }
 
   Future<FireflyCsvFile> _exportWindowed(
@@ -142,4 +196,65 @@ class FireflyCsvExportService {
     final breakAt = csv.indexOf('\n');
     return breakAt < 0 ? '' : csv.substring(breakAt + 1);
   }
+}
+
+/// The piggy banks as CSV, one row per account a piggy bank saves on.
+///
+/// Firefly's own export lays a one-to-many out this way, a budget once per
+/// limit and a recurrence once per line, and a piggy bank has saved on more
+/// than one account since 6.2, each holding its own share of the amount. A
+/// piggy bank with no account keeps one row with those columns empty rather
+/// than dropping out, which is what Firefly does to a budget without limits.
+String piggyBanksCsv(List<PiggyBank> piggyBanks) {
+  const header = [
+    'piggy_bank_id',
+    'name',
+    'account_id',
+    'account_name',
+    'account_current_amount',
+    'currency_code',
+    'target_amount',
+    'current_amount',
+    'start_date',
+    'target_date',
+    'order',
+    'active',
+    'notes',
+    'object_group_title',
+  ];
+  final rows = <List<String>>[header];
+  for (final piggy in piggyBanks) {
+    final links = piggy.accounts.isEmpty
+        ? <PiggyBankAccountLink?>[null]
+        : piggy.accounts;
+    for (final link in links) {
+      rows.add([
+        piggy.id,
+        piggy.name,
+        link?.accountId ?? '',
+        link?.name ?? '',
+        link == null ? '' : _money(link.currentAmount),
+        piggy.currencyCode,
+        _money(piggy.targetAmount),
+        _money(piggy.currentAmount),
+        formatFireflyDate(piggy.startDate),
+        piggy.targetDate == null ? '' : formatFireflyDate(piggy.targetDate!),
+        '${piggy.order}',
+        '${piggy.active}',
+        piggy.notes ?? '',
+        piggy.objectGroupTitle ?? '',
+      ]);
+    }
+  }
+  return [for (final row in rows) '${row.map(_csvField).join(',')}\n'].join();
+}
+
+String _money(double amount) => amount.toStringAsFixed(2);
+
+/// Quoted when the value carries a comma, a quote or a line break, with an
+/// inner quote doubled: the form Firefly writes and [FireflyCsvFile.rowCount]
+/// reads back.
+String _csvField(String value) {
+  if (!value.contains(RegExp(r'[",\r\n]'))) return value;
+  return '"${value.replaceAll('"', '""')}"';
 }

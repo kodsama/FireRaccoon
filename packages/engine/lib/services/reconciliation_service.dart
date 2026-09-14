@@ -22,24 +22,17 @@ class ReconciliationService {
     double tolerance = 0.005,
   }) async {
     final reconciled = await _markReconciled(journalsToReconcile);
-
-    Transaction? correction;
-    if (createCorrection && gap.abs() > tolerance) {
-      await _ensureReconciliationAccount(
-        accountName: accountName,
-        currencyCode: currencyCode,
-      );
-      correction = await _api.createTransaction(
-        buildReconciliationCorrection(
-          accountId: accountId,
-          accountName: accountName,
-          currencyCode: currencyCode,
-          currencySymbol: currencySymbol,
-          gap: gap,
-          endDate: endDate,
-        ),
-      );
-    }
+    final correction = createCorrection
+        ? await _correct(
+            accountId: accountId,
+            accountName: accountName,
+            currencyCode: currencyCode,
+            currencySymbol: currencySymbol,
+            endDate: endDate,
+            gap: gap,
+            tolerance: tolerance,
+          )
+        : null;
 
     return ReconciliationStoreResult(
       reconciled: reconciled,
@@ -50,6 +43,87 @@ class ReconciliationService {
   /// Marks [journalsToReconcile] reconciled and creates a Platinum-style
   /// payback transfer from [paymentAccount] to [creditCard]: one leg per
   /// purchase, or a single netted leg when a refund is among them.
+  ///
+  /// [correction] is the gap the statement leaves at its close, as [store]
+  /// takes it, and is written after the payback. The payback is dated past
+  /// the close and never part of the gap, so a card whose ledger sat a fixed
+  /// amount off the bank's balance had no way through this path to be put
+  /// right.
+  Future<ReconciliationStoreResult> storeCreditCardPayback({
+    required List<Transaction> journalsToReconcile,
+    required Account creditCard,
+    required Account paymentAccount,
+    required DateTime paybackDate,
+    ({double gap, DateTime endDate})? correction,
+    double tolerance = 0.005,
+  }) async {
+    if (!isCreditCardAccount(creditCard)) {
+      throw ArgumentError('creditCard must have role ccAsset');
+    }
+    if (paymentAccount.type != 'asset' ||
+        paymentAccount.currencyCode != creditCard.currencyCode ||
+        paymentAccount.id == creditCard.id) {
+      throw ArgumentError(
+        'paymentAccount must be a different asset in the same currency',
+      );
+    }
+
+    final reconciled = await _markReconciled(journalsToReconcile);
+    final payback = await _api.createTransaction(
+      buildCreditCardPaybackTransfer(
+        paymentAccount: paymentAccount,
+        creditCard: creditCard,
+        paybackDate: paybackDate,
+        purchases: journalsToReconcile,
+      ),
+    );
+    final corrected = correction == null
+        ? null
+        : await _correct(
+            accountId: creditCard.id,
+            accountName: creditCard.name,
+            currencyCode: creditCard.currencyCode,
+            currencySymbol: creditCard.currencySymbol,
+            endDate: correction.endDate,
+            gap: correction.gap,
+            tolerance: tolerance,
+          );
+
+    return ReconciliationStoreResult(
+      reconciled: reconciled,
+      correction: corrected,
+      payback: payback,
+    );
+  }
+
+  /// The correction for [gap] on [endDate], or nothing when the gap is within
+  /// [tolerance].
+  Future<Transaction?> _correct({
+    required String accountId,
+    required String accountName,
+    required String currencyCode,
+    required String currencySymbol,
+    required DateTime endDate,
+    required double gap,
+    required double tolerance,
+  }) async {
+    if (gap.abs() <= tolerance) return null;
+    await _ensureReconciliationAccount(
+      accountName: accountName,
+      currencyCode: currencyCode,
+    );
+    return _api.createTransaction(
+      buildReconciliationCorrection(
+        accountId: accountId,
+        accountName: accountName,
+        currencyCode: currencyCode,
+        currencySymbol: currencySymbol,
+        gap: gap,
+        endDate: endDate,
+      ),
+    );
+  }
+
   /// Makes the `<account> reconciliation` account a correction refers to, if
   /// Firefly has not.
   ///
@@ -75,36 +149,6 @@ class ReconciliationService {
       type: 'reconciliation',
       currencyCode: currencyCode,
     );
-  }
-
-  Future<ReconciliationStoreResult> storeCreditCardPayback({
-    required List<Transaction> journalsToReconcile,
-    required Account creditCard,
-    required Account paymentAccount,
-    required DateTime paybackDate,
-  }) async {
-    if (!isCreditCardAccount(creditCard)) {
-      throw ArgumentError('creditCard must have role ccAsset');
-    }
-    if (paymentAccount.type != 'asset' ||
-        paymentAccount.currencyCode != creditCard.currencyCode ||
-        paymentAccount.id == creditCard.id) {
-      throw ArgumentError(
-        'paymentAccount must be a different asset in the same currency',
-      );
-    }
-
-    final reconciled = await _markReconciled(journalsToReconcile);
-    final payback = await _api.createTransaction(
-      buildCreditCardPaybackTransfer(
-        paymentAccount: paymentAccount,
-        creditCard: creditCard,
-        paybackDate: paybackDate,
-        purchases: journalsToReconcile,
-      ),
-    );
-
-    return ReconciliationStoreResult(reconciled: reconciled, payback: payback);
   }
 
   Future<List<Transaction>> _markReconciled(
