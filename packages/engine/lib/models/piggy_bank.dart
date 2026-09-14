@@ -33,6 +33,7 @@ class PiggyBank {
   final DateTime startDate;
   final DateTime? targetDate;
   final bool active;
+  final int order;
   final String? notes;
   final String? objectGroupTitle;
   final List<PiggyBankAccountLink> accounts;
@@ -49,6 +50,7 @@ class PiggyBank {
     required this.startDate,
     this.targetDate,
     this.active = true,
+    this.order = 0,
     this.notes,
     this.objectGroupTitle,
     this.accounts = const [],
@@ -72,6 +74,7 @@ class PiggyBank {
       startDate: parseFireflyDate(attrs['start_date']) ?? DateTime.now(),
       targetDate: parseFireflyDate(attrs['target_date']),
       active: attrs['active'] as bool? ?? true,
+      order: (attrs['order'] as num?)?.toInt() ?? 0,
       notes: attrs['notes'] as String?,
       objectGroupTitle: attrs['object_group_title'] as String?,
       accounts: accountList
