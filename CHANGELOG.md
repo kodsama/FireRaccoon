@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `store_reconciliation` on a credit card took the payback alone and never
+  computed a gap, whatever `start_balance`, `end_balance` and
+  `create_correction` said, so a card whose ledger had been a fixed amount
+  off the bank's closing balance since before the imported history could not
+  be put right through MCP. The card path now computes the gap over the
+  statement window the way the asset path does, with the payback dated after
+  the close and no part of it, and writes the correction against
+  `<account> reconciliation`. `payment_account_id` and `payback_date` go
+  together and can both be left out, so a statement whose purchases were paid
+  back long ago is reconciled and corrected without a second payback for
+  them, which is how such an offset gets one correction at the first
+  statement that proves it. Half a payback, or one asked for on an account
+  that is not a card, is refused rather than ignored
+
 ## [0.8.0] - 2026-09-13
 
 ### Added

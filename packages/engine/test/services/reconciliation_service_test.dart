@@ -328,5 +328,59 @@ void main() {
       );
       expect(api.creates, isEmpty);
     });
+
+    test(
+      'writes the correction the statement leaves, after the payback',
+      () async {
+        // The payback is dated past the close and never part of the gap, so a
+        // card whose ledger sat a fixed amount off the bank's balance for years
+        // had no way through this path to be put right.
+        final api = _RecordingApi();
+        final service = ReconciliationService(api);
+
+        final result = await service.storeCreditCardPayback(
+          journalsToReconcile: [
+            _tx(id: 'j1', amount: 40, source: 'Platinum', destination: 'Store'),
+          ],
+          creditCard: card,
+          paymentAccount: payment,
+          paybackDate: DateTime(2026, 7, 31),
+          correction: (gap: -60, endDate: DateTime(2026, 7, 15)),
+        );
+
+        expect(api.creates.map((t) => t.type), ['transfer', 'reconciliation']);
+        final correction = api.creates.last;
+        expect(correction.date, DateTime(2026, 7, 15));
+        expect(correction.amount, 60);
+        // The ledger held less debt than the bank said, so money leaves the
+        // card, against the account named for it and made on the spot.
+        expect(correction.sourceName, 'Platinum');
+        expect(correction.destinationName, 'Platinum reconciliation');
+        expect(api.accountCreates, [
+          'reconciliation:Platinum reconciliation:EUR',
+        ]);
+        expect(result.payback?.type, 'transfer');
+        expect(result.correction?.type, 'reconciliation');
+      },
+    );
+
+    test('a gap within tolerance gets the payback and no correction', () async {
+      final api = _RecordingApi();
+      final service = ReconciliationService(api);
+
+      final result = await service.storeCreditCardPayback(
+        journalsToReconcile: [
+          _tx(id: 'j1', amount: 40, source: 'Platinum', destination: 'Store'),
+        ],
+        creditCard: card,
+        paymentAccount: payment,
+        paybackDate: DateTime(2026, 7, 31),
+        correction: (gap: 0.004, endDate: DateTime(2026, 7, 15)),
+      );
+
+      expect(api.creates.map((t) => t.type), ['transfer']);
+      expect(api.accountCreates, isEmpty);
+      expect(result.correction, isNull);
+    });
   });
 }
