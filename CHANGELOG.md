@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The reconciliation correction was refused with `Created zero transaction
+  journals`. It named only the account being reconciled and left the far side
+  empty, which is how Firefly's own interface has its journal factory fill in
+  the account it keeps for that one. The REST layer never lets that through:
+  an absent name arrives at the validator as an empty string rather than as
+  nothing, so Firefly searched for an account called nothing, found none and
+  built no journal. The correction now names both sides, and the account
+  Firefly keeps is read with `GET /api/v1/accounts?type=reconciliation` and
+  matched on the names Firefly gives them, the current
+  `<account> reconciliation (<currency>)` and the bare
+  `<account> reconciliation` an older version wrote, since an account keeps
+  the name it was made with. An account Firefly has never reconciled has none,
+  and its API refuses to create the type, so the rows stay marked and the
+  warning says to reconcile that account once in Firefly first
+
 - A correction could not be written on any account Firefly's own interface had
   ever reconciled, which is most of them. It puts the other side of a
   correction against `<account> reconciliation (<currency>)`, and

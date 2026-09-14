@@ -92,6 +92,28 @@ Map<String, Object?> liabilityAccountsBody() => {
 };
 
 /// Payees: in Firefly an expense account is who you paid.
+/// The accounts Firefly keeps for corrections, one per asset account it has
+/// reconciled, named the way 6.6.6 names them.
+Map<String, Object?> reconciliationAccountsBody(List<String> names) => {
+  'data': [
+    for (final (index, name) in names.indexed)
+      {
+        'id': '${70 + index}',
+        'type': 'accounts',
+        'attributes': {
+          'name': name,
+          'type': 'reconciliation',
+          'current_balance': '0.00',
+          'currency_symbol': '\u20ac',
+          'currency_code': 'EUR',
+        },
+      },
+  ],
+  'meta': {
+    'pagination': {'total_pages': 1},
+  },
+};
+
 Map<String, Object?> expenseAccountsBody() => {
   'data': [
     {
@@ -416,6 +438,13 @@ MockClient fireflyMockClient({
   List<String>? recordBodies,
   Set<String> failingExports = const {},
   Set<String> failingWrites = const {},
+
+  /// The accounts Firefly keeps for corrections. Both mock accounts have one,
+  /// as an account reconciled in its interface would.
+  List<String> reconciliationAccounts = const [
+    'Checking reconciliation (EUR)',
+    'Credit Card reconciliation (EUR)',
+  ],
 }) {
   final transactions = <String, Map<String, Object?>>{
     '1': transactionItem(
@@ -550,15 +579,12 @@ MockClient fireflyMockClient({
     }
     if (path == '/api/v1/accounts' &&
         request.url.queryParameters['type'] == 'reconciliation') {
-      // Empty by default: Firefly makes one only from its own interface, so a
-      // ledger that has never reconciled this account has none, which is the
-      // case a correction has to cope with.
-      return jsonHttpResponse({
-        'data': <Object?>[],
-        'meta': {
-          'pagination': {'total_pages': 1},
-        },
-      });
+      // What Firefly made from its own interface, named as it names them.
+      // Empty stands for a ledger it has never reconciled, which is the case
+      // a correction cannot be written for at all.
+      return jsonHttpResponse(
+        reconciliationAccountsBody(reconciliationAccounts),
+      );
     }
     if (path == '/api/v1/accounts' && method == 'POST') {
       final sent = jsonDecode(request.body) as Map<String, dynamic>;
