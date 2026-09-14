@@ -28,6 +28,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   asset account, used to report the whole call as failed and say nothing about
   the reconciliation that had happened. The rows stay marked, the call answers
   `ok`, and the unwritten correction is named under `warning` with the reason
+- Taking a category off a transaction needed `category_name` and `category_id`
+  emptied in the same call. Either one alone answered `ok` and changed nothing:
+  the other half was sent back carrying its stored value, and Firefly resolves
+  whichever half still has one. Emptying either now clears both, on a leg named
+  in `splits` as well. A removal the ledger did not take is reported the way
+  every other unapplied field is, as `not_applied` naming the field that was
+  emptied, rather than answered as a success
 
 ## [0.9.0] - 2026-09-14
 
