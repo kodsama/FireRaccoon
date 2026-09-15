@@ -89,7 +89,7 @@ live in `CONTEXT.md`.
 | `update_account` | Change a name, IBAN, BIC, account number, notes, role, currency, liability terms or opening balance; at least one field required |
 | `update_budget` | Update a budget name, active flag, notes, and auto-budget |
 | `delete_budget` | Delete a budget |
-| `get_account` | One account, optionally as it stood on a date |
+| `get_account` | One account with its identifiers and, on a liability, its own terms; optionally as it stood on a date |
 | `get_account_balance_at_date` | Balance on a date, for checking a statement close |
 | `get_account_balance_history` | Balance series across a window |
 | `create_account` | Create an asset, expense, revenue, or liability account |

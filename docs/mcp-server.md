@@ -144,7 +144,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `update_account` | Name, identifiers, notes, role, currency, liability terms, or balances; omitted fields keep their value | yes |
 | `update_budget` | Update a budget; omitted fields keep their value, and a period limit that did not follow the amount is reported | yes |
 | `delete_budget` | Delete a budget | yes |
-| `get_account` | One account, optionally as of a date |  |
+| `get_account` | One account with its identifiers and, on a liability, its own terms; optionally as of a date |  |
 | `get_account_balance_at_date` | Balance on a date, for checking a statement close |  |
 | `get_account_balance_history` | Balance at each of a series of dates |  |
 | `create_account` | Create an asset, expense, revenue, liability, or reconciliation account | yes |
@@ -439,6 +439,16 @@ out either way, each leg carrying its own id, so the rule that a missing leg is
 deleted never comes into play, and legs cannot be added or removed this way.
 The readback reports a leg Firefly declined as `splits[0].budget_id`, and a
 group that came back without a journal the call named as `splits[0]`.
+
+### A liability's own terms
+
+`get_account` and `get_accounts` carry `liability_type`, `liability_direction`,
+`opening_balance` and `opening_balance_date`, so what `update_account` writes
+can be read back. They used to be dropped from both, which left every liability
+reading as one nobody had configured: the obvious answer was to set the fields,
+`update_account` said `ok`, the read still said null, and nothing had changed
+because nothing was wrong. Checking how a liability stood took a whole-ledger
+`export_firefly_data`.
 
 ### Removing a value, not just changing it
 

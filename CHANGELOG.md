@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `get_account` and `get_accounts` dropped `liability_type`,
+  `liability_direction`, `opening_balance` and `opening_balance_date`, which
+  `update_account` writes and `export_firefly_data` has always carried. Every
+  liability read as one nobody had configured, and the obvious answer cost real
+  time: set the fields, `update_account` says `ok`, the read still says null,
+  and nothing changed because nothing was wrong. Seeing how a liability stood
+  took a whole-ledger export. All four are read back now
+
 ## [0.10.0] - 2026-09-15
 
 ### Fixed

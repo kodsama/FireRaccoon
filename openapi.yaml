@@ -1540,7 +1540,9 @@ x-mcp:
       mapsTo: DELETE /api/v1/budgets/{budgetId}
       required: [budget_id]
     get_account:
-      description: Fetch one account, optionally as of a date
+      description: >
+        Fetch one account, optionally as of a date. Carries the identifiers and,
+        on a liability, its type, direction and opening balance.
       mapsTo: GET /api/v1/accounts/{accountId}
       required: [account_id]
     get_account_balance_at_date:

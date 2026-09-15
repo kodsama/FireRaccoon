@@ -286,6 +286,17 @@ Map<String, Object?> _accountJson(Account account) => {
   // has_account_number flag on a search result.
   'account_number': account.accountNumber,
   'iban': account.iban,
+  // A liability's own terms. update_account writes all four and
+  // export_firefly_data carries them, but reading one account did not, so
+  // every liability read as one nobody had configured: the obvious answer was
+  // to set the fields, which answered ok and changed nothing because nothing
+  // was wrong. Checking how a liability stands took a whole-ledger export.
+  'liability_type': account.liabilityType,
+  'liability_direction': account.liabilityDirection,
+  'opening_balance': account.openingBalance,
+  'opening_balance_date': account.openingBalanceDate == null
+      ? null
+      : _dateOnly(account.openingBalanceDate!),
 };
 
 /// One leg of a split group, in the shape the write tools accept back.
