@@ -144,7 +144,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `update_account` | Name, identifiers, notes, role, currency, liability terms, or balances; omitted fields keep their value | yes |
 | `update_budget` | Update a budget; omitted fields keep their value, and a period limit that did not follow the amount is reported | yes |
 | `delete_budget` | Delete a budget | yes |
-| `get_account` | One account, optionally as of a date |  |
+| `get_account` | One account with its identifiers and, on a liability, its own terms; optionally as of a date |  |
 | `get_account_balance_at_date` | Balance on a date, for checking a statement close |  |
 | `get_account_balance_history` | Balance at each of a series of dates |  |
 | `create_account` | Create an asset, expense, revenue, liability, or reconciliation account | yes |
@@ -440,6 +440,23 @@ deleted never comes into play, and legs cannot be added or removed this way.
 The readback reports a leg Firefly declined as `splits[0].budget_id`, and a
 group that came back without a journal the call named as `splits[0]`.
 
+### A liability's own terms
+
+`get_account` and `get_accounts` carry `liability_type`, `liability_direction`,
+`opening_balance` and `opening_balance_date`, so what `update_account` writes
+can be read back. They used to be dropped from both, which left every liability
+reading as one nobody had configured: the obvious answer was to set the fields,
+`update_account` said `ok`, the read still said null, and nothing had changed
+because nothing was wrong. Checking how a liability stood took a whole-ledger
+`export_firefly_data`.
+
+Setting an opening balance on a liability used to need those two liability
+fields restated in the same call or Firefly answered `500 Undefined array key
+"liability_direction"`. It decides the sign of the balance from the direction
+and reads the key off the payload without checking it is there. FireRaccoon now
+sends the stored direction with any opening balance it writes to a liability,
+so the call the crash asked for is the call that already works.
+
 ### Removing a value, not just changing it
 
 An update leaves out a field it was not given, which is what makes a partial
@@ -460,17 +477,30 @@ ledger did not take comes back the way any unapplied field does, as
 `code: not_applied` naming the field the caller emptied, with the row as it now
 stands.
 
-### A name replaces the id beside it
+### Either half of a pair replaces the other
 
-Firefly resolves an id in preference to a name. An update that named a
-category while the stored id rode along changed nothing and answered 200, and
-so did one that moved a payee by name: the description and category in the
-same call landed, the payer stayed, and nothing in the answer said so. A name
-stated without its id now drops the stored id for that side, on the group and
-on a leg named in `splits` alike, and a leg of a create that names its own
-account no longer inherits the group's id. An account Firefly kept regardless
-comes back as `not_applied`, naming `source_name`, `destination_name` or the id
-that did not land, the way every other declined field is reported.
+Firefly tries the id first but falls through to the name when the id names an
+account the transaction type will not take, so whichever half the call left out
+has to be dropped rather than sent along from what is stored.
+
+An update that named a category while the stored id rode along changed nothing
+and answered 200, and so did one that moved a payee by name: the description
+and category in the same call landed, the payer stayed, and nothing in the
+answer said so. Stating the id alone was the same story from the other side:
+the stored name travelled with it, so moving a row to an account by id either
+landed on the name's account or was refused for an account nobody had
+mentioned.
+
+Whichever half a call states now drops the stored other half for that side, on
+the group and on a leg named in `splits` alike, and a leg of a create that
+states one half no longer inherits the group's other. State both to set both.
+An account Firefly kept regardless comes back as `not_applied`, naming
+`source_name`, `destination_name` or the id that did not land, the way every
+other declined field is reported.
+
+A liability is never one end of a transfer: Firefly holds a transfer between
+two asset accounts only, and paying a loan is a withdrawal whose destination is
+the liability.
 
 ### Reconciliation survives an edit
 

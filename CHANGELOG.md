@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.1] - 2026-09-15
+
+### Fixed
+
+- `get_account` and `get_accounts` dropped `liability_type`,
+  `liability_direction`, `opening_balance` and `opening_balance_date`, which
+  `update_account` writes and `export_firefly_data` has always carried. Every
+  liability read as one nobody had configured, and the obvious answer cost real
+  time: set the fields, `update_account` says `ok`, the read still says null,
+  and nothing changed because nothing was wrong. Seeing how a liability stood
+  took a whole-ledger export. All four are read back now
+- Setting an opening balance on a liability crashed Firefly with `500 Undefined
+  array key "liability_direction"` unless the liability fields were restated in
+  the same call. Firefly decides the sign of the balance from the direction and
+  reads the key off the payload without checking it is there, on the one path
+  that writes an opening balance. FireRaccoon sends the stored direction with
+  any opening balance it writes to a liability, which also fixes editing one
+  from the account dialog, where the direction only travels when it changed
+- An account id stated on `update_transaction` could not override the stored
+  name on that side. Firefly tries the id first but falls through to the name
+  when the id names an account the transaction type will not take, so moving a
+  row to an account by id either landed on the name's account or was refused
+  for an account nobody had mentioned. The two halves were asymmetric: a name
+  replaced a stored id, an id lost to a stored name. Either half now drops the
+  stored other, on the group and on a leg named in `splits` alike, and a leg of
+  a create stating one half no longer inherits the group's other
+
 ## [0.10.0] - 2026-09-15
 
 ### Fixed

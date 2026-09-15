@@ -909,6 +909,11 @@ void main() {
 
     test('updateAccount sends PUT with extended attributes', () async {
       final client = MockClient((request) async {
+        // An opening balance is read back against first, to see whether the
+        // account is a liability whose direction has to ride along.
+        if (request.method == 'GET') {
+          return jsonHttpResponse(accountBody(id: '5'));
+        }
         expect(request.method, 'PUT');
         expect(request.url.path, '/api/v1/accounts/5');
         expect(request.headers['Content-Type'], 'application/json');
@@ -921,6 +926,7 @@ void main() {
         expect(body['virtual_balance'], '500.00');
         expect(body['interest'], '2.5');
         expect(body['interest_period'], 'monthly');
+        expect(body.containsKey('liability_direction'), isFalse);
         return http.Response('', 200);
       });
       final service = FireflyApiService(
@@ -943,6 +949,91 @@ void main() {
         ),
         completes,
       );
+    });
+
+    test(
+      'an opening balance on a liability carries the stored direction',
+      () async {
+        final requests = <String>[];
+        final client = MockClient((request) async {
+          requests.add(request.method);
+          if (request.method == 'GET') {
+            expect(request.url.path, '/api/v1/accounts/7');
+            return jsonHttpResponse(
+              accountBody(
+                id: '7',
+                name: 'Mortgage',
+                type: 'liabilities',
+                liabilityType: 'mortgage',
+                liabilityDirection: 'credit',
+              ),
+            );
+          }
+          final body = jsonDecode(request.body) as Map<String, dynamic>;
+          // Firefly reads this key unguarded while deciding the sign of the
+          // balance, so without it the write is a 500 on an undefined key.
+          expect(body['liability_direction'], 'credit');
+          expect(body['opening_balance'], '-2192000.00');
+          return http.Response('', 200);
+        });
+        final service = FireflyApiService(
+          serverUrl: baseUrl,
+          apiToken: token,
+          client: client,
+        );
+
+        await service.updateAccount(
+          '7',
+          openingBalance: -2192000,
+          openingBalanceDate: DateTime(2019, 9, 30),
+        );
+
+        expect(requests, ['GET', 'PUT']);
+      },
+    );
+
+    test('a direction the caller gave is not read back', () async {
+      final requests = <String>[];
+      final client = MockClient((request) async {
+        requests.add(request.method);
+        final body = jsonDecode(request.body) as Map<String, dynamic>;
+        expect(body['liability_direction'], 'debit');
+        return http.Response('', 200);
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      await service.updateAccount(
+        '7',
+        liabilityDirection: 'debit',
+        openingBalance: 100,
+        openingBalanceDate: DateTime(2026, 1, 1),
+      );
+
+      expect(requests, ['PUT']);
+    });
+
+    test('an update carrying no opening balance reads nothing back', () async {
+      final requests = <String>[];
+      final client = MockClient((request) async {
+        requests.add(request.method);
+        return http.Response('', 200);
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      // Firefly only reaches the unguarded key while writing an opening
+      // balance, and both halves have to be there for it to try.
+      await service.updateAccount('7', name: 'Mortgage');
+      await service.updateAccount('7', openingBalance: 100);
+
+      expect(requests, ['PUT', 'PUT']);
     });
 
     test('updateAccount throws on failure', () async {
