@@ -83,6 +83,10 @@ Map<String, Object?> liabilityAccountsBody() => {
         'current_balance': '-120.50',
         'currency_symbol': '€',
         'currency_code': 'EUR',
+        'liability_type': 'debt',
+        'liability_direction': 'credit',
+        'opening_balance': '-2182000.000000000000',
+        'opening_balance_date': '2019-09-28T00:00:00+02:00',
       },
     },
   ],
@@ -764,11 +768,10 @@ MockClient fireflyMockClient({
         !path.endsWith('/transactions') &&
         method == 'GET') {
       final accountId = path.split('/')[4];
-      final body = assetAccountsBody();
-      final match = (body['data'] as List)
-          .cast<Map<String, Object?>>()
-          .where((item) => item['id'] == accountId)
-          .toList();
+      final match = [
+        for (final body in [assetAccountsBody(), liabilityAccountsBody()])
+          ...(body['data'] as List).cast<Map<String, Object?>>(),
+      ].where((item) => item['id'] == accountId).toList();
       if (match.isEmpty) {
         return jsonHttpResponse({'message': 'Not found'}, status: 404);
       }

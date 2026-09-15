@@ -94,6 +94,46 @@ void main() {
       expect((result['account'] as Map)['name'], 'Checking');
     });
 
+    test('get_account carries a liability its own terms', () async {
+      // Without these a liability read as one nobody had configured, and the
+      // only way to see how one stood was a whole-ledger export.
+      final result = await _tool(
+        'get_account',
+        client: fireflyMockClient(),
+      ).run({'account_id': '6'});
+
+      final account = result['account'] as Map<String, Object?>;
+      expect(account['type'], 'liability');
+      expect(account['liability_type'], 'debt');
+      expect(account['liability_direction'], 'credit');
+      expect(account['opening_balance'], -2182000.0);
+      expect(account['opening_balance_date'], '2019-09-28');
+    });
+
+    test('get_accounts carries them too', () async {
+      final result = await _tool('get_accounts', client: fireflyMockClient())
+          .run({
+            'types': ['liability'],
+          });
+
+      final accounts = (result['accounts'] as List)
+          .cast<Map<String, Object?>>();
+      expect(accounts.single['liability_direction'], 'credit');
+      expect(accounts.single['opening_balance_date'], '2019-09-28');
+    });
+
+    test('an account with no opening balance reports it as null', () async {
+      final result = await _tool(
+        'get_account',
+        client: fireflyMockClient(),
+      ).run({'account_id': '5'});
+
+      final account = result['account'] as Map<String, Object?>;
+      expect(account.containsKey('opening_balance_date'), isTrue);
+      expect(account['opening_balance_date'], isNull);
+      expect(account['liability_type'], isNull);
+    });
+
     test('get_account surfaces a missing account as a failure', () async {
       // The tool lets the error out; the server turns it into a tool_error
       // response rather than reporting a fabricated empty account.
