@@ -450,6 +450,13 @@ reading as one nobody had configured: the obvious answer was to set the fields,
 because nothing was wrong. Checking how a liability stood took a whole-ledger
 `export_firefly_data`.
 
+Setting an opening balance on a liability used to need those two liability
+fields restated in the same call or Firefly answered `500 Undefined array key
+"liability_direction"`. It decides the sign of the balance from the direction
+and reads the key off the payload without checking it is there. FireRaccoon now
+sends the stored direction with any opening balance it writes to a liability,
+so the call the crash asked for is the call that already works.
+
 ### Removing a value, not just changing it
 
 An update leaves out a field it was not given, which is what makes a partial

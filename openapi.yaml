@@ -1492,7 +1492,9 @@ x-mcp:
         Update an account. Pass account_id plus at least one field; anything
         omitted keeps its current value. Setting account_number or iban on a
         payee is what lets find_account resolve a statement line to it next
-        time instead of guessing from the name.
+        time instead of guessing from the name. An opening balance written to a
+        liability carries the stored liability_direction, which Firefly reads
+        unguarded while deciding the sign of the balance.
       mapsTo: PUT /api/v1/accounts/{accountId}
       required: [account_id]
       inputSchema:
