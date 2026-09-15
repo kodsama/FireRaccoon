@@ -623,15 +623,19 @@ const _legOwnedFields = [
   'reconciled',
 ];
 
-/// Whether [args] states [nameKey] as the replacement for [idKey].
+/// Whether [args] states [stated] as the replacement for [replaced], the other
+/// half of the name and id pair naming one thing.
 ///
-/// Firefly resolves an id in preference to a name, so an id the caller never
-/// mentioned has to be dropped rather than sent alongside the new name. An
-/// empty name is a clear, which the cleared-fields path handles instead.
-bool _replacesId(Map<String, Object?> args, String nameKey, String idKey) =>
-    args.containsKey(nameKey) &&
-    !_isEmptyValue(args[nameKey]) &&
-    !args.containsKey(idKey);
+/// Firefly tries the id first but falls through to the name when the id names
+/// an account the transaction type will not take, so whichever half the caller
+/// left out has to be dropped rather than sent along from what is stored. Sent
+/// along, the stored half either wins outright or turns a refusal into one
+/// naming an account nobody mentioned. An empty value is a clear, which the
+/// cleared-fields path handles instead.
+bool _replaces(Map<String, Object?> args, String stated, String replaced) =>
+    args.containsKey(stated) &&
+    !_isEmptyValue(args[stated]) &&
+    !args.containsKey(replaced);
 
 /// Fields the caller stated that the stored transaction does not carry.
 ///
@@ -771,11 +775,11 @@ Transaction _splitFromArgs(
 }) {
   String? pick(String key) => (leg[key] as String?) ?? (args[key] as String?);
 
-  // A leg naming its own category or account must not inherit the group's
-  // id, which Firefly would resolve in preference to the name.
-  String? pickId(String nameKey, String idKey) =>
-      (leg[idKey] as String?) ??
-      (_replacesId(leg, nameKey, idKey) ? null : args[idKey] as String?);
+  // A leg naming its own category or account by one half must not inherit the
+  // group's other half, which Firefly would resolve in its place.
+  String? pickPaired(String stated, String replaced) =>
+      (leg[replaced] as String?) ??
+      (_replaces(leg, stated, replaced) ? null : args[replaced] as String?);
 
   final amount = (leg['amount'] as num?)?.toDouble();
   if (amount == null || amount <= 0) {
@@ -792,14 +796,14 @@ Transaction _splitFromArgs(
     date: date,
     amount: amount,
     description: description,
-    sourceName: pick('source_name') ?? '',
-    destinationName: pick('destination_name') ?? '',
-    categoryName: pick('category_name') ?? '',
+    sourceName: pickPaired('source_id', 'source_name') ?? '',
+    destinationName: pickPaired('destination_id', 'destination_name') ?? '',
+    categoryName: pickPaired('category_id', 'category_name') ?? '',
     currencySymbol: currencySymbol,
     currencyCode: (leg['currency_code'] as String?) ?? currencyCode,
-    sourceId: pickId('source_name', 'source_id'),
-    destinationId: pickId('destination_name', 'destination_id'),
-    categoryId: pickId('category_name', 'category_id'),
+    sourceId: pickPaired('source_name', 'source_id'),
+    destinationId: pickPaired('destination_name', 'destination_id'),
+    categoryId: pickPaired('category_name', 'category_id'),
     budgetId: pick('budget_id'),
     billId: pick('bill_id'),
     notes: pick('notes'),
@@ -987,20 +991,22 @@ Transaction _patchSplit(
     );
   }
 
-  // Empty rather than null: toSplitJson leaves an empty id out, so Firefly
-  // resolves the name it was given instead of the id that name replaces.
-  String? replacing(String nameKey, String idKey) =>
-      _replacesId(patch, nameKey, idKey) ? '' : patch[idKey] as String?;
+  // What the second half should carry, given the first may stand in for it.
+  // Empty rather than null: toSplitJson leaves an empty value out, so Firefly
+  // resolves the half the caller gave instead of the half it replaces, which
+  // the leg would otherwise keep from what is stored.
+  String? replacing(String stated, String replaced) =>
+      _replaces(patch, stated, replaced) ? '' : patch[replaced] as String?;
 
   return split.copyWith(
     date: date,
     amount: amount,
     description: patch['description'] as String?,
     sourceId: replacing('source_name', 'source_id'),
-    sourceName: patch['source_name'] as String?,
+    sourceName: replacing('source_id', 'source_name'),
     destinationId: replacing('destination_name', 'destination_id'),
-    destinationName: patch['destination_name'] as String?,
-    categoryName: patch['category_name'] as String?,
+    destinationName: replacing('destination_id', 'destination_name'),
+    categoryName: replacing('category_id', 'category_name'),
     categoryId: replacing('category_name', 'category_id'),
     budgetId: patch['budget_id'] as String?,
     billId: patch['bill_id'] as String?,
@@ -1105,11 +1111,13 @@ Transaction _transactionFromArgs(
           reconciled: isUpdate
               ? (args['reconciled'] as bool?) ?? split.reconciled
               : false,
-          categoryName: args['category_name'] as String?,
-          // Empty rather than null: toSplitJson leaves an empty id out, so
-          // Firefly resolves the name it was given instead of the id that
-          // name was meant to replace.
-          categoryId: _replacesId(args, 'category_name', 'category_id')
+          // Empty rather than null: toSplitJson leaves an empty value out, so
+          // Firefly resolves the half the caller gave instead of the half it
+          // replaces, which the leg would otherwise keep from what is stored.
+          categoryName: _replaces(args, 'category_id', 'category_name')
+              ? ''
+              : args['category_name'] as String?,
+          categoryId: _replaces(args, 'category_name', 'category_id')
               ? ''
               : args['category_id'] as String?,
           budgetId: args['budget_id'] as String?,
@@ -1215,20 +1223,33 @@ Transaction _transactionFromArgs(
     // when there are legs. Serialisation reads the legs either way; this is
     // what makes the returned object describe itself the way a fetched one
     // does.
+    //
+    // An id the caller stated wins over the name it replaces, the same way a
+    // stated name wins over the id below. Sending the stored name beside the
+    // new id made the two halves asymmetric: a name replaced an id, an id lost
+    // to a name. Firefly falls through to the name when the id names an
+    // account the type will not take, so moving a row to an account by id
+    // either landed on the name's account instead or was refused for one the
+    // caller had never mentioned. An empty string is how the model spells
+    // "send nothing": toSplitJson leaves it out.
     sourceName:
         leadingLeg?.sourceName ??
         (args['source_name'] as String?) ??
-        base?.sourceName ??
+        (_replaces(args, 'source_id', 'source_name') ? '' : base?.sourceName) ??
         '',
     destinationName:
         leadingLeg?.destinationName ??
         (args['destination_name'] as String?) ??
-        base?.destinationName ??
+        (_replaces(args, 'destination_id', 'destination_name')
+            ? ''
+            : base?.destinationName) ??
         '',
     categoryName:
         leadingLeg?.categoryName ??
         (args['category_name'] as String?) ??
-        base?.categoryName ??
+        (_replaces(args, 'category_id', 'category_name')
+            ? ''
+            : base?.categoryName) ??
         '',
     currencySymbol: currencySymbol,
     currencyCode: leadingLeg?.currencyCode ?? currencyCode,
@@ -1239,17 +1260,17 @@ Transaction _transactionFromArgs(
     sourceId:
         leadingLeg?.sourceId ??
         (args['source_id'] as String?) ??
-        (_replacesId(args, 'source_name', 'source_id') ? null : base?.sourceId),
+        (_replaces(args, 'source_name', 'source_id') ? null : base?.sourceId),
     destinationId:
         leadingLeg?.destinationId ??
         (args['destination_id'] as String?) ??
-        (_replacesId(args, 'destination_name', 'destination_id')
+        (_replaces(args, 'destination_name', 'destination_id')
             ? null
             : base?.destinationId),
     categoryId:
         leadingLeg?.categoryId ??
         (args['category_id'] as String?) ??
-        (_replacesId(args, 'category_name', 'category_id')
+        (_replaces(args, 'category_name', 'category_id')
             ? null
             : base?.categoryId),
     budgetId:
@@ -3208,6 +3229,10 @@ List<McpTool> buildTools({
           'description and accounts, and a description renames the group. Pass '
           'splits instead to change one leg on its own, naming it by its '
           'journal_id; a leg the list leaves out is left exactly as it is. '
+          'An account or a category is named twice, by id and by name: state '
+          'either half and the stored other half is dropped rather than sent '
+          'along, so state both to set both. A liability is never one end of '
+          'a transfer; paying one is a withdrawal whose destination it is. '
           'A reconciled transaction will not take an amount or an account '
           'change: pass reconciled:false with it to release the row, or '
           'keep_reconciled:true to release it, store the change and mark it '
