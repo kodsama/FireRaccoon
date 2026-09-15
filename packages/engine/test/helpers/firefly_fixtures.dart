@@ -47,6 +47,31 @@ Map<String, Object?> accountsBody() => {
   ],
 };
 
+/// One account, in the envelope `GET /api/v1/accounts/{id}` answers with.
+Map<String, Object?> accountBody({
+  String id = '5',
+  String name = 'Checking',
+  String type = 'asset',
+  String role = 'defaultAsset',
+  String? liabilityType,
+  String? liabilityDirection,
+}) => {
+  'data': {
+    'id': id,
+    'type': 'accounts',
+    'attributes': {
+      'name': name,
+      'type': type,
+      'account_role': role,
+      'current_balance': '2500.00',
+      'currency_symbol': '€',
+      'currency_code': 'EUR',
+      'liability_type': liabilityType,
+      'liability_direction': liabilityDirection,
+    },
+  },
+};
+
 Map<String, Object?> budgetsBody() => {
   'data': [
     {

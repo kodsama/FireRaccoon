@@ -914,6 +914,23 @@ class FireflyApiService implements FireflyService {
       if (interest != null) body['interest'] = interest.toString();
       if (interestPeriod != null) body['interest_period'] = interestPeriod;
 
+      // Firefly decides the sign of a liability's opening balance from
+      // liability_direction and reads it off the payload without checking it
+      // is there, so setting an opening balance on a liability without
+      // restating the direction is a 500 on an undefined array key. It only
+      // reaches that line when both halves of the balance are present, which
+      // is what narrows this to the one call that needs it. The stored
+      // direction is the only safe value: defaulting one would flip the sign
+      // of the balance being written.
+      if (openingBalance != null &&
+          openingBalanceDate != null &&
+          liabilityDirection == null) {
+        final stored = await getAccount(accountId);
+        if (stored.isLiability && stored.liabilityDirection != null) {
+          body['liability_direction'] = stored.liabilityDirection;
+        }
+      }
+
       final response = await _send(
         'PUT',
         '/api/v1/accounts/$accountId',

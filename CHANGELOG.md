@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   time: set the fields, `update_account` says `ok`, the read still says null,
   and nothing changed because nothing was wrong. Seeing how a liability stood
   took a whole-ledger export. All four are read back now
+- Setting an opening balance on a liability crashed Firefly with `500 Undefined
+  array key "liability_direction"` unless the liability fields were restated in
+  the same call. Firefly decides the sign of the balance from the direction and
+  reads the key off the payload without checking it is there, on the one path
+  that writes an opening balance. FireRaccoon sends the stored direction with
+  any opening balance it writes to a liability, which also fixes editing one
+  from the account dialog, where the direction only travels when it changed
 
 ## [0.10.0] - 2026-09-15
 
