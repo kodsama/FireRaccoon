@@ -7,37 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-15
+
 ### Fixed
 
-- The reconciliation correction was refused with `Created zero transaction
-  journals`. It named only the account being reconciled and left the far side
-  empty, which is how Firefly's own interface has its journal factory fill in
-  the account it keeps for that one. The REST layer never lets that through:
-  an absent name arrives at the validator as an empty string rather than as
-  nothing, so Firefly searched for an account called nothing, found none and
-  built no journal. The correction now names both sides, and the account
-  Firefly keeps is read with `GET /api/v1/accounts?type=reconciliation` and
-  matched on the names Firefly gives them, the current
-  `<account> reconciliation (<currency>)` and the bare
-  `<account> reconciliation` an older version wrote, since an account keeps
-  the name it was made with. An account Firefly has never reconciled has none,
-  and its API refuses to create the type, so the rows stay marked and the
-  warning says to reconcile that account once in Firefly first
-
-- A correction could not be written on any account Firefly's own interface had
-  ever reconciled, which is most of them. It puts the other side of a
-  correction against `<account> reconciliation (<currency>)`, and
-  FireRaccoon named that account itself from a guess that left the currency
-  out. Firefly searches for the name it is given and refuses the write when it
-  finds none, so the correction was refused, and the account FireRaccoon then
-  tried to create was refused too: its API takes asset, expense, revenue, cash
-  and liabilities and no other type. A correction now names only the account
-  being reconciled and leaves the other side carrying neither a name nor an
-  id, which is how Firefly is asked to resolve its own account for it and make
-  one where the ledger has none, exactly as its interface does. `create_account`
-  and `update_account` no longer offer a `reconciliation` type they could never
-  write, and `get_accounts` takes `reconciliation` among its types so the
-  accounts a correction goes against can be read back
+- A correction could not be written at all. Firefly puts the other side of one
+  against an account it keeps per asset account and names itself, currently
+  `<account> reconciliation (<currency>)` and on older versions the bare
+  `<account> reconciliation`. FireRaccoon guessed that name without the
+  currency, Firefly searches for the name it is given and refuses the write
+  when it finds none, and the account FireRaccoon then tried to create was
+  refused too: its API takes asset, expense, revenue, cash and liabilities and
+  no other type. Leaving the far side empty instead, which is how Firefly's own
+  interface has its journal factory fill the account in, does not survive the
+  REST layer either, where an absent name reaches the validator as an empty
+  string: Firefly looked for an account called nothing and answered `Created
+  zero transaction journals`. The correction now names both sides, and the
+  account is read with `GET /api/v1/accounts?type=reconciliation` and matched
+  on both names Firefly has used, since an account keeps the name it was made
+  with. One its interface has never reconciled has no such account and the API
+  cannot make one, so the rows stay marked and the warning says to reconcile
+  that account once in Firefly first. `create_account` and `update_account` no
+  longer offer a `reconciliation` type they could never write, and
+  `get_accounts` takes `reconciliation` among its types so these can be read
+  back
 - `store_reconciliation` marks the rows before it writes the correction, so a
   correction Firefly refuses, which is any against an account that is not an
   asset account, used to report the whole call as failed and say nothing about
