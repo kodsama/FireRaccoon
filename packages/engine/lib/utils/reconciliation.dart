@@ -1,3 +1,4 @@
+import '../models/account.dart';
 import '../models/transaction.dart';
 import 'transaction_filters.dart';
 import 'transaction_grouping.dart';
@@ -219,41 +220,75 @@ double computeReconciliationGap({
   return endBalance - (startBalance + net);
 }
 
-/// Builds a reconciliation correction transaction for [gap] on [endDate].
-/// The account Firefly puts the other side of a correction against.
+/// The names Firefly gives the account it keeps for [accountName].
 ///
-/// Firefly names these `<account> reconciliation` and only ever creates one
-/// from its own interface. A correction refers to it by name, and a name
-/// Firefly cannot resolve is a refusal, so whatever writes a correction has to
-/// make sure it exists first.
-String reconciliationAccountName(String accountName) =>
-    '$accountName reconciliation';
+/// 6.6.6 writes `:name reconciliation (:currency)` and older versions wrote
+/// the name alone. An account keeps the name it was made with, so a ledger
+/// running since 2020 holds both spellings and both have to be read.
+///
+/// The currency is the reconciled account's own, except that Firefly falls
+/// back to the instance's primary currency for an account carrying none,
+/// which is why any suffix is taken before giving up.
+List<String> reconciliationAccountNames(String accountName, String currency) =>
+    ['$accountName reconciliation ($currency)', '$accountName reconciliation'];
 
+/// The account Firefly keeps for [accountName] among [accounts], or null.
+///
+/// Read rather than guessed: the name is Firefly's to choose, a correction
+/// has to name an account that already exists, and its API will not make one.
+Account? findReconciliationAccount(
+  Iterable<Account> accounts, {
+  required String accountName,
+  required String currencyCode,
+}) {
+  for (final wanted in reconciliationAccountNames(accountName, currencyCode)) {
+    for (final account in accounts) {
+      if (account.name.toLowerCase() == wanted.toLowerCase()) return account;
+    }
+  }
+  final anyCurrency = '$accountName reconciliation ('.toLowerCase();
+  for (final account in accounts) {
+    if (account.name.toLowerCase().startsWith(anyCurrency)) return account;
+  }
+  return null;
+}
+
+/// Builds a reconciliation correction transaction for [gap] on [endDate],
+/// against the account Firefly keeps for the one being reconciled.
+///
+/// Both sides are named. Firefly's own interface leaves the far side empty
+/// and lets its journal factory fill in the account, but the REST API turns
+/// an absent name into an empty string before the validator sees it, so the
+/// side never reads as unstated: it searches for an account called nothing,
+/// finds none, and builds zero journals out of the request.
 Transaction buildReconciliationCorrection({
   required String accountId,
   required String accountName,
+  required String reconciliationAccountId,
+  required String reconciliationAccountName,
   required String currencyCode,
   required String currencySymbol,
   required double gap,
   required DateTime endDate,
 }) {
-  final amount = gap.abs();
-  final reconciliationAccount = reconciliationAccountName(accountName);
+  // A gap above zero is a statement holding more than the ledger does, so the
+  // money arrives: the account is the destination and the account Firefly
+  // keeps for it is the source.
   final isShort = gap > 0;
 
   return Transaction(
     id: '',
     type: 'reconciliation',
     date: endDate,
-    amount: amount,
+    amount: gap.abs(),
     description: 'Reconciliation of $accountName',
-    sourceName: isShort ? reconciliationAccount : accountName,
-    destinationName: isShort ? accountName : reconciliationAccount,
+    sourceName: isShort ? reconciliationAccountName : accountName,
+    destinationName: isShort ? accountName : reconciliationAccountName,
     categoryName: '',
     currencySymbol: currencySymbol,
     currencyCode: currencyCode,
-    sourceId: isShort ? null : accountId,
-    destinationId: isShort ? accountId : null,
+    sourceId: isShort ? reconciliationAccountId : accountId,
+    destinationId: isShort ? accountId : reconciliationAccountId,
   );
 }
 
@@ -262,6 +297,7 @@ class ReconciliationStoreResult {
     required this.reconciled,
     this.correction,
     this.payback,
+    this.correctionError,
   });
 
   final List<Transaction> reconciled;
@@ -269,4 +305,13 @@ class ReconciliationStoreResult {
 
   /// Multi-split credit-card payback transfer, when created.
   final Transaction? payback;
+
+  /// Why the correction was not written, null when there was nothing to
+  /// correct or the correction went in.
+  ///
+  /// The journals are marked before the correction, and that half stands
+  /// whatever happens to this one. Reporting the whole call as failed would
+  /// hide a reconciliation that did happen and invite a caller to run it
+  /// again.
+  final String? correctionError;
 }

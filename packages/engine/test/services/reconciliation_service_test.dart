@@ -15,22 +15,36 @@ class _RecordingApi implements FireflyService {
     return transaction;
   }
 
+  /// Refuses every create of this type, the way Firefly refuses a correction
+  /// against an account it will not reconcile.
+  String? refuseCreateOfType;
+
   @override
   Future<Transaction> createTransaction(Transaction transaction) async {
+    if (transaction.type == refuseCreateOfType) {
+      throw StateError('422 Mortgage is not an asset account');
+    }
     creates.add(transaction);
     return transaction.copyWith(id: 'created-1');
   }
 
-  /// What the ledger already has of type `reconciliation`.
-  List<Account> reconciliationAccounts = const [];
   final accountCreates = <String>[];
+
+  /// Every account read, by the types it asked for.
+  final accountReads = <List<String>>[];
+
+  /// What the ledger holds of type `reconciliation`.
+  List<Account> reconciliationAccounts = const [];
 
   @override
   Future<List<Account>> getAccounts({
     List<String> types = const ['asset', 'liability'],
-  }) async => types.contains('reconciliation')
-      ? reconciliationAccounts
-      : const <Account>[];
+  }) async {
+    accountReads.add(types);
+    return types.contains('reconciliation')
+        ? reconciliationAccounts
+        : const <Account>[];
+  }
 
   @override
   Future<Account> createAccount({
@@ -118,7 +132,14 @@ void main() {
   });
 
   test('store creates correction when gap exceeds tolerance', () async {
-    final api = _RecordingApi();
+    final api = _RecordingApi()
+      ..reconciliationAccounts = [
+        _account(
+          id: 'r1',
+          name: 'Checking reconciliation (EUR)',
+          type: 'reconciliation',
+        ),
+      ];
     final service = ReconciliationService(api);
 
     final result = await service.store(
@@ -135,45 +156,15 @@ void main() {
     expect(result.correction?.id, 'created-1');
   });
 
-  test(
-    'a correction makes the reconciliation account Firefly has not',
-    () async {
-      // Firefly creates these only from its own interface, and a correction
-      // names one: on a ledger that has never reconciled this account there was
-      // nothing for it to name, and no way through the API to make one, so the
-      // correction could not be written at all.
-      final api = _RecordingApi();
-      final service = ReconciliationService(api);
-
-      await service.store(
-        journalsToReconcile: [_tx(id: '1')],
-        accountId: 'a1',
-        accountName: 'Checking',
-        currencyCode: 'EUR',
-        currencySymbol: '\u20ac',
-        endDate: DateTime(2026, 1, 31),
-        gap: 12.5,
-      );
-
-      expect(api.accountCreates, [
-        'reconciliation:Checking reconciliation:EUR',
-      ]);
-      // Named exactly as the correction refers to it, or Firefly cannot resolve
-      // the name and refuses the write.
-      final correction = api.creates.single;
-      expect([
-        correction.sourceName,
-        correction.destinationName,
-      ], contains('Checking reconciliation'));
-    },
-  );
-
-  test('one that already exists is not made again', () async {
+  test('a correction names the account Firefly keeps for this one', () async {
+    // Read, never guessed and never made: Firefly names it itself, its API
+    // refuses to create the type, and a correction naming an account it
+    // cannot find is refused.
     final api = _RecordingApi()
       ..reconciliationAccounts = [
         _account(
           id: 'r1',
-          name: 'Checking reconciliation',
+          name: 'Checking reconciliation (EUR)',
           type: 'reconciliation',
         ),
       ];
@@ -189,11 +180,74 @@ void main() {
       gap: 12.5,
     );
 
+    expect(api.accountReads, [
+      ['reconciliation'],
+    ]);
+    final correction = api.creates.single;
+    expect(correction.type, 'reconciliation');
+    expect(correction.amount, 12.5);
+    // Short by the gap, so the money arrives and this account is the
+    // destination.
+    expect(correction.destinationId, 'a1');
+    expect(correction.destinationName, 'Checking');
+    expect(correction.sourceId, 'r1');
+    expect(correction.sourceName, 'Checking reconciliation (EUR)');
+    // Nothing is made: Firefly's API takes none of the types this needs.
     expect(api.accountCreates, isEmpty);
-    expect(api.creates, hasLength(1));
   });
 
-  test('nothing is made when there is no correction to write', () async {
+  test('a surplus leaves this account as the source', () async {
+    final api = _RecordingApi()
+      ..reconciliationAccounts = [
+        _account(
+          id: 'r1',
+          name: 'Checking reconciliation (EUR)',
+          type: 'reconciliation',
+        ),
+      ];
+    final service = ReconciliationService(api);
+
+    await service.store(
+      journalsToReconcile: [_tx(id: '1')],
+      accountId: 'a1',
+      accountName: 'Checking',
+      currencyCode: 'EUR',
+      currencySymbol: '\u20ac',
+      endDate: DateTime(2026, 1, 31),
+      gap: -12.5,
+    );
+
+    final correction = api.creates.single;
+    expect(correction.sourceId, 'a1');
+    expect(correction.sourceName, 'Checking');
+    expect(correction.destinationId, 'r1');
+    expect(correction.destinationName, 'Checking reconciliation (EUR)');
+  });
+
+  test('an account Firefly has never reconciled is reported', () async {
+    // It makes these only from its own interface, so there is nothing to name
+    // and nothing the API can do about it. The rows are already marked.
+    final api = _RecordingApi();
+    final service = ReconciliationService(api);
+
+    final result = await service.store(
+      journalsToReconcile: [_tx(id: '1')],
+      accountId: 'a1',
+      accountName: 'Checking',
+      currencyCode: 'EUR',
+      currencySymbol: '\u20ac',
+      endDate: DateTime(2026, 1, 31),
+      gap: 12.5,
+    );
+
+    expect(api.creates, isEmpty);
+    expect(api.accountCreates, isEmpty);
+    expect(result.reconciled, hasLength(1));
+    expect(result.correction, isNull);
+    expect(result.correctionError, contains('Reconcile that account once'));
+  });
+
+  test('nothing is written when there is no correction to make', () async {
     final api = _RecordingApi();
     final service = ReconciliationService(api);
 
@@ -207,8 +261,39 @@ void main() {
       gap: 0,
     );
 
-    expect(api.accountCreates, isEmpty);
     expect(api.creates, isEmpty);
+    expect(api.accountCreates, isEmpty);
+  });
+
+  test('a refused correction leaves the journals reconciled', () async {
+    // Firefly will not put a reconciliation account against anything but an
+    // asset account. The marking already happened, and failing the whole call
+    // would hide it and invite the lot to be run again.
+    final api = _RecordingApi()
+      ..refuseCreateOfType = 'reconciliation'
+      ..reconciliationAccounts = [
+        _account(
+          id: 'r1',
+          name: 'Mortgage reconciliation (EUR)',
+          type: 'reconciliation',
+        ),
+      ];
+    final service = ReconciliationService(api);
+
+    final result = await service.store(
+      journalsToReconcile: [_tx(id: '1')],
+      accountId: 'a1',
+      accountName: 'Mortgage',
+      currencyCode: 'EUR',
+      currencySymbol: '\u20ac',
+      endDate: DateTime(2026, 1, 31),
+      gap: 12.5,
+    );
+
+    expect(result.reconciled, hasLength(1));
+    expect(result.correction, isNull);
+    expect(result.correctionError, contains('not an asset account'));
+    expect(api.updates, hasLength(1));
   });
 
   test('store reports partial progress on mid-loop failure', () async {
@@ -335,7 +420,14 @@ void main() {
         // The payback is dated past the close and never part of the gap, so a
         // card whose ledger sat a fixed amount off the bank's balance for years
         // had no way through this path to be put right.
-        final api = _RecordingApi();
+        final api = _RecordingApi()
+          ..reconciliationAccounts = [
+            _account(
+              id: 'r1',
+              name: 'Platinum reconciliation (EUR)',
+              type: 'reconciliation',
+            ),
+          ];
         final service = ReconciliationService(api);
 
         final result = await service.storeCreditCardPayback(
@@ -352,17 +444,46 @@ void main() {
         final correction = api.creates.last;
         expect(correction.date, DateTime(2026, 7, 15));
         expect(correction.amount, 60);
-        // The ledger held less debt than the bank said, so money leaves the
-        // card, against the account named for it and made on the spot.
+        // The ledger held less debt than the bank said, so the money leaves
+        // the card and lands on the account Firefly keeps for it.
+        expect(correction.sourceId, 'cc');
         expect(correction.sourceName, 'Platinum');
-        expect(correction.destinationName, 'Platinum reconciliation');
-        expect(api.accountCreates, [
-          'reconciliation:Platinum reconciliation:EUR',
-        ]);
+        expect(correction.destinationId, 'r1');
+        expect(correction.destinationName, 'Platinum reconciliation (EUR)');
+        expect(api.accountCreates, isEmpty);
         expect(result.payback?.type, 'transfer');
         expect(result.correction?.type, 'reconciliation');
+        expect(result.correctionError, isNull);
       },
     );
+
+    test('a refused correction keeps the payback and says why', () async {
+      final api = _RecordingApi()
+        ..refuseCreateOfType = 'reconciliation'
+        ..reconciliationAccounts = [
+          _account(
+            id: 'r1',
+            name: 'Platinum reconciliation (EUR)',
+            type: 'reconciliation',
+          ),
+        ];
+      final service = ReconciliationService(api);
+
+      final result = await service.storeCreditCardPayback(
+        journalsToReconcile: [
+          _tx(id: 'j1', amount: 40, source: 'Platinum', destination: 'Store'),
+        ],
+        creditCard: card,
+        paymentAccount: payment,
+        paybackDate: DateTime(2026, 7, 31),
+        correction: (gap: -60, endDate: DateTime(2026, 7, 15)),
+      );
+
+      expect(result.payback?.type, 'transfer');
+      expect(result.correction, isNull);
+      expect(result.correctionError, contains('not an asset account'));
+      expect(result.reconciled, hasLength(1));
+    });
 
     test('a gap within tolerance gets the payback and no correction', () async {
       final api = _RecordingApi();

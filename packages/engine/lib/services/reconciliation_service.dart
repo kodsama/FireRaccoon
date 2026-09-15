@@ -22,7 +22,7 @@ class ReconciliationService {
     double tolerance = 0.005,
   }) async {
     final reconciled = await _markReconciled(journalsToReconcile);
-    final correction = createCorrection
+    final corrected = createCorrection
         ? await _correct(
             accountId: accountId,
             accountName: accountName,
@@ -32,11 +32,12 @@ class ReconciliationService {
             gap: gap,
             tolerance: tolerance,
           )
-        : null;
+        : const (correction: null, error: null);
 
     return ReconciliationStoreResult(
       reconciled: reconciled,
-      correction: correction,
+      correction: corrected.correction,
+      correctionError: corrected.error,
     );
   }
 
@@ -78,7 +79,7 @@ class ReconciliationService {
       ),
     );
     final corrected = correction == null
-        ? null
+        ? const (correction: null, error: null)
         : await _correct(
             accountId: creditCard.id,
             accountName: creditCard.name,
@@ -91,14 +92,29 @@ class ReconciliationService {
 
     return ReconciliationStoreResult(
       reconciled: reconciled,
-      correction: corrected,
+      correction: corrected.correction,
       payback: payback,
+      correctionError: corrected.error,
     );
   }
 
   /// The correction for [gap] on [endDate], or nothing when the gap is within
   /// [tolerance].
-  Future<Transaction?> _correct({
+  ///
+  /// The account the other side goes against is read, never guessed and never
+  /// made. Firefly keeps one per asset account, names it itself, and makes it
+  /// only from its own interface: its API refuses the type outright, and a
+  /// correction naming an account it cannot find is refused as well. Guessing
+  /// the name missed the currency Firefly puts in it, and leaving the side
+  /// empty, which is how its own interface asks the factory to fill the
+  /// account in, does not survive the REST layer: an absent name arrives as an
+  /// empty string, so the validator searches for an account called nothing and
+  /// the request builds zero journals.
+  ///
+  /// A refusal comes back rather than up. The journals are marked first and
+  /// that half stands, so an account the interface has never reconciled, or
+  /// one Firefly will not reconcile at all, is reported rather than thrown.
+  Future<({Transaction? correction, String? error})> _correct({
     required String accountId,
     required String accountName,
     required String currencyCode,
@@ -107,48 +123,49 @@ class ReconciliationService {
     required double gap,
     required double tolerance,
   }) async {
-    if (gap.abs() <= tolerance) return null;
-    await _ensureReconciliationAccount(
-      accountName: accountName,
-      currencyCode: currencyCode,
-    );
-    return _api.createTransaction(
-      buildReconciliationCorrection(
-        accountId: accountId,
+    if (gap.abs() <= tolerance) return (correction: null, error: null);
+    final Account? against;
+    try {
+      against = findReconciliationAccount(
+        await _api.getAccounts(types: const ['reconciliation']),
         accountName: accountName,
         currencyCode: currencyCode,
-        currencySymbol: currencySymbol,
-        gap: gap,
-        endDate: endDate,
-      ),
-    );
-  }
-
-  /// Makes the `<account> reconciliation` account a correction refers to, if
-  /// Firefly has not.
-  ///
-  /// Firefly creates one only from its own interface, so on a ledger that has
-  /// never reconciled this account there is nothing for the correction to name
-  /// and the write is refused. Nothing in the API surface made one either,
-  /// which left the correction impossible rather than merely awkward.
-  ///
-  /// Asked for by type, because a plain account read covers asset and
-  /// liability only and would not see an existing one.
-  Future<void> _ensureReconciliationAccount({
-    required String accountName,
-    required String currencyCode,
-  }) async {
-    final wanted = reconciliationAccountName(accountName);
-    final existing = await _api.getAccounts(types: const ['reconciliation']);
-    final already = existing.any(
-      (account) => account.name.toLowerCase() == wanted.toLowerCase(),
-    );
-    if (already) return;
-    await _api.createAccount(
-      name: wanted,
-      type: 'reconciliation',
-      currencyCode: currencyCode,
-    );
+      );
+    } on Object catch (error) {
+      return (
+        correction: null,
+        error:
+            'the accounts Firefly keeps for corrections could not be read: '
+            '$error',
+      );
+    }
+    if (against == null) {
+      return (
+        correction: null,
+        error:
+            'Firefly keeps one reconciliation account per asset account, '
+            'names it itself and makes it only from its own interface, and it '
+            'has none for "$accountName". Reconcile that account once in '
+            'Firefly to make it, and the correction can be written.',
+      );
+    }
+    try {
+      final correction = await _api.createTransaction(
+        buildReconciliationCorrection(
+          accountId: accountId,
+          accountName: accountName,
+          reconciliationAccountId: against.id,
+          reconciliationAccountName: against.name,
+          currencyCode: currencyCode,
+          currencySymbol: currencySymbol,
+          gap: gap,
+          endDate: endDate,
+        ),
+      );
+      return (correction: correction, error: null);
+    } on Object catch (error) {
+      return (correction: null, error: '$error');
+    }
   }
 
   Future<List<Transaction>> _markReconciled(

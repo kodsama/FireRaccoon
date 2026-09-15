@@ -553,10 +553,39 @@ const _clearableFields = {
   'tags',
 };
 
+/// The other half of a name and id pair naming one thing.
+///
+/// Firefly resolves whichever half still carries a value, so emptying one and
+/// sending the stored other back removed nothing and answered ok: a category
+/// could be changed but not taken off. Emptying either half clears both.
+const _pairedField = {
+  'category_name': 'category_id',
+  'category_id': 'category_name',
+};
+
 /// Which of [_clearableFields] the caller emptied, for a group or for one leg.
-Set<String> _clearedFields(Map<String, Object?> args) => {
+Set<String> _statedClears(Map<String, Object?> args) => {
   for (final field in _clearableFields)
     if (args.containsKey(field) && _isEmptyValue(args[field])) field,
+};
+
+/// What an empty value has to erase on the wire, the other half of a pair
+/// included.
+Set<String> _clearedFields(Map<String, Object?> args) => {
+  for (final field in _statedClears(args)) ...[field, ?_pairedField[field]],
+};
+
+/// Whether [saved] still carries [field] after a call asked for it to go.
+bool _stillCarries(String field, Transaction saved) => switch (field) {
+  'category_name' => saved.categoryName.trim().isNotEmpty,
+  'category_id' => (saved.categoryId ?? '').isNotEmpty,
+  'budget_name' => (saved.budgetName ?? '').trim().isNotEmpty,
+  'budget_id' => (saved.budgetId ?? '').isNotEmpty,
+  'bill_id' => (saved.billId ?? '').isNotEmpty,
+  'piggy_bank_id' => (saved.piggyBankId ?? '').isNotEmpty,
+  'notes' => (saved.notes ?? '').trim().isNotEmpty,
+  'tags' => saved.tags.isNotEmpty,
+  _ => false,
 };
 
 /// Fields belonging to a leg rather than to the group around it.
@@ -646,6 +675,11 @@ List<String> _unappliedTransactionFields(
       'amount',
     if (args['reconciled'] is bool && saved.reconciled != args['reconciled'])
       'reconciled',
+    // A removal is stated by emptying a field, so the checks above skip it.
+    // What came back still carrying the value is the same kind of silent
+    // refusal, and worth the same report.
+    for (final field in _statedClears(args))
+      if (_stillCarries(field, saved)) field,
   ];
 
   if (stated('date')) {
@@ -707,6 +741,9 @@ List<String> _unappliedSplitFields(List<Object?> legs, Transaction saved) {
     }
     if (leg['reconciled'] is bool && split.reconciled != leg['reconciled']) {
       missed.add('splits[$index].reconciled');
+    }
+    for (final field in _statedClears(leg)) {
+      if (_stillCarries(field, split)) missed.add('splits[$index].$field');
     }
   }
   return missed;
@@ -2526,7 +2563,9 @@ List<McpTool> buildTools({
       description:
           'List Firefly III accounts with balances. Defaults to the accounts you '
           'own (asset and liability). Pass types to reach payees: an expense '
-          'account is who you paid, a revenue account is who paid you.',
+          'account is who you paid, a revenue account is who paid you. '
+          'reconciliation reaches the accounts Firefly puts the other side of '
+          'a correction against, which it names and makes itself.',
       inputSchema: const {
         'type': 'object',
         'properties': {
@@ -2534,19 +2573,35 @@ List<McpTool> buildTools({
             'type': 'array',
             'items': {
               'type': 'string',
-              'enum': ['asset', 'liability', 'expense', 'revenue'],
+              'enum': [
+                'asset',
+                'liability',
+                'expense',
+                'revenue',
+                'reconciliation',
+              ],
             },
             'default': ['asset', 'liability'],
             'description':
                 'Account types to include. Use expense and revenue to list '
-                'existing payees before creating a new one.',
+                'existing payees before creating a new one, reconciliation to '
+                'see what Firefly made for a correction.',
           },
         },
       },
       run: (args) async {
         final api = service();
         final types = _strList(args['types']);
-        const allowed = {'asset', 'liability', 'expense', 'revenue'};
+        const allowed = {
+          'asset',
+          'liability',
+          'expense',
+          'revenue',
+          // Firefly makes one of these per account it has reconciled and
+          // names it itself. Nothing here could see them, so a correction
+          // that went against one could not be checked afterwards.
+          'reconciliation',
+        };
         final unknown = types.where((t) => !allowed.contains(t)).toList();
         if (unknown.isNotEmpty) {
           return _badInput(
@@ -2919,8 +2974,10 @@ List<McpTool> buildTools({
           'Reconcile an account against a statement: mark transaction_ids '
           'reconciled and, when end_balance is not start_balance plus the '
           'selected rows, write a correction for the difference dated '
-          'end_date against <account> reconciliation, made if Firefly has '
-          'none. A credit card (ccAsset) gets the same gap and correction. '
+          'end_date. The correction names only this account; Firefly puts the '
+          'other side against its own reconciliation account for it, which it '
+          'makes when the ledger has none. A credit card (ccAsset) gets the '
+          'same gap and correction. '
           'Pass payment_account_id and payback_date together to also create '
           'its payback transfer, one leg per purchase or a single netted leg '
           'when the selection holds refunds, dated after the close and no '
@@ -2929,7 +2986,10 @@ List<McpTool> buildTools({
           'since before the imported history gets one correction at the '
           'first statement that proves it. Not atomic: a mid-loop failure '
           'leaves already-updated journals reconciled, and the error message '
-          'reports how many journals were updated.',
+          'reports how many journals were updated. A correction Firefly '
+          'refuses, which is any against an account that is not an asset '
+          'account, leaves the selection reconciled and comes back under '
+          'warning rather than failing the call.',
       inputSchema: {
         'type': 'object',
         'required': [
@@ -3087,6 +3147,14 @@ List<McpTool> buildTools({
             'payback': result.payback == null
                 ? null
                 : _transactionJson(result.payback!),
+          // The journals are marked before the correction, so a refusal here
+          // leaves a reconciliation that did happen. Answering with the
+          // failure alone would hide it and invite the whole call again.
+          if (result.correctionError != null)
+            'warning':
+                'The selection is reconciled. The correction for the gap of '
+                '${gap.toStringAsFixed(2)} was not written: '
+                '${result.correctionError}',
         };
       },
     ),
@@ -4029,13 +4097,7 @@ List<McpTool> buildTools({
           'name': {'type': 'string'},
           'type': {
             'type': 'string',
-            'enum': [
-              'asset',
-              'expense',
-              'revenue',
-              'liability',
-              'reconciliation',
-            ],
+            'enum': ['asset', 'expense', 'revenue', 'liability'],
           },
           'iban': {'type': 'string'},
           'bic': {'type': 'string'},
@@ -4489,15 +4551,10 @@ List<McpTool> buildTools({
         if (currency == null || currency.isEmpty) {
           return _badInput('currency_code is required');
         }
-        const accountTypes = [
-          'asset',
-          'expense',
-          'revenue',
-          'liability',
-          // Firefly makes these only from its own interface, and a
-          // reconciliation correction has to name one that exists.
-          'reconciliation',
-        ];
+        // Firefly's API takes asset, expense, revenue, cash and liabilities
+        // and nothing else, so a reconciliation account cannot be made here.
+        // It makes its own when a correction needs one.
+        const accountTypes = ['asset', 'expense', 'revenue', 'liability'];
         if (!accountTypes.contains(type)) {
           return _badInput('type must be one of ${accountTypes.join(', ')}');
         }

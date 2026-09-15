@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.10.0] - 2026-09-15
+
+### Fixed
+
+- A correction could not be written at all. Firefly puts the other side of one
+  against an account it keeps per asset account and names itself, currently
+  `<account> reconciliation (<currency>)` and on older versions the bare
+  `<account> reconciliation`. FireRaccoon guessed that name without the
+  currency, Firefly searches for the name it is given and refuses the write
+  when it finds none, and the account FireRaccoon then tried to create was
+  refused too: its API takes asset, expense, revenue, cash and liabilities and
+  no other type. Leaving the far side empty instead, which is how Firefly's own
+  interface has its journal factory fill the account in, does not survive the
+  REST layer either, where an absent name reaches the validator as an empty
+  string: Firefly looked for an account called nothing and answered `Created
+  zero transaction journals`. The correction now names both sides, and the
+  account is read with `GET /api/v1/accounts?type=reconciliation` and matched
+  on both names Firefly has used, since an account keeps the name it was made
+  with. One its interface has never reconciled has no such account and the API
+  cannot make one, so the rows stay marked and the warning says to reconcile
+  that account once in Firefly first. `create_account` and `update_account` no
+  longer offer a `reconciliation` type they could never write, and
+  `get_accounts` takes `reconciliation` among its types so these can be read
+  back
+- `store_reconciliation` marks the rows before it writes the correction, so a
+  correction Firefly refuses, which is any against an account that is not an
+  asset account, used to report the whole call as failed and say nothing about
+  the reconciliation that had happened. The rows stay marked, the call answers
+  `ok`, and the unwritten correction is named under `warning` with the reason
+- Taking a category off a transaction needed `category_name` and `category_id`
+  emptied in the same call. Either one alone answered `ok` and changed nothing:
+  the other half was sent back carrying its stored value, and Firefly resolves
+  whichever half still has one. Emptying either now clears both, on a leg named
+  in `splits` as well. A removal the ledger did not take is reported the way
+  every other unapplied field is, as `not_applied` naming the field that was
+  emptied, rather than answered as a success
+
 ## [0.9.0] - 2026-09-14
 
 ### Added

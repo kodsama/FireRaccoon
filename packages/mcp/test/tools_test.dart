@@ -814,6 +814,39 @@ void main() {
       final accounts = result['accounts'] as List<Object?>;
       expect(accounts.first, containsPair('name', 'Checking'));
     });
+
+    test('reads the accounts a correction goes against', () async {
+      // Firefly makes one per account it has reconciled and names it itself.
+      // Nothing in the surface could see them, so a correction that went
+      // against one could not be checked afterwards.
+      final seen = <Uri>[];
+      final result =
+          await _tool(
+            'get_accounts',
+            client: fireflyMockClient(record: seen),
+          ).run({
+            'types': ['reconciliation'],
+          });
+
+      expect(result['ok'], isTrue);
+      expect(result['types'], ['reconciliation']);
+      expect(
+        seen.any(
+          (uri) =>
+              uri.path == '/api/v1/accounts' &&
+              uri.queryParameters['type'] == 'reconciliation',
+        ),
+        isTrue,
+      );
+    });
+
+    test('an account type Firefly has no filter for is refused', () async {
+      final result = await _tool('get_accounts', client: fireflyMockClient())
+          .run({
+            'types': ['piggy'],
+          });
+      expect(result['code'], 'bad_input');
+    });
   });
 
   group('get_transactions', () {
@@ -1003,10 +1036,12 @@ void main() {
       expect(result['gap'], isA<num>());
     });
 
-    test('makes the reconciliation account the correction names', () async {
-      // Firefly creates one only from its own interface, and a correction
-      // refers to it by name, so on a ledger that has never reconciled this
-      // account the write was refused with no way through the tools to fix it.
+    test('a correction names the account Firefly keeps for this one', () async {
+      // The far side used to be a guess at the name, without the currency
+      // Firefly puts in it, and then an empty side, which its own interface
+      // uses to have the account filled in. Neither survives the API: a name
+      // it cannot find is refused, and an absent name arrives as an empty
+      // string, so the request built zero journals.
       final seen = <Uri>[];
       final bodies = <String>[];
       final result = await _tool(
@@ -1015,8 +1050,9 @@ void main() {
       ).run(reconciliationArgs());
 
       expect(result['ok'], isTrue);
-      // Looked for by type: a plain account read covers asset and liability
-      // only and would not have seen an existing one either.
+      expect(result['warning'], isNull);
+      // Read, and read by type, since a plain account read covers asset and
+      // liability only.
       expect(
         seen.any(
           (uri) =>
@@ -1025,12 +1061,59 @@ void main() {
         ),
         isTrue,
       );
-      final created = bodies
-          .map((b) => jsonDecode(b) as Map<String, Object?>)
-          .where((b) => b['type'] == 'reconciliation')
-          .toList();
-      expect(created, hasLength(1));
-      expect(created.single['name'], 'Checking reconciliation');
+      // Nothing is made: Firefly's API takes none of the types this needs.
+      expect(
+        bodies
+            .map(jsonDecode)
+            .whereType<Map>()
+            .where((body) => body['type'] == 'reconciliation'),
+        isEmpty,
+      );
+      final correction = bodies
+          .map(jsonDecode)
+          .whereType<Map>()
+          .expand((body) => (body['transactions'] as List? ?? const []))
+          .cast<Map>()
+          .singleWhere((leg) => leg['type'] == 'reconciliation');
+      expect(correction['destination_id'], '5');
+      expect(correction['destination_name'], 'Checking');
+      expect(correction['source_id'], '70');
+      expect(correction['source_name'], 'Checking reconciliation (EUR)');
+    });
+
+    test('an account Firefly has never reconciled is reported', () async {
+      // It makes these only from its own interface, so there is nothing for
+      // the correction to name and no way to make one. The rows are marked
+      // first, so the answer has to carry that.
+      final result = await _tool(
+        'store_reconciliation',
+        client: fireflyMockClient(reconciliationAccounts: const []),
+      ).run(reconciliationArgs());
+
+      expect(result['ok'], isTrue);
+      expect(result['reconciled_count'], 1);
+      expect(result['correction'], isNull);
+      expect(result['warning'], contains('Reconcile that account once'));
+    });
+
+    test('a correction Firefly refuses leaves the rows reconciled', () async {
+      // It will not put a reconciliation account against anything but an
+      // asset account. The marking already happened, and answering with the
+      // failure alone would hide it.
+      final result =
+          await _tool(
+            'store_reconciliation',
+            client: fireflyMockClient(failingWrites: {'/api/v1/transactions'}),
+          ).run({
+            ...reconciliationArgs(),
+            'transaction_ids': ['2'],
+          });
+
+      expect(result['ok'], isTrue);
+      expect(result['reconciled_count'], 1);
+      expect(result['correction'], isNull);
+      expect(result['warning'], contains('reconciled'));
+      expect(result['warning'], contains('was not written'));
     });
 
     test('skips correction when create_correction is false', () async {
@@ -1107,8 +1190,14 @@ void main() {
           .cast<Map>()
           .last;
       expect(correction['amount'], '60.00');
+      expect(correction['source_id'], '6');
       expect(correction['source_name'], 'Credit Card');
-      expect(correction['destination_name'], 'Credit Card reconciliation');
+      // The far side names the account Firefly keeps for this card.
+      expect(correction['destination_id'], '71');
+      expect(
+        correction['destination_name'],
+        'Credit Card reconciliation (EUR)',
+      );
     });
 
     test('a card whose statement adds up gets no correction', () async {

@@ -120,12 +120,12 @@ are described under [Importing a statement](#importing-a-statement).
 | `get_current_user` | Authenticated Firefly user profile |  |
 | `get_primary_currency` | Instance default currency |  |
 | `set_primary_currency` | Change the default currency | yes |
-| `get_accounts` | List accounts with balances |  |
+| `get_accounts` | List accounts with balances; pass types to reach payees, or `reconciliation` to see what Firefly keeps for a correction |  |
 | `get_transactions` | Transactions, filterable by account, date window, and reconciled state |  |
 | `get_transaction` | One transaction by group ID, with the legs of a split group |  |
 | `get_card_settlements` | What the paybacks on a credit card settle, read from their link notes, and the purchases and refunds no payback links |  |
 | `set_transaction_reconciled` | Mark reconciled or unreconciled | yes |
-| `store_reconciliation` | Reconcile an account against a statement: mark the rows, write the correction the balances call for, and on a credit card the payback transfer too | yes |
+| `store_reconciliation` | Reconcile an account against a statement: mark the rows, write the correction the balances call for against the account Firefly keeps for it, and on a credit card the payback transfer too | yes |
 | `create_transaction` | Create a transaction, one leg or several | yes |
 | `update_transaction` | Update a transaction; omitted fields keep their value, the bookkeeping reaches every leg of a split group, `splits` reaches one leg by its journal id, and `keep_reconciled` releases and re-reconciles a row around a change | yes |
 | `duplicate_transaction` | Copy a transaction and every leg of it, with optional overrides | yes |
@@ -354,11 +354,27 @@ credit card is not one of these: `store_reconciliation` builds that payback from
 the purchases it settles, which is what keeps the group title and the per-leg
 links identical to what the app writes.
 
-A correction puts its other side against `<account> reconciliation`, an account
-Firefly only ever creates from its own interface. `store_reconciliation` makes
-it when the ledger has none, in the reconciled account's currency, because a
-name Firefly cannot resolve is a refusal and there was otherwise no way to
-write a correction at all.
+A correction names both sides: the account being reconciled, and the account
+Firefly keeps for it. That second one is read rather than guessed, with
+`GET /api/v1/accounts?type=reconciliation`, and matched by the names Firefly
+gives them: `<account> reconciliation (<currency>)` on 6.6.6, and the bare
+`<account> reconciliation` an older version wrote, since an account keeps the
+name it was made with. `get_accounts` takes `reconciliation` among its types,
+which is how to read the same list.
+
+Neither shortcut works. Guessing the name misses the currency, and a name
+Firefly cannot resolve is a refusal. Leaving the far side empty is what
+Firefly's own interface does, and its journal factory fills the account in,
+but the REST layer turns an absent name into an empty string before the
+validator sees it: the side never reads as unstated, so Firefly searches for an
+account called nothing and answers `Created zero transaction journals`.
+
+Firefly makes these only from its own interface and its API refuses to create
+the type, so an account it has never reconciled has nothing for a correction to
+name. Reconcile that account once in Firefly and the correction can be written.
+Until then, and for any account Firefly will not reconcile at all, the rows are
+still marked: the call answers `ok` with the reconciliation done and names the
+unwritten correction under `warning`.
 
 A credit card gets the same gap and correction as any other account, computed
 over the statement window from `start_balance`, `end_balance` and the rows
@@ -434,6 +450,15 @@ Passing an empty string, or an empty array for `tags`, now removes what is
 there: `notes`, `category_name`, `category_id`, `budget_name`, `budget_id`,
 `bill_id`, `piggy_bank_id` and `tags`. Omitting the field still leaves it
 exactly as it was.
+
+A category is named twice, by `category_name` and `category_id`, and Firefly
+resolves whichever half still carries a value. Emptying one of them therefore
+clears both: sending the stored other half back was how a removal reported
+success and left the category exactly where it was, and getting it off needed
+both fields emptied in the same call. Either one alone is enough. A removal the
+ledger did not take comes back the way any unapplied field does, as
+`code: not_applied` naming the field the caller emptied, with the row as it now
+stands.
 
 ### A name replaces the id beside it
 
