@@ -477,17 +477,30 @@ ledger did not take comes back the way any unapplied field does, as
 `code: not_applied` naming the field the caller emptied, with the row as it now
 stands.
 
-### A name replaces the id beside it
+### Either half of a pair replaces the other
 
-Firefly resolves an id in preference to a name. An update that named a
-category while the stored id rode along changed nothing and answered 200, and
-so did one that moved a payee by name: the description and category in the
-same call landed, the payer stayed, and nothing in the answer said so. A name
-stated without its id now drops the stored id for that side, on the group and
-on a leg named in `splits` alike, and a leg of a create that names its own
-account no longer inherits the group's id. An account Firefly kept regardless
-comes back as `not_applied`, naming `source_name`, `destination_name` or the id
-that did not land, the way every other declined field is reported.
+Firefly tries the id first but falls through to the name when the id names an
+account the transaction type will not take, so whichever half the call left out
+has to be dropped rather than sent along from what is stored.
+
+An update that named a category while the stored id rode along changed nothing
+and answered 200, and so did one that moved a payee by name: the description
+and category in the same call landed, the payer stayed, and nothing in the
+answer said so. Stating the id alone was the same story from the other side:
+the stored name travelled with it, so moving a row to an account by id either
+landed on the name's account or was refused for an account nobody had
+mentioned.
+
+Whichever half a call states now drops the stored other half for that side, on
+the group and on a leg named in `splits` alike, and a leg of a create that
+states one half no longer inherits the group's other. State both to set both.
+An account Firefly kept regardless comes back as `not_applied`, naming
+`source_name`, `destination_name` or the id that did not land, the way every
+other declined field is reported.
+
+A liability is never one end of a transfer: Firefly holds a transfer between
+two asset accounts only, and paying a loan is a withdrawal whose destination is
+the liability.
 
 ### Reconciliation survives an edit
 

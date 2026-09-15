@@ -410,6 +410,160 @@ void main() {
     });
   });
 
+  group('a payee identified on an update', () {
+    // The other half of the pair above. An id stated at the top level used to
+    // travel with the stored name, and Firefly falls through to the name when
+    // the id names an account the type will not take, so moving a row to an
+    // account by id either landed on the name's account or was refused for an
+    // account the caller had never mentioned.
+    test('replaces the name it is meant to replace', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: transactionItem(destinationName: 'Handelsbanken'),
+        onWrite: () => transactionEnvelope(transactionItem()),
+      );
+
+      await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'destination_id': '10317'});
+
+      final leg = _leg(recorder.body!);
+      expect(leg['destination_id'], '10317');
+      expect(leg.containsKey('destination_name'), isFalse);
+      // The side the call never mentioned keeps what it has.
+      expect(leg['source_name'], 'Checking');
+    });
+
+    test('drops the name on the source side the same way', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: transactionItem(type: 'deposit', sourceName: 'Employer'),
+        onWrite: () => transactionEnvelope(transactionItem()),
+      );
+
+      await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'source_id': '12'});
+
+      final leg = _leg(recorder.body!);
+      expect(leg['source_id'], '12');
+      expect(leg.containsKey('source_name'), isFalse);
+      expect(leg['destination_name'], 'Store');
+    });
+
+    test('leaves a name the caller stated in place', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: transactionItem(destinationName: 'Handelsbanken'),
+        onWrite: () => transactionEnvelope(transactionItem()),
+      );
+
+      await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'destination_id': '10317',
+        'destination_name': 'HSB lån 1',
+      });
+
+      final leg = _leg(recorder.body!);
+      expect(leg['destination_id'], '10317');
+      expect(leg['destination_name'], 'HSB lån 1');
+    });
+
+    test('a category id drops the stored category name', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: transactionItem(),
+        onWrite: () => transactionEnvelope(transactionItem()),
+      );
+
+      await _tool(
+        'update_transaction',
+        client,
+      ).run({'transaction_id': '1', 'category_id': '11'});
+
+      final leg = _leg(recorder.body!);
+      expect(leg['category_id'], '11');
+      expect(leg.containsKey('category_name'), isFalse);
+    });
+
+    test('one leg named by journal_id does the same', () async {
+      Map<String, Object?> leg(String journalId, String description) => {
+        'transaction_journal_id': journalId,
+        'type': 'withdrawal',
+        'date': '2026-01-15',
+        'amount': '45.00',
+        'description': description,
+        'source_name': 'Checking',
+        'destination_name': 'Handelsbanken',
+        'currency_code': 'EUR',
+        'currency_symbol': '€',
+        'reconciled': false,
+      };
+      final group = {
+        'id': '1',
+        'type': 'transactions',
+        'attributes': {
+          'group_title': 'Mortgage',
+          'transactions': [leg('811', 'Amortisation'), leg('812', 'Interest')],
+        },
+      };
+      final recorder = _Recorder();
+      final client = recorder.client(
+        transaction: group,
+        onWrite: () => transactionEnvelope(_echoGroup(group, recorder.body!)),
+      );
+
+      await _tool('update_transaction', client).run({
+        'transaction_id': '1',
+        'splits': [
+          {'journal_id': '811', 'destination_id': '10317'},
+        ],
+      });
+
+      final legs = (recorder.body!['transactions'] as List)
+          .cast<Map<String, Object?>>();
+      final changed = legs.singleWhere(
+        (leg) => leg['transaction_journal_id'] == '811',
+      );
+      expect(changed['destination_id'], '10317');
+      expect(changed.containsKey('destination_name'), isFalse);
+      // A leg the call left out keeps what it had.
+      final untouched = legs.singleWhere(
+        (leg) => leg['transaction_journal_id'] == '812',
+      );
+      expect(untouched['destination_name'], 'Handelsbanken');
+    });
+
+    test('a leg identifying its own payee does not inherit the group '
+        'name', () async {
+      final recorder = _Recorder();
+      final client = recorder.client(
+        onWrite: () => transactionEnvelope(transactionItem()),
+      );
+
+      await _tool('create_transaction', client).run({
+        'type': 'withdrawal',
+        'date': '2026-03-01',
+        'description': 'Card bill',
+        'source_id': '5',
+        'destination_name': 'Store',
+        'splits': [
+          {'amount': 10, 'description': 'Coffee'},
+          {'amount': 20, 'description': 'Books', 'destination_id': '9'},
+        ],
+      });
+
+      final legs = recorder.body!['transactions'] as List;
+      final inherited = legs.first as Map<String, Object?>;
+      final identified = legs.last as Map<String, Object?>;
+      expect(inherited['destination_name'], 'Store');
+      expect(identified['destination_id'], '9');
+      expect(identified.containsKey('destination_name'), isFalse);
+    });
+  });
+
   group('keeping a row reconciled through a change', () {
     // Moving an account on a reconciled row took two calls: release it with
     // the change, then set the flag back. Between them the row sat

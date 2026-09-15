@@ -1463,7 +1463,9 @@ x-mcp:
         Update a transaction; omitted fields keep their current value. Stated at
         the top level the bookkeeping fields reach every leg of a split group;
         splits[] reaches one leg, named by the journal_id get_transaction
-        reports for it, and leaves the legs it does not name alone.
+        reports for it, and leaves the legs it does not name alone. An account
+        or a category is named twice, by id and by name: state either half and
+        the stored other half is dropped rather than sent along.
         keep_reconciled releases a reconciled row for the change and puts each
         leg's flag back in a second write from the same call.
       mapsTo: PUT /api/v1/transactions/{transactionId}

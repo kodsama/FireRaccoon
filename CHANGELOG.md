@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that writes an opening balance. FireRaccoon sends the stored direction with
   any opening balance it writes to a liability, which also fixes editing one
   from the account dialog, where the direction only travels when it changed
+- An account id stated on `update_transaction` could not override the stored
+  name on that side. Firefly tries the id first but falls through to the name
+  when the id names an account the transaction type will not take, so moving a
+  row to an account by id either landed on the name's account or was refused
+  for an account nobody had mentioned. The two halves were asymmetric: a name
+  replaced a stored id, an id lost to a stored name. Either half now drops the
+  stored other, on the group and on a leg named in `splits` alike, and a leg of
+  a create stating one half no longer inherits the group's other
 
 ## [0.10.0] - 2026-09-15
 
