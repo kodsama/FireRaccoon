@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-09-16
+
+### Changed
+
+- `get_account_balance_history` answers per account, keyed by account id, each
+  point carrying the date its bucket closes, the balance at that close, and the
+  earned and spent beside it. It used to pass Firefly's balance chart straight
+  through, which is two datasets labelled `earned` and `spent`, summed across
+  every account asked for, with the dates dropped. A tool for charting or
+  comparing month ends returned no balances, no dates and no account labels,
+  and a seven-day window came back as eight buckets, so the series could not be
+  aligned by counting either. It is built now from one balance read plus one
+  pass over each account's transactions, rather than the call per date that
+  asking Firefly for every close would cost
+- `store_reconciliation` counts every row in `transaction_ids` toward the net,
+  whatever its date. `start_date` and `end_date` record the statement period
+  and date the correction; they no longer decide which rows count
+
+### Fixed
+
+- A selected row dated outside the reconciliation window was left out of the
+  net and its amount surfaced as the gap, while the same row was still marked
+  reconciled and still took its leg in the payback. A card closing on the 15th
+  posts a purchase dated the 15th onto the next invoice, so the rows an invoice
+  settles straddle any window drawn around them, and a straddling purchase was
+  indistinguishable in the answer from a real balance defect
+- Money came back as raw binary floats, so a statement that balanced exactly
+  read as a gap of -9.09e-13 and a payback whose legs sum to 5522.18 read as
+  5522.1799999999985. Sums are rounded where they are taken, to the account's
+  own currency decimals, so `gap == 0` means the statement is explained and
+  needs no tolerance of its own
+- `store_reconciliation` answers an unwritten correction with
+  `correction_error_code`, so a caller can branch without parsing prose:
+  `reconciliation_account_missing`, `reconciliation_accounts_unreadable` or
+  `correction_refused`. The missing-account message now says Firefly's API
+  cannot make the account rather than only pointing at its interface, and
+  `create_account` explains the same when asked for the type. Checked against
+  6.7.1: the account endpoint validates the type against the keys of
+  `firefly.subTitlesByIdentifier`, which has no reconciliation, and the empty
+  far side reaches the validator as an empty name rather than as no name
+- The transaction walk keyed groups by consecutive runs in Firefly's response.
+  Firefly paginates journals, not groups, so a group whose legs arrived
+  non-contiguously became several entries sharing one id, each carrying its own
+  fragment's total. An id that is no longer unique drops a fragment in anything
+  keyed by it, and a six-leg bill reading as two three-leg ones turned the
+  check that a recurring split still has all its legs into a false finding.
+  `create_backup` wrote the same shape. Groups are keyed by id now, so the
+  order Firefly answers in does not matter
+
 ## [0.10.1] - 2026-09-15
 
 ### Fixed

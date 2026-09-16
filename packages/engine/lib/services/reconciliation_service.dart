@@ -32,12 +32,13 @@ class ReconciliationService {
             gap: gap,
             tolerance: tolerance,
           )
-        : const (correction: null, error: null);
+        : const (correction: null, error: null, code: null);
 
     return ReconciliationStoreResult(
       reconciled: reconciled,
       correction: corrected.correction,
       correctionError: corrected.error,
+      correctionErrorCode: corrected.code,
     );
   }
 
@@ -79,7 +80,7 @@ class ReconciliationService {
       ),
     );
     final corrected = correction == null
-        ? const (correction: null, error: null)
+        ? const (correction: null, error: null, code: null)
         : await _correct(
             accountId: creditCard.id,
             accountName: creditCard.name,
@@ -95,6 +96,7 @@ class ReconciliationService {
       correction: corrected.correction,
       payback: payback,
       correctionError: corrected.error,
+      correctionErrorCode: corrected.code,
     );
   }
 
@@ -111,10 +113,17 @@ class ReconciliationService {
   /// empty string, so the validator searches for an account called nothing and
   /// the request builds zero journals.
   ///
+  /// Still true of 6.7.1, checked against its source rather than assumed from
+  /// 6.6.6. The account endpoint validates the type against the keys of
+  /// `firefly.subTitlesByIdentifier`, which are asset, expense, revenue, cash,
+  /// liabilities and liability. The empty side is `clearString`, which returns
+  /// null for null but the empty string for the empty string, and the
+  /// transaction request casts the absent name to string before it gets there.
+  ///
   /// A refusal comes back rather than up. The journals are marked first and
   /// that half stands, so an account the interface has never reconciled, or
   /// one Firefly will not reconcile at all, is reported rather than thrown.
-  Future<({Transaction? correction, String? error})> _correct({
+  Future<({Transaction? correction, String? error, String? code})> _correct({
     required String accountId,
     required String accountName,
     required String currencyCode,
@@ -123,7 +132,9 @@ class ReconciliationService {
     required double gap,
     required double tolerance,
   }) async {
-    if (gap.abs() <= tolerance) return (correction: null, error: null);
+    if (gap.abs() <= tolerance) {
+      return (correction: null, error: null, code: null);
+    }
     final Account? against;
     try {
       against = findReconciliationAccount(
@@ -134,6 +145,7 @@ class ReconciliationService {
     } on Object catch (error) {
       return (
         correction: null,
+        code: reconciliationAccountsUnreadable,
         error:
             'the accounts Firefly keeps for corrections could not be read: '
             '$error',
@@ -142,11 +154,18 @@ class ReconciliationService {
     if (against == null) {
       return (
         correction: null,
+        code: reconciliationAccountMissing,
         error:
-            'Firefly keeps one reconciliation account per asset account, '
-            'names it itself and makes it only from its own interface, and it '
-            'has none for "$accountName". Reconcile that account once in '
-            'Firefly to make it, and the correction can be written.',
+            'Firefly keeps one reconciliation account per asset account and '
+            'has none for "$accountName". Its API cannot make one, so this '
+            'is not a step that can be retried from here: the account '
+            'endpoint takes asset, expense, revenue, cash and liability and '
+            'refuses the reconciliation type, and the correction cannot ask '
+            'Firefly to fill the account in either, because a side left '
+            'empty reaches the validator as an empty name rather than as no '
+            'name and matches nothing. Reconcile "$accountName" once in '
+            "Firefly's own interface to make the account, after which "
+            'corrections for it can be written here.',
       );
     }
     try {
@@ -162,9 +181,9 @@ class ReconciliationService {
           endDate: endDate,
         ),
       );
-      return (correction: correction, error: null);
+      return (correction: correction, error: null, code: null);
     } on Object catch (error) {
-      return (correction: null, error: '$error');
+      return (correction: null, code: correctionRefused, error: '$error');
     }
   }
 

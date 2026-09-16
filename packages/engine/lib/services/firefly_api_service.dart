@@ -20,6 +20,7 @@ import '../models/transaction.dart';
 import '../models/transaction_page.dart';
 import '../utils/chart_balance_parser.dart';
 import '../utils/date_range.dart';
+import '../utils/transaction_grouping.dart';
 import 'firefly_api_exception.dart';
 import 'firefly_service.dart';
 
@@ -460,7 +461,9 @@ class FireflyApiService implements FireflyService {
   }) async {
     final first = await _fetchTransactionPage(path, page: 1, limit: _pageSize);
     onPageProgress?.call(1, first.totalPages);
-    if (first.totalPages <= 1) return first.transactions;
+    if (first.totalPages <= 1) {
+      return mergeTransactionGroups(first.transactions);
+    }
     onFirstPage?.call(first.transactions);
 
     // Fetch remaining pages concurrently (bounded), preserving page order.
@@ -490,7 +493,9 @@ class FireflyApiService implements FireflyService {
         ? _maxConcurrentPageFetches
         : first.totalPages - 1;
     await Future.wait([for (var i = 0; i < workerCount; i++) worker()]);
-    return [for (final page in pages) ...page];
+    // Merged across the whole walk, not per page: the split that made a group
+    // arrive in fragments is usually the page boundary itself.
+    return mergeTransactionGroups([for (final page in pages) ...page]);
   }
 
   @override

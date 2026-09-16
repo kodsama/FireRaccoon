@@ -101,3 +101,34 @@ bool shouldSelectAllForIds({
       ) !=
       SelectionState.all;
 }
+
+/// One entry per group id, with every journal that belongs to it.
+///
+/// Firefly paginates journals, not groups, so a group's legs can arrive split
+/// across pages, and within a page it does not promise to keep them together.
+/// Concatenating what came back then left a group as several entries sharing
+/// one id, each carrying the total of its own fragment: an id that is no
+/// longer unique, a total that is not the group's, and a six-leg bill reading
+/// as two three-leg ones, which turns a check that a recurring split still has
+/// all its legs into a false finding.
+///
+/// Keyed by id rather than merged run by run, so the order Firefly answers in
+/// does not matter. Groups keep the order they were first seen in, and their
+/// legs the order they arrived in.
+List<Transaction> mergeTransactionGroups(List<Transaction> transactions) {
+  final legsById = <String, List<Transaction>>{};
+  final firstSeen = <String, Transaction>{};
+  for (final transaction in transactions) {
+    (legsById[transaction.id] ??= <Transaction>[]).addAll(
+      transaction.resolvedSplits(),
+    );
+    firstSeen.putIfAbsent(transaction.id, () => transaction);
+  }
+  return [
+    for (final entry in legsById.entries)
+      if (entry.value.length == firstSeen[entry.key]!.resolvedSplits().length)
+        firstSeen[entry.key]!
+      else
+        firstSeen[entry.key]!.copyWith(splits: entry.value),
+  ];
+}

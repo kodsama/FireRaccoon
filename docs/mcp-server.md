@@ -146,8 +146,8 @@ are described under [Importing a statement](#importing-a-statement).
 | `delete_budget` | Delete a budget | yes |
 | `get_account` | One account with its identifiers and, on a liability, its own terms; optionally as of a date |  |
 | `get_account_balance_at_date` | Balance on a date, for checking a statement close |  |
-| `get_account_balance_history` | Balance at each of a series of dates |  |
-| `create_account` | Create an asset, expense, revenue, liability, or reconciliation account | yes |
+| `get_account_balance_history` | Balance at the close of each bucket in a window, per account, with the earned and spent beside it |  |
+| `create_account` | Create an asset, expense, revenue, or liability account. Firefly makes reconciliation accounts only from its own interface, so this cannot | yes |
 | `create_liability` | Create a liability with its direction, interest, and opening balance | yes |
 | `delete_account` | Delete an account **and its transactions** | yes |
 | `create_budget` | Create a budget, optionally with an auto-budget | yes |
@@ -354,6 +354,24 @@ credit card is not one of these: `store_reconciliation` builds that payback from
 the purchases it settles, which is what keeps the group title and the per-leg
 links identical to what the app writes.
 
+Every row in `transaction_ids` counts toward the net, whatever its date.
+`start_date` and `end_date` record the statement period and date the
+correction; they do not decide which rows count. A card that closes on the
+15th posts a purchase dated the 15th onto the next invoice, so the rows an
+invoice settles straddle any window drawn around them, and dropping the
+straddling row reported its own amount as a gap, indistinguishable in the
+answer from a real balance defect, while that row was still marked reconciled
+and still took its leg in the payback.
+
+`gap` is rounded to the account's currency, as are the amounts on the
+transactions that come back. Adding a dozen legs as binary floats leaves a
+tail near 1e-12: a statement that balanced exactly came back as a gap of
+-9.09e-13, which is not zero to anything branching on it, and a payback whose
+legs sum to 5522.18 came back as 5522.1799999999985. Rounding where the sum is
+taken means `gap == 0` needs no tolerance of its own, and a tolerance wide
+enough for float noise would have been wide enough to swallow a one-cent
+error.
+
 A correction names both sides: the account being reconciled, and the account
 Firefly keeps for it. That second one is read rather than guessed, with
 `GET /api/v1/accounts?type=reconciliation`, and matched by the names Firefly
@@ -372,9 +390,24 @@ account called nothing and answers `Created zero transaction journals`.
 Firefly makes these only from its own interface and its API refuses to create
 the type, so an account it has never reconciled has nothing for a correction to
 name. Reconcile that account once in Firefly and the correction can be written.
+This still holds on 6.7.1: the account endpoint validates `type` against the
+keys of `firefly.subTitlesByIdentifier`, which are asset, expense, revenue,
+cash, liabilities and liability, and the empty far side is run through
+`clearString`, which returns the empty string rather than null. Neither
+`create_account` nor `store_reconciliation` can get around that, so bootstrap
+is a hand action in Firefly, once per account.
+
 Until then, and for any account Firefly will not reconcile at all, the rows are
 still marked: the call answers `ok` with the reconciliation done and names the
-unwritten correction under `warning`.
+unwritten correction under `warning`. `ok` stays true because the marking did
+happen and failing the call would hide it, so the thing to branch on is
+`correction_error_code`:
+
+| Code | Meaning |
+| --- | --- |
+| `reconciliation_account_missing` | Firefly has no reconciliation account for this one and its API cannot make one. Reconcile the account in Firefly once; retrying the call will not help |
+| `reconciliation_accounts_unreadable` | The account list could not be read, so whether one exists is unknown. Worth retrying |
+| `correction_refused` | The account was found and Firefly turned the correction down, which is what it does for anything that is not an asset account |
 
 A credit card gets the same gap and correction as any other account, computed
 over the statement window from `start_balance`, `end_balance` and the rows
