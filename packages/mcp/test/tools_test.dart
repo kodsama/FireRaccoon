@@ -1051,6 +1051,7 @@ void main() {
 
       expect(result['ok'], isTrue);
       expect(result['warning'], isNull);
+      expect(result['correction_error_code'], isNull);
       // Read, and read by type, since a plain account read covers asset and
       // liability only.
       expect(
@@ -1093,7 +1094,10 @@ void main() {
       expect(result['ok'], isTrue);
       expect(result['reconciled_count'], 1);
       expect(result['correction'], isNull);
-      expect(result['warning'], contains('Reconcile that account once'));
+      // ok stays true because the marking did happen, so the code is the
+      // only thing a caller can branch on to find the write that did not.
+      expect(result['correction_error_code'], 'reconciliation_account_missing');
+      expect(result['warning'], contains('API cannot make one'));
     });
 
     test('a correction Firefly refuses leaves the rows reconciled', () async {
@@ -1112,8 +1116,71 @@ void main() {
       expect(result['ok'], isTrue);
       expect(result['reconciled_count'], 1);
       expect(result['correction'], isNull);
+      expect(result['correction_error_code'], 'correction_refused');
       expect(result['warning'], contains('reconciled'));
       expect(result['warning'], contains('was not written'));
+    });
+
+    test('a selected row dated outside the window still counts', () async {
+      // A card closing on the 15th posts a purchase dated the 15th onto the
+      // next invoice, so the rows an invoice settles straddle any window
+      // drawn around it. Leaving the row out of the net reported its own
+      // amount as a gap, which reads exactly like a real balance defect while
+      // the row was still marked reconciled.
+      final result = await _tool(
+        'store_reconciliation',
+        client: fireflyMockClient(
+          transactionOverrides: {
+            '1': transactionItem(
+              id: '1',
+              date: '2025-12-20',
+              amount: '45.00',
+              sourceId: '5',
+              destinationId: '9',
+            ),
+          },
+        ),
+      ).run({...reconciliationArgs(), 'end_balance': 955.0});
+
+      expect(result['ok'], isTrue);
+      expect(result['reconciled_count'], 1);
+      expect(result['gap'], 0);
+      expect(result['correction'], isNull);
+    });
+
+    test('a gap that is exactly zero comes back as zero', () async {
+      // Three legs added as binary floats leave a tail near 1e-13. A caller
+      // branching on gap == 0 wrote a correction for it, and a report read it
+      // aloud as a gap of -1.1368683772161603e-13.
+      final result =
+          await _tool(
+            'store_reconciliation',
+            client: fireflyMockClient(
+              transactionOverrides: {
+                for (final (id, amount) in [
+                  ('1', '133.14'),
+                  ('2', '326.50'),
+                  ('3', '120.44'),
+                ])
+                  id: transactionItem(
+                    id: id,
+                    date: '2026-01-15',
+                    amount: amount,
+                    sourceId: '5',
+                    destinationId: '9',
+                  ),
+              },
+            ),
+          ).run({
+            ...reconciliationArgs(),
+            'end_balance': 419.92,
+            'transaction_ids': ['1', '2', '3'],
+          });
+
+      expect(result['ok'], isTrue);
+      expect(result['gap'], 0);
+      expect(result['gap'] == 0, isTrue);
+      expect(result['correction'], isNull);
     });
 
     test('skips correction when create_correction is false', () async {

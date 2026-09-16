@@ -108,40 +108,73 @@ void main() {
           _tx(type: 'deposit', date: DateTime(2026, 1, 10), amount: 30),
         ],
         accountName: 'Checking',
-        startDate: DateTime(2026, 1, 1),
-        endDate: DateTime(2026, 1, 31),
       );
 
       expect(gap, 0);
     });
 
-    test('ignores checked transactions outside the period', () {
+    test('a selected row dated before the period still counts', () {
+      // A card that closes on the 15th posts a purchase dated the 15th onto
+      // the next invoice, so the rows an invoice settles straddle any window
+      // drawn around it. Dropping the row reported its own amount as a gap,
+      // which reads exactly like a real balance defect.
       final gap = computeReconciliationGap(
         startBalance: 100,
-        endBalance: 100,
+        endBalance: 130,
         selectedTransactions: [
           _tx(type: 'deposit', date: DateTime(2025, 12, 20), amount: 30),
         ],
         accountName: 'Checking',
-        startDate: DateTime(2026, 1, 1),
-        endDate: DateTime(2026, 1, 31),
       );
 
       expect(gap, 0);
     });
 
-    test('ignores future in-period transactions when computing gap', () {
+    test('a gap that is exactly zero compares equal to zero', () {
+      // Ten legs added as binary floats leave a tail near 1e-12, and a caller
+      // branching on gap == 0 wrote a correction for it.
+      final gap = computeReconciliationGap(
+        startBalance: 0,
+        endBalance: -5522.18,
+        selectedTransactions: [
+          for (final amount in [
+            3850.00,
+            133.14,
+            326.50,
+            120.44,
+            157.20,
+            42.00,
+            370.00,
+            77.50,
+            382.16,
+            63.24,
+          ])
+            _tx(
+              type: 'withdrawal',
+              date: DateTime(2026, 4, 1),
+              amount: amount,
+              source: 'Checking',
+              destination: 'Store',
+            ),
+        ],
+        accountName: 'Checking',
+      );
+
+      // Added as raw floats these legs come to -5522.1799999999985, leaving
+      // a gap of -1.8e-12 that is not zero to anything branching on it.
+      expect(gap, 0);
+      expect(gap == 0, isTrue);
+    });
+
+    test('a selected row dated ahead of today still counts', () {
       final gap = computeReconciliationGap(
         startBalance: 100,
-        endBalance: 130,
+        endBalance: 170,
         selectedTransactions: [
           _tx(type: 'deposit', date: DateTime(2026, 7, 5), amount: 30),
           _tx(type: 'deposit', date: DateTime(2026, 7, 20), amount: 40),
         ],
         accountName: 'Checking',
-        startDate: DateTime(2026, 7, 1),
-        endDate: DateTime(2026, 7, 31),
-        reference: DateTime(2026, 7, 9),
       );
 
       expect(gap, 0);
@@ -217,16 +250,12 @@ void main() {
         endBalance: 130,
         selectedTransactions: [inPeriod],
         accountName: 'Checking',
-        startDate: DateTime(2026, 1, 1),
-        endDate: DateTime(2026, 1, 31),
       );
       final noneSelectedGap = computeReconciliationGap(
         startBalance: 100,
         endBalance: 130,
         selectedTransactions: const [],
         accountName: 'Checking',
-        startDate: DateTime(2026, 1, 1),
-        endDate: DateTime(2026, 1, 31),
       );
 
       expect(allSelectedGap, 0);

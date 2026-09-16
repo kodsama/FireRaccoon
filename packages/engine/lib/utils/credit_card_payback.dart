@@ -1,5 +1,6 @@
 import '../models/account.dart';
 import '../models/transaction.dart';
+import 'money.dart';
 import 'transaction_splits.dart';
 
 /// True when [account] is a Firefly credit-card asset (`ccAsset` role).
@@ -142,15 +143,19 @@ Transaction _nettedPayback({
   required List<Transaction> charges,
   required List<Transaction> refunds,
 }) {
-  final owed =
-      charges.fold<double>(
-        0,
-        (sum, charge) => sum + creditCardPaybackAmount(charge, creditCard.name),
-      ) -
-      refunds.fold<double>(
-        0,
-        (sum, refund) => sum + creditCardPaybackAmount(refund, creditCard.name),
-      );
+  final owed = roundMoney(
+    charges.fold<double>(
+          0,
+          (sum, charge) =>
+              sum + creditCardPaybackAmount(charge, creditCard.name),
+        ) -
+        refunds.fold<double>(
+          0,
+          (sum, refund) =>
+              sum + creditCardPaybackAmount(refund, creditCard.name),
+        ),
+    decimals: creditCard.currencyDecimalPlaces,
+  );
   if (owed <= 0.005) {
     throw ArgumentError(
       'The refunds in this selection are worth as much as the purchases, so '

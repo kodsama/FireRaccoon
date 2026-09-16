@@ -36,11 +36,16 @@ class _RecordingApi implements FireflyService {
   /// What the ledger holds of type `reconciliation`.
   List<Account> reconciliationAccounts = const [];
 
+  /// Fails every account read, the way an unreachable Firefly does, leaving
+  /// whether a reconciliation account exists unknown rather than answered.
+  bool failAccountReads = false;
+
   @override
   Future<List<Account>> getAccounts({
     List<String> types = const ['asset', 'liability'],
   }) async {
     accountReads.add(types);
+    if (failAccountReads) throw StateError('502 bad gateway');
     return types.contains('reconciliation')
         ? reconciliationAccounts
         : const <Account>[];
@@ -244,8 +249,37 @@ void main() {
     expect(api.accountCreates, isEmpty);
     expect(result.reconciled, hasLength(1));
     expect(result.correction, isNull);
-    expect(result.correctionError, contains('Reconcile that account once'));
+    expect(result.correctionErrorCode, reconciliationAccountMissing);
+    // The remedy is a hand action in another interface, so saying only "go
+    // reconcile it" reads as an oversight here rather than a limit of the
+    // API. It has to say the create is not ours to retry.
+    expect(result.correctionError, contains('API cannot make one'));
+    expect(result.correctionError, contains('Checking'));
   });
+
+  test(
+    'an unreadable account list is told apart from an absent account',
+    () async {
+      // One is worth retrying and the other never will be, and a caller that
+      // cannot tell them apart either gives up on a blip or retries forever.
+      final api = _RecordingApi()..failAccountReads = true;
+      final service = ReconciliationService(api);
+
+      final result = await service.store(
+        journalsToReconcile: [_tx(id: '1')],
+        accountId: 'a1',
+        accountName: 'Checking',
+        currencyCode: 'EUR',
+        currencySymbol: '€',
+        endDate: DateTime(2026, 1, 31),
+        gap: 12.5,
+      );
+
+      expect(result.reconciled, hasLength(1));
+      expect(result.correction, isNull);
+      expect(result.correctionErrorCode, reconciliationAccountsUnreadable);
+    },
+  );
 
   test('nothing is written when there is no correction to make', () async {
     final api = _RecordingApi();
@@ -292,6 +326,7 @@ void main() {
 
     expect(result.reconciled, hasLength(1));
     expect(result.correction, isNull);
+    expect(result.correctionErrorCode, correctionRefused);
     expect(result.correctionError, contains('not an asset account'));
     expect(api.updates, hasLength(1));
   });
@@ -454,6 +489,7 @@ void main() {
         expect(result.payback?.type, 'transfer');
         expect(result.correction?.type, 'reconciliation');
         expect(result.correctionError, isNull);
+        expect(result.correctionErrorCode, isNull);
       },
     );
 

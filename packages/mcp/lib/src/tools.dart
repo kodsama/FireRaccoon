@@ -3006,10 +3006,19 @@ List<McpTool> buildTools({
           'Reconcile an account against a statement: mark transaction_ids '
           'reconciled and, when end_balance is not start_balance plus the '
           'selected rows, write a correction for the difference dated '
-          'end_date. The correction names only this account; Firefly puts the '
-          'other side against its own reconciliation account for it, which it '
-          'makes when the ledger has none. A credit card (ccAsset) gets the '
-          'same gap and correction. '
+          'end_date. Every row in transaction_ids counts toward that sum '
+          'whatever its date: a card closing on the 15th posts a purchase '
+          'dated the 15th onto the next invoice, so the rows an invoice '
+          'settles straddle any window drawn around them, and the dates bound '
+          'nothing the caller has not already decided by choosing the rows. '
+          'gap comes back rounded to the currency, so gap == 0 means the '
+          'statement is explained and needs no tolerance of its own. The other side goes against the reconciliation account '
+          'Firefly keeps for this one, which has to exist already: its API '
+          'will not make one, so an account never reconciled in Firefly '
+          'itself gets correction_error_code '
+          'reconciliation_account_missing and has to be reconciled there '
+          'once before a correction can be written for it. A credit card '
+          '(ccAsset) gets the same gap and correction. '
           'Pass payment_account_id and payback_date together to also create '
           'its payback transfer, one leg per purchase or a single netted leg '
           'when the selection holds refunds, dated after the close and no '
@@ -3018,10 +3027,15 @@ List<McpTool> buildTools({
           'since before the imported history gets one correction at the '
           'first statement that proves it. Not atomic: a mid-loop failure '
           'leaves already-updated journals reconciled, and the error message '
-          'reports how many journals were updated. A correction Firefly '
-          'refuses, which is any against an account that is not an asset '
-          'account, leaves the selection reconciled and comes back under '
-          'warning rather than failing the call.',
+          'reports how many journals were updated. A correction that is not '
+          'written leaves the selection reconciled and comes back under '
+          'warning with ok still true, because the marking did happen: '
+          'branch on correction_error_code, which is '
+          'reconciliation_account_missing when Firefly has no reconciliation '
+          'account for this one, reconciliation_accounts_unreadable when '
+          'they could not be read and it is worth retrying, or '
+          'correction_refused when Firefly turned the correction down, which '
+          'is what it does for anything that is not an asset account.',
       inputSchema: {
         'type': 'object',
         'required': [
@@ -3036,11 +3050,16 @@ List<McpTool> buildTools({
           'account_id': {'type': 'string'},
           'start_date': {
             'type': 'string',
-            'description': 'Period start date (YYYY-MM-DD).',
+            'description':
+                'Statement period start (YYYY-MM-DD). Records the period; it '
+                'does not decide the net. Every row in transaction_ids '
+                'counts, whatever its date.',
           },
           'end_date': {
             'type': 'string',
-            'description': 'Period end date (YYYY-MM-DD).',
+            'description':
+                'Statement period end (YYYY-MM-DD). Dates the correction. '
+                'Like start_date it does not bound which rows count.',
           },
           'start_balance': {'type': 'number'},
           'end_balance': {'type': 'number'},
@@ -3143,8 +3162,7 @@ List<McpTool> buildTools({
           endBalance: endBalance,
           selectedTransactions: journals,
           accountName: account.name,
-          startDate: startDate,
-          endDate: endDate,
+          decimals: account.currencyDecimalPlaces,
         );
         final reconciliation = ReconciliationService(api);
         final result = payback == null
@@ -3181,7 +3199,11 @@ List<McpTool> buildTools({
                 : _transactionJson(result.payback!),
           // The journals are marked before the correction, so a refusal here
           // leaves a reconciliation that did happen. Answering with the
-          // failure alone would hide it and invite the whole call again.
+          // failure alone would hide it and invite the whole call again, so
+          // ok stays true and the code carries the refusal for a caller that
+          // needs to branch on it.
+          if (result.correctionErrorCode != null)
+            'correction_error_code': result.correctionErrorCode,
           if (result.correctionError != null)
             'warning':
                 'The selection is reconciled. The correction for the gap of '
@@ -4588,9 +4610,18 @@ List<McpTool> buildTools({
           return _badInput('currency_code is required');
         }
         // Firefly's API takes asset, expense, revenue, cash and liabilities
-        // and nothing else, so a reconciliation account cannot be made here.
-        // It makes its own when a correction needs one.
+        // and nothing else. Asking for a reconciliation account is a real
+        // thing to want and the plain list does not explain why it is absent,
+        // so that one answers for itself.
         const accountTypes = ['asset', 'expense', 'revenue', 'liability'];
+        if (type == 'reconciliation') {
+          return _badInput(
+            'Firefly keeps one reconciliation account per asset account and '
+            'makes it only from its own interface. Its API refuses the type, '
+            'so this cannot create one and neither can store_reconciliation. '
+            'Reconcile the account once in Firefly to make it.',
+          );
+        }
         if (!accountTypes.contains(type)) {
           return _badInput('type must be one of ${accountTypes.join(', ')}');
         }
