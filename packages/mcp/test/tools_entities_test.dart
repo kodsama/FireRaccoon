@@ -176,6 +176,27 @@ void main() {
       expect(calls, isEmpty);
     });
 
+    test('create_account says why a reconciliation account is not ours to '
+        'make', () async {
+      // Asking for one is reasonable and the plain list of types reads as an
+      // arbitrary restriction here rather than Firefly's own.
+      final calls = <Uri>[];
+      final result =
+          await _tool(
+            'create_account',
+            client: fireflyMockClient(record: calls),
+          ).run({
+            'name': 'Checking reconciliation (EUR)',
+            'type': 'reconciliation',
+            'currency_code': 'EUR',
+          });
+
+      expect(result['code'], 'bad_input');
+      expect(result['error'], contains('its own interface'));
+      expect(result['error'], contains('store_reconciliation'));
+      expect(calls, isEmpty);
+    });
+
     test('create_liability sends its type and direction', () async {
       final bodies = <String>[];
       final result =

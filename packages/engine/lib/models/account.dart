@@ -1,3 +1,4 @@
+import '../utils/money.dart';
 import 'firefly_date.dart';
 
 class Account {
@@ -10,6 +11,10 @@ class Account {
   final double currentBalance;
   final String currencySymbol;
   final String currencyCode;
+
+  /// Decimal places the account's currency carries, for rounding a total made
+  /// of floats back into money. Firefly reports it per account.
+  final int currencyDecimalPlaces;
 
   /// Whether [currencyCode] is the account's own setting or Firefly's fallback.
   ///
@@ -45,6 +50,7 @@ class Account {
     required this.currentBalance,
     required this.currencySymbol,
     required this.currencyCode,
+    this.currencyDecimalPlaces = defaultCurrencyDecimals,
     this.hasCurrencySetting = true,
     this.iban,
     this.bic,
@@ -81,6 +87,9 @@ class Account {
           double.tryParse(attrs['current_balance']?.toString() ?? '0') ?? 0.0,
       currencySymbol: attrs['currency_symbol'] as String? ?? '€',
       currencyCode: attrs['currency_code'] as String? ?? 'EUR',
+      currencyDecimalPlaces:
+          int.tryParse(attrs['currency_decimal_places']?.toString() ?? '') ??
+          defaultCurrencyDecimals,
       hasCurrencySetting: attrs['object_has_currency_setting'] as bool? ?? true,
       iban: attrs['iban'] as String?,
       bic: attrs['bic'] as String?,
@@ -110,6 +119,7 @@ class Account {
     double? currentBalance,
     String? currencySymbol,
     String? currencyCode,
+    int? currencyDecimalPlaces,
     bool? hasCurrencySetting,
     String? iban,
     String? bic,
@@ -133,6 +143,8 @@ class Account {
       currentBalance: currentBalance ?? this.currentBalance,
       currencySymbol: currencySymbol ?? this.currencySymbol,
       currencyCode: currencyCode ?? this.currencyCode,
+      currencyDecimalPlaces:
+          currencyDecimalPlaces ?? this.currencyDecimalPlaces,
       hasCurrencySetting: hasCurrencySetting ?? this.hasCurrencySetting,
       iban: iban ?? this.iban,
       bic: bic ?? this.bic,

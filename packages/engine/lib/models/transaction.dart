@@ -1,3 +1,4 @@
+import '../utils/money.dart';
 import 'firefly_date.dart';
 
 class Transaction {
@@ -80,9 +81,12 @@ class Transaction {
 
   /// Sum of all split amounts (equals [amount] for a single-line journal).
   /// Memoized: the model is immutable and this is read in tight loops.
-  late final double totalAmount = resolvedSplits().fold(
-    0.0,
-    (sum, split) => sum + split.amount,
+  ///
+  /// Rounded, because adding ten legs of a payback that come to 5522.18 in
+  /// cents leaves 5522.1799999999985 in binary floats, and that is the figure
+  /// that reaches a caller and a report.
+  late final double totalAmount = roundMoney(
+    resolvedSplits().fold(0.0, (sum, split) => sum + split.amount),
   );
 
   /// True when every split in the journal is reconciled.

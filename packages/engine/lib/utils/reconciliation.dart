@@ -1,5 +1,6 @@
 import '../models/account.dart';
 import '../models/transaction.dart';
+import 'money.dart';
 import 'transaction_filters.dart';
 import 'transaction_grouping.dart';
 import 'transaction_splits.dart';
@@ -195,29 +196,33 @@ List<Transaction> transactionsForReconciliationView({
 }
 
 /// Difference between the statement closing balance and the ledger total for
-/// checked transactions in the period. Zero means the statement matches.
+/// [selectedTransactions]. Zero means the statement matches.
+///
+/// Every selected transaction counts, whatever its date. A statement period
+/// and a posting date do not have to agree: a card that closes on the 15th
+/// puts a purchase dated the 15th on the next invoice, so the rows an invoice
+/// settles are not the rows a calendar window holds. Dropping the straddling
+/// row from the net reported its amount as a gap, which is indistinguishable
+/// in the answer from a real balance defect, while the same row was still
+/// marked reconciled and still took its leg in the payback. The selection is
+/// the caller's, and it decides the net on its own.
+///
+/// [decimals] is the currency's, so the answer is money rather than the tail
+/// a dozen added floats leave. Without it a statement that balances exactly
+/// comes back as a gap of -9.09e-13, which is not zero to a caller branching
+/// on it and not a sentence about money in a report.
 double computeReconciliationGap({
   required double startBalance,
   required double endBalance,
   required Iterable<Transaction> selectedTransactions,
   required String accountName,
-  required DateTime startDate,
-  required DateTime endDate,
-  DateTime? reference,
+  int decimals = defaultCurrencyDecimals,
 }) {
   var net = 0.0;
   for (final transaction in selectedTransactions) {
-    if (!isReconciliationToggleableTransaction(
-      transaction.date,
-      startDate,
-      endDate,
-      reference: reference,
-    )) {
-      continue;
-    }
     net += signedAmountForAccount(transaction, accountName);
   }
-  return endBalance - (startBalance + net);
+  return roundMoney(endBalance - (startBalance + net), decimals: decimals);
 }
 
 /// The names Firefly gives the account it keeps for [accountName].
@@ -292,12 +297,27 @@ Transaction buildReconciliationCorrection({
   );
 }
 
+/// Firefly has no reconciliation account for the one being reconciled, and its
+/// API cannot make one. Only its own interface can, so a caller seeing this
+/// has to send someone there once for the account rather than retry.
+const String reconciliationAccountMissing = 'reconciliation_account_missing';
+
+/// The reconciliation accounts could not be read, so whether one exists is
+/// unknown. Unlike [reconciliationAccountMissing], this is worth retrying.
+const String reconciliationAccountsUnreadable =
+    'reconciliation_accounts_unreadable';
+
+/// The account was found and Firefly still refused the correction, which is
+/// what it does for anything that is not an asset account.
+const String correctionRefused = 'correction_refused';
+
 class ReconciliationStoreResult {
   const ReconciliationStoreResult({
     required this.reconciled,
     this.correction,
     this.payback,
     this.correctionError,
+    this.correctionErrorCode,
   });
 
   final List<Transaction> reconciled;
@@ -314,4 +334,9 @@ class ReconciliationStoreResult {
   /// hide a reconciliation that did happen and invite a caller to run it
   /// again.
   final String? correctionError;
+
+  /// Which refusal [correctionError] describes, so a caller can branch on it
+  /// without reading the prose: one of [reconciliationAccountMissing],
+  /// [reconciliationAccountsUnreadable] or [correctionRefused].
+  final String? correctionErrorCode;
 }
