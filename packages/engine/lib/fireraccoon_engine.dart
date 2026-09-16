@@ -46,6 +46,7 @@ export 'utils/agent_key.dart';
 export 'utils/account_balance.dart';
 export 'utils/balance_check.dart';
 export 'utils/bank_amount.dart';
+export 'utils/account_balance_series.dart';
 export 'utils/money.dart';
 export 'utils/name_matching.dart';
 export 'utils/chart_balance_parser.dart';

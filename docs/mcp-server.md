@@ -146,7 +146,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `delete_budget` | Delete a budget | yes |
 | `get_account` | One account with its identifiers and, on a liability, its own terms; optionally as of a date |  |
 | `get_account_balance_at_date` | Balance on a date, for checking a statement close |  |
-| `get_account_balance_history` | Balance at each of a series of dates |  |
+| `get_account_balance_history` | Balance at the close of each bucket in a window, per account, with the earned and spent beside it |  |
 | `create_account` | Create an asset, expense, revenue, or liability account. Firefly makes reconciliation accounts only from its own interface, so this cannot | yes |
 | `create_liability` | Create a liability with its direction, interest, and opening balance | yes |
 | `delete_account` | Delete an account **and its transactions** | yes |

@@ -245,27 +245,55 @@ void main() {
       expect(result['deleted'], isTrue);
     });
 
-    test('get_account_balance_history returns a series per account', () async {
-      final calls = <Uri>[];
+    test('get_account_balance_history keys the series by account', () async {
+      // It used to answer Firefly's chart datasets straight through: two
+      // unlabelled series called earned and spent, summed across every
+      // account asked for, with the dates thrown away. None of charting,
+      // comparing month ends, or telling two accounts apart was possible.
       final result =
           await _tool(
             'get_account_balance_history',
-            client: fireflyMockClient(record: calls),
+            client: fireflyMockClient(),
           ).run({
-            'account_ids': ['5'],
+            'account_ids': ['5', '6'],
             'start_date': '2026-01-01',
             'end_date': '2026-02-01',
           });
 
       expect(result['ok'], isTrue);
-      expect(result['histories'], isA<Map<String, Object?>>());
-      final chart = calls.firstWhere(
-        (u) => u.path.endsWith('/chart/balance/balance'),
-      );
-      // end_date is inclusive to the caller, so the chart window has to reach
-      // past it or the final month is dropped.
-      expect(chart.queryParameters['end'], '2026-02-02');
+      final histories = result['histories']! as Map<String, Object?>;
+      expect(histories.keys, containsAll(['5', '6']));
+      expect(histories.keys, isNot(contains('earned')));
+
+      final series = histories['5']! as List<Object?>;
+      expect(series, isNotEmpty);
+      final first = series.first! as Map<String, Object?>;
+      expect(first.keys, containsAll(['date', 'balance', 'earned', 'spent']));
+      expect(first['date'], '2026-01-31');
+      // The window is inclusive, so the last bucket closes on end_date rather
+      // than running on to the end of its month.
+      expect((series.last! as Map<String, Object?>)['date'], '2026-02-01');
+      expect(result['accounts'], isA<List<Object?>>());
     });
+
+    test(
+      'get_account_balance_history refuses a period it cannot bucket',
+      () async {
+        final result =
+            await _tool(
+              'get_account_balance_history',
+              client: fireflyMockClient(),
+            ).run({
+              'account_ids': ['5'],
+              'start_date': '2026-01-01',
+              'end_date': '2026-02-01',
+              'period': '2H',
+            });
+
+        expect(result['code'], 'bad_input');
+        expect(result['error'], contains('period must be one of'));
+      },
+    );
 
     test('get_account_balance_history rejects an unknown account', () async {
       final result =
