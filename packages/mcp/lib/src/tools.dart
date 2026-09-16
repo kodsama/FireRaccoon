@@ -5497,8 +5497,13 @@ List<McpTool> buildTools({
     McpTool(
       name: 'get_account_balance_history',
       description:
-          'Balance series for one or more accounts across a window, for charting '
-          'or comparing month ends.',
+          'Balance series for one or more accounts across a window, for '
+          'charting or comparing month ends. Answers per account, keyed by '
+          'account id, each point carrying the date the bucket closes, the '
+          'balance at that close, and the earned and spent that got there. '
+          'One balance read plus one pass over the transactions per account, '
+          'so sweeping a card against its whole invoice history does not cost '
+          'a call per date.',
       inputSchema: {
         'type': 'object',
         'required': ['account_ids', 'start_date', 'end_date'],
@@ -5515,7 +5520,11 @@ List<McpTool> buildTools({
           'period': {
             'type': 'string',
             'default': '1M',
-            'description': 'Firefly bucket size, such as 1D, 1W, or 1M.',
+            'description':
+                'Bucket size. A calendar period closes on month ends; 1D and '
+                '1W advance from start_date. The last bucket is cut at '
+                'end_date.',
+            'enum': balanceSeriesPeriods,
           },
         },
       },
@@ -5545,15 +5554,52 @@ List<McpTool> buildTools({
         if (wanted.isEmpty) {
           return _badInput('none of account_ids matched an account');
         }
-        final histories = await api.getAccountBalanceHistories(
-          accounts: wanted,
+        final period = (args['period'] as String?) ?? '1M';
+        if (!balanceSeriesPeriods.contains(period.toUpperCase())) {
+          return _badInput(
+            'period must be one of ${balanceSeriesPeriods.join(', ')}',
+          );
+        }
+        final bucketEnds = balanceSeriesBucketEnds(
           start: start,
-          end: inclusiveEnd.add(const Duration(days: 1)),
-          period: (args['period'] as String?) ?? '1M',
+          end: inclusiveEnd,
+          period: period,
         );
+        // The balance the day before the window is what the walk starts from,
+        // so one read answers every bucket rather than one read per date.
+        final opening = start.subtract(const Duration(days: 1));
+        final histories = <String, Object?>{};
+        for (final account in wanted) {
+          final transactions = await api.getAccountTransactions(
+            account.id,
+            start: start,
+            end: inclusiveEnd.add(const Duration(days: 1)),
+          );
+          histories[account.id] = [
+            for (final point in buildAccountBalanceSeries(
+              openingBalance: await api.getAccountBalanceAtDate(
+                account.id,
+                opening,
+              ),
+              transactions: transactions,
+              accountName: account.name,
+              bucketEnds: bucketEnds,
+              decimals: account.currencyDecimalPlaces,
+            ))
+              point.toJson(),
+          ];
+        }
         return {
           'ok': true,
-          'period': (args['period'] as String?) ?? '1M',
+          'period': period,
+          'accounts': [
+            for (final account in wanted)
+              {
+                'id': account.id,
+                'name': account.name,
+                'currency_code': account.currencyCode,
+              },
+          ],
           'histories': histories,
         };
       },
