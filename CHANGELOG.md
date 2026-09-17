@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-09-18
+
+### Fixed
+
+- The `Balance` column inside an Upcoming section was short by that section's
+  own net on every row. The column walks backwards from the newest row, so it
+  has to start where that row leaves the account, and it started instead at the
+  balance Firefly reports as of today, which holds the settled rows and none of
+  the upcoming ones. Every upcoming row was therefore subtracted a second time.
+  The section header was right throughout, since it walks forward from the same
+  figure, so two columns on one screen disagreed. On a credit card the effect
+  read as a data fault rather than a display one: the payback row showed the
+  account no better off after a transfer in of its whole debt, and the row
+  below it showed roughly twice the real debt
+
 ## [0.11.0] - 2026-09-16
 
 ### Changed
