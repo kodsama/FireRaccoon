@@ -988,11 +988,22 @@ class _TransactionTypeBadge extends ConsumerWidget {
   }
 }
 
+/// The balance each row in [transactions] leaves the account at, keyed by
+/// transaction id.
+///
+/// The walk runs backwards from the newest row, so it starts where that row
+/// leaves the account. Firefly reports `current_balance` as of today, which
+/// holds the settled rows and none of the upcoming ones, so every upcoming row
+/// is added on first. Starting from the settled figure instead subtracted each
+/// upcoming row a second time and put the whole upcoming block out by its own
+/// net, which on a card reads as a payback booked backwards rather than as a
+/// column fault.
 Map<String, double>? computeRunningBalances({
   required String? filterAccount,
   required List<Transaction> transactions,
   required List<Account>? accounts,
   required AccountPrognosisResult? prognosis,
+  DateTime? reference,
 }) {
   if (filterAccount == null || accounts == null) return null;
   final account = accounts.firstWhere(
@@ -1013,6 +1024,12 @@ Map<String, double>? computeRunningBalances({
 
   final sorted = List<Transaction>.from(transactions)
     ..sort((a, b) => b.date.compareTo(a.date));
+
+  for (final t in sorted) {
+    if (isFutureTransaction(t.date, reference: reference)) {
+      currentBalance += signedListAmount(t, accountName: filterAccount);
+    }
+  }
 
   final Map<String, double> result = {};
   for (final t in sorted) {
