@@ -1680,10 +1680,11 @@ x-mcp:
       required: [title, first_date, type, amount, description, source_id, destination_id]
     update_recurrence:
       description: >
-        Replace a recurring rule. Firefly takes the whole rule, so every field to
-        keep must be passed.
+        Change a recurring rule. Only the fields being changed are passed;
+        everything left out keeps what is stored, weekend handling and schedule
+        included.
       mapsTo: PUT /api/v1/recurrences/{recurrenceId}
-      required: [recurrence_id, title, first_date, type, amount, description, source_id, destination_id]
+      required: [recurrence_id]
     get_recurrence_transactions:
       description: Transactions a recurring rule has created
       mapsTo: GET /api/v1/recurrences/{recurrenceId}/transactions

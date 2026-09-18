@@ -1418,6 +1418,24 @@ class FireflyApiService implements FireflyService {
   }
 
   @override
+  Future<Recurrence> getRecurrence(String recurrenceId) async {
+    try {
+      final response = await _send(
+        'GET',
+        '/api/v1/recurrences/$recurrenceId',
+        maxAttempts: _readMaxAttempts,
+      );
+      if (response.statusCode != 200) {
+        throw Exception('Failed to fetch recurrence: ${_status(response)}');
+      }
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return Recurrence.fromJson(data['data'] as Map<String, dynamic>);
+    } catch (e) {
+      throw FireflyApiException('$e', cause: e);
+    }
+  }
+
+  @override
   Future<Recurrence> createRecurrence(RecurrenceInput input) async {
     try {
       final response = await _send(

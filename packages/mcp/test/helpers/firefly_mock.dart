@@ -238,7 +238,12 @@ Map<String, Object?> piggyEnvelope({String name = 'New Laptop'}) => {
   },
 };
 
-Map<String, Object?> recurrenceEnvelope({String title = 'Salary'}) => {
+Map<String, Object?> recurrenceEnvelope({
+  String title = 'Salary',
+  int weekend = 1,
+  String? foreignAmount,
+  String? foreignCurrencyCode,
+}) => {
   'data': {
     'id': '12',
     'attributes': {
@@ -249,7 +254,7 @@ Map<String, Object?> recurrenceEnvelope({String title = 'Salary'}) => {
       'active': true,
       'apply_rules': true,
       'repetitions': [
-        {'type': 'monthly', 'moment': '1', 'skip': 0, 'weekend': 1},
+        {'type': 'monthly', 'moment': '1', 'skip': 0, 'weekend': weekend},
       ],
       'transactions': [
         {
@@ -258,11 +263,15 @@ Map<String, Object?> recurrenceEnvelope({String title = 'Salary'}) => {
           'amount': '1200.00',
           'currency_code': 'EUR',
           'currency_symbol': '€',
+          'foreign_amount': ?foreignAmount,
+          'foreign_currency_code': ?foreignCurrencyCode,
           'source_id': '5',
           'source_name': 'Joint Current',
           'destination_id': '9',
           'destination_name': 'Landlord',
+          'category_id': '7',
           'category_name': 'Housing',
+          'budget_id': '3',
           'budget_name': 'Fixed costs',
           'tags': ['standing'],
         },
@@ -443,6 +452,12 @@ MockClient fireflyMockClient({
   Set<String> failingExports = const {},
   Set<String> failingWrites = const {},
 
+  /// The weekend handling the stored recurrence carries. Left at Firefly's
+  /// "create anyway" unless a test needs a reset to be visible.
+  int recurrenceWeekend = 1,
+  String? recurrenceForeignAmount,
+  String? recurrenceForeignCurrencyCode,
+
   /// The accounts Firefly keeps for corrections. Both mock accounts have one,
   /// as an account reconciled in its interface would.
   List<String> reconciliationAccounts = const [
@@ -493,6 +508,12 @@ MockClient fireflyMockClient({
     },
     ...transactionOverrides,
   };
+
+  Map<String, Object?> stored() => recurrenceEnvelope(
+    weekend: recurrenceWeekend,
+    foreignAmount: recurrenceForeignAmount,
+    foreignCurrencyCode: recurrenceForeignCurrencyCode,
+  );
 
   return MockClient((request) async {
     record?.add(request.url);
@@ -735,7 +756,7 @@ MockClient fireflyMockClient({
         return jsonHttpResponse(recurrenceEnvelope(), status: 201);
       }
       return jsonHttpResponse({
-        'data': [recurrenceEnvelope()['data']],
+        'data': [stored()['data']],
       });
     }
     if (path == '/api/v1/recurrences/12/transactions') {
@@ -745,6 +766,7 @@ MockClient fireflyMockClient({
     }
     if (path.startsWith('/api/v1/recurrences/')) {
       if (method == 'DELETE') return http.Response('', 204);
+      if (method == 'GET') return jsonHttpResponse(stored());
       return jsonHttpResponse(recurrenceEnvelope(title: 'Salary raised'));
     }
     if (path == '/api/v1/currencies') {

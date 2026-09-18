@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 import 'package:http/testing.dart';
 import 'package:test/test.dart';
@@ -1734,6 +1735,185 @@ void main() {
       expect(result['ok'], isTrue);
       expect((result['recurrence'] as Map)['title'], 'Salary raised');
     });
+
+    test('update_recurrence keeps the weekend handling it was not asked to '
+        'change', () async {
+      // Regression: the schema had no weekend parameter and the input sent one
+      // anyway, so any write reset a rule set to "the Friday before" back to
+      // "create anyway" — including a write that only meant to move the amount.
+      final bodies = <String>[];
+      final result = await _tool(
+        'update_recurrence',
+        client: fireflyMockClient(recordBodies: bodies, recurrenceWeekend: 3),
+      ).run({'recurrence_id': '12', 'amount': 1300});
+
+      expect(result['ok'], isTrue);
+      final body = jsonDecode(bodies.single) as Map<String, Object?>;
+      expect(
+        body.containsKey('repetitions'),
+        isFalse,
+        reason: 'an untouched schedule stays off the request entirely',
+      );
+    });
+
+    test('update_recurrence sets the weekend handling it is given', () async {
+      final bodies = <String>[];
+      final result = await _tool(
+        'update_recurrence',
+        client: fireflyMockClient(recordBodies: bodies),
+      ).run({'recurrence_id': '12', 'weekend': 'nextMonday'});
+
+      expect(result['ok'], isTrue);
+      final repetition =
+          ((jsonDecode(bodies.single) as Map)['repetitions'] as List).single
+              as Map<String, Object?>;
+      expect(repetition['weekend'], RecurrenceWeekendMode.nextMonday.apiValue);
+      expect(repetition['moment'], '1', reason: 'the stored moment is kept');
+    });
+
+    test('create_recurrence sets the weekend handling it is given', () async {
+      final bodies = <String>[];
+      final result = await _tool(
+        'create_recurrence',
+        client: fireflyMockClient(recordBodies: bodies),
+      ).run({...recurrenceArgs(), 'weekend': 'previousFriday'});
+
+      expect(result['ok'], isTrue);
+      final repetition =
+          ((jsonDecode(bodies.single) as Map)['repetitions'] as List).single
+              as Map<String, Object?>;
+      expect(
+        repetition['weekend'],
+        RecurrenceWeekendMode.previousFriday.apiValue,
+      );
+    });
+
+    test(
+      'an unknown weekend mode is refused before anything is written',
+      () async {
+        final bodies = <String>[];
+        final result = await _tool(
+          'update_recurrence',
+          client: fireflyMockClient(recordBodies: bodies),
+        ).run({'recurrence_id': '12', 'weekend': 'the Tuesday after'});
+
+        expect(result['code'], 'bad_input');
+        expect(result['error'], contains('weekend'));
+        expect(bodies, isEmpty);
+      },
+    );
+
+    test('update_recurrence keeps every field it was not given', () async {
+      // Firefly replaces a recurrence wholesale, so anything missing from the
+      // request comes back cleared. An amount change must not cost the rule its
+      // accounts, its category, its tags or its foreign amount.
+      final bodies = <String>[];
+      final result = await _tool(
+        'update_recurrence',
+        client: fireflyMockClient(
+          recordBodies: bodies,
+          recurrenceForeignAmount: '95.00',
+          recurrenceForeignCurrencyCode: 'USD',
+        ),
+      ).run({'recurrence_id': '12', 'amount': 1300});
+
+      expect(result['ok'], isTrue);
+      final body = jsonDecode(bodies.single) as Map<String, Object?>;
+      expect(body['title'], 'Salary');
+      expect(body['first_date'], '2026-09-01');
+      expect(body['repeat_until'], '2027-09-01');
+      expect(body['type'], 'withdrawal');
+
+      final line =
+          (body['transactions'] as List).single as Map<String, Object?>;
+      expect(
+        line['id'],
+        '55',
+        reason: 'the stored line is updated, not replaced',
+      );
+      expect(line['amount'], '1300.00');
+      expect(line['description'], 'Rent payment');
+      expect(line['source_id'], '5');
+      expect(line['destination_id'], '9');
+      expect(line['category_id'], '7');
+      expect(line['budget_id'], '3');
+      expect(line['tags'], ['standing']);
+      expect(line['foreign_amount'], '95.00');
+      expect(line['foreign_currency_code'], 'USD');
+    });
+
+    test('update_recurrence changes every field it is given', () async {
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'update_recurrence',
+            client: fireflyMockClient(recordBodies: bodies),
+          ).run({
+            'recurrence_id': '12',
+            'title': 'Rent raised',
+            'description': 'Rent, new lease',
+            'first_date': '2026-10-01',
+            'repeat_until': '2028-01-01',
+            'nr_of_repetitions': 12,
+            'notes': 'renegotiated',
+            'type': 'withdrawal',
+            'amount': 1300,
+            'foreign_amount': 140,
+            'foreign_currency_code': 'USD',
+            'source_id': '6',
+            'destination_id': '10',
+            'category_id': '8',
+            'budget_id': '4',
+            'bill_id': '9',
+            'currency_code': 'SEK',
+            'repetition_type': 'monthly',
+            'moment': '2',
+            'skip': 1,
+            'tags': ['lease'],
+          });
+
+      expect(result['ok'], isTrue);
+      final body = jsonDecode(bodies.single) as Map<String, Object?>;
+      expect(body['title'], 'Rent raised');
+      expect(body['first_date'], '2026-10-01');
+      expect(body['repeat_until'], '2028-01-01');
+      expect(body['nr_of_repetitions'], 12);
+      expect(body['notes'], 'renegotiated');
+
+      final repetition =
+          (body['repetitions'] as List).single as Map<String, Object?>;
+      expect(repetition['moment'], '2');
+      expect(repetition['skip'], 1);
+
+      final line =
+          (body['transactions'] as List).single as Map<String, Object?>;
+      expect(line['description'], 'Rent, new lease');
+      expect(line['amount'], '1300.00');
+      expect(line['currency_code'], 'SEK');
+      expect(line['foreign_amount'], '140.00');
+      expect(line['foreign_currency_code'], 'USD');
+      expect(line['source_id'], '6');
+      expect(line['destination_id'], '10');
+      expect(line['category_id'], '8');
+      expect(line['budget_id'], '4');
+      expect(line['bill_id'], '9');
+      expect(line['tags'], ['lease']);
+    });
+
+    test(
+      'update_recurrence still refuses a field it was given empty',
+      () async {
+        final bodies = <String>[];
+        final result = await _tool(
+          'update_recurrence',
+          client: fireflyMockClient(recordBodies: bodies),
+        ).run({'recurrence_id': '12', 'source_id': '  '});
+
+        expect(result['code'], 'bad_input');
+        expect(result['error'], contains('source_id'));
+        expect(bodies, isEmpty);
+      },
+    );
 
     test('delete_recurrence deletes', () async {
       final result = await _tool(

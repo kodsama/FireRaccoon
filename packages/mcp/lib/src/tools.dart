@@ -1728,14 +1728,24 @@ Map<String, Object?> _recurrenceFieldSchema() => {
     'type': 'string',
     'description':
         'Which point in the period: day of month for monthly, 1-7 for weekly, '
-        'MM-DD for yearly, empty for daily.',
+        '"week,weekday" for ndom (2,3 is the 2nd Wednesday), MM-DD for yearly, '
+        'empty for daily.',
   },
   'skip': {'type': 'integer', 'minimum': 0, 'default': 0},
+  'weekend': {
+    'type': 'string',
+    'enum': ['createAnyway', 'skipWeekend', 'previousFriday', 'nextMonday'],
+    'description':
+        'What happens when an occurrence lands on a Saturday or Sunday.',
+    'default': 'createAnyway',
+  },
   'type': {
     'type': 'string',
     'enum': ['withdrawal', 'deposit', 'transfer'],
   },
   'amount': {'type': 'number', 'exclusiveMinimum': 0},
+  'foreign_amount': {'type': 'number', 'exclusiveMinimum': 0},
+  'foreign_currency_code': {'type': 'string'},
   'source_id': {'type': 'string'},
   'destination_id': {'type': 'string'},
   'category_id': {'type': 'string'},
@@ -1748,49 +1758,89 @@ Map<String, Object?> _recurrenceFieldSchema() => {
   },
 };
 
-/// Firefly replaces a recurrence wholesale, so create and update build the same
-/// complete input rather than merging over what is stored.
+/// An argument read over what is stored: an absent key keeps [stored], while a
+/// key that is present wins even when it trims to nothing. That is what keeps
+/// `title: ""` a refusal rather than a silent no-op.
+String? _mergedText(Map<String, Object?> args, String key, String? stored) {
+  if (!args.containsKey(key)) return stored;
+  return (args[key] as String?)?.trim();
+}
+
+/// Builds the complete rule Firefly wants from the arguments and, on an update,
+/// from [current].
+///
+/// Firefly replaces a recurrence wholesale: every field missing from the request
+/// comes back reset, whether or not the caller meant to touch it. So an update
+/// merges over the stored rule, and only a create starts from nothing.
 Future<RecurrenceInput> _recurrenceInput(
   Map<String, Object?> args,
-  FireflyService api,
-) async {
-  final title = (args['title'] as String?)?.trim();
+  FireflyService api, {
+  Recurrence? current,
+}) async {
+  final storedLine = current?.primaryTransaction;
+  final storedRepetition = current?.primaryRepetition;
+
+  final title = _mergedText(args, 'title', current?.title);
   if (title == null || title.isEmpty) throw ArgumentError('title is required');
-  final firstDate = _optionalDate(args['first_date'], 'first_date');
+  final firstDate =
+      _optionalDate(args['first_date'], 'first_date') ?? current?.firstDate;
   if (firstDate == null) throw ArgumentError('first_date is required');
-  final amount = (args['amount'] as num?)?.toDouble();
+  final amount = (args['amount'] as num?)?.toDouble() ?? storedLine?.amount;
   if (amount == null || amount <= 0) {
     throw ArgumentError('amount must be greater than zero');
   }
-  final description = (args['description'] as String?)?.trim();
-  if (description == null || description.isEmpty) {
+  final lineDescription = _mergedText(
+    args,
+    'description',
+    storedLine?.description,
+  );
+  if (lineDescription == null || lineDescription.isEmpty) {
     throw ArgumentError('description is required');
   }
-  final sourceId = (args['source_id'] as String?)?.trim();
-  final destinationId = (args['destination_id'] as String?)?.trim();
+  final sourceId = _mergedText(args, 'source_id', storedLine?.sourceId);
+  final destinationId = _mergedText(
+    args,
+    'destination_id',
+    storedLine?.destinationId,
+  );
   if (sourceId == null || sourceId.isEmpty) {
     throw ArgumentError('source_id is required');
   }
   if (destinationId == null || destinationId.isEmpty) {
     throw ArgumentError('destination_id is required');
   }
-  final currency =
-      args['currency_code'] as String? ?? (await api.getPrimaryCurrency()).code;
+  var currency = _mergedText(args, 'currency_code', storedLine?.currencyCode);
+  if (currency == null || currency.isEmpty) {
+    currency = (await api.getPrimaryCurrency()).code;
+  }
+  final foreignAmount = args.containsKey('foreign_amount')
+      ? (args['foreign_amount'] as num?)?.toDouble()
+      : storedLine?.foreignAmount;
   return RecurrenceInput(
-    type: _requireEnum(
-      RecurrenceTransactionType.values,
-      args['type'] as String?,
-      (v) => v.apiValue,
-      'type',
-    ),
+    type: args.containsKey('type') || current == null
+        ? _requireEnum(
+            RecurrenceTransactionType.values,
+            args['type'] as String?,
+            (v) => v.apiValue,
+            'type',
+          )
+        : current.type,
     title: title,
-    description: args['description'] as String?,
+    description: args.containsKey('description')
+        ? args['description'] as String?
+        : current?.description,
     firstDate: firstDate,
-    repeatUntil: _optionalDate(args['repeat_until'], 'repeat_until'),
-    nrOfRepetitions: (args['nr_of_repetitions'] as num?)?.toInt(),
-    applyRules: args['apply_rules'] as bool? ?? true,
-    active: args['active'] as bool? ?? true,
-    notes: args['notes'] as String?,
+    repeatUntil: args.containsKey('repeat_until')
+        ? _optionalDate(args['repeat_until'], 'repeat_until')
+        : current?.repeatUntil,
+    nrOfRepetitions: args.containsKey('nr_of_repetitions')
+        ? (args['nr_of_repetitions'] as num?)?.toInt()
+        : current?.nrOfRepetitions,
+    applyRules: args['apply_rules'] as bool? ?? current?.applyRules ?? true,
+    active: args['active'] as bool? ?? current?.active ?? true,
+    notes: args.containsKey('notes')
+        ? args['notes'] as String?
+        : current?.notes,
     repetitions: [
       RecurrenceRepetitionInput(
         type: args.containsKey('repetition_type')
@@ -1800,22 +1850,45 @@ Future<RecurrenceInput> _recurrenceInput(
                 (v) => v.apiValue,
                 'repetition_type',
               )
-            : RecurrenceRepetitionType.monthly,
-        moment: (args['moment'] as String?) ?? '',
-        skip: (args['skip'] as num?)?.toInt() ?? 0,
+            : storedRepetition?.type ?? RecurrenceRepetitionType.monthly,
+        moment: (args['moment'] as String?) ?? storedRepetition?.moment ?? '',
+        skip: (args['skip'] as num?)?.toInt() ?? storedRepetition?.skip ?? 0,
+        weekend: args.containsKey('weekend')
+            ? _requireEnum(
+                RecurrenceWeekendMode.values,
+                args['weekend'] as String?,
+                (v) => v.name,
+                'weekend',
+              )
+            : storedRepetition?.weekend ?? RecurrenceWeekendMode.createAnyway,
       ),
     ],
     transactions: [
       RecurrenceTransactionInput(
-        description: description,
+        id: storedLine?.id,
+        description: lineDescription,
         amount: amount,
         currencyCode: currency,
+        foreignAmount: foreignAmount,
+        foreignCurrencyCode: _mergedText(
+          args,
+          'foreign_currency_code',
+          storedLine?.foreignCurrencyCode,
+        ),
         sourceId: sourceId,
         destinationId: destinationId,
-        budgetId: args['budget_id'] as String?,
-        categoryId: args['category_id'] as String?,
-        billId: args['bill_id'] as String?,
-        tags: _strList(args['tags']),
+        budgetId: args.containsKey('budget_id')
+            ? args['budget_id'] as String?
+            : storedLine?.budgetId,
+        categoryId: args.containsKey('category_id')
+            ? args['category_id'] as String?
+            : storedLine?.categoryId,
+        billId: args.containsKey('bill_id')
+            ? args['bill_id'] as String?
+            : storedLine?.billId,
+        tags: args.containsKey('tags')
+            ? _strList(args['tags'])
+            : storedLine?.tags ?? const [],
       ),
     ],
   );
@@ -5370,8 +5443,9 @@ List<McpTool> buildTools({
       writes: true,
       description:
           'Create a recurring transaction rule. repetition_type monthly with '
-          'moment "1" means the 1st of each month; weekly takes 1-7, yearly a '
-          'MM-DD.',
+          'moment "1" means the 1st of each month; weekly takes 1-7, ndom a '
+          '"week,weekday" pair, yearly a MM-DD. weekend says what an occurrence '
+          'landing on a Saturday or Sunday does.',
       inputSchema: {
         'type': 'object',
         'required': [
@@ -5401,20 +5475,12 @@ List<McpTool> buildTools({
       name: 'update_recurrence',
       writes: true,
       description:
-          'Replace a recurring rule. Firefly takes the whole rule, so pass every '
-          'field you want kept.',
+          'Change a recurring rule. Pass only the fields you are changing: '
+          'everything left out keeps what is stored, including the weekend '
+          'handling and the schedule.',
       inputSchema: {
         'type': 'object',
-        'required': [
-          'recurrence_id',
-          'title',
-          'first_date',
-          'type',
-          'amount',
-          'description',
-          'source_id',
-          'destination_id',
-        ],
+        'required': ['recurrence_id'],
         'properties': {
           'recurrence_id': {'type': 'string'},
           ..._recurrenceFieldSchema(),
@@ -5426,13 +5492,14 @@ List<McpTool> buildTools({
           return _badInput('recurrence_id is required');
         }
         final api = service();
+        final current = await api.getRecurrence(id);
         final RecurrenceInput input;
         try {
-          input = await _recurrenceInput(args, api);
+          input = await _recurrenceInput(args, api, current: current);
         } on ArgumentError catch (e) {
           return _badInput('${e.message}');
         }
-        final updated = await api.updateRecurrence(id, input);
+        final updated = await api.updateRecurrence(id, input, current: current);
         return {'ok': true, 'recurrence': _recurrenceJson(updated)};
       },
     ),

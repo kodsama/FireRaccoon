@@ -586,6 +586,12 @@ class FakeFireflyService implements FireflyService {
   }
 
   @override
+  Future<Recurrence> getRecurrence(String recurrenceId) async {
+    _maybeThrow();
+    return recurrences.firstWhere((r) => r.id == recurrenceId);
+  }
+
+  @override
   Future<Recurrence> createRecurrence(RecurrenceInput input) async {
     _maybeThrow();
     final tx = input.transactions.isEmpty ? null : input.transactions.first;
