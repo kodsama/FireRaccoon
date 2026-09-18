@@ -34,6 +34,8 @@ code comments, ADRs, and MCP descriptions.
 | **Budget** | Firefly budget with optional auto-budget amount |
 | **Bill / subscription** | Recurring payable tracked as a Firefly bill |
 | **Recurrence** | Firefly repeating transaction rule |
+| **Schedule rule** | An anchor plus an adjustment FireRaccoon reads in place of Firefly's repetition, stored in the recurrence notes under `fireraccoon:schedule:`; says schedules Firefly cannot, such as the last banking day of the month |
+| **Banking calendar** | Which days a bank settles on: weekends everywhere, plus a per-country holiday table. `SE` counts Midsummer Eve, Christmas Eve and New Year's Eve as shut |
 | **Piggy bank** | Saved-toward goal linked to an account |
 
 ## Statement matching

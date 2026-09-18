@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `schedule_rule` states a monthly schedule Firefly has no way to store: an
+  anchor, a day of the month or an nth weekday counted from either end, plus an
+  adjustment to the previous or next banking day, read against a banking
+  calendar. "Last banking day of the month" and "the last banking day on or
+  before the 25th" are one rule each now, where a fixed `moment` was a day or
+  three out every month and the rows written ahead inherited the error. The
+  rule rides in the recurrence notes and FireRaccoon's own expansion honours
+  it, for the prognosis, the projection and the write-ahead; Firefly's
+  repetition stays underneath as the fallback. The `SE` calendar counts
+  Midsummer Eve, Christmas Eve and New Year's Eve as shut, because Swedish
+  banks settle nothing on them
+
 - `update_recurrence` and `delete_recurrence` name the transactions FireRaccoon
   has already written ahead from the rule. Firefly records no link from such a
   row back to the rule that produced it, so correcting a rule whose amount had

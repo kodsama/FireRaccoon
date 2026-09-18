@@ -473,6 +473,59 @@ deleted never comes into play, and legs cannot be added or removed this way.
 The readback reports a leg Firefly declined as `splits[0].budget_id`, and a
 group that came back without a journal the call named as `splits[0]`.
 
+### A schedule Firefly cannot state
+
+Real subscriptions and salaries are rarely drawn on a fixed day number. A union
+fee in this ledger came out on the 28th, the 30th, the 30th, the 27th, the
+31st, the 30th, the 29th, the 30th, the 31st and the 31st over ten consecutive
+months. That is one rule, "last banking day of the month", and Firefly has no
+way to say it: stored as `monthly` with a fixed `moment`, every projected row
+is a day or three out and the rows written ahead inherit the error. Being a few
+days out does not matter for one row. It matters for the projected balance on
+the day a large debit lands, which is the question the projection exists to
+answer.
+
+Combining `monthly` with `weekend` reaches some of it, since monthly already
+clamps down in a short month and `previousFriday` moves an occurrence rather
+than only skipping it. But the pairing is a coincidence, not a rule: nothing in
+the stored data says "last banking day on or before the 25th", the two settings
+can drift apart, and nobody setting up a salary guesses that the answer is a day
+number plus a weekend mode. `weekend` also knows Saturday and Sunday only, which
+in Sweden is wrong several times a year and wrong precisely in the months where
+a salary or a large direct debit moves.
+
+`schedule_rule` says it once, as an anchor plus an adjustment read against a
+banking calendar:
+
+| Rule | `schedule_rule` |
+| --- | --- |
+| Last banking day of the month | `anchor=day:31;adjust=previous-banking;calendar=SE` |
+| First banking day of the month | `anchor=day:1;adjust=next-banking;calendar=SE` |
+| The ordinary Swedish salary date | `anchor=day:25;adjust=previous-banking;calendar=SE` |
+| First banking day on or after the 15th | `anchor=day:15;adjust=next-banking;calendar=SE` |
+| The last Thursday | `anchor=weekday:-1,4` |
+| The 2nd Wednesday | `anchor=weekday:2,3` |
+
+`anchor` takes `day:1-31`, clamping down in a month too short for it as
+Firefly's own monthly repetition does, or `weekday:<n>,<1-7>` where a negative
+`n` counts from the end. That negative index is what `ndom` cannot say: counting
+forward, `5,4` fires in the months with five Thursdays and produces nothing in
+the rest, which is worse than an error because the rule just goes quiet.
+`adjust` takes `none`, `previous-banking` or `next-banking`. `calendar` takes
+`weekend`, Saturday and Sunday only, or `SE`, Swedish bank holidays with
+Midsummer Eve, Christmas Eve and New Year's Eve in, because Swedish banks settle
+nothing on those three and that is what "banking day" has to mean for a salary.
+
+Firefly cannot store this, so the rule rides in the recurrence notes under
+`fireraccoon:schedule:` and FireRaccoon's own expansion honours it, for the
+prognosis, the projection and the rows it writes ahead. Firefly's repetition
+stays underneath as the fallback for anything the server generates, so set both:
+the closest `monthly` day number, and the rule. An empty `schedule_rule` drops
+it. A rule nobody can parse reads as no rule at all and the Firefly repetition
+takes over, which is the safe half of the fallback; writing one is refused
+instead, since a rule that quietly became something else would schedule the
+wrong day for months before anybody noticed.
+
 ### The rows a recurrence already wrote ahead
 
 FireRaccoon materializes upcoming occurrences as real future-dated
