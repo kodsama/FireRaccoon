@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.12.0] - 2026-09-18
+
+### Added
+
+- `schedule_rule` states a monthly schedule Firefly has no way to store: an
+  anchor, a day of the month or an nth weekday counted from either end, plus an
+  adjustment to the previous or next banking day, read against a banking
+  calendar. "Last banking day of the month" and "the last banking day on or
+  before the 25th" are one rule each now, where a fixed `moment` was a day or
+  three out every month and the rows written ahead inherited the error. The
+  rule rides in the recurrence notes and FireRaccoon's own expansion honours
+  it, for the prognosis, the projection and the write-ahead; Firefly's
+  repetition stays underneath as the fallback. The `SE` calendar counts
+  Midsummer Eve, Christmas Eve and New Year's Eve as shut, because Swedish
+  banks settle nothing on them
+
+- `update_recurrence` and `delete_recurrence` name the transactions FireRaccoon
+  has already written ahead from the rule. Firefly records no link from such a
+  row back to the rule that produced it, so correcting a rule whose amount had
+  drifted was one call and then a hunt for the rows already on the books, with
+  nothing in the answer saying they existed. Both tools now report each row's
+  id, date, description and amount, and `update_future_transactions` /
+  `delete_future_transactions` bring them along. Both default to off, so
+  nothing is rewritten silently. Where the schedule itself moved, each row also
+  carries `moves_to`, the date it would take, and taking them along moves them
+  there; a row the new schedule has no occurrence left for comes back as
+  `no_longer_scheduled` and is left where it is rather than deleted on a guess.
+  A row written ahead now carries the rule's id in its marker rather than a
+  constant shared by every row
+
+### Fixed
+
+- Any MCP write to a recurrence reset the fields the tool schema did not carry.
+  `weekend` was the visible one: a rule set in Firefly to move a weekend
+  occurrence to the Friday before came back as "create anyway" after a call
+  that only meant to change the amount, because the input serialised its own
+  default every time. The foreign amount and the line's own id went the same
+  way, Firefly replacing a recurrence wholesale rather than patching it.
+  `update_recurrence` now reads the stored rule first and merges over it, so
+  only the fields actually passed change, and `weekend` is a parameter on both
+  create and update with the four values Firefly offers
+
 ## [0.11.1] - 2026-09-18
 
 ### Fixed

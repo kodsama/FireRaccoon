@@ -238,18 +238,31 @@ Map<String, Object?> piggyEnvelope({String name = 'New Laptop'}) => {
   },
 };
 
-Map<String, Object?> recurrenceEnvelope({String title = 'Salary'}) => {
+Map<String, Object?> recurrenceEnvelope({
+  String title = 'Salary',
+  int weekend = 1,
+  String? foreignAmount,
+  String? foreignCurrencyCode,
+
+  /// A rule that carries no category, budget, bill or tags, as one set up in
+  /// Firefly's own interface without them does.
+  bool bareLine = false,
+  String? notes,
+}) => {
   'data': {
     'id': '12',
     'attributes': {
       'type': 'withdrawal',
       'title': title,
+      'notes': ?notes,
       'first_date': '2026-09-01',
-      'repeat_until': '2027-09-01',
+      // Far out on purpose: a nearer end date would quietly stop the
+      // schedule tests from having occurrences to expand once it passed.
+      'repeat_until': '2099-09-01',
       'active': true,
       'apply_rules': true,
       'repetitions': [
-        {'type': 'monthly', 'moment': '1', 'skip': 0, 'weekend': 1},
+        {'type': 'monthly', 'moment': '1', 'skip': 0, 'weekend': weekend},
       ],
       'transactions': [
         {
@@ -258,18 +271,93 @@ Map<String, Object?> recurrenceEnvelope({String title = 'Salary'}) => {
           'amount': '1200.00',
           'currency_code': 'EUR',
           'currency_symbol': '€',
+          'foreign_amount': ?foreignAmount,
+          'foreign_currency_code': ?foreignCurrencyCode,
           'source_id': '5',
           'source_name': 'Joint Current',
           'destination_id': '9',
           'destination_name': 'Landlord',
-          'category_name': 'Housing',
-          'budget_name': 'Fixed costs',
-          'tags': ['standing'],
+          if (!bareLine) ...{
+            'category_id': '7',
+            'category_name': 'Housing',
+            'budget_id': '3',
+            'budget_name': 'Fixed costs',
+            'tags': ['standing'],
+          },
         },
       ],
     },
   },
 };
+
+/// The recurrence Firefly answers a write with: what it had, with what the
+/// request carried applied over it.
+///
+/// Firefly returns the stored resource, so a mock that answered with a fixed
+/// body let a tool send anything at all and still read back something
+/// plausible.
+Map<String, Object?> recurrenceAfterWrite(
+  Map<String, Object?> previous,
+  String body,
+) {
+  final sent = jsonDecode(body) as Map<String, dynamic>;
+  final data = {...previous['data']! as Map<String, Object?>};
+  final attrs = {...data['attributes']! as Map<String, Object?>};
+
+  for (final key in const [
+    'title',
+    'description',
+    'first_date',
+    'repeat_until',
+    'nr_of_repetitions',
+    'active',
+    'apply_rules',
+    'type',
+    'notes',
+  ]) {
+    if (sent.containsKey(key)) attrs[key] = sent[key];
+  }
+
+  final repetitions = sent['repetitions'] as List?;
+  if (repetitions != null) {
+    attrs['repetitions'] = [
+      for (final repetition in repetitions.cast<Map<String, dynamic>>())
+        {
+          'type': repetition['type'],
+          'moment': repetition['moment'],
+          'skip': repetition['skip'],
+          'weekend': repetition['weekend'],
+        },
+    ];
+  }
+
+  final lines = sent['transactions'] as List?;
+  if (lines != null && lines.isNotEmpty) {
+    final line = {
+      ...(attrs['transactions']! as List).first as Map<String, Object?>,
+    };
+    final sentLine = lines.first as Map<String, dynamic>;
+    for (final key in const [
+      'description',
+      'amount',
+      'currency_code',
+      'foreign_amount',
+      'foreign_currency_code',
+      'source_id',
+      'destination_id',
+      'category_id',
+      'budget_id',
+      'bill_id',
+      'tags',
+    ]) {
+      if (sentLine.containsKey(key)) line[key] = sentLine[key];
+    }
+    attrs['transactions'] = [line];
+  }
+
+  data['attributes'] = attrs;
+  return {'data': data};
+}
 
 Map<String, Object?> transactionItem({
   String id = '1',
@@ -443,6 +531,14 @@ MockClient fireflyMockClient({
   Set<String> failingExports = const {},
   Set<String> failingWrites = const {},
 
+  /// The weekend handling the stored recurrence carries. Left at Firefly's
+  /// "create anyway" unless a test needs a reset to be visible.
+  int recurrenceWeekend = 1,
+  String? recurrenceForeignAmount,
+  String? recurrenceForeignCurrencyCode,
+  bool recurrenceBareLine = false,
+  String? recurrenceNotes,
+
   /// The accounts Firefly keeps for corrections. Both mock accounts have one,
   /// as an account reconciled in its interface would.
   List<String> reconciliationAccounts = const [
@@ -493,6 +589,14 @@ MockClient fireflyMockClient({
     },
     ...transactionOverrides,
   };
+
+  Map<String, Object?> stored() => recurrenceEnvelope(
+    weekend: recurrenceWeekend,
+    foreignAmount: recurrenceForeignAmount,
+    foreignCurrencyCode: recurrenceForeignCurrencyCode,
+    bareLine: recurrenceBareLine,
+    notes: recurrenceNotes,
+  );
 
   return MockClient((request) async {
     record?.add(request.url);
@@ -732,10 +836,13 @@ MockClient fireflyMockClient({
     }
     if (path == '/api/v1/recurrences') {
       if (method == 'POST') {
-        return jsonHttpResponse(recurrenceEnvelope(), status: 201);
+        return jsonHttpResponse(
+          recurrenceAfterWrite(stored(), request.body),
+          status: 201,
+        );
       }
       return jsonHttpResponse({
-        'data': [recurrenceEnvelope()['data']],
+        'data': [stored()['data']],
       });
     }
     if (path == '/api/v1/recurrences/12/transactions') {
@@ -745,7 +852,8 @@ MockClient fireflyMockClient({
     }
     if (path.startsWith('/api/v1/recurrences/')) {
       if (method == 'DELETE') return http.Response('', 204);
-      return jsonHttpResponse(recurrenceEnvelope(title: 'Salary raised'));
+      if (method == 'GET') return jsonHttpResponse(stored());
+      return jsonHttpResponse(recurrenceAfterWrite(stored(), request.body));
     }
     if (path == '/api/v1/currencies') {
       return jsonHttpResponse({

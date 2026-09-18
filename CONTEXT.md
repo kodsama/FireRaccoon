@@ -18,7 +18,7 @@ code comments, ADRs, and MCP descriptions.
 | **DATA_PASSWORD** | Env password that creates/unlocks encrypted DATA_DIR on boot |
 | **Projection** | Coarse on-device forecast (`ProjectionService` / MCP `run_projection`) |
 | **Prognosis** | Rich account forecast in the UI (`AccountPrognosisService`) |
-| **Write-ahead** | Materializing upcoming recurrence occurrences as future transactions |
+| **Write-ahead** | Materializing upcoming recurrence occurrences as future transactions; each row carries `fireraccoon:auto-written:<recurrence id>` in its notes, which is the only link back to the rule that wrote it. Rows from before the id spell it bare, and rows from before the rename spell it `fireracoon:`; all three are read |
 | **Reconciliation** | Marking journals reconciled and optionally posting a correction; for `ccAsset` accounts, also creating a payback transfer, one leg per purchase or a single netted leg when refunds are among them |
 | **Link note** | `fireraccoon:linked_journal:<id>` on a payback leg, naming the purchase or refund it settles; rows from before the rename spell it `fireracoon:` and readers take both |
 | **Agent key** | Credential an MCP client presents (`frcn_…`); bound to a person, stored with its digest so the owner can read it back, revocable |
@@ -34,6 +34,8 @@ code comments, ADRs, and MCP descriptions.
 | **Budget** | Firefly budget with optional auto-budget amount |
 | **Bill / subscription** | Recurring payable tracked as a Firefly bill |
 | **Recurrence** | Firefly repeating transaction rule |
+| **Schedule rule** | An anchor plus an adjustment FireRaccoon reads in place of Firefly's repetition, stored in the recurrence notes under `fireraccoon:schedule:`; says schedules Firefly cannot, such as the last banking day of the month |
+| **Banking calendar** | Which days a bank settles on: weekends everywhere, plus a per-country holiday table. `SE` counts Midsummer Eve, Christmas Eve and New Year's Eve as shut |
 | **Piggy bank** | Saved-toward goal linked to an account |
 
 ## Statement matching

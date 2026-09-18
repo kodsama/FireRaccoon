@@ -175,9 +175,9 @@ are described under [Importing a statement](#importing-a-statement).
 | `delete_piggy_bank` | Delete a piggy bank | yes |
 | `get_recurrences` | List recurring rules, each with the amount, accounts, category, budget and tags of the lines it creates |  |
 | `get_recurrence_transactions` | Transactions a recurring rule has created |  |
-| `create_recurrence` | Create a recurring rule | yes |
-| `update_recurrence` | Update a recurring rule; omitted fields keep their value | yes |
-| `delete_recurrence` | Delete a recurring rule; created transactions are kept | yes |
+| `create_recurrence` | Create a recurring rule; `weekend` says what an occurrence landing on a weekend does | yes |
+| `update_recurrence` | Change a recurring rule; omitted fields keep their stored value, and the answer names the rows written ahead from it | yes |
+| `delete_recurrence` | Delete a recurring rule; created transactions are kept unless `delete_future_transactions` says otherwise | yes |
 | `get_currencies` | List currencies and which are enabled |  |
 | `run_projection` | On-device balance forecast |  |
 | `get_dashboard_kpis` | Income, spending, and savings KPIs for a period |  |
@@ -472,6 +472,100 @@ out either way, each leg carrying its own id, so the rule that a missing leg is
 deleted never comes into play, and legs cannot be added or removed this way.
 The readback reports a leg Firefly declined as `splits[0].budget_id`, and a
 group that came back without a journal the call named as `splits[0]`.
+
+### A schedule Firefly cannot state
+
+Real subscriptions and salaries are rarely drawn on a fixed day number. A union
+fee in this ledger came out on the 28th, the 30th, the 30th, the 27th, the
+31st, the 30th, the 29th, the 30th, the 31st and the 31st over ten consecutive
+months. That is one rule, "last banking day of the month", and Firefly has no
+way to say it: stored as `monthly` with a fixed `moment`, every projected row
+is a day or three out and the rows written ahead inherit the error. Being a few
+days out does not matter for one row. It matters for the projected balance on
+the day a large debit lands, which is the question the projection exists to
+answer.
+
+Combining `monthly` with `weekend` reaches some of it, since monthly already
+clamps down in a short month and `previousFriday` moves an occurrence rather
+than only skipping it. But the pairing is a coincidence, not a rule: nothing in
+the stored data says "last banking day on or before the 25th", the two settings
+can drift apart, and nobody setting up a salary guesses that the answer is a day
+number plus a weekend mode. `weekend` also knows Saturday and Sunday only, which
+in Sweden is wrong several times a year and wrong precisely in the months where
+a salary or a large direct debit moves.
+
+`schedule_rule` says it once, as an anchor plus an adjustment read against a
+banking calendar:
+
+| Rule | `schedule_rule` |
+| --- | --- |
+| Last banking day of the month | `anchor=day:31;adjust=previous-banking;calendar=SE` |
+| First banking day of the month | `anchor=day:1;adjust=next-banking;calendar=SE` |
+| The ordinary Swedish salary date | `anchor=day:25;adjust=previous-banking;calendar=SE` |
+| First banking day on or after the 15th | `anchor=day:15;adjust=next-banking;calendar=SE` |
+| The last Thursday | `anchor=weekday:-1,4` |
+| The 2nd Wednesday | `anchor=weekday:2,3` |
+
+`anchor` takes `day:1-31`, clamping down in a month too short for it as
+Firefly's own monthly repetition does, or `weekday:<n>,<1-7>` where a negative
+`n` counts from the end. That negative index is what `ndom` cannot say: counting
+forward, `5,4` fires in the months with five Thursdays and produces nothing in
+the rest, which is worse than an error because the rule just goes quiet.
+`adjust` takes `none`, `previous-banking` or `next-banking`. `calendar` takes
+`weekend`, Saturday and Sunday only, or `SE`, Swedish bank holidays with
+Midsummer Eve, Christmas Eve and New Year's Eve in, because Swedish banks settle
+nothing on those three and that is what "banking day" has to mean for a salary.
+
+Firefly cannot store this, so the rule rides in the recurrence notes under
+`fireraccoon:schedule:` and FireRaccoon's own expansion honours it, for the
+prognosis, the projection and the rows it writes ahead. Firefly's repetition
+stays underneath as the fallback for anything the server generates, so set both:
+the closest `monthly` day number, and the rule. An empty `schedule_rule` drops
+it. A rule nobody can parse reads as no rule at all and the Firefly repetition
+takes over, which is the safe half of the fallback; writing one is refused
+instead, since a rule that quietly became something else would schedule the
+wrong day for months before anybody noticed.
+
+### The rows a recurrence already wrote ahead
+
+FireRaccoon materializes upcoming occurrences as real future-dated
+transactions. Correcting the rule used to be one call and those rows a hunt:
+Firefly records no link from a written-ahead row back to the rule that produced
+it, and nothing in the answer said they existed. A monthly insurance rule whose
+amount had been superseded months earlier took one call to fix and two more to
+find.
+
+`update_recurrence` and `delete_recurrence` now report them. `future_transactions`
+carries the count and each row's id, date, description and amount, whether or
+not the caller wants them touched, because a caller that declines still needs to
+know which rows are out of step with the rule. Passing
+`update_future_transactions` rewrites them to say what the rule now says;
+`delete_future_transactions` takes them with the rule. Both default to off, so
+nothing is ever rewritten silently, and a row Firefly refuses comes back under
+`failed_transaction_ids` rather than as a thrown call, since by then the rule
+itself has already changed.
+
+When the schedule itself moved, the rows move with it. Each one carries
+`moves_to`, the date it would take, computed whether or not the caller wants it
+applied, so declining is a decision rather than an oversight. Rows and the new
+occurrences pair nearest-first rather than in order: an adjustment carries an
+occurrence out of the month it belongs to, so the first of January can fall on
+the thirtieth of December, and pairing by position would hand every row the date
+of its neighbour. A row the new schedule has no occurrence left for comes back
+as `no_longer_scheduled` and stays where it is. The rule no longer says when it
+should happen, and deleting it on that basis would be a guess; `delete_transaction`
+is there for a caller who has decided.
+
+A schedule that did not move leaves every date alone, including one somebody
+set by hand.
+
+The link is the marker in the note. It used to be the same constant on every
+row, `fireraccoon:auto-written`, which named the population but not which rule
+each row belonged to; a row written now carries
+`fireraccoon:auto-written:<recurrence id>`. Rows written under the bare marker
+are matched on what the rule still determines, its two accounts and a date the
+schedule falls on, and rows from before the raccoon rename spell it
+`fireracoon:` with one `c`. All three are read.
 
 ### A liability's own terms
 

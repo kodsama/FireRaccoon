@@ -6,6 +6,146 @@ import 'recurrence_scheduler.dart';
 /// and other clients can recognize them.
 const kWriteAheadMarker = 'fireraccoon:auto-written';
 
+/// The marker a row written for [recurrenceId] carries.
+///
+/// Firefly records nothing about which rule produced a row written ahead, so
+/// the marker is the only link there is. It used to be the same constant on
+/// every row, which named the population but not which rule each row belonged
+/// to; the id makes the set exact.
+String writeAheadMarkerFor(String recurrenceId) =>
+    '$kWriteAheadMarker:$recurrenceId';
+
+/// The marker in [notes], whichever spelling and shape wrote it.
+///
+/// Rows written before the raccoon rename spell it `fireracoon:` with one `c`,
+/// and rows written before the id was carried end at `auto-written`. Both are
+/// still on the books, so both are read.
+final RegExp _writeAheadNote = RegExp(
+  r'firerac{1,2}oon:auto-written(?::(\S+))?',
+);
+
+/// Whether [notes] marks a row FireRaccoon wrote ahead.
+bool isWriteAheadNote(String? notes) =>
+    notes != null && _writeAheadNote.hasMatch(notes);
+
+/// The recurrence id [notes] names, or null when the marker is absent or was
+/// written before ids were carried.
+String? writeAheadRecurrenceId(String? notes) {
+  if (notes == null) return null;
+  final match = _writeAheadNote.firstMatch(notes);
+  return match?.group(1);
+}
+
+/// The rows among [transactions] that [recurrence] wrote ahead.
+///
+/// A row naming a recurrence is taken only for that one. A row from before the
+/// id was carried names no rule, so it is matched on what the rule still
+/// determines: the two accounts it moves between and a date the schedule
+/// actually falls on.
+List<Transaction> writeAheadRowsFor({
+  required Recurrence recurrence,
+  required List<Transaction> transactions,
+}) {
+  final line = recurrence.primaryTransaction;
+  final matched = <Transaction>[];
+  for (final transaction in transactions) {
+    if (!isWriteAheadNote(transaction.notes)) continue;
+    final named = writeAheadRecurrenceId(transaction.notes);
+    if (named != null) {
+      if (named == recurrence.id) matched.add(transaction);
+      continue;
+    }
+    if (line == null) continue;
+    if (!_sameAccounts(transaction, line)) continue;
+    final day = prognosisStartOfDay(transaction.date);
+    final falls = expandRecurrenceOccurrences(
+      recurrence: recurrence,
+      rangeStart: day,
+      rangeEnd: day.add(const Duration(days: 1)),
+    );
+    if (falls.isNotEmpty) matched.add(transaction);
+  }
+  return matched;
+}
+
+/// Where each of [rows] lands once [after]'s schedule replaces [before]'s,
+/// by row id, over a window of [days] from [reference].
+///
+/// Empty when the schedule did not move, so a row somebody dated by hand is
+/// left where they put it. Null against a row the new schedule has no
+/// occurrence left for, which is the honest answer: the rule no longer says
+/// when that row should happen, and deciding that for the caller would be
+/// deleting their data on a guess.
+///
+/// Rows and occurrences pair nearest-first rather than in order. An adjustment
+/// carries an occurrence out of the month it belongs to, so the first of
+/// January can fall on the thirtieth of December, and pairing by position
+/// would hand every row the date of its neighbour.
+Map<String, DateTime?> writeAheadRowMoves({
+  required List<Transaction> rows,
+  required Recurrence before,
+  required Recurrence after,
+  required int days,
+  DateTime? reference,
+}) {
+  if (rows.isEmpty) return const {};
+  final now = reference ?? DateTime.now();
+  final start = DateTime(now.year, now.month, now.day);
+  // Past the window the rows themselves were read from, so a row at its far
+  // edge still has occurrences either side of it to pair with.
+  final end = start.add(Duration(days: days + 31));
+
+  final was = expandRecurrenceOccurrences(
+    recurrence: before,
+    rangeStart: start,
+    rangeEnd: end,
+  );
+  final willBe = expandRecurrenceOccurrences(
+    recurrence: after,
+    rangeStart: start,
+    rangeEnd: end,
+  );
+  if (_sameDates(was, willBe)) return const {};
+
+  final free = [...willBe];
+  final moves = <String, DateTime?>{};
+  final byDate = [...rows]..sort((a, b) => a.date.compareTo(b.date));
+  for (final row in byDate) {
+    if (free.isEmpty) {
+      moves[row.id] = null;
+      continue;
+    }
+    final day = prognosisStartOfDay(row.date);
+    var nearest = 0;
+    for (var i = 1; i < free.length; i++) {
+      if (free[i].difference(day).inDays.abs() <
+          free[nearest].difference(day).inDays.abs()) {
+        nearest = i;
+      }
+    }
+    moves[row.id] = free.removeAt(nearest);
+  }
+  return moves;
+}
+
+bool _sameDates(List<DateTime> a, List<DateTime> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (!a[i].isAtSameMomentAs(b[i])) return false;
+  }
+  return true;
+}
+
+bool _sameAccounts(Transaction row, RecurrenceTransactionLine line) {
+  final sourceMatches = line.sourceId != null
+      ? row.sourceId == line.sourceId
+      : row.sourceName == line.sourceName;
+  final destinationMatches = line.destinationId != null
+      ? row.destinationId == line.destinationId
+      : row.destinationName == line.destinationName;
+  return sourceMatches && destinationMatches;
+}
+
 /// Key used to decide whether an occurrence already exists in the window.
 String writeAheadDedupKey({
   required String description,
@@ -81,7 +221,7 @@ List<Transaction> planWriteAheadTransactions({
           billId: line.billId,
           billName: line.billName,
           tags: line.tags,
-          notes: kWriteAheadMarker,
+          notes: writeAheadMarkerFor(recurrence.id),
         ),
       );
     }

@@ -2147,6 +2147,62 @@ void main() {
       expect(piggies.single.name, 'New Laptop');
     });
 
+    test('getRecurrence reads one rule, and reports a refusal', () async {
+      var path = '';
+      var found = true;
+      final client = MockClient((request) async {
+        path = request.url.path;
+        if (!found) {
+          return jsonHttpResponse({'message': 'Not found'}, status: 404);
+        }
+        return jsonHttpResponse({
+          'data': {
+            'id': '12',
+            'attributes': {
+              'type': 'withdrawal',
+              'title': 'Union fee',
+              'first_date': '2026-08-08',
+              'active': true,
+              'apply_rules': true,
+              'repetitions': [
+                {'type': 'monthly', 'moment': '8', 'skip': 0, 'weekend': 3},
+              ],
+              'transactions': [
+                {
+                  'id': '55',
+                  'description': 'Union fee',
+                  'amount': '250.00',
+                  'currency_code': 'EUR',
+                  'source_id': '1',
+                  'destination_id': '2',
+                },
+              ],
+            },
+          },
+        });
+      });
+      final service = FireflyApiService(
+        serverUrl: baseUrl,
+        apiToken: token,
+        client: client,
+      );
+
+      final recurrence = await service.getRecurrence('12');
+
+      expect(path, '/api/v1/recurrences/12');
+      expect(recurrence.title, 'Union fee');
+      expect(
+        recurrence.primaryRepetition!.weekend,
+        RecurrenceWeekendMode.previousFriday,
+      );
+
+      found = false;
+      await expectLater(
+        service.getRecurrence('12'),
+        throwsA(isA<FireflyApiException>()),
+      );
+    });
+
     test('mutation endpoints throw on network exceptions', () async {
       final client = MockClient((_) async => throw Exception('socket'));
       final service = FireflyApiService(

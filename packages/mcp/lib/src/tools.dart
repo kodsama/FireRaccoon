@@ -1702,6 +1702,7 @@ Map<String, Object?> _recurrenceJson(Recurrence recurrence) => {
       ? null
       : _dateOnly(recurrence.repeatUntil!),
   'nr_of_repetitions': recurrence.nrOfRepetitions,
+  'schedule_rule': recurrence.scheduleRule?.ruleValue,
   'repetitions': [
     for (final r in recurrence.repetitions) _recurrenceRepetitionJson(r),
   ],
@@ -1728,14 +1729,41 @@ Map<String, Object?> _recurrenceFieldSchema() => {
     'type': 'string',
     'description':
         'Which point in the period: day of month for monthly, 1-7 for weekly, '
-        'MM-DD for yearly, empty for daily.',
+        '"week,weekday" for ndom (2,3 is the 2nd Wednesday), MM-DD for yearly, '
+        'empty for daily.',
   },
   'skip': {'type': 'integer', 'minimum': 0, 'default': 0},
+  'schedule_rule': {
+    'type': 'string',
+    'description':
+        'A monthly rule FireRaccoon keeps alongside the Firefly repetition and '
+        'uses for its own projection and write-ahead, for schedules Firefly '
+        'cannot state. '
+        '"anchor=day:31;adjust=previous-banking;calendar=SE" is the last '
+        'banking day of the month; '
+        '"anchor=day:25;adjust=previous-banking;calendar=SE" the ordinary '
+        'Swedish salary date; "anchor=weekday:-1,4;adjust=none" the last '
+        'Thursday. anchor takes day:1-31, clamping down in a short month, or '
+        'weekday:<n>,<1-7> where a negative n counts from the end. adjust '
+        'takes none, previous-banking or next-banking. calendar takes weekend '
+        '(Saturday and Sunday only) or SE (Swedish bank holidays, the three '
+        'eves included). Pass an empty string to drop the rule and go back to '
+        'the Firefly repetition.',
+  },
+  'weekend': {
+    'type': 'string',
+    'enum': ['createAnyway', 'skipWeekend', 'previousFriday', 'nextMonday'],
+    'description':
+        'What happens when an occurrence lands on a Saturday or Sunday.',
+    'default': 'createAnyway',
+  },
   'type': {
     'type': 'string',
     'enum': ['withdrawal', 'deposit', 'transfer'],
   },
   'amount': {'type': 'number', 'exclusiveMinimum': 0},
+  'foreign_amount': {'type': 'number', 'exclusiveMinimum': 0},
+  'foreign_currency_code': {'type': 'string'},
   'source_id': {'type': 'string'},
   'destination_id': {'type': 'string'},
   'category_id': {'type': 'string'},
@@ -1748,49 +1776,227 @@ Map<String, Object?> _recurrenceFieldSchema() => {
   },
 };
 
-/// Firefly replaces a recurrence wholesale, so create and update build the same
-/// complete input rather than merging over what is stored.
+/// How far ahead a recurrence's own rows are looked for.
+///
+/// The app writes ahead at most 90 days, so half a year covers any horizon
+/// anyone has set and still reads one window rather than the whole ledger.
+const _futureRowHorizonDays = 183;
+
+/// The rows FireRaccoon has already written ahead for [recurrence].
+///
+/// Firefly records no link from a written-ahead row back to the rule that
+/// produced it, so the marker in the note is the only handle there is.
+Future<List<Transaction>> _futureRowsFor(
+  FireflyService api,
+  Recurrence recurrence,
+) async {
+  final now = DateTime.now();
+  final start = DateTime(now.year, now.month, now.day);
+  final rows = await api.getTransactions(
+    start: start,
+    end: start.add(const Duration(days: _futureRowHorizonDays)),
+  );
+  return writeAheadRowsFor(recurrence: recurrence, transactions: rows);
+}
+
+/// [row] rewritten to say what [recurrence] now says, on [date].
+///
+/// [date] is null when the schedule did not move, or moved somewhere this row
+/// has no occurrence left in, and the row then stays where it is: a row
+/// somebody dated by hand keeps that date, and a rule that no longer covers a
+/// row is not grounds for guessing a new one.
+Transaction _rowFromRecurrence(
+  Transaction row,
+  Recurrence recurrence, {
+  DateTime? date,
+}) {
+  final line = recurrence.primaryTransaction!;
+  return Transaction(
+    id: row.id,
+    journalId: row.journalId,
+    type: recurrence.type.apiValue,
+    date: date ?? row.date,
+    amount: line.amount,
+    description: line.description,
+    sourceName: line.sourceName ?? '',
+    destinationName: line.destinationName ?? '',
+    categoryName: line.categoryName ?? '',
+    currencySymbol: row.currencySymbol,
+    currencyCode: line.currencyCode,
+    foreignAmount: line.foreignAmount,
+    foreignCurrencyCode: line.foreignCurrencyCode,
+    sourceId: line.sourceId,
+    destinationId: line.destinationId,
+    categoryId: line.categoryId,
+    budgetId: line.budgetId,
+    budgetName: line.budgetName,
+    notes: writeAheadMarkerFor(recurrence.id),
+    tags: line.tags,
+    billId: line.billId,
+    billName: line.billName,
+    // Firefly keeps what it has when a field is merely absent, so a rule that
+    // dropped its budget has to say so.
+    clearedFields: {
+      if (line.categoryId == null && (line.categoryName ?? '').isEmpty) ...[
+        'category_id',
+        'category_name',
+      ],
+      if (line.budgetId == null && (line.budgetName ?? '').isEmpty) ...[
+        'budget_id',
+        'budget_name',
+      ],
+      if (line.billId == null) 'bill_id',
+      if (line.tags.isEmpty) 'tags',
+    },
+  );
+}
+
+/// What a recurrence write did, or could have done, to the rows it had already
+/// written ahead.
+///
+/// Reported whether or not the caller asked for them, because a caller that
+/// declines still needs to know which rows are now out of step with the rule.
+/// [action] is `update` or `delete`, naming both the key that counts what was
+/// done and the parameter that would have asked for it.
+Map<String, Object?> _futureRowsJson(
+  List<Transaction> rows, {
+  required String action,
+  required int changed,
+  required List<String> failed,
+  Map<String, DateTime?> moves = const {},
+}) => {
+  'count': rows.length,
+  '${action}d': changed,
+  'transactions': [
+    for (final row in rows)
+      {
+        'id': row.id,
+        // The date the row was read on. Where the schedule moved, moves_to is
+        // where it goes, and the count above says whether it went.
+        'date': _dateOnly(row.date),
+        if (moves[row.id] != null) 'moves_to': _dateOnly(moves[row.id]!),
+        if (moves.containsKey(row.id) && moves[row.id] == null)
+          'no_longer_scheduled': true,
+        'description': row.description,
+        'amount': row.totalAmount,
+      },
+  ],
+  if (failed.isNotEmpty) 'failed_transaction_ids': failed,
+  if (rows.isNotEmpty && changed == 0)
+    'note':
+        'FireRaccoon wrote these rows ahead from this rule and left them as '
+        'they are.'
+        '${moves.isEmpty ? '' : ' The schedule moved, so each row carries the '
+                  'date it would take.'}'
+        ' Pass ${action}_future_transactions: true to bring them along.',
+};
+
+/// An argument read over what is stored: an absent key keeps [stored], while a
+/// key that is present wins even when it trims to nothing. That is what keeps
+/// `title: ""` a refusal rather than a silent no-op.
+String? _mergedText(Map<String, Object?> args, String key, String? stored) {
+  if (!args.containsKey(key)) return stored;
+  return (args[key] as String?)?.trim();
+}
+
+/// Builds the complete rule Firefly wants from the arguments and, on an update,
+/// from [current].
+///
+/// Firefly replaces a recurrence wholesale: every field missing from the request
+/// comes back reset, whether or not the caller meant to touch it. So an update
+/// merges over the stored rule, and only a create starts from nothing.
 Future<RecurrenceInput> _recurrenceInput(
   Map<String, Object?> args,
-  FireflyService api,
-) async {
-  final title = (args['title'] as String?)?.trim();
+  FireflyService api, {
+  Recurrence? current,
+}) async {
+  final storedLine = current?.primaryTransaction;
+  final storedRepetition = current?.primaryRepetition;
+
+  final title = _mergedText(args, 'title', current?.title);
   if (title == null || title.isEmpty) throw ArgumentError('title is required');
-  final firstDate = _optionalDate(args['first_date'], 'first_date');
+  final firstDate =
+      _optionalDate(args['first_date'], 'first_date') ?? current?.firstDate;
   if (firstDate == null) throw ArgumentError('first_date is required');
-  final amount = (args['amount'] as num?)?.toDouble();
+  final amount = (args['amount'] as num?)?.toDouble() ?? storedLine?.amount;
   if (amount == null || amount <= 0) {
     throw ArgumentError('amount must be greater than zero');
   }
-  final description = (args['description'] as String?)?.trim();
-  if (description == null || description.isEmpty) {
+  final lineDescription = _mergedText(
+    args,
+    'description',
+    storedLine?.description,
+  );
+  if (lineDescription == null || lineDescription.isEmpty) {
     throw ArgumentError('description is required');
   }
-  final sourceId = (args['source_id'] as String?)?.trim();
-  final destinationId = (args['destination_id'] as String?)?.trim();
+  final sourceId = _mergedText(args, 'source_id', storedLine?.sourceId);
+  final destinationId = _mergedText(
+    args,
+    'destination_id',
+    storedLine?.destinationId,
+  );
   if (sourceId == null || sourceId.isEmpty) {
     throw ArgumentError('source_id is required');
   }
   if (destinationId == null || destinationId.isEmpty) {
     throw ArgumentError('destination_id is required');
   }
-  final currency =
-      args['currency_code'] as String? ?? (await api.getPrimaryCurrency()).code;
+  var currency = _mergedText(args, 'currency_code', storedLine?.currencyCode);
+  if (currency == null || currency.isEmpty) {
+    currency = (await api.getPrimaryCurrency()).code;
+  }
+  final foreignAmount = args.containsKey('foreign_amount')
+      ? (args['foreign_amount'] as num?)?.toDouble()
+      : storedLine?.foreignAmount;
+
+  var notes = args.containsKey('notes')
+      ? args['notes'] as String?
+      : current?.notes;
+  if (args.containsKey('schedule_rule')) {
+    final raw = (args['schedule_rule'] as String?)?.trim() ?? '';
+    RecurrenceScheduleRule? rule;
+    if (raw.isNotEmpty) {
+      try {
+        rule = RecurrenceScheduleRule.parse(raw);
+      } on FormatException catch (error) {
+        throw ArgumentError('schedule_rule: ${error.message}');
+      }
+    }
+    notes = notesWithScheduleRule(notes, rule);
+  } else if (args.containsKey('notes')) {
+    // A rule the caller did not name survives a notes rewrite, the way every
+    // other field they did not name does. One written into the notes by hand
+    // wins, since naming it there is naming it.
+    notes = notesWithScheduleRule(
+      notes,
+      scheduleRuleFromNotes(notes) ?? current?.scheduleRule,
+    );
+  }
+
   return RecurrenceInput(
-    type: _requireEnum(
-      RecurrenceTransactionType.values,
-      args['type'] as String?,
-      (v) => v.apiValue,
-      'type',
-    ),
+    type: args.containsKey('type') || current == null
+        ? _requireEnum(
+            RecurrenceTransactionType.values,
+            args['type'] as String?,
+            (v) => v.apiValue,
+            'type',
+          )
+        : current.type,
     title: title,
-    description: args['description'] as String?,
+    description: args.containsKey('description')
+        ? args['description'] as String?
+        : current?.description,
     firstDate: firstDate,
-    repeatUntil: _optionalDate(args['repeat_until'], 'repeat_until'),
-    nrOfRepetitions: (args['nr_of_repetitions'] as num?)?.toInt(),
-    applyRules: args['apply_rules'] as bool? ?? true,
-    active: args['active'] as bool? ?? true,
-    notes: args['notes'] as String?,
+    repeatUntil: args.containsKey('repeat_until')
+        ? _optionalDate(args['repeat_until'], 'repeat_until')
+        : current?.repeatUntil,
+    nrOfRepetitions: args.containsKey('nr_of_repetitions')
+        ? (args['nr_of_repetitions'] as num?)?.toInt()
+        : current?.nrOfRepetitions,
+    applyRules: args['apply_rules'] as bool? ?? current?.applyRules ?? true,
+    active: args['active'] as bool? ?? current?.active ?? true,
+    notes: notes,
     repetitions: [
       RecurrenceRepetitionInput(
         type: args.containsKey('repetition_type')
@@ -1800,22 +2006,45 @@ Future<RecurrenceInput> _recurrenceInput(
                 (v) => v.apiValue,
                 'repetition_type',
               )
-            : RecurrenceRepetitionType.monthly,
-        moment: (args['moment'] as String?) ?? '',
-        skip: (args['skip'] as num?)?.toInt() ?? 0,
+            : storedRepetition?.type ?? RecurrenceRepetitionType.monthly,
+        moment: (args['moment'] as String?) ?? storedRepetition?.moment ?? '',
+        skip: (args['skip'] as num?)?.toInt() ?? storedRepetition?.skip ?? 0,
+        weekend: args.containsKey('weekend')
+            ? _requireEnum(
+                RecurrenceWeekendMode.values,
+                args['weekend'] as String?,
+                (v) => v.name,
+                'weekend',
+              )
+            : storedRepetition?.weekend ?? RecurrenceWeekendMode.createAnyway,
       ),
     ],
     transactions: [
       RecurrenceTransactionInput(
-        description: description,
+        id: storedLine?.id,
+        description: lineDescription,
         amount: amount,
         currencyCode: currency,
+        foreignAmount: foreignAmount,
+        foreignCurrencyCode: _mergedText(
+          args,
+          'foreign_currency_code',
+          storedLine?.foreignCurrencyCode,
+        ),
         sourceId: sourceId,
         destinationId: destinationId,
-        budgetId: args['budget_id'] as String?,
-        categoryId: args['category_id'] as String?,
-        billId: args['bill_id'] as String?,
-        tags: _strList(args['tags']),
+        budgetId: args.containsKey('budget_id')
+            ? args['budget_id'] as String?
+            : storedLine?.budgetId,
+        categoryId: args.containsKey('category_id')
+            ? args['category_id'] as String?
+            : storedLine?.categoryId,
+        billId: args.containsKey('bill_id')
+            ? args['bill_id'] as String?
+            : storedLine?.billId,
+        tags: args.containsKey('tags')
+            ? _strList(args['tags'])
+            : storedLine?.tags ?? const [],
       ),
     ],
   );
@@ -5370,8 +5599,11 @@ List<McpTool> buildTools({
       writes: true,
       description:
           'Create a recurring transaction rule. repetition_type monthly with '
-          'moment "1" means the 1st of each month; weekly takes 1-7, yearly a '
-          'MM-DD.',
+          'moment "1" means the 1st of each month; weekly takes 1-7, ndom a '
+          '"week,weekday" pair, yearly a MM-DD. weekend says what an occurrence '
+          'landing on a Saturday or Sunday does, and schedule_rule says a '
+          'monthly schedule Firefly cannot state, such as the last banking day '
+          'of the month.',
       inputSchema: {
         'type': 'object',
         'required': [
@@ -5401,22 +5633,25 @@ List<McpTool> buildTools({
       name: 'update_recurrence',
       writes: true,
       description:
-          'Replace a recurring rule. Firefly takes the whole rule, so pass every '
-          'field you want kept.',
+          'Change a recurring rule. Pass only the fields you are changing: '
+          'everything left out keeps what is stored, including the weekend '
+          'handling and the schedule. The answer names the transactions '
+          'FireRaccoon has already written ahead from this rule, each with '
+          'the date it would move to if the schedule changed. They keep the '
+          'old values and dates unless update_future_transactions says '
+          'otherwise.',
       inputSchema: {
         'type': 'object',
-        'required': [
-          'recurrence_id',
-          'title',
-          'first_date',
-          'type',
-          'amount',
-          'description',
-          'source_id',
-          'destination_id',
-        ],
+        'required': ['recurrence_id'],
         'properties': {
           'recurrence_id': {'type': 'string'},
+          'update_future_transactions': {
+            'type': 'boolean',
+            'default': false,
+            'description':
+                'Rewrite the rows already written ahead for this rule to match '
+                'it, moving them to the new dates when the schedule changed.',
+          },
           ..._recurrenceFieldSchema(),
         },
       },
@@ -5426,14 +5661,49 @@ List<McpTool> buildTools({
           return _badInput('recurrence_id is required');
         }
         final api = service();
+        final current = await api.getRecurrence(id);
         final RecurrenceInput input;
         try {
-          input = await _recurrenceInput(args, api);
+          input = await _recurrenceInput(args, api, current: current);
         } on ArgumentError catch (e) {
           return _badInput('${e.message}');
         }
-        final updated = await api.updateRecurrence(id, input);
-        return {'ok': true, 'recurrence': _recurrenceJson(updated)};
+        final updated = await api.updateRecurrence(id, input, current: current);
+        final rows = await _futureRowsFor(api, updated);
+        final moves = writeAheadRowMoves(
+          rows: rows,
+          before: current,
+          after: updated,
+          days: _futureRowHorizonDays,
+        );
+        var changed = 0;
+        final failed = <String>[];
+        if (args['update_future_transactions'] as bool? ?? false) {
+          for (final row in rows) {
+            try {
+              await api.updateTransaction(
+                _rowFromRecurrence(row, updated, date: moves[row.id]),
+              );
+              changed++;
+            } on FireflyApiException {
+              // The rule itself is already changed, so a row that will not
+              // take the new values is named rather than thrown: the caller
+              // needs to know which half landed.
+              failed.add(row.id);
+            }
+          }
+        }
+        return {
+          'ok': true,
+          'recurrence': _recurrenceJson(updated),
+          'future_transactions': _futureRowsJson(
+            rows,
+            action: 'update',
+            changed: changed,
+            failed: failed,
+            moves: moves,
+          ),
+        };
       },
     ),
     McpTool(
@@ -5695,12 +5965,21 @@ List<McpTool> buildTools({
       writes: true,
       description:
           'Delete a recurring transaction rule. Transactions it already created '
-          'are kept.',
+          'are kept, and the answer names the ones FireRaccoon wrote ahead from '
+          'it, which outlive the rule unless delete_future_transactions says '
+          'otherwise.',
       inputSchema: {
         'type': 'object',
         'required': ['recurrence_id'],
         'properties': {
           'recurrence_id': {'type': 'string'},
+          'delete_future_transactions': {
+            'type': 'boolean',
+            'default': false,
+            'description':
+                'Also delete the rows already written ahead for this rule. '
+                'Rows Firefly itself created are never touched.',
+          },
         },
       },
       run: (args) async {
@@ -5708,8 +5987,32 @@ List<McpTool> buildTools({
         if (id == null || id.isEmpty) {
           return _badInput('recurrence_id is required');
         }
-        await service().deleteRecurrence(id);
-        return {'ok': true, 'recurrence_id': id, 'deleted': true};
+        final api = service();
+        final rows = await _futureRowsFor(api, await api.getRecurrence(id));
+        var changed = 0;
+        final failed = <String>[];
+        if (args['delete_future_transactions'] as bool? ?? false) {
+          for (final row in rows) {
+            try {
+              await api.deleteTransaction(row.id);
+              changed++;
+            } on FireflyApiException {
+              failed.add(row.id);
+            }
+          }
+        }
+        await api.deleteRecurrence(id);
+        return {
+          'ok': true,
+          'recurrence_id': id,
+          'deleted': true,
+          'future_transactions': _futureRowsJson(
+            rows,
+            action: 'delete',
+            changed: changed,
+            failed: failed,
+          ),
+        };
       },
     ),
     McpTool(
