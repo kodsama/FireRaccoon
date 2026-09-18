@@ -148,6 +148,7 @@ abstract class FireflyService {
   Future<Bill> updateBill(String billId, BillInput input);
   Future<void> deleteBill(String billId);
   Future<List<Recurrence>> getRecurrences();
+  Future<Recurrence> getRecurrence(String recurrenceId);
   Future<Recurrence> createRecurrence(RecurrenceInput input);
 
   /// [current] lets the implementation leave an unedited schedule off the
