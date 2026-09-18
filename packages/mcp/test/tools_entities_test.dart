@@ -2114,6 +2114,108 @@ void main() {
       },
     );
 
+    test('a schedule rule is written into the notes and read back', () async {
+      // Firefly has nowhere to store "the last banking day of the month", so
+      // the rule rides in the notes and FireRaccoon's own expansion reads it.
+      final bodies = <String>[];
+      final result =
+          await _tool(
+            'update_recurrence',
+            client: fireflyMockClient(recordBodies: bodies),
+          ).run({
+            'recurrence_id': '12',
+            'schedule_rule':
+                'anchor=day:31;adjust=previous-banking;'
+                'calendar=SE',
+          });
+
+      expect(result['ok'], isTrue);
+      final body = jsonDecode(bodies.single) as Map<String, Object?>;
+      expect(
+        body['notes'],
+        'fireraccoon:schedule:anchor=day:31;adjust=previous-banking;'
+        'calendar=SE',
+      );
+      expect(
+        (result['recurrence'] as Map)['schedule_rule'],
+        'anchor=day:31;adjust=previous-banking;calendar=SE',
+      );
+    });
+
+    test('a rule nobody named survives a notes rewrite', () async {
+      final bodies = <String>[];
+      await _tool(
+        'update_recurrence',
+        client: fireflyMockClient(
+          recordBodies: bodies,
+          recurrenceNotes:
+              'fireraccoon:schedule:anchor=weekday:-1,4;'
+              'adjust=none;calendar=weekend',
+        ),
+      ).run({'recurrence_id': '12', 'notes': 'Renegotiated in March'});
+
+      final notes = (jsonDecode(bodies.single) as Map)['notes'] as String;
+      expect(notes, startsWith('Renegotiated in March\n'));
+      expect(notes, contains('anchor=weekday:-1,4'));
+    });
+
+    test('an empty schedule_rule drops the rule', () async {
+      final bodies = <String>[];
+      await _tool(
+        'update_recurrence',
+        client: fireflyMockClient(
+          recordBodies: bodies,
+          recurrenceNotes: 'kept\nfireraccoon:schedule:anchor=day:1',
+        ),
+      ).run({'recurrence_id': '12', 'schedule_rule': ''});
+
+      expect((jsonDecode(bodies.single) as Map)['notes'], 'kept');
+    });
+
+    test('a rule written into the notes by hand wins', () async {
+      final bodies = <String>[];
+      await _tool(
+        'update_recurrence',
+        client: fireflyMockClient(
+          recordBodies: bodies,
+          recurrenceNotes: 'fireraccoon:schedule:anchor=day:1',
+        ),
+      ).run({
+        'recurrence_id': '12',
+        'notes': 'fireraccoon:schedule:anchor=day:20',
+      });
+
+      expect(
+        (jsonDecode(bodies.single) as Map)['notes'],
+        contains('anchor=day:20'),
+      );
+    });
+
+    test(
+      'an unreadable schedule rule is refused before anything is written',
+      () async {
+        final bodies = <String>[];
+        final result = await _tool(
+          'create_recurrence',
+          client: fireflyMockClient(recordBodies: bodies),
+        ).run({...recurrenceArgs(), 'schedule_rule': 'anchor=day:99'});
+
+        expect(result['code'], 'bad_input');
+        expect(result['error'], contains('schedule_rule'));
+        expect(bodies, isEmpty);
+      },
+    );
+
+    test('a rule reads as absent when there is none', () async {
+      final result = await _tool(
+        'get_recurrences',
+        client: fireflyMockClient(),
+      ).run({});
+
+      final rule = (result['recurrences'] as List).single as Map;
+      expect(rule['schedule_rule'], isNull);
+    });
+
     test('delete_recurrence deletes', () async {
       final result = await _tool(
         'delete_recurrence',

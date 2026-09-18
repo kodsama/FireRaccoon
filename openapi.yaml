@@ -1677,7 +1677,9 @@ x-mcp:
       mapsTo: DELETE /api/v1/recurrences/{recurrenceId}
       required: [recurrence_id]
     create_recurrence:
-      description: Create a recurring transaction rule
+      description: >
+        Create a recurring transaction rule. schedule_rule states a monthly
+        schedule Firefly cannot, such as the last banking day of the month.
       mapsTo: POST /api/v1/recurrences
       required: [title, first_date, type, amount, description, source_id, destination_id]
     update_recurrence:

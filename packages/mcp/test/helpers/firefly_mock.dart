@@ -247,12 +247,14 @@ Map<String, Object?> recurrenceEnvelope({
   /// A rule that carries no category, budget, bill or tags, as one set up in
   /// Firefly's own interface without them does.
   bool bareLine = false,
+  String? notes,
 }) => {
   'data': {
     'id': '12',
     'attributes': {
       'type': 'withdrawal',
       'title': title,
+      'notes': ?notes,
       'first_date': '2026-09-01',
       'repeat_until': '2027-09-01',
       'active': true,
@@ -533,6 +535,7 @@ MockClient fireflyMockClient({
   String? recurrenceForeignAmount,
   String? recurrenceForeignCurrencyCode,
   bool recurrenceBareLine = false,
+  String? recurrenceNotes,
 
   /// The accounts Firefly keeps for corrections. Both mock accounts have one,
   /// as an account reconciled in its interface would.
@@ -590,6 +593,7 @@ MockClient fireflyMockClient({
     foreignAmount: recurrenceForeignAmount,
     foreignCurrencyCode: recurrenceForeignCurrencyCode,
     bareLine: recurrenceBareLine,
+    notes: recurrenceNotes,
   );
 
   return MockClient((request) async {

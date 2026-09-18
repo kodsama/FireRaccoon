@@ -1702,6 +1702,7 @@ Map<String, Object?> _recurrenceJson(Recurrence recurrence) => {
       ? null
       : _dateOnly(recurrence.repeatUntil!),
   'nr_of_repetitions': recurrence.nrOfRepetitions,
+  'schedule_rule': recurrence.scheduleRule?.ruleValue,
   'repetitions': [
     for (final r in recurrence.repetitions) _recurrenceRepetitionJson(r),
   ],
@@ -1732,6 +1733,23 @@ Map<String, Object?> _recurrenceFieldSchema() => {
         'empty for daily.',
   },
   'skip': {'type': 'integer', 'minimum': 0, 'default': 0},
+  'schedule_rule': {
+    'type': 'string',
+    'description':
+        'A monthly rule FireRaccoon keeps alongside the Firefly repetition and '
+        'uses for its own projection and write-ahead, for schedules Firefly '
+        'cannot state. '
+        '"anchor=day:31;adjust=previous-banking;calendar=SE" is the last '
+        'banking day of the month; '
+        '"anchor=day:25;adjust=previous-banking;calendar=SE" the ordinary '
+        'Swedish salary date; "anchor=weekday:-1,4;adjust=none" the last '
+        'Thursday. anchor takes day:1-31, clamping down in a short month, or '
+        'weekday:<n>,<1-7> where a negative n counts from the end. adjust '
+        'takes none, previous-banking or next-banking. calendar takes weekend '
+        '(Saturday and Sunday only) or SE (Swedish bank holidays, the three '
+        'eves included). Pass an empty string to drop the rule and go back to '
+        'the Firefly repetition.',
+  },
   'weekend': {
     'type': 'string',
     'enum': ['createAnyway', 'skipWeekend', 'previousFriday', 'nextMonday'],
@@ -1918,6 +1936,31 @@ Future<RecurrenceInput> _recurrenceInput(
   final foreignAmount = args.containsKey('foreign_amount')
       ? (args['foreign_amount'] as num?)?.toDouble()
       : storedLine?.foreignAmount;
+
+  var notes = args.containsKey('notes')
+      ? args['notes'] as String?
+      : current?.notes;
+  if (args.containsKey('schedule_rule')) {
+    final raw = (args['schedule_rule'] as String?)?.trim() ?? '';
+    RecurrenceScheduleRule? rule;
+    if (raw.isNotEmpty) {
+      try {
+        rule = RecurrenceScheduleRule.parse(raw);
+      } on FormatException catch (error) {
+        throw ArgumentError('schedule_rule: ${error.message}');
+      }
+    }
+    notes = notesWithScheduleRule(notes, rule);
+  } else if (args.containsKey('notes')) {
+    // A rule the caller did not name survives a notes rewrite, the way every
+    // other field they did not name does. One written into the notes by hand
+    // wins, since naming it there is naming it.
+    notes = notesWithScheduleRule(
+      notes,
+      scheduleRuleFromNotes(notes) ?? current?.scheduleRule,
+    );
+  }
+
   return RecurrenceInput(
     type: args.containsKey('type') || current == null
         ? _requireEnum(
@@ -1940,9 +1983,7 @@ Future<RecurrenceInput> _recurrenceInput(
         : current?.nrOfRepetitions,
     applyRules: args['apply_rules'] as bool? ?? current?.applyRules ?? true,
     active: args['active'] as bool? ?? current?.active ?? true,
-    notes: args.containsKey('notes')
-        ? args['notes'] as String?
-        : current?.notes,
+    notes: notes,
     repetitions: [
       RecurrenceRepetitionInput(
         type: args.containsKey('repetition_type')
@@ -5547,7 +5588,9 @@ List<McpTool> buildTools({
           'Create a recurring transaction rule. repetition_type monthly with '
           'moment "1" means the 1st of each month; weekly takes 1-7, ndom a '
           '"week,weekday" pair, yearly a MM-DD. weekend says what an occurrence '
-          'landing on a Saturday or Sunday does.',
+          'landing on a Saturday or Sunday does, and schedule_rule says a '
+          'monthly schedule Firefly cannot state, such as the last banking day '
+          'of the month.',
       inputSchema: {
         'type': 'object',
         'required': [
