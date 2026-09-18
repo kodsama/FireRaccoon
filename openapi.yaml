@@ -1671,7 +1671,9 @@ x-mcp:
       mapsTo: GET /api/v1/recurrences
     delete_recurrence:
       description: >
-        Delete a recurring rule. Transactions it already created are kept.
+        Delete a recurring rule. Transactions it already created are kept, and
+        the answer names the ones FireRaccoon wrote ahead from it, which
+        delete_future_transactions can take with the rule.
       mapsTo: DELETE /api/v1/recurrences/{recurrenceId}
       required: [recurrence_id]
     create_recurrence:
@@ -1682,7 +1684,8 @@ x-mcp:
       description: >
         Change a recurring rule. Only the fields being changed are passed;
         everything left out keeps what is stored, weekend handling and schedule
-        included.
+        included. The answer names the transactions written ahead from the rule,
+        which update_future_transactions can bring along.
       mapsTo: PUT /api/v1/recurrences/{recurrenceId}
       required: [recurrence_id]
     get_recurrence_transactions:
