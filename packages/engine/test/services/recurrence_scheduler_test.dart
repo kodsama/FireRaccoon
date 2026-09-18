@@ -11,6 +11,7 @@ Recurrence _recurrence({
   DateTime? latestDate,
   int? nrOfRepetitions,
   bool active = true,
+  String? notes,
   List<RecurrenceTransactionLine>? transactions,
 }) {
   return Recurrence(
@@ -18,6 +19,7 @@ Recurrence _recurrence({
     title: 'Rent',
     type: RecurrenceTransactionType.withdrawal,
     active: active,
+    notes: notes,
     firstDate: firstDate ?? DateTime(2026, 1, 5),
     repeatUntil: repeatUntil,
     latestDate: latestDate,
@@ -270,6 +272,161 @@ void main() {
         rangeEnd: DateTime(2026, 1, 10),
       );
       expect(afterLatest.first.isAfter(DateTime(2026, 1, 2)), isTrue);
+    });
+
+    test('a schedule rule expands in place of the Firefly repetition', () {
+      // The union fee: one rule, "last banking day of the month", where the
+      // stored repetition can only say a day number and is a day or three out
+      // every month.
+      final dates = expandRecurrenceOccurrences(
+        recurrence: _recurrence(
+          type: RecurrenceRepetitionType.monthly,
+          moment: '31',
+          firstDate: DateTime(2026, 1, 1),
+          notes:
+              'fireraccoon:schedule:anchor=day:31;'
+              'adjust=previous-banking;calendar=SE',
+        ),
+        rangeStart: DateTime(2026, 4, 1),
+        rangeEnd: DateTime(2026, 8, 1),
+      );
+
+      expect(dates, [
+        DateTime(2026, 4, 30),
+        DateTime(2026, 5, 29), // the 31st is a Sunday
+        DateTime(2026, 6, 30),
+        DateTime(2026, 7, 31),
+      ]);
+    });
+
+    test('a rule that lands outside its own month still lands in range', () {
+      // The banking day before 1 January 2027 is 30 December: an expansion
+      // that only asked December about December would miss it.
+      final dates = expandRecurrenceOccurrences(
+        recurrence: _recurrence(
+          type: RecurrenceRepetitionType.monthly,
+          moment: '1',
+          firstDate: DateTime(2026, 1, 1),
+          notes:
+              'fireraccoon:schedule:anchor=day:1;'
+              'adjust=previous-banking;calendar=SE',
+        ),
+        rangeStart: DateTime(2026, 12, 1),
+        rangeEnd: DateTime(2027, 1, 1),
+      );
+
+      expect(dates, [DateTime(2026, 12, 1), DateTime(2026, 12, 30)]);
+    });
+
+    test('the last Thursday of every month, which ndom goes quiet on', () {
+      final dates = expandRecurrenceOccurrences(
+        recurrence: _recurrence(
+          type: RecurrenceRepetitionType.ndom,
+          moment: '5,4',
+          firstDate: DateTime(2026, 1, 1),
+          notes: 'fireraccoon:schedule:anchor=weekday:-1,4',
+        ),
+        rangeStart: DateTime(2026, 9, 1),
+        rangeEnd: DateTime(2026, 12, 1),
+      );
+
+      expect(dates, [
+        DateTime(2026, 9, 24),
+        DateTime(2026, 10, 29),
+        DateTime(2026, 11, 26),
+      ]);
+    });
+
+    test('a rule honours skip, first date, repeat until and the count', () {
+      final everyOther = expandRecurrenceOccurrences(
+        recurrence: _recurrence(
+          type: RecurrenceRepetitionType.monthly,
+          moment: '10',
+          skip: 1,
+          firstDate: DateTime(2026, 2, 10),
+          notes: 'fireraccoon:schedule:anchor=day:10',
+        ),
+        rangeStart: DateTime(2026, 1, 1),
+        rangeEnd: DateTime(2026, 9, 1),
+      );
+      expect(everyOther, [
+        DateTime(2026, 2, 10),
+        DateTime(2026, 4, 10),
+        DateTime(2026, 6, 10),
+        DateTime(2026, 8, 10),
+      ]);
+
+      final capped = expandRecurrenceOccurrences(
+        recurrence: _recurrence(
+          type: RecurrenceRepetitionType.monthly,
+          moment: '10',
+          firstDate: DateTime(2026, 2, 10),
+          nrOfRepetitions: 2,
+          notes: 'fireraccoon:schedule:anchor=day:10',
+        ),
+        rangeStart: DateTime(2026, 1, 1),
+        rangeEnd: DateTime(2026, 9, 1),
+      );
+      expect(capped, [DateTime(2026, 2, 10), DateTime(2026, 3, 10)]);
+
+      final ended = expandRecurrenceOccurrences(
+        recurrence: _recurrence(
+          type: RecurrenceRepetitionType.monthly,
+          moment: '10',
+          firstDate: DateTime(2026, 2, 10),
+          repeatUntil: DateTime(2026, 4, 1),
+          notes: 'fireraccoon:schedule:anchor=day:10',
+        ),
+        rangeStart: DateTime(2026, 1, 1),
+        rangeEnd: DateTime(2026, 9, 1),
+      );
+      expect(ended, [DateTime(2026, 2, 10), DateTime(2026, 3, 10)]);
+    });
+
+    test('a rule skips what Firefly has already written', () {
+      final dates = expandRecurrenceOccurrences(
+        recurrence: _recurrence(
+          type: RecurrenceRepetitionType.monthly,
+          moment: '10',
+          firstDate: DateTime(2026, 1, 10),
+          latestDate: DateTime(2026, 3, 10),
+          notes: 'fireraccoon:schedule:anchor=day:10',
+        ),
+        rangeStart: DateTime(2026, 1, 1),
+        rangeEnd: DateTime(2026, 6, 1),
+      );
+
+      expect(dates, [DateTime(2026, 4, 10), DateTime(2026, 5, 10)]);
+    });
+
+    test('a month the anchor has no day in is passed over', () {
+      final dates = expandRecurrenceOccurrences(
+        recurrence: _recurrence(
+          type: RecurrenceRepetitionType.ndom,
+          moment: '5,4',
+          firstDate: DateTime(2026, 9, 1),
+          notes: 'fireraccoon:schedule:anchor=weekday:5,4',
+        ),
+        rangeStart: DateTime(2026, 9, 1),
+        rangeEnd: DateTime(2026, 12, 1),
+      );
+
+      expect(dates, [DateTime(2026, 10, 29)]);
+    });
+
+    test('an unreadable rule falls back to the Firefly repetition', () {
+      final dates = expandRecurrenceOccurrences(
+        recurrence: _recurrence(
+          type: RecurrenceRepetitionType.monthly,
+          moment: '5',
+          firstDate: DateTime(2026, 1, 5),
+          notes: 'fireraccoon:schedule:anchor=day:99',
+        ),
+        rangeStart: DateTime(2026, 1, 1),
+        rangeEnd: DateTime(2026, 3, 1),
+      );
+
+      expect(dates, [DateTime(2026, 1, 5), DateTime(2026, 2, 5)]);
     });
   });
 

@@ -1,4 +1,5 @@
 import 'firefly_date.dart';
+import 'recurrence_schedule_rule.dart';
 
 enum RecurrenceTransactionType {
   withdrawal('withdrawal'),
@@ -192,6 +193,15 @@ class Recurrence {
 
   RecurrenceRepetition? get primaryRepetition =>
       repetitions.isEmpty ? null : repetitions.first;
+
+  /// The rule FireRaccoon reads in place of [primaryRepetition], when the
+  /// notes carry one.
+  ///
+  /// Firefly has nowhere to store an anchor-plus-adjustment rule, so it rides
+  /// in the notes and is read back from them rather than held as a field:
+  /// every construction site already carries the notes, and nothing has to
+  /// remember to keep the two in step.
+  RecurrenceScheduleRule? get scheduleRule => scheduleRuleFromNotes(notes);
 
   RecurrenceTransactionLine? get primaryTransaction =>
       transactions.isEmpty ? null : transactions.first;

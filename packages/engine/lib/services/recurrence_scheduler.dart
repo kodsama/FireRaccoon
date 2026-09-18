@@ -1,6 +1,7 @@
 import '../models/account_prognosis.dart';
 import '../models/bill.dart';
 import '../models/recurrence.dart';
+import '../models/recurrence_schedule_rule.dart';
 
 /// A cash-flow event derived from a bill or recurrence schedule.
 class ScheduledCashFlow {
@@ -73,13 +74,31 @@ DateTime prognosisAdjustWeekend(DateTime date, RecurrenceWeekendMode mode) {
 bool prognosisIsWeekend(DateTime date) =>
     date.weekday == DateTime.saturday || date.weekday == DateTime.sunday;
 
+/// The [n]th [weekday] of the month, counted from the end when [n] is
+/// negative, or null when the month has no such day.
+///
+/// Counting forward is what Firefly's `ndom` does, and it cannot say "the last
+/// Thursday": `5` fires in the months with five Thursdays and produces nothing
+/// in the rest, which is worse than an error because the rule just goes quiet.
+/// `-1` says it.
 DateTime? prognosisNthWeekdayOfMonth(int year, int month, int n, int weekday) {
-  var count = 0;
+  if (n == 0) return null;
   final days = prognosisDaysInMonth(year, month);
-  for (var day = 1; day <= days; day++) {
+  var count = 0;
+  if (n > 0) {
+    for (var day = 1; day <= days; day++) {
+      final date = DateTime(year, month, day);
+      if (date.weekday == weekday) {
+        count++;
+        if (count == n) return date;
+      }
+    }
+    return null;
+  }
+  for (var day = days; day >= 1; day--) {
     final date = DateTime(year, month, day);
     if (date.weekday == weekday) {
-      count++;
+      count--;
       if (count == n) return date;
     }
   }
@@ -93,6 +112,11 @@ List<DateTime> expandRecurrenceOccurrences({
 }) {
   if (!recurrence.active || recurrence.repetitions.isEmpty) {
     return const [];
+  }
+
+  final rule = recurrence.scheduleRule;
+  if (rule != null) {
+    return _expandByScheduleRule(recurrence, rule, rangeStart, rangeEnd);
   }
 
   final occurrences = <DateTime>[];
@@ -113,6 +137,61 @@ List<DateTime> expandRecurrenceOccurrences({
       }
     }
     day = day.add(const Duration(days: 1));
+  }
+
+  return occurrences;
+}
+
+/// Expands a rule FireRaccoon owns rather than the repetition Firefly stores.
+///
+/// Month by month rather than day by day, because an adjustment moves a date:
+/// the first of a month can land on the last banking day of the month before,
+/// and the last on the first of the month after, so a day-at-a-time matcher
+/// would have to ask every neighbouring month about every day.
+List<DateTime> _expandByScheduleRule(
+  Recurrence recurrence,
+  RecurrenceScheduleRule rule,
+  DateTime rangeStart,
+  DateTime rangeEnd,
+) {
+  final first = prognosisStartOfDay(recurrence.firstDate);
+  final start = prognosisStartOfDay(rangeStart);
+  final end = prognosisStartOfDay(rangeEnd);
+  final step = recurrence.primaryRepetition!.skip + 1;
+
+  final occurrences = <DateTime>[];
+  var counted = 0;
+  var month = DateTime(first.year, first.month, 1);
+  // One month past the end, since an adjustment can pull a date backwards
+  // into the range from the month after it.
+  final lastMonth = DateTime(end.year, end.month + 1, 1);
+
+  while (!month.isAfter(lastMonth)) {
+    final elapsed =
+        (month.year - first.year) * 12 + (month.month - first.month);
+    if (elapsed % step != 0) {
+      month = DateTime(month.year, month.month + 1, 1);
+      continue;
+    }
+    final date = rule.dateIn(month.year, month.month);
+    month = DateTime(month.year, month.month + 1, 1);
+    if (date == null || date.isBefore(first)) continue;
+    if (recurrence.repeatUntil != null &&
+        date.isAfter(prognosisStartOfDay(recurrence.repeatUntil!))) {
+      break;
+    }
+    counted++;
+    if (recurrence.nrOfRepetitions != null &&
+        counted > recurrence.nrOfRepetitions!) {
+      break;
+    }
+    if (recurrence.latestDate != null &&
+        !prognosisIsAfterDay(date, recurrence.latestDate!)) {
+      continue;
+    }
+    if (!date.isBefore(start) && date.isBefore(end)) {
+      occurrences.add(date);
+    }
   }
 
   return occurrences;
