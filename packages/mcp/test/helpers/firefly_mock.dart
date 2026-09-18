@@ -243,6 +243,10 @@ Map<String, Object?> recurrenceEnvelope({
   int weekend = 1,
   String? foreignAmount,
   String? foreignCurrencyCode,
+
+  /// A rule that carries no category, budget, bill or tags, as one set up in
+  /// Firefly's own interface without them does.
+  bool bareLine = false,
 }) => {
   'data': {
     'id': '12',
@@ -269,16 +273,87 @@ Map<String, Object?> recurrenceEnvelope({
           'source_name': 'Joint Current',
           'destination_id': '9',
           'destination_name': 'Landlord',
-          'category_id': '7',
-          'category_name': 'Housing',
-          'budget_id': '3',
-          'budget_name': 'Fixed costs',
-          'tags': ['standing'],
+          if (!bareLine) ...{
+            'category_id': '7',
+            'category_name': 'Housing',
+            'budget_id': '3',
+            'budget_name': 'Fixed costs',
+            'tags': ['standing'],
+          },
         },
       ],
     },
   },
 };
+
+/// The recurrence Firefly answers a write with: what it had, with what the
+/// request carried applied over it.
+///
+/// Firefly returns the stored resource, so a mock that answered with a fixed
+/// body let a tool send anything at all and still read back something
+/// plausible.
+Map<String, Object?> recurrenceAfterWrite(
+  Map<String, Object?> previous,
+  String body,
+) {
+  final sent = jsonDecode(body) as Map<String, dynamic>;
+  final data = {...previous['data']! as Map<String, Object?>};
+  final attrs = {...data['attributes']! as Map<String, Object?>};
+
+  for (final key in const [
+    'title',
+    'description',
+    'first_date',
+    'repeat_until',
+    'nr_of_repetitions',
+    'active',
+    'apply_rules',
+    'type',
+    'notes',
+  ]) {
+    if (sent.containsKey(key)) attrs[key] = sent[key];
+  }
+
+  final repetitions = sent['repetitions'] as List?;
+  if (repetitions != null) {
+    attrs['repetitions'] = [
+      for (final repetition in repetitions.cast<Map<String, dynamic>>())
+        {
+          'type': repetition['type'],
+          'moment': repetition['moment'],
+          'skip': repetition['skip'],
+          'weekend': repetition['weekend'],
+        },
+    ];
+  }
+
+  final lines = sent['transactions'] as List?;
+  if (lines != null && lines.isNotEmpty) {
+    final line = {
+      ...(attrs['transactions']! as List).first as Map<String, Object?>,
+    };
+    final sentLine = lines.first as Map<String, dynamic>;
+    for (final key in const [
+      'description',
+      'amount',
+      'currency_code',
+      'foreign_amount',
+      'foreign_currency_code',
+      'source_id',
+      'destination_id',
+      'category_id',
+      'budget_id',
+      'bill_id',
+      'tags',
+    ]) {
+      if (sentLine.containsKey(key)) line[key] = sentLine[key];
+    }
+    attrs['transactions'] = [line];
+  }
+
+  data['attributes'] = attrs;
+  return {'data': data};
+}
 
 Map<String, Object?> transactionItem({
   String id = '1',
@@ -457,6 +532,7 @@ MockClient fireflyMockClient({
   int recurrenceWeekend = 1,
   String? recurrenceForeignAmount,
   String? recurrenceForeignCurrencyCode,
+  bool recurrenceBareLine = false,
 
   /// The accounts Firefly keeps for corrections. Both mock accounts have one,
   /// as an account reconciled in its interface would.
@@ -513,6 +589,7 @@ MockClient fireflyMockClient({
     weekend: recurrenceWeekend,
     foreignAmount: recurrenceForeignAmount,
     foreignCurrencyCode: recurrenceForeignCurrencyCode,
+    bareLine: recurrenceBareLine,
   );
 
   return MockClient((request) async {
@@ -753,7 +830,10 @@ MockClient fireflyMockClient({
     }
     if (path == '/api/v1/recurrences') {
       if (method == 'POST') {
-        return jsonHttpResponse(recurrenceEnvelope(), status: 201);
+        return jsonHttpResponse(
+          recurrenceAfterWrite(stored(), request.body),
+          status: 201,
+        );
       }
       return jsonHttpResponse({
         'data': [stored()['data']],
@@ -767,7 +847,7 @@ MockClient fireflyMockClient({
     if (path.startsWith('/api/v1/recurrences/')) {
       if (method == 'DELETE') return http.Response('', 204);
       if (method == 'GET') return jsonHttpResponse(stored());
-      return jsonHttpResponse(recurrenceEnvelope(title: 'Salary raised'));
+      return jsonHttpResponse(recurrenceAfterWrite(stored(), request.body));
     }
     if (path == '/api/v1/currencies') {
       return jsonHttpResponse({

@@ -176,8 +176,8 @@ are described under [Importing a statement](#importing-a-statement).
 | `get_recurrences` | List recurring rules, each with the amount, accounts, category, budget and tags of the lines it creates |  |
 | `get_recurrence_transactions` | Transactions a recurring rule has created |  |
 | `create_recurrence` | Create a recurring rule; `weekend` says what an occurrence landing on a weekend does | yes |
-| `update_recurrence` | Change a recurring rule; omitted fields keep their stored value | yes |
-| `delete_recurrence` | Delete a recurring rule; created transactions are kept | yes |
+| `update_recurrence` | Change a recurring rule; omitted fields keep their stored value, and the answer names the rows written ahead from it | yes |
+| `delete_recurrence` | Delete a recurring rule; created transactions are kept unless `delete_future_transactions` says otherwise | yes |
 | `get_currencies` | List currencies and which are enabled |  |
 | `run_projection` | On-device balance forecast |  |
 | `get_dashboard_kpis` | Income, spending, and savings KPIs for a period |  |
@@ -472,6 +472,37 @@ out either way, each leg carrying its own id, so the rule that a missing leg is
 deleted never comes into play, and legs cannot be added or removed this way.
 The readback reports a leg Firefly declined as `splits[0].budget_id`, and a
 group that came back without a journal the call named as `splits[0]`.
+
+### The rows a recurrence already wrote ahead
+
+FireRaccoon materializes upcoming occurrences as real future-dated
+transactions. Correcting the rule used to be one call and those rows a hunt:
+Firefly records no link from a written-ahead row back to the rule that produced
+it, and nothing in the answer said they existed. A monthly insurance rule whose
+amount had been superseded months earlier took one call to fix and two more to
+find.
+
+`update_recurrence` and `delete_recurrence` now report them. `future_transactions`
+carries the count and each row's id, date, description and amount, whether or
+not the caller wants them touched, because a caller that declines still needs to
+know which rows are out of step with the rule. Passing
+`update_future_transactions` rewrites them to say what the rule now says;
+`delete_future_transactions` takes them with the rule. Both default to off, so
+nothing is ever rewritten silently, and a row Firefly refuses comes back under
+`failed_transaction_ids` rather than as a thrown call, since by then the rule
+itself has already changed.
+
+A rewritten row keeps its date. A row on the books may have been moved
+deliberately, and it is the next write-ahead pass, expanding the schedule again,
+that decides where a new occurrence falls.
+
+The link is the marker in the note. It used to be the same constant on every
+row, `fireraccoon:auto-written`, which named the population but not which rule
+each row belonged to; a row written now carries
+`fireraccoon:auto-written:<recurrence id>`. Rows written under the bare marker
+are matched on what the rule still determines, its two accounts and a date the
+schedule falls on, and rows from before the raccoon rename spell it
+`fireracoon:` with one `c`. All three are read.
 
 ### A liability's own terms
 

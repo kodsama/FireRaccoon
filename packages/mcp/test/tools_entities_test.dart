@@ -1724,17 +1724,20 @@ void main() {
       expect(calls, isEmpty);
     });
 
-    test('update_recurrence replaces the rule', () async {
-      final result =
-          await _tool('update_recurrence', client: fireflyMockClient()).run({
-            ...recurrenceArgs(),
-            'recurrence_id': '12',
-            'title': 'Rent raised',
-          });
+    test(
+      'update_recurrence sends the change and reads the rule back',
+      () async {
+        final result =
+            await _tool('update_recurrence', client: fireflyMockClient()).run({
+              ...recurrenceArgs(),
+              'recurrence_id': '12',
+              'title': 'Rent raised',
+            });
 
-      expect(result['ok'], isTrue);
-      expect((result['recurrence'] as Map)['title'], 'Salary raised');
-    });
+        expect(result['ok'], isTrue);
+        expect((result['recurrence'] as Map)['title'], 'Rent raised');
+      },
+    );
 
     test('update_recurrence keeps the weekend handling it was not asked to '
         'change', () async {
@@ -1912,6 +1915,202 @@ void main() {
         expect(result['code'], 'bad_input');
         expect(result['error'], contains('source_id'));
         expect(bodies, isEmpty);
+      },
+    );
+
+    /// A row FireRaccoon wrote ahead, dated inside the window the recurrence
+    /// tools read. Relative to today, because that window is.
+    Map<String, Map<String, Object?>> writtenAhead({
+      String id = '40',
+      String marker = 'fireraccoon:auto-written:12',
+      int inDays = 30,
+    }) {
+      final when = DateTime.now().add(Duration(days: inDays));
+      final day =
+          '${when.year.toString().padLeft(4, '0')}-'
+          '${when.month.toString().padLeft(2, '0')}-'
+          '${when.day.toString().padLeft(2, '0')}';
+      return {
+        id: transactionItem(
+          id: id,
+          date: day,
+          amount: '1200.00',
+          description: 'Rent payment',
+          sourceId: '5',
+          destinationId: '9',
+          notes: marker,
+        ),
+      };
+    }
+
+    test('update_recurrence names the rows it already wrote ahead', () async {
+      // The template was one call; the rows already on the books then had to
+      // be found one at a time, with nothing in the answer saying they existed.
+      final result = await _tool(
+        'update_recurrence',
+        client: fireflyMockClient(transactionOverrides: writtenAhead()),
+      ).run({'recurrence_id': '12', 'amount': 1300});
+
+      final future = result['future_transactions'] as Map<String, Object?>;
+      expect(future['count'], 1);
+      expect(future['updated'], 0);
+      expect(future['note'], contains('update_future_transactions'));
+      final row = (future['transactions'] as List).single as Map;
+      expect(row['id'], '40');
+      expect(row['amount'], 1200.0);
+    });
+
+    test(
+      'update_recurrence brings the written-ahead rows along when asked',
+      () async {
+        final calls = <Uri>[];
+        final bodies = <String>[];
+        final result =
+            await _tool(
+              'update_recurrence',
+              client: fireflyMockClient(
+                record: calls,
+                recordBodies: bodies,
+                transactionOverrides: writtenAhead(),
+              ),
+            ).run({
+              'recurrence_id': '12',
+              'amount': 1300,
+              'update_future_transactions': true,
+            });
+
+        final future = result['future_transactions'] as Map<String, Object?>;
+        expect(future['count'], 1);
+        expect(future['updated'], 1);
+        expect(future.containsKey('note'), isFalse);
+        expect(calls.map((c) => c.path), contains('/api/v1/transactions/40'));
+        final rewrite =
+            ((jsonDecode(bodies.last) as Map)['transactions'] as List).single
+                as Map<String, Object?>;
+        expect(rewrite['amount'], '1300.00');
+        expect(rewrite['source_id'], '5');
+        expect(rewrite['destination_id'], '9');
+        expect(rewrite['notes'], 'fireraccoon:auto-written:12');
+      },
+    );
+
+    test('a rewritten row loses the bookkeeping the rule dropped', () async {
+      // Firefly keeps what it has when a field is merely absent, so a row that
+      // had been given a category by hand would keep it against a rule that
+      // carries none.
+      final bodies = <String>[];
+      await _tool(
+        'update_recurrence',
+        client: fireflyMockClient(
+          recordBodies: bodies,
+          recurrenceBareLine: true,
+          transactionOverrides: writtenAhead(),
+        ),
+      ).run({
+        'recurrence_id': '12',
+        'amount': 1300,
+        'update_future_transactions': true,
+      });
+
+      final rewrite =
+          ((jsonDecode(bodies.last) as Map)['transactions'] as List).single
+              as Map<String, Object?>;
+      expect(rewrite['category_id'], '');
+      expect(rewrite['category_name'], '');
+      expect(rewrite['budget_id'], '');
+      expect(rewrite['bill_id'], '');
+      expect(rewrite['tags'], isEmpty);
+    });
+
+    test(
+      'a row written ahead for another rule is left out of the count',
+      () async {
+        final result =
+            await _tool(
+              'update_recurrence',
+              client: fireflyMockClient(
+                transactionOverrides: writtenAhead(
+                  marker: 'fireraccoon:auto-written:99',
+                ),
+              ),
+            ).run({
+              'recurrence_id': '12',
+              'amount': 1300,
+              'update_future_transactions': true,
+            });
+
+        final future = result['future_transactions'] as Map<String, Object?>;
+        expect(future['count'], 0);
+        expect(future.containsKey('note'), isFalse);
+      },
+    );
+
+    test(
+      'a row that will not take the new values is named, not thrown',
+      () async {
+        final result =
+            await _tool(
+              'update_recurrence',
+              client: fireflyMockClient(
+                transactionOverrides: writtenAhead(),
+                failingWrites: {'/api/v1/transactions/40'},
+              ),
+            ).run({
+              'recurrence_id': '12',
+              'amount': 1300,
+              'update_future_transactions': true,
+            });
+
+        expect(result['ok'], isTrue, reason: 'the rule itself was changed');
+        final future = result['future_transactions'] as Map<String, Object?>;
+        expect(future['updated'], 0);
+        expect(future['failed_transaction_ids'], ['40']);
+      },
+    );
+
+    test('delete_recurrence names the rows that outlive it', () async {
+      final result = await _tool(
+        'delete_recurrence',
+        client: fireflyMockClient(transactionOverrides: writtenAhead()),
+      ).run({'recurrence_id': '12'});
+
+      expect(result['deleted'], isTrue);
+      final future = result['future_transactions'] as Map<String, Object?>;
+      expect(future['count'], 1);
+      expect(future['deleted'], 0);
+      expect(future['note'], contains('delete_future_transactions'));
+    });
+
+    test('delete_recurrence takes the rows with it when asked', () async {
+      final calls = <Uri>[];
+      final result = await _tool(
+        'delete_recurrence',
+        client: fireflyMockClient(
+          record: calls,
+          transactionOverrides: writtenAhead(),
+        ),
+      ).run({'recurrence_id': '12', 'delete_future_transactions': true});
+
+      final future = result['future_transactions'] as Map<String, Object?>;
+      expect(future['deleted'], 1);
+      expect(calls.map((c) => c.path), contains('/api/v1/transactions/40'));
+    });
+
+    test(
+      'a row that will not delete is named, and the rule still goes',
+      () async {
+        final result = await _tool(
+          'delete_recurrence',
+          client: fireflyMockClient(
+            transactionOverrides: writtenAhead(),
+            failingWrites: {'/api/v1/transactions/40'},
+          ),
+        ).run({'recurrence_id': '12', 'delete_future_transactions': true});
+
+        expect(result['deleted'], isTrue);
+        final future = result['future_transactions'] as Map<String, Object?>;
+        expect(future['deleted'], 0);
+        expect(future['failed_transaction_ids'], ['40']);
       },
     );
 

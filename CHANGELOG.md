@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `update_recurrence` and `delete_recurrence` name the transactions FireRaccoon
+  has already written ahead from the rule. Firefly records no link from such a
+  row back to the rule that produced it, so correcting a rule whose amount had
+  drifted was one call and then a hunt for the rows already on the books, with
+  nothing in the answer saying they existed. Both tools now report each row's
+  id, date, description and amount, and `update_future_transactions` /
+  `delete_future_transactions` bring them along. Both default to off, so
+  nothing is rewritten silently. A row written ahead now carries the rule's id
+  in its marker rather than a constant shared by every row
+
 ### Fixed
 
 - Any MCP write to a recurrence reset the fields the tool schema did not carry.

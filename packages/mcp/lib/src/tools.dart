@@ -1758,6 +1758,108 @@ Map<String, Object?> _recurrenceFieldSchema() => {
   },
 };
 
+/// How far ahead a recurrence's own rows are looked for.
+///
+/// The app writes ahead at most 90 days, so half a year covers any horizon
+/// anyone has set and still reads one window rather than the whole ledger.
+const _futureRowHorizonDays = 183;
+
+/// The rows FireRaccoon has already written ahead for [recurrence].
+///
+/// Firefly records no link from a written-ahead row back to the rule that
+/// produced it, so the marker in the note is the only handle there is.
+Future<List<Transaction>> _futureRowsFor(
+  FireflyService api,
+  Recurrence recurrence,
+) async {
+  final now = DateTime.now();
+  final start = DateTime(now.year, now.month, now.day);
+  final rows = await api.getTransactions(
+    start: start,
+    end: start.add(const Duration(days: _futureRowHorizonDays)),
+  );
+  return writeAheadRowsFor(recurrence: recurrence, transactions: rows);
+}
+
+/// [row] rewritten to say what [recurrence] now says.
+///
+/// The date stays where it is. A row already on the books may have been moved
+/// deliberately, and it is the next write-ahead pass, expanding the schedule
+/// again, that decides where a new occurrence falls.
+Transaction _rowFromRecurrence(Transaction row, Recurrence recurrence) {
+  final line = recurrence.primaryTransaction!;
+  return Transaction(
+    id: row.id,
+    journalId: row.journalId,
+    type: recurrence.type.apiValue,
+    date: row.date,
+    amount: line.amount,
+    description: line.description,
+    sourceName: line.sourceName ?? '',
+    destinationName: line.destinationName ?? '',
+    categoryName: line.categoryName ?? '',
+    currencySymbol: row.currencySymbol,
+    currencyCode: line.currencyCode,
+    foreignAmount: line.foreignAmount,
+    foreignCurrencyCode: line.foreignCurrencyCode,
+    sourceId: line.sourceId,
+    destinationId: line.destinationId,
+    categoryId: line.categoryId,
+    budgetId: line.budgetId,
+    budgetName: line.budgetName,
+    notes: writeAheadMarkerFor(recurrence.id),
+    tags: line.tags,
+    billId: line.billId,
+    billName: line.billName,
+    // Firefly keeps what it has when a field is merely absent, so a rule that
+    // dropped its budget has to say so.
+    clearedFields: {
+      if (line.categoryId == null && (line.categoryName ?? '').isEmpty) ...[
+        'category_id',
+        'category_name',
+      ],
+      if (line.budgetId == null && (line.budgetName ?? '').isEmpty) ...[
+        'budget_id',
+        'budget_name',
+      ],
+      if (line.billId == null) 'bill_id',
+      if (line.tags.isEmpty) 'tags',
+    },
+  );
+}
+
+/// What a recurrence write did, or could have done, to the rows it had already
+/// written ahead.
+///
+/// Reported whether or not the caller asked for them, because a caller that
+/// declines still needs to know which rows are now out of step with the rule.
+/// [action] is `update` or `delete`, naming both the key that counts what was
+/// done and the parameter that would have asked for it.
+Map<String, Object?> _futureRowsJson(
+  List<Transaction> rows, {
+  required String action,
+  required int changed,
+  required List<String> failed,
+}) => {
+  'count': rows.length,
+  '${action}d': changed,
+  'transactions': [
+    for (final row in rows)
+      {
+        'id': row.id,
+        'date': _dateOnly(row.date),
+        'description': row.description,
+        'amount': row.totalAmount,
+      },
+  ],
+  if (failed.isNotEmpty) 'failed_transaction_ids': failed,
+  if (rows.isNotEmpty && changed == 0)
+    'note':
+        'FireRaccoon wrote these rows ahead from this rule and left them as '
+        'they are. Pass ${action}_future_transactions: true to bring them '
+        'along.',
+};
+
 /// An argument read over what is stored: an absent key keeps [stored], while a
 /// key that is present wins even when it trims to nothing. That is what keeps
 /// `title: ""` a refusal rather than a silent no-op.
@@ -5477,12 +5579,21 @@ List<McpTool> buildTools({
       description:
           'Change a recurring rule. Pass only the fields you are changing: '
           'everything left out keeps what is stored, including the weekend '
-          'handling and the schedule.',
+          'handling and the schedule. The answer names the transactions '
+          'FireRaccoon has already written ahead from this rule, which keep '
+          'the old values unless update_future_transactions says otherwise.',
       inputSchema: {
         'type': 'object',
         'required': ['recurrence_id'],
         'properties': {
           'recurrence_id': {'type': 'string'},
+          'update_future_transactions': {
+            'type': 'boolean',
+            'default': false,
+            'description':
+                'Rewrite the rows already written ahead for this rule to match '
+                'it. Their dates are left alone.',
+          },
           ..._recurrenceFieldSchema(),
         },
       },
@@ -5500,7 +5611,32 @@ List<McpTool> buildTools({
           return _badInput('${e.message}');
         }
         final updated = await api.updateRecurrence(id, input, current: current);
-        return {'ok': true, 'recurrence': _recurrenceJson(updated)};
+        final rows = await _futureRowsFor(api, updated);
+        var changed = 0;
+        final failed = <String>[];
+        if (args['update_future_transactions'] as bool? ?? false) {
+          for (final row in rows) {
+            try {
+              await api.updateTransaction(_rowFromRecurrence(row, updated));
+              changed++;
+            } on FireflyApiException {
+              // The rule itself is already changed, so a row that will not
+              // take the new values is named rather than thrown: the caller
+              // needs to know which half landed.
+              failed.add(row.id);
+            }
+          }
+        }
+        return {
+          'ok': true,
+          'recurrence': _recurrenceJson(updated),
+          'future_transactions': _futureRowsJson(
+            rows,
+            action: 'update',
+            changed: changed,
+            failed: failed,
+          ),
+        };
       },
     ),
     McpTool(
@@ -5762,12 +5898,21 @@ List<McpTool> buildTools({
       writes: true,
       description:
           'Delete a recurring transaction rule. Transactions it already created '
-          'are kept.',
+          'are kept, and the answer names the ones FireRaccoon wrote ahead from '
+          'it, which outlive the rule unless delete_future_transactions says '
+          'otherwise.',
       inputSchema: {
         'type': 'object',
         'required': ['recurrence_id'],
         'properties': {
           'recurrence_id': {'type': 'string'},
+          'delete_future_transactions': {
+            'type': 'boolean',
+            'default': false,
+            'description':
+                'Also delete the rows already written ahead for this rule. '
+                'Rows Firefly itself created are never touched.',
+          },
         },
       },
       run: (args) async {
@@ -5775,8 +5920,32 @@ List<McpTool> buildTools({
         if (id == null || id.isEmpty) {
           return _badInput('recurrence_id is required');
         }
-        await service().deleteRecurrence(id);
-        return {'ok': true, 'recurrence_id': id, 'deleted': true};
+        final api = service();
+        final rows = await _futureRowsFor(api, await api.getRecurrence(id));
+        var changed = 0;
+        final failed = <String>[];
+        if (args['delete_future_transactions'] as bool? ?? false) {
+          for (final row in rows) {
+            try {
+              await api.deleteTransaction(row.id);
+              changed++;
+            } on FireflyApiException {
+              failed.add(row.id);
+            }
+          }
+        }
+        await api.deleteRecurrence(id);
+        return {
+          'ok': true,
+          'recurrence_id': id,
+          'deleted': true,
+          'future_transactions': _futureRowsJson(
+            rows,
+            action: 'delete',
+            changed: changed,
+            failed: failed,
+          ),
+        };
       },
     ),
     McpTool(
