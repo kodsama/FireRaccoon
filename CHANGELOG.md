@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Any MCP write to a recurrence reset the fields the tool schema did not carry.
+  `weekend` was the visible one: a rule set in Firefly to move a weekend
+  occurrence to the Friday before came back as "create anyway" after a call
+  that only meant to change the amount, because the input serialised its own
+  default every time. The foreign amount and the line's own id went the same
+  way, Firefly replacing a recurrence wholesale rather than patching it.
+  `update_recurrence` now reads the stored rule first and merges over it, so
+  only the fields actually passed change, and `weekend` is a parameter on both
+  create and update with the four values Firefly offers
+
 ## [0.11.1] - 2026-09-18
 
 ### Fixed

@@ -120,7 +120,7 @@ live in `CONTEXT.md`.
 | `get_recurrences` | List recurring rules, each with the amount, accounts, category, budget and tags of the lines it creates |
 | `get_recurrence_transactions` | Transactions a recurring rule has created |
 | `create_recurrence` | Create a recurring rule |
-| `update_recurrence` | Replace a recurring rule; every field to keep must be passed |
+| `update_recurrence` | Change a recurring rule; fields left out keep their stored value |
 | `delete_recurrence` | Delete a recurring rule; transactions it created are kept |
 | `get_currencies` | List currencies and which are enabled |
 | `run_projection` | Savings, compound, portfolio, or cashflow projection |
