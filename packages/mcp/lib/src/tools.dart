@@ -1799,18 +1799,23 @@ Future<List<Transaction>> _futureRowsFor(
   return writeAheadRowsFor(recurrence: recurrence, transactions: rows);
 }
 
-/// [row] rewritten to say what [recurrence] now says.
+/// [row] rewritten to say what [recurrence] now says, on [date].
 ///
-/// The date stays where it is. A row already on the books may have been moved
-/// deliberately, and it is the next write-ahead pass, expanding the schedule
-/// again, that decides where a new occurrence falls.
-Transaction _rowFromRecurrence(Transaction row, Recurrence recurrence) {
+/// [date] is null when the schedule did not move, or moved somewhere this row
+/// has no occurrence left in, and the row then stays where it is: a row
+/// somebody dated by hand keeps that date, and a rule that no longer covers a
+/// row is not grounds for guessing a new one.
+Transaction _rowFromRecurrence(
+  Transaction row,
+  Recurrence recurrence, {
+  DateTime? date,
+}) {
   final line = recurrence.primaryTransaction!;
   return Transaction(
     id: row.id,
     journalId: row.journalId,
     type: recurrence.type.apiValue,
-    date: row.date,
+    date: date ?? row.date,
     amount: line.amount,
     description: line.description,
     sourceName: line.sourceName ?? '',
@@ -1858,6 +1863,7 @@ Map<String, Object?> _futureRowsJson(
   required String action,
   required int changed,
   required List<String> failed,
+  Map<String, DateTime?> moves = const {},
 }) => {
   'count': rows.length,
   '${action}d': changed,
@@ -1865,7 +1871,12 @@ Map<String, Object?> _futureRowsJson(
     for (final row in rows)
       {
         'id': row.id,
+        // The date the row was read on. Where the schedule moved, moves_to is
+        // where it goes, and the count above says whether it went.
         'date': _dateOnly(row.date),
+        if (moves[row.id] != null) 'moves_to': _dateOnly(moves[row.id]!),
+        if (moves.containsKey(row.id) && moves[row.id] == null)
+          'no_longer_scheduled': true,
         'description': row.description,
         'amount': row.totalAmount,
       },
@@ -1874,8 +1885,10 @@ Map<String, Object?> _futureRowsJson(
   if (rows.isNotEmpty && changed == 0)
     'note':
         'FireRaccoon wrote these rows ahead from this rule and left them as '
-        'they are. Pass ${action}_future_transactions: true to bring them '
-        'along.',
+        'they are.'
+        '${moves.isEmpty ? '' : ' The schedule moved, so each row carries the '
+                  'date it would take.'}'
+        ' Pass ${action}_future_transactions: true to bring them along.',
 };
 
 /// An argument read over what is stored: an absent key keeps [stored], while a
@@ -5623,8 +5636,10 @@ List<McpTool> buildTools({
           'Change a recurring rule. Pass only the fields you are changing: '
           'everything left out keeps what is stored, including the weekend '
           'handling and the schedule. The answer names the transactions '
-          'FireRaccoon has already written ahead from this rule, which keep '
-          'the old values unless update_future_transactions says otherwise.',
+          'FireRaccoon has already written ahead from this rule, each with '
+          'the date it would move to if the schedule changed. They keep the '
+          'old values and dates unless update_future_transactions says '
+          'otherwise.',
       inputSchema: {
         'type': 'object',
         'required': ['recurrence_id'],
@@ -5635,7 +5650,7 @@ List<McpTool> buildTools({
             'default': false,
             'description':
                 'Rewrite the rows already written ahead for this rule to match '
-                'it. Their dates are left alone.',
+                'it, moving them to the new dates when the schedule changed.',
           },
           ..._recurrenceFieldSchema(),
         },
@@ -5655,12 +5670,20 @@ List<McpTool> buildTools({
         }
         final updated = await api.updateRecurrence(id, input, current: current);
         final rows = await _futureRowsFor(api, updated);
+        final moves = writeAheadRowMoves(
+          rows: rows,
+          before: current,
+          after: updated,
+          days: _futureRowHorizonDays,
+        );
         var changed = 0;
         final failed = <String>[];
         if (args['update_future_transactions'] as bool? ?? false) {
           for (final row in rows) {
             try {
-              await api.updateTransaction(_rowFromRecurrence(row, updated));
+              await api.updateTransaction(
+                _rowFromRecurrence(row, updated, date: moves[row.id]),
+              );
               changed++;
             } on FireflyApiException {
               // The rule itself is already changed, so a row that will not
@@ -5678,6 +5701,7 @@ List<McpTool> buildTools({
             action: 'update',
             changed: changed,
             failed: failed,
+            moves: moves,
           ),
         };
       },
