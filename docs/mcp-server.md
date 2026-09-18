@@ -545,9 +545,19 @@ nothing is ever rewritten silently, and a row Firefly refuses comes back under
 `failed_transaction_ids` rather than as a thrown call, since by then the rule
 itself has already changed.
 
-A rewritten row keeps its date. A row on the books may have been moved
-deliberately, and it is the next write-ahead pass, expanding the schedule again,
-that decides where a new occurrence falls.
+When the schedule itself moved, the rows move with it. Each one carries
+`moves_to`, the date it would take, computed whether or not the caller wants it
+applied, so declining is a decision rather than an oversight. Rows and the new
+occurrences pair nearest-first rather than in order: an adjustment carries an
+occurrence out of the month it belongs to, so the first of January can fall on
+the thirtieth of December, and pairing by position would hand every row the date
+of its neighbour. A row the new schedule has no occurrence left for comes back
+as `no_longer_scheduled` and stays where it is. The rule no longer says when it
+should happen, and deleting it on that basis would be a guess; `delete_transaction`
+is there for a caller who has decided.
+
+A schedule that did not move leaves every date alone, including one somebody
+set by hand.
 
 The link is the marker in the note. It used to be the same constant on every
 row, `fireraccoon:auto-written`, which named the population but not which rule

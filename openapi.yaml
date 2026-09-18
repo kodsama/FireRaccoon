@@ -1687,7 +1687,8 @@ x-mcp:
         Change a recurring rule. Only the fields being changed are passed;
         everything left out keeps what is stored, weekend handling and schedule
         included. The answer names the transactions written ahead from the rule,
-        which update_future_transactions can bring along.
+        each with the date it would move to if the schedule changed, which
+        update_future_transactions can bring along.
       mapsTo: PUT /api/v1/recurrences/{recurrenceId}
       required: [recurrence_id]
     get_recurrence_transactions:

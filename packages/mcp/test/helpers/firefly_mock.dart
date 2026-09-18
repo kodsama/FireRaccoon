@@ -256,7 +256,9 @@ Map<String, Object?> recurrenceEnvelope({
       'title': title,
       'notes': ?notes,
       'first_date': '2026-09-01',
-      'repeat_until': '2027-09-01',
+      // Far out on purpose: a nearer end date would quietly stop the
+      // schedule tests from having occurrences to expand once it passed.
+      'repeat_until': '2099-09-01',
       'active': true,
       'apply_rules': true,
       'repetitions': [

@@ -28,8 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nothing in the answer saying they existed. Both tools now report each row's
   id, date, description and amount, and `update_future_transactions` /
   `delete_future_transactions` bring them along. Both default to off, so
-  nothing is rewritten silently. A row written ahead now carries the rule's id
-  in its marker rather than a constant shared by every row
+  nothing is rewritten silently. Where the schedule itself moved, each row also
+  carries `moves_to`, the date it would take, and taking them along moves them
+  there; a row the new schedule has no occurrence left for comes back as
+  `no_longer_scheduled` and is left where it is rather than deleted on a guess.
+  A row written ahead now carries the rule's id in its marker rather than a
+  constant shared by every row
 
 ### Fixed
 
