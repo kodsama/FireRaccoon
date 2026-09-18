@@ -68,6 +68,74 @@ List<Transaction> writeAheadRowsFor({
   return matched;
 }
 
+/// Where each of [rows] lands once [after]'s schedule replaces [before]'s,
+/// by row id, over a window of [days] from [reference].
+///
+/// Empty when the schedule did not move, so a row somebody dated by hand is
+/// left where they put it. Null against a row the new schedule has no
+/// occurrence left for, which is the honest answer: the rule no longer says
+/// when that row should happen, and deciding that for the caller would be
+/// deleting their data on a guess.
+///
+/// Rows and occurrences pair nearest-first rather than in order. An adjustment
+/// carries an occurrence out of the month it belongs to, so the first of
+/// January can fall on the thirtieth of December, and pairing by position
+/// would hand every row the date of its neighbour.
+Map<String, DateTime?> writeAheadRowMoves({
+  required List<Transaction> rows,
+  required Recurrence before,
+  required Recurrence after,
+  required int days,
+  DateTime? reference,
+}) {
+  if (rows.isEmpty) return const {};
+  final now = reference ?? DateTime.now();
+  final start = DateTime(now.year, now.month, now.day);
+  // Past the window the rows themselves were read from, so a row at its far
+  // edge still has occurrences either side of it to pair with.
+  final end = start.add(Duration(days: days + 31));
+
+  final was = expandRecurrenceOccurrences(
+    recurrence: before,
+    rangeStart: start,
+    rangeEnd: end,
+  );
+  final willBe = expandRecurrenceOccurrences(
+    recurrence: after,
+    rangeStart: start,
+    rangeEnd: end,
+  );
+  if (_sameDates(was, willBe)) return const {};
+
+  final free = [...willBe];
+  final moves = <String, DateTime?>{};
+  final byDate = [...rows]..sort((a, b) => a.date.compareTo(b.date));
+  for (final row in byDate) {
+    if (free.isEmpty) {
+      moves[row.id] = null;
+      continue;
+    }
+    final day = prognosisStartOfDay(row.date);
+    var nearest = 0;
+    for (var i = 1; i < free.length; i++) {
+      if (free[i].difference(day).inDays.abs() <
+          free[nearest].difference(day).inDays.abs()) {
+        nearest = i;
+      }
+    }
+    moves[row.id] = free.removeAt(nearest);
+  }
+  return moves;
+}
+
+bool _sameDates(List<DateTime> a, List<DateTime> b) {
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; i++) {
+    if (!a[i].isAtSameMomentAs(b[i])) return false;
+  }
+  return true;
+}
+
 bool _sameAccounts(Transaction row, RecurrenceTransactionLine line) {
   final sourceMatches = line.sourceId != null
       ? row.sourceId == line.sourceId

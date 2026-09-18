@@ -7,6 +7,7 @@ Recurrence _monthly({
   double amount = 500,
   String description = 'Rent',
   bool active = true,
+  String? notes,
 }) {
   return Recurrence(
     id: id,
@@ -14,6 +15,7 @@ Recurrence _monthly({
     title: description,
     firstDate: DateTime(2026, 1, 20),
     active: active,
+    notes: notes,
     repetitions: [
       RecurrenceRepetition(
         type: RecurrenceRepetitionType.monthly,
@@ -342,6 +344,112 @@ void main() {
 
       expect(isWriteAheadNote(notes), isTrue);
       expect(writeAheadRecurrenceId(notes), 'r4');
+    });
+  });
+
+  group('writeAheadRowMoves', () {
+    final reference = DateTime(2026, 7, 12);
+
+    test('a schedule that did not move leaves every row alone', () {
+      // Including a row somebody dated by hand: nobody asked for it to be
+      // snapped back onto the schedule.
+      final moves = writeAheadRowMoves(
+        rows: [
+          _existing(id: 'a', date: DateTime(2026, 8, 20)),
+          _existing(id: 'b', date: DateTime(2026, 9, 3)),
+        ],
+        before: _monthly(),
+        after: _monthly(amount: 600),
+        days: 90,
+        reference: reference,
+      );
+
+      expect(moves, isEmpty);
+    });
+
+    test('a moved day of the month carries its rows with it', () {
+      final moves = writeAheadRowMoves(
+        rows: [
+          _existing(id: 'a', date: DateTime(2026, 8, 20)),
+          _existing(id: 'b', date: DateTime(2026, 9, 20)),
+        ],
+        before: _monthly(),
+        after: _monthly(momentDay: 5),
+        days: 90,
+        reference: reference,
+      );
+
+      expect(moves, {'a': DateTime(2026, 8, 5), 'b': DateTime(2026, 9, 5)});
+    });
+
+    test('an occurrence carried out of its own month still finds its row', () {
+      // "First banking day of the month, or the one before it" puts January's
+      // occurrence in December. Pairing by position would hand the December
+      // row January's date and the January row February's.
+      final before = _monthly(momentDay: 1);
+      final after = _monthly(
+        momentDay: 1,
+        notes:
+            'fireraccoon:schedule:anchor=day:1;'
+            'adjust=previous-banking;calendar=SE',
+      );
+
+      final moves = writeAheadRowMoves(
+        rows: [
+          _existing(id: 'dec', date: DateTime(2026, 12, 1)),
+          _existing(id: 'jan', date: DateTime(2027, 1, 1)),
+        ],
+        before: before,
+        after: after,
+        days: 200,
+        reference: DateTime(2026, 11, 15),
+      );
+
+      expect(moves['dec'], DateTime(2026, 12, 1));
+      expect(moves['jan'], DateTime(2026, 12, 30));
+    });
+
+    test(
+      'a row the new schedule has no occurrence for is named, not guessed',
+      () {
+        final moves = writeAheadRowMoves(
+          rows: [
+            _existing(id: 'a', date: DateTime(2026, 8, 20)),
+            _existing(id: 'b', date: DateTime(2026, 9, 20)),
+            _existing(id: 'c', date: DateTime(2026, 10, 20)),
+          ],
+          before: _monthly(),
+          after: _monthly(active: false),
+          days: 90,
+          reference: reference,
+        );
+
+        expect(moves, {'a': null, 'b': null, 'c': null});
+      },
+    );
+
+    test('no rows means nothing to move', () {
+      expect(
+        writeAheadRowMoves(
+          rows: const [],
+          before: _monthly(),
+          after: _monthly(momentDay: 5),
+          days: 90,
+          reference: reference,
+        ),
+        isEmpty,
+      );
+    });
+
+    test('uses DateTime.now when reference omitted', () {
+      final moves = writeAheadRowMoves(
+        rows: [_existing(id: 'a', date: DateTime.now())],
+        before: _monthly(),
+        after: _monthly(momentDay: 5),
+        days: 90,
+      );
+
+      expect(moves.keys, ['a']);
     });
   });
 }
