@@ -3924,4 +3924,92 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get mcpBasePortReset => 'Repor predefinição';
+
+  @override
+  String get scheduleRuleSection => 'Regra de dia útil bancário';
+
+  @override
+  String get scheduleRuleEnable => 'Usar uma regra de dia útil bancário';
+
+  @override
+  String get scheduleRuleHelp =>
+      'A previsão do FireRaccoon e as linhas que ele escreve com antecedência seguem esta regra em vez do número do dia acima. O Firefly III mantém esse número para o que gera sozinho, por isso deixe-o o mais próximo possível da regra.';
+
+  @override
+  String get scheduleAnchorKind => 'Cai em';
+
+  @override
+  String get scheduleAnchorDayOfMonth => 'Um dia do mês';
+
+  @override
+  String get scheduleAnchorWeekday => 'Um dia da semana do mês';
+
+  @override
+  String get scheduleAnchorDay => 'Dia do mês';
+
+  @override
+  String get scheduleAnchorDayHelp =>
+      '31 significa o último dia, recuando num mês mais curto.';
+
+  @override
+  String get scheduleAnchorWhich => 'Qual';
+
+  @override
+  String get scheduleNthFirst => 'Primeiro';
+
+  @override
+  String get scheduleNthSecond => 'Segundo';
+
+  @override
+  String get scheduleNthThird => 'Terceiro';
+
+  @override
+  String get scheduleNthFourth => 'Quarto';
+
+  @override
+  String get scheduleNthFifth => 'Quinto';
+
+  @override
+  String get scheduleNthLast => 'Último';
+
+  @override
+  String scheduleNthFromLast(int count) {
+    return '$count antes do último';
+  }
+
+  @override
+  String get scheduleAnchorWeekdayName => 'Dia da semana';
+
+  @override
+  String get scheduleAdjustment => 'Depois mover para';
+
+  @override
+  String get scheduleAdjustNone => 'Deixar onde cai';
+
+  @override
+  String get scheduleAdjustPreviousBanking => 'O dia útil bancário anterior';
+
+  @override
+  String get scheduleAdjustNextBanking => 'O dia útil bancário seguinte';
+
+  @override
+  String get scheduleCalendar => 'Calendário bancário';
+
+  @override
+  String get scheduleCalendarWeekend => 'Apenas fins de semana';
+
+  @override
+  String get scheduleCalendarSweden => 'Suécia';
+
+  @override
+  String get scheduleCalendarHelp =>
+      'Que dias contam como fechados. A Suécia conta a véspera de São João, a véspera de Natal e a véspera de Ano Novo a par dos feriados.';
+
+  @override
+  String scheduleRuleNextDates(String dates) {
+    return 'Próximas: $dates';
+  }
+
+  @override
+  String get scheduleRuleNoDates => 'Esta regra não produz datas.';
 }

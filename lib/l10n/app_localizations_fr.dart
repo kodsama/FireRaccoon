@@ -3937,4 +3937,92 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get mcpBasePortReset => 'Rétablir la valeur par défaut';
+
+  @override
+  String get scheduleRuleSection => 'Règle de jour bancaire';
+
+  @override
+  String get scheduleRuleEnable => 'Utiliser une règle de jour bancaire';
+
+  @override
+  String get scheduleRuleHelp =>
+      'Les prévisions de FireRaccoon et les lignes écrites à l\'avance suivent cette règle plutôt que le numéro de jour ci-dessus. Firefly III conserve ce numéro pour ce qu\'il génère lui-même : gardez-le aussi proche de la règle que possible.';
+
+  @override
+  String get scheduleAnchorKind => 'Tombe le';
+
+  @override
+  String get scheduleAnchorDayOfMonth => 'Un jour du mois';
+
+  @override
+  String get scheduleAnchorWeekday => 'Un jour de semaine du mois';
+
+  @override
+  String get scheduleAnchorDay => 'Jour du mois';
+
+  @override
+  String get scheduleAnchorDayHelp =>
+      '31 signifie le dernier jour, ramené au précédent dans un mois plus court.';
+
+  @override
+  String get scheduleAnchorWhich => 'Lequel';
+
+  @override
+  String get scheduleNthFirst => 'Premier';
+
+  @override
+  String get scheduleNthSecond => 'Deuxième';
+
+  @override
+  String get scheduleNthThird => 'Troisième';
+
+  @override
+  String get scheduleNthFourth => 'Quatrième';
+
+  @override
+  String get scheduleNthFifth => 'Cinquième';
+
+  @override
+  String get scheduleNthLast => 'Dernier';
+
+  @override
+  String scheduleNthFromLast(int count) {
+    return '$count avant le dernier';
+  }
+
+  @override
+  String get scheduleAnchorWeekdayName => 'Jour de la semaine';
+
+  @override
+  String get scheduleAdjustment => 'Puis déplacer vers';
+
+  @override
+  String get scheduleAdjustNone => 'Laisser où il tombe';
+
+  @override
+  String get scheduleAdjustPreviousBanking => 'Le jour bancaire précédent';
+
+  @override
+  String get scheduleAdjustNextBanking => 'Le jour bancaire suivant';
+
+  @override
+  String get scheduleCalendar => 'Calendrier bancaire';
+
+  @override
+  String get scheduleCalendarWeekend => 'Week-ends seulement';
+
+  @override
+  String get scheduleCalendarSweden => 'Suède';
+
+  @override
+  String get scheduleCalendarHelp =>
+      'Quels jours comptent comme fermés. La Suède ajoute la veille de la Saint-Jean, le réveillon de Noël et la Saint-Sylvestre aux jours fériés.';
+
+  @override
+  String scheduleRuleNextDates(String dates) {
+    return 'Prochaines : $dates';
+  }
+
+  @override
+  String get scheduleRuleNoDates => 'Cette règle ne produit aucune date.';
 }

@@ -2303,5 +2303,46 @@
   "mcpBasePortReset": "Reset to default",
   "@mcpBasePortReset": {
     "description": "Button that restores the default MCP port"
-  }
+  },
+  "scheduleRuleSection": "Banking-day rule",
+  "scheduleRuleEnable": "Use a banking-day rule",
+  "scheduleRuleHelp": "FireRaccoon's forecast and the rows it writes ahead follow this rule instead of the day number above. Firefly III keeps that day number for what it generates itself, so leave it as close to the rule as it can get.",
+  "scheduleAnchorKind": "Falls on",
+  "scheduleAnchorDayOfMonth": "A day of the month",
+  "scheduleAnchorWeekday": "A weekday of the month",
+  "scheduleAnchorDay": "Day of the month",
+  "scheduleAnchorDayHelp": "31 means the last day, falling back in a shorter month.",
+  "scheduleAnchorWhich": "Which one",
+  "scheduleNthFirst": "First",
+  "scheduleNthSecond": "Second",
+  "scheduleNthThird": "Third",
+  "scheduleNthFourth": "Fourth",
+  "scheduleNthFifth": "Fifth",
+  "scheduleNthLast": "Last",
+  "scheduleNthFromLast": "{count} back from the last",
+  "@scheduleNthFromLast": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "scheduleAnchorWeekdayName": "Weekday",
+  "scheduleAdjustment": "Then move it to",
+  "scheduleAdjustNone": "Leave it where it falls",
+  "scheduleAdjustPreviousBanking": "The banking day before",
+  "scheduleAdjustNextBanking": "The banking day after",
+  "scheduleCalendar": "Banking calendar",
+  "scheduleCalendarWeekend": "Weekends only",
+  "scheduleCalendarSweden": "Sweden",
+  "scheduleCalendarHelp": "Which days count as closed. Sweden counts Midsummer Eve, Christmas Eve and New Year's Eve alongside the public holidays.",
+  "scheduleRuleNextDates": "Next: {dates}",
+  "@scheduleRuleNextDates": {
+    "placeholders": {
+      "dates": {
+        "type": "String"
+      }
+    }
+  },
+  "scheduleRuleNoDates": "This rule produces no dates."
 }

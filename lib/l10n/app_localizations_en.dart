@@ -3905,4 +3905,92 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mcpBasePortReset => 'Reset to default';
+
+  @override
+  String get scheduleRuleSection => 'Banking-day rule';
+
+  @override
+  String get scheduleRuleEnable => 'Use a banking-day rule';
+
+  @override
+  String get scheduleRuleHelp =>
+      'FireRaccoon\'s forecast and the rows it writes ahead follow this rule instead of the day number above. Firefly III keeps that day number for what it generates itself, so leave it as close to the rule as it can get.';
+
+  @override
+  String get scheduleAnchorKind => 'Falls on';
+
+  @override
+  String get scheduleAnchorDayOfMonth => 'A day of the month';
+
+  @override
+  String get scheduleAnchorWeekday => 'A weekday of the month';
+
+  @override
+  String get scheduleAnchorDay => 'Day of the month';
+
+  @override
+  String get scheduleAnchorDayHelp =>
+      '31 means the last day, falling back in a shorter month.';
+
+  @override
+  String get scheduleAnchorWhich => 'Which one';
+
+  @override
+  String get scheduleNthFirst => 'First';
+
+  @override
+  String get scheduleNthSecond => 'Second';
+
+  @override
+  String get scheduleNthThird => 'Third';
+
+  @override
+  String get scheduleNthFourth => 'Fourth';
+
+  @override
+  String get scheduleNthFifth => 'Fifth';
+
+  @override
+  String get scheduleNthLast => 'Last';
+
+  @override
+  String scheduleNthFromLast(int count) {
+    return '$count back from the last';
+  }
+
+  @override
+  String get scheduleAnchorWeekdayName => 'Weekday';
+
+  @override
+  String get scheduleAdjustment => 'Then move it to';
+
+  @override
+  String get scheduleAdjustNone => 'Leave it where it falls';
+
+  @override
+  String get scheduleAdjustPreviousBanking => 'The banking day before';
+
+  @override
+  String get scheduleAdjustNextBanking => 'The banking day after';
+
+  @override
+  String get scheduleCalendar => 'Banking calendar';
+
+  @override
+  String get scheduleCalendarWeekend => 'Weekends only';
+
+  @override
+  String get scheduleCalendarSweden => 'Sweden';
+
+  @override
+  String get scheduleCalendarHelp =>
+      'Which days count as closed. Sweden counts Midsummer Eve, Christmas Eve and New Year\'s Eve alongside the public holidays.';
+
+  @override
+  String scheduleRuleNextDates(String dates) {
+    return 'Next: $dates';
+  }
+
+  @override
+  String get scheduleRuleNoDates => 'This rule produces no dates.';
 }

@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-09-18
+
+### Added
+
+- The recurring transaction form sets the banking-day rule: an anchor, a day of
+  the month or a weekday counted from either end, an adjustment to the banking
+  day before or after, and which calendar decides what is shut. It shows the
+  next three dates the rule produces, so a rule can be checked against a
+  calendar rather than reasoned about. Until now the rule was reachable only
+  through MCP, while the forecast reading it was in the app
+
+### Fixed
+
+- The schedule rule showed up as raw text in a recurrence's notes field, where
+  it reads as junk and one keystroke would put the schedule silently back to
+  the day number Firefly stores. It is a marker rather than prose, so the form
+  now keeps it out of the field and writes it back on save
+
 ## [0.12.0] - 2026-09-18
 
 ### Added
