@@ -3907,4 +3907,92 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get mcpBasePortReset => 'Återställ till standard';
+
+  @override
+  String get scheduleRuleSection => 'Bankdagsregel';
+
+  @override
+  String get scheduleRuleEnable => 'Använd en bankdagsregel';
+
+  @override
+  String get scheduleRuleHelp =>
+      'FireRaccoons prognos och raderna den skriver i förväg följer den här regeln i stället för dagnumret ovan. Firefly III behåller dagnumret för det den själv skapar, så håll det så nära regeln som det går.';
+
+  @override
+  String get scheduleAnchorKind => 'Infaller';
+
+  @override
+  String get scheduleAnchorDayOfMonth => 'En dag i månaden';
+
+  @override
+  String get scheduleAnchorWeekday => 'En veckodag i månaden';
+
+  @override
+  String get scheduleAnchorDay => 'Dag i månaden';
+
+  @override
+  String get scheduleAnchorDayHelp =>
+      '31 betyder sista dagen, och backar i en kortare månad.';
+
+  @override
+  String get scheduleAnchorWhich => 'Vilken';
+
+  @override
+  String get scheduleNthFirst => 'Första';
+
+  @override
+  String get scheduleNthSecond => 'Andra';
+
+  @override
+  String get scheduleNthThird => 'Tredje';
+
+  @override
+  String get scheduleNthFourth => 'Fjärde';
+
+  @override
+  String get scheduleNthFifth => 'Femte';
+
+  @override
+  String get scheduleNthLast => 'Sista';
+
+  @override
+  String scheduleNthFromLast(int count) {
+    return '$count före den sista';
+  }
+
+  @override
+  String get scheduleAnchorWeekdayName => 'Veckodag';
+
+  @override
+  String get scheduleAdjustment => 'Flytta sedan till';
+
+  @override
+  String get scheduleAdjustNone => 'Låt den ligga kvar';
+
+  @override
+  String get scheduleAdjustPreviousBanking => 'Bankdagen före';
+
+  @override
+  String get scheduleAdjustNextBanking => 'Bankdagen efter';
+
+  @override
+  String get scheduleCalendar => 'Bankkalender';
+
+  @override
+  String get scheduleCalendarWeekend => 'Bara helger';
+
+  @override
+  String get scheduleCalendarSweden => 'Sverige';
+
+  @override
+  String get scheduleCalendarHelp =>
+      'Vilka dagar som räknas som stängda. Sverige räknar midsommarafton, julafton och nyårsafton tillsammans med helgdagarna.';
+
+  @override
+  String scheduleRuleNextDates(String dates) {
+    return 'Nästa: $dates';
+  }
+
+  @override
+  String get scheduleRuleNoDates => 'Regeln ger inga datum.';
 }

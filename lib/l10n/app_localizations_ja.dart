@@ -3810,4 +3810,91 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get mcpBasePortReset => '既定値に戻す';
+
+  @override
+  String get scheduleRuleSection => '銀行営業日ルール';
+
+  @override
+  String get scheduleRuleEnable => '銀行営業日ルールを使う';
+
+  @override
+  String get scheduleRuleHelp =>
+      'FireRaccoon の予測と先行作成される行は、上の日付番号ではなくこのルールに従います。Firefly III 自身が生成する分にはその日付番号が使われるため、ルールにできるだけ近い値にしておいてください。';
+
+  @override
+  String get scheduleAnchorKind => '基準日';
+
+  @override
+  String get scheduleAnchorDayOfMonth => '月の特定の日';
+
+  @override
+  String get scheduleAnchorWeekday => '月の特定の曜日';
+
+  @override
+  String get scheduleAnchorDay => '月の日';
+
+  @override
+  String get scheduleAnchorDayHelp => '31 は月末を意味し、短い月では手前の日に戻ります。';
+
+  @override
+  String get scheduleAnchorWhich => '何番目';
+
+  @override
+  String get scheduleNthFirst => '第 1';
+
+  @override
+  String get scheduleNthSecond => '第 2';
+
+  @override
+  String get scheduleNthThird => '第 3';
+
+  @override
+  String get scheduleNthFourth => '第 4';
+
+  @override
+  String get scheduleNthFifth => '第 5';
+
+  @override
+  String get scheduleNthLast => '最後';
+
+  @override
+  String scheduleNthFromLast(int count) {
+    return '最後から $count 番目';
+  }
+
+  @override
+  String get scheduleAnchorWeekdayName => '曜日';
+
+  @override
+  String get scheduleAdjustment => 'その後の移動先';
+
+  @override
+  String get scheduleAdjustNone => 'そのままにする';
+
+  @override
+  String get scheduleAdjustPreviousBanking => '前の銀行営業日';
+
+  @override
+  String get scheduleAdjustNextBanking => '次の銀行営業日';
+
+  @override
+  String get scheduleCalendar => '銀行カレンダー';
+
+  @override
+  String get scheduleCalendarWeekend => '週末のみ';
+
+  @override
+  String get scheduleCalendarSweden => 'スウェーデン';
+
+  @override
+  String get scheduleCalendarHelp =>
+      'どの日を休業日として数えるか。スウェーデンは祝日に加えて夏至祭前夜、クリスマスイブ、大晦日も数えます。';
+
+  @override
+  String scheduleRuleNextDates(String dates) {
+    return '次回: $dates';
+  }
+
+  @override
+  String get scheduleRuleNoDates => 'このルールでは日付が生成されません。';
 }

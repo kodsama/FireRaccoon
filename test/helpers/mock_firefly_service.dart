@@ -57,6 +57,7 @@ class FakeFireflyService implements FireflyService {
   /// treats a missing bound as unbounded will happily hide.
   final List<({DateTime? start, DateTime? end})> accountPageWindows = [];
   final List<Transaction> updatedTransactions = [];
+  final List<RecurrenceInput> savedRecurrences = [];
 
   Future<void> _maybeDelay() async {
     final delay = responseDelay;
@@ -594,6 +595,7 @@ class FakeFireflyService implements FireflyService {
   @override
   Future<Recurrence> createRecurrence(RecurrenceInput input) async {
     _maybeThrow();
+    savedRecurrences.add(input);
     final tx = input.transactions.isEmpty ? null : input.transactions.first;
     return Recurrence(
       id: 'new-${recurrences.length + 1}',

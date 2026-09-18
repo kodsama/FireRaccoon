@@ -3802,4 +3802,90 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mcpBasePortReset => '恢复默认';
+
+  @override
+  String get scheduleRuleSection => '银行工作日规则';
+
+  @override
+  String get scheduleRuleEnable => '使用银行工作日规则';
+
+  @override
+  String get scheduleRuleHelp =>
+      'FireRaccoon 的预测和提前写入的记录按此规则执行，而不是上面的日期编号。Firefly III 自己生成的记录仍使用那个编号，因此请让它尽量贴近规则。';
+
+  @override
+  String get scheduleAnchorKind => '落在';
+
+  @override
+  String get scheduleAnchorDayOfMonth => '每月某一天';
+
+  @override
+  String get scheduleAnchorWeekday => '每月某个星期几';
+
+  @override
+  String get scheduleAnchorDay => '每月日期';
+
+  @override
+  String get scheduleAnchorDayHelp => '31 表示当月最后一天，较短的月份会往前顺延。';
+
+  @override
+  String get scheduleAnchorWhich => '第几个';
+
+  @override
+  String get scheduleNthFirst => '第一个';
+
+  @override
+  String get scheduleNthSecond => '第二个';
+
+  @override
+  String get scheduleNthThird => '第三个';
+
+  @override
+  String get scheduleNthFourth => '第四个';
+
+  @override
+  String get scheduleNthFifth => '第五个';
+
+  @override
+  String get scheduleNthLast => '最后一个';
+
+  @override
+  String scheduleNthFromLast(int count) {
+    return '倒数第 $count 个';
+  }
+
+  @override
+  String get scheduleAnchorWeekdayName => '星期几';
+
+  @override
+  String get scheduleAdjustment => '然后移动到';
+
+  @override
+  String get scheduleAdjustNone => '保持原处';
+
+  @override
+  String get scheduleAdjustPreviousBanking => '前一个银行工作日';
+
+  @override
+  String get scheduleAdjustNextBanking => '后一个银行工作日';
+
+  @override
+  String get scheduleCalendar => '银行日历';
+
+  @override
+  String get scheduleCalendarWeekend => '仅周末';
+
+  @override
+  String get scheduleCalendarSweden => '瑞典';
+
+  @override
+  String get scheduleCalendarHelp => '哪些日子算作停业。瑞典把仲夏前夜、平安夜和除夕与公共假日一同计入。';
+
+  @override
+  String scheduleRuleNextDates(String dates) {
+    return '接下来：$dates';
+  }
+
+  @override
+  String get scheduleRuleNoDates => '此规则不会产生任何日期。';
 }
