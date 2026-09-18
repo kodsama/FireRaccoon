@@ -74,6 +74,14 @@ class _RecurringTransactionFormDialogState
   bool _applyRules = true;
   bool _saving = false;
 
+  bool _useScheduleRule = false;
+  bool _anchorIsWeekday = false;
+  int _anchorDay = 1;
+  int _anchorIndex = 1;
+  int _anchorWeekday = DateTime.monday;
+  RecurrenceDateAdjustment _adjustment = RecurrenceDateAdjustment.none;
+  BankingCalendar _calendar = BankingCalendar.weekendOnly;
+
   @override
   void initState() {
     super.initState();
@@ -99,7 +107,13 @@ class _RecurringTransactionFormDialogState
       text: recurrence?.nrOfRepetitions?.toString() ?? '',
     );
     _tagsController = TextEditingController(text: tx?.tags.join(', ') ?? '');
-    _notesController = TextEditingController(text: recurrence?.notes ?? '');
+    // The schedule rule lives in the notes because Firefly has nowhere else to
+    // keep it. It is a marker, not prose, so it stays out of the field people
+    // type in and goes back on at save; left visible it reads as junk and one
+    // keystroke would silently put the schedule back to the day number.
+    _notesController = TextEditingController(
+      text: notesWithScheduleRule(recurrence?.notes, null) ?? '',
+    );
 
     _firstDate =
         recurrence?.firstDate ?? DateTime.now().add(const Duration(days: 1));
@@ -122,6 +136,33 @@ class _RecurringTransactionFormDialogState
     _transactionLineId = tx?.id;
     _active = recurrence?.active ?? true;
     _applyRules = recurrence?.applyRules ?? true;
+
+    final rule = recurrence?.scheduleRule;
+    _useScheduleRule = rule != null;
+    if (rule != null) {
+      switch (rule.anchor) {
+        case DayOfMonthAnchor(:final day):
+          _anchorIsWeekday = false;
+          _anchorDay = day;
+        case NthWeekdayAnchor(:final index, :final weekday):
+          _anchorIsWeekday = true;
+          _anchorIndex = index;
+          _anchorWeekday = weekday;
+      }
+      _adjustment = rule.adjustment;
+      _calendar = rule.calendar;
+    }
+  }
+
+  RecurrenceScheduleRule? _scheduleRule() {
+    if (!_useScheduleRule) return null;
+    return RecurrenceScheduleRule(
+      anchor: _anchorIsWeekday
+          ? NthWeekdayAnchor(index: _anchorIndex, weekday: _anchorWeekday)
+          : DayOfMonthAnchor(_anchorDay),
+      adjustment: _adjustment,
+      calendar: _calendar,
+    );
   }
 
   @override
@@ -207,6 +248,48 @@ class _RecurringTransactionFormDialogState
     };
   }
 
+  String _adjustmentLabel(RecurrenceDateAdjustment adjustment) {
+    final l10n = context.l10n;
+    return switch (adjustment) {
+      RecurrenceDateAdjustment.none => l10n.scheduleAdjustNone,
+      RecurrenceDateAdjustment.previousBankingDay =>
+        l10n.scheduleAdjustPreviousBanking,
+      RecurrenceDateAdjustment.nextBankingDay => l10n.scheduleAdjustNextBanking,
+    };
+  }
+
+  String _calendarLabel(BankingCalendar calendar) {
+    final l10n = context.l10n;
+    return calendar.name == BankingCalendar.sweden.name
+        ? l10n.scheduleCalendarSweden
+        : l10n.scheduleCalendarWeekend;
+  }
+
+  String _anchorIndexLabel(int index) {
+    final l10n = context.l10n;
+    return switch (index) {
+      1 => l10n.scheduleNthFirst,
+      2 => l10n.scheduleNthSecond,
+      3 => l10n.scheduleNthThird,
+      4 => l10n.scheduleNthFourth,
+      5 => l10n.scheduleNthFifth,
+      -1 => l10n.scheduleNthLast,
+      // Only a rule written through MCP reaches here: the picker offers the
+      // six above. Naming it keeps the dropdown able to show what is stored
+      // rather than snapping it to something else on the way in.
+      _ => l10n.scheduleNthFromLast(-index),
+    };
+  }
+
+  /// The choices for which weekday of the month, with whatever a stored rule
+  /// carries alongside them.
+  List<int> get _anchorIndexChoices {
+    const offered = [1, 2, 3, 4, 5, -1];
+    return offered.contains(_anchorIndex)
+        ? offered
+        : [...offered, _anchorIndex];
+  }
+
   String _endModeLabel(RecurrenceEndMode mode) {
     final l10n = context.l10n;
     return switch (mode) {
@@ -246,7 +329,7 @@ class _RecurringTransactionFormDialogState
           : null,
       applyRules: _applyRules,
       active: _active,
-      notes: _notesController.text,
+      notes: notesWithScheduleRule(_notesController.text, _scheduleRule()),
       repetitions: [
         RecurrenceRepetitionInput(
           type: _repetitionType,
@@ -940,7 +1023,177 @@ class _RecurringTransactionFormDialogState
           },
           controlAffinity: ListTileControlAffinity.leading,
         ),
+        const SizedBox(height: 24),
+        _buildScheduleRule(l10n),
       ],
+    );
+  }
+
+  /// A monthly schedule Firefly cannot state, such as the last banking day of
+  /// the month.
+  ///
+  /// Firefly stores a day number and, separately, what to do about weekends.
+  /// Pairing the two reaches some of these dates but says nothing about what
+  /// was meant, so the two settings drift apart and nobody guesses the pairing
+  /// in the first place. This says it once, and FireRaccoon's own forecast
+  /// reads it.
+  Widget _buildScheduleRule(dynamic l10n) {
+    final format = ref.watch(localeFormattingProvider);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _sectionTitle(l10n.scheduleRuleSection),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text(l10n.scheduleRuleEnable),
+          subtitle: Text(
+            l10n.scheduleRuleHelp,
+            style: TextStyle(color: context.colors.text3, fontSize: 12),
+          ),
+          value: _useScheduleRule,
+          onChanged: (value) => setState(() => _useScheduleRule = value),
+        ),
+        if (_useScheduleRule) ...[
+          const SizedBox(height: 16),
+          DropdownButtonFormField<bool>(
+            initialValue: _anchorIsWeekday,
+            isExpanded: true,
+            decoration: _fieldDecoration(l10n.scheduleAnchorKind),
+            items: [
+              DropdownMenuItem(
+                value: false,
+                child: Text(l10n.scheduleAnchorDayOfMonth),
+              ),
+              DropdownMenuItem(
+                value: true,
+                child: Text(l10n.scheduleAnchorWeekday),
+              ),
+            ],
+            onChanged: (value) {
+              if (value != null) setState(() => _anchorIsWeekday = value);
+            },
+          ),
+          const SizedBox(height: 16),
+          if (!_anchorIsWeekday)
+            DropdownButtonFormField<int>(
+              initialValue: _anchorDay,
+              isExpanded: true,
+              decoration: _fieldDecoration(
+                l10n.scheduleAnchorDay,
+                helper: l10n.scheduleAnchorDayHelp,
+              ),
+              items: [
+                for (var day = 1; day <= 31; day++)
+                  DropdownMenuItem(value: day, child: Text('$day')),
+              ],
+              onChanged: (value) {
+                if (value != null) setState(() => _anchorDay = value);
+              },
+            )
+          else ...[
+            DropdownButtonFormField<int>(
+              initialValue: _anchorIndex,
+              isExpanded: true,
+              decoration: _fieldDecoration(l10n.scheduleAnchorWhich),
+              items: [
+                for (final index in _anchorIndexChoices)
+                  DropdownMenuItem(
+                    value: index,
+                    child: Text(_anchorIndexLabel(index)),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value != null) setState(() => _anchorIndex = value);
+              },
+            ),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<int>(
+              initialValue: _anchorWeekday,
+              isExpanded: true,
+              decoration: _fieldDecoration(l10n.scheduleAnchorWeekdayName),
+              items: [
+                for (var weekday = 1; weekday <= 7; weekday++)
+                  DropdownMenuItem(
+                    value: weekday,
+                    child: Text(format.formatWeekdayName(weekday)),
+                  ),
+              ],
+              onChanged: (value) {
+                if (value != null) setState(() => _anchorWeekday = value);
+              },
+            ),
+          ],
+          const SizedBox(height: 16),
+          DropdownButtonFormField<RecurrenceDateAdjustment>(
+            initialValue: _adjustment,
+            isExpanded: true,
+            decoration: _fieldDecoration(l10n.scheduleAdjustment),
+            items: RecurrenceDateAdjustment.values
+                .map(
+                  (a) => DropdownMenuItem(
+                    value: a,
+                    child: Text(_adjustmentLabel(a)),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value != null) setState(() => _adjustment = value);
+            },
+          ),
+          // Which days are shut only matters once something moves off them.
+          if (_adjustment != RecurrenceDateAdjustment.none) ...[
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              initialValue: _calendar.name,
+              isExpanded: true,
+              decoration: _fieldDecoration(
+                l10n.scheduleCalendar,
+                helper: l10n.scheduleCalendarHelp,
+              ),
+              items: BankingCalendar.all
+                  .map(
+                    (c) => DropdownMenuItem(
+                      value: c.name,
+                      child: Text(_calendarLabel(c)),
+                    ),
+                  )
+                  .toList(),
+              onChanged: (value) {
+                final calendar = BankingCalendar.byName(value);
+                if (calendar != null) setState(() => _calendar = calendar);
+              },
+            ),
+          ],
+          const SizedBox(height: 12),
+          _scheduleRulePreview(l10n, format),
+        ],
+      ],
+    );
+  }
+
+  /// The next few dates the rule produces, so a rule can be checked against
+  /// the calendar rather than reasoned about.
+  Widget _scheduleRulePreview(dynamic l10n, LocaleFormatting format) {
+    final rule = _scheduleRule()!;
+    final today = DateTime.now();
+    final dates = <DateTime>[];
+    var month = DateTime(today.year, today.month, 1);
+    for (var step = 0; step < 14 && dates.length < 3; step++) {
+      final date = rule.dateIn(month.year, month.month);
+      if (date != null &&
+          !date.isBefore(DateTime(today.year, today.month, today.day)) &&
+          !dates.contains(date)) {
+        dates.add(date);
+      }
+      month = DateTime(month.year, month.month + 1, 1);
+    }
+    return Text(
+      dates.isEmpty
+          ? l10n.scheduleRuleNoDates
+          : l10n.scheduleRuleNextDates(
+              dates.map(format.formatMediumDate).join(', '),
+            ),
+      style: TextStyle(color: context.colors.text3, fontSize: 12),
     );
   }
 

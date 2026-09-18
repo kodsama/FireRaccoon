@@ -7047,6 +7047,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset to default'**
   String get mcpBasePortReset;
+
+  /// No description provided for @scheduleRuleSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Banking-day rule'**
+  String get scheduleRuleSection;
+
+  /// No description provided for @scheduleRuleEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Use a banking-day rule'**
+  String get scheduleRuleEnable;
+
+  /// No description provided for @scheduleRuleHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'FireRaccoon\'s forecast and the rows it writes ahead follow this rule instead of the day number above. Firefly III keeps that day number for what it generates itself, so leave it as close to the rule as it can get.'**
+  String get scheduleRuleHelp;
+
+  /// No description provided for @scheduleAnchorKind.
+  ///
+  /// In en, this message translates to:
+  /// **'Falls on'**
+  String get scheduleAnchorKind;
+
+  /// No description provided for @scheduleAnchorDayOfMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'A day of the month'**
+  String get scheduleAnchorDayOfMonth;
+
+  /// No description provided for @scheduleAnchorWeekday.
+  ///
+  /// In en, this message translates to:
+  /// **'A weekday of the month'**
+  String get scheduleAnchorWeekday;
+
+  /// No description provided for @scheduleAnchorDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day of the month'**
+  String get scheduleAnchorDay;
+
+  /// No description provided for @scheduleAnchorDayHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'31 means the last day, falling back in a shorter month.'**
+  String get scheduleAnchorDayHelp;
+
+  /// No description provided for @scheduleAnchorWhich.
+  ///
+  /// In en, this message translates to:
+  /// **'Which one'**
+  String get scheduleAnchorWhich;
+
+  /// No description provided for @scheduleNthFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'First'**
+  String get scheduleNthFirst;
+
+  /// No description provided for @scheduleNthSecond.
+  ///
+  /// In en, this message translates to:
+  /// **'Second'**
+  String get scheduleNthSecond;
+
+  /// No description provided for @scheduleNthThird.
+  ///
+  /// In en, this message translates to:
+  /// **'Third'**
+  String get scheduleNthThird;
+
+  /// No description provided for @scheduleNthFourth.
+  ///
+  /// In en, this message translates to:
+  /// **'Fourth'**
+  String get scheduleNthFourth;
+
+  /// No description provided for @scheduleNthFifth.
+  ///
+  /// In en, this message translates to:
+  /// **'Fifth'**
+  String get scheduleNthFifth;
+
+  /// No description provided for @scheduleNthLast.
+  ///
+  /// In en, this message translates to:
+  /// **'Last'**
+  String get scheduleNthLast;
+
+  /// No description provided for @scheduleNthFromLast.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} back from the last'**
+  String scheduleNthFromLast(int count);
+
+  /// No description provided for @scheduleAnchorWeekdayName.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekday'**
+  String get scheduleAnchorWeekdayName;
+
+  /// No description provided for @scheduleAdjustment.
+  ///
+  /// In en, this message translates to:
+  /// **'Then move it to'**
+  String get scheduleAdjustment;
+
+  /// No description provided for @scheduleAdjustNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave it where it falls'**
+  String get scheduleAdjustNone;
+
+  /// No description provided for @scheduleAdjustPreviousBanking.
+  ///
+  /// In en, this message translates to:
+  /// **'The banking day before'**
+  String get scheduleAdjustPreviousBanking;
+
+  /// No description provided for @scheduleAdjustNextBanking.
+  ///
+  /// In en, this message translates to:
+  /// **'The banking day after'**
+  String get scheduleAdjustNextBanking;
+
+  /// No description provided for @scheduleCalendar.
+  ///
+  /// In en, this message translates to:
+  /// **'Banking calendar'**
+  String get scheduleCalendar;
+
+  /// No description provided for @scheduleCalendarWeekend.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekends only'**
+  String get scheduleCalendarWeekend;
+
+  /// No description provided for @scheduleCalendarSweden.
+  ///
+  /// In en, this message translates to:
+  /// **'Sweden'**
+  String get scheduleCalendarSweden;
+
+  /// No description provided for @scheduleCalendarHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Which days count as closed. Sweden counts Midsummer Eve, Christmas Eve and New Year\'s Eve alongside the public holidays.'**
+  String get scheduleCalendarHelp;
+
+  /// No description provided for @scheduleRuleNextDates.
+  ///
+  /// In en, this message translates to:
+  /// **'Next: {dates}'**
+  String scheduleRuleNextDates(String dates);
+
+  /// No description provided for @scheduleRuleNoDates.
+  ///
+  /// In en, this message translates to:
+  /// **'This rule produces no dates.'**
+  String get scheduleRuleNoDates;
 }
 
 class _AppLocalizationsDelegate

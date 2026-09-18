@@ -518,7 +518,10 @@ nothing on those three and that is what "banking day" has to mean for a salary.
 
 Firefly cannot store this, so the rule rides in the recurrence notes under
 `fireraccoon:schedule:` and FireRaccoon's own expansion honours it, for the
-prognosis, the projection and the rows it writes ahead. Firefly's repetition
+prognosis, the projection and the rows it writes ahead. The app's recurring
+transaction form sets the same rule, and keeps the marker out of the notes field
+people type in: it is a marker rather than prose, and left visible one keystroke
+would put the schedule silently back to the day number. Firefly's repetition
 stays underneath as the fallback for anything the server generates, so set both:
 the closest `monthly` day number, and the rule. An empty `schedule_rule` drops
 it. A rule nobody can parse reads as no rule at all and the Firefly repetition

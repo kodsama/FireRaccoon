@@ -91,6 +91,17 @@ class LocaleFormatting {
     return _date('yMMMM', () => DateFormat.yMMMM(_dateTag)).format(date);
   }
 
+  /// The name of a `DateTime.monday`-style weekday.
+  ///
+  /// Any week will do: 5 January 2026 was a Monday, so adding the weekday
+  /// number lands on that weekday without a calendar lookup.
+  String formatWeekdayName(int weekday) {
+    return _date(
+      'EEEE',
+      () => DateFormat.EEEE(_dateTag),
+    ).format(DateTime(2026, 1, 4 + weekday));
+  }
+
   String formatMediumDate(DateTime date) {
     return _date('yMMMd', () => DateFormat.yMMMd(_dateTag)).format(date);
   }
