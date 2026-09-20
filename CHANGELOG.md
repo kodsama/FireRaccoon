@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Nothing in the top strip of a page responded to a click while the header
+  search field had focus. Focusing it opens the suggestion box, and on an empty
+  query that box holds only the hint naming what the current page can be
+  searched by. It still covered what sat under it and took every click landing
+  there, which on the dashboard is exactly where the Insights / Accounts /
+  Focus pills are. The hint no longer accepts pointers, so the click reaches
+  the page and the box closes along with the focus it follows
+
 ## [0.13.0] - 2026-09-18
 
 ### Added
