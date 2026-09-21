@@ -92,6 +92,84 @@ DashboardPeriodKey get _currentMonthPeriodKey {
 }
 
 void main() {
+  group('the dashboard forecast', () {
+    test('runs ninety days and lists what is dated ahead', () async {
+      final soon = DateTime.now().add(const Duration(days: 3));
+      final container = await _container(
+        accounts: [_asset(id: '1', balance: 1000)],
+        transactions: [
+          Transaction(
+            id: 'rent',
+            type: 'withdrawal',
+            date: DateTime(soon.year, soon.month, soon.day),
+            amount: 400,
+            description: 'Rent',
+            sourceName: 'Asset 1',
+            destinationName: 'Landlord',
+            categoryName: 'Housing',
+            currencySymbol: '€',
+            currencyCode: 'EUR',
+          ),
+        ],
+      );
+
+      final forecast = container.read(dashboardForecastProvider);
+      expect(
+        forecast.horizonEnd.difference(DateTime.now()).inDays,
+        greaterThanOrEqualTo(kDashboardOutlookDays - 1),
+      );
+
+      final outlook = container.read(ninetyDayOutlookProvider);
+      expect(outlook.series, hasLength(kDashboardOutlookDays + 1));
+      expect(outlook.today, 1000);
+      expect(outlook.atEnd, 600);
+
+      final coming = container.read(upcomingMovementsProvider);
+      expect(coming, hasLength(1));
+      expect(coming.single.description, 'Rent');
+      expect(coming.single.amount, -400);
+      expect(coming.single.accountName, 'Asset 1');
+    });
+  });
+
+  group('budgetHealthProvider', () {
+    test('reads the budgets against the month', () async {
+      SharedPreferences.setMockInitialValues({});
+      final prefs = await SharedPreferences.getInstance();
+      final container = ProviderContainer(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          budgetsProvider.overrideWith(
+            (ref) async => [
+              Budget(
+                id: '1',
+                name: 'Food',
+                active: true,
+                spent: 100,
+                autoBudgetAmount: 400,
+              ),
+              Budget(
+                id: '2',
+                name: 'Transport',
+                active: true,
+                spent: 500,
+                autoBudgetAmount: 300,
+              ),
+            ],
+          ),
+        ],
+      );
+      addTearDown(container.dispose);
+      await container.read(budgetsProvider.future);
+
+      final health = container.read(budgetHealthProvider);
+      expect(health.counted, 2);
+      expect(health.over, 1);
+      expect(health.spent, 600);
+      expect(health.budgeted, 700);
+    });
+  });
+
   group('netWorthBreakdownProvider', () {
     test('caches a single negative net worth result', () async {
       final container = await _container(

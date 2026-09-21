@@ -180,17 +180,61 @@ final endOfMonthOutlookProvider = Provider<EndOfMonthOutlook>((ref) {
   return computeEndOfMonthOutlook(transactions: _transactions(ref));
 });
 
-/// Cached forward-looking net-worth projection for a period.
-final projectionOutlookProvider = Provider.autoDispose
-    .family<List<double>, DashboardPeriodKey>((ref, key) {
-      final period = ref.watch(dashboardPeriodContextProvider(key));
-      final netWorth = ref.watch(netWorthBreakdownProvider).netWorth;
-      return projectionOutlook(
-        netWorth,
-        _transactionsForPeriod(ref, key),
-        period.range,
-      );
-    });
+/// How far ahead the dashboard's outlook card looks.
+const kDashboardOutlookDays = 90;
+
+/// The forecast the dashboard reads: ninety days ahead, on its own horizon
+/// rather than the projection page's.
+///
+/// That page is where a horizon is chosen and changed; a card that says
+/// ninety days on it has to mean ninety days whatever was left set there.
+final dashboardForecastProvider = Provider<AccountPrognosisResult>((ref) {
+  final reference = DateTime.now();
+  final bills = ref.watch(billsProvider).asData?.value ?? const [];
+  final recurrences = ref.watch(recurrencesProvider).asData?.value ?? const [];
+  final settings = ref.watch(prognosisSettingsProvider);
+
+  return AccountPrognosisService.compute(
+    accounts: _accounts(ref),
+    transactions: _transactions(ref),
+    bills: bills,
+    recurrences: recurrences,
+    options: PrognosisOptions(
+      reference: reference,
+      inclusion: settings.inclusion,
+      marginPercent: settings.marginPercent,
+      horizon: PrognosisHorizon.customDate,
+      customHorizonDate: DateTime(
+        reference.year,
+        reference.month,
+        reference.day + kDashboardOutlookDays,
+      ),
+    ),
+  );
+});
+
+/// Ninety days of that forecast, added up over the asset accounts.
+final ninetyDayOutlookProvider = Provider<ProjectionOutlook>((ref) {
+  return projectionOutlook(
+    ref.watch(dashboardForecastProvider),
+    reference: DateTime.now(),
+    days: kDashboardOutlookDays,
+  );
+});
+
+/// What the forecast has dated over the next month.
+final upcomingMovementsProvider = Provider<List<UpcomingMovement>>((ref) {
+  return upcomingMovements(
+    ref.watch(dashboardForecastProvider),
+    reference: DateTime.now(),
+  );
+});
+
+/// How the budgets are holding against the month so far.
+final budgetHealthProvider = Provider<BudgetHealth>((ref) {
+  final budgets = ref.watch(budgetsProvider).asData?.value ?? const [];
+  return budgetHealth(budgets, reference: DateTime.now());
+});
 
 /// Cached account prognosis shared across dashboard, accounts, and prognosis screens.
 final accountPrognosisProvider = Provider<AccountPrognosisResult>((ref) {

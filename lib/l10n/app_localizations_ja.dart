@@ -619,7 +619,49 @@ class AppLocalizationsJa extends AppLocalizations {
   String get viewAllAccounts => 'すべての口座を表示';
 
   @override
-  String get thirtyDayOutlook => '30 日間の見通し';
+  String get ninetyDayOutlook => '90日間の見通し';
+
+  @override
+  String get whatIsComing => 'これからの予定';
+
+  @override
+  String get nothingScheduledAhead => '今後1か月の予定はありません';
+
+  @override
+  String get budgetsInANutshell => '予算のあらまし';
+
+  @override
+  String get budgetsNoneSet => '予算額が未設定です';
+
+  @override
+  String outlookDeltaFromToday(String amount) {
+    return '本日から$amount';
+  }
+
+  @override
+  String outlookLowOn(String amount, String date) {
+    return '最低 $amount（$date）';
+  }
+
+  @override
+  String outlookNegativeFrom(String date) {
+    return '$date以降はマイナス';
+  }
+
+  @override
+  String budgetsWithinCount(int within, int total) {
+    return '$total件中$within件が予算内';
+  }
+
+  @override
+  String budgetsAheadOfPace(String amount) {
+    return '月の進みより$amount多い';
+  }
+
+  @override
+  String budgetsWithinPace(String amount) {
+    return '月の進みより$amount余裕あり';
+  }
 
   @override
   String get monthEndPrognosis => '月末の見通し';
@@ -768,12 +810,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get prognosisPredictedBalances => '予測残高';
-
-  @override
-  String get todaysTimeline => '今日のタイムライン';
-
-  @override
-  String get noActivityToday => '今日のアクティビティはありません';
 
   @override
   String get noChangeVsLastMonth => '先月と変化なし';

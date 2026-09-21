@@ -27,6 +27,7 @@ import '../widgets/simple_charts.dart';
 import '../widgets/fun_decorated_surface.dart';
 
 import '../l10n/app_localizations.dart';
+import '../l10n/fun_l10n.dart';
 import '../l10n/l10n_extensions.dart';
 import '../utils/locale_formatting.dart';
 import '../providers/default_period_provider.dart';
@@ -634,31 +635,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _MonthEndPrognosisPanel(
-              prognosis: prognosis,
+            _AccountsOutlookTable(
+              title: fun.yourAccounts,
               accounts: assets,
+              prognosis: prognosis,
+              balanceHistories: balanceHistories,
               format: format,
+              currency: currency,
               onOpenPrognosis: _openPrognosis,
-            ),
-            const SizedBox(height: 24),
-            Text(fun.yourAccounts, style: context.textTheme.titleLarge),
-            const SizedBox(height: 16),
-            Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: assets
-                  .map(
-                    (account) => _AccountTile(
-                      account: account,
-                      balanceHistory: balanceHistories[account.name],
-                      prognosis: prognosis.forAccount(account.id),
-                      format: format,
-                      onTap: () => context.goPreservingSearch(
-                        TransactionsRoute.location(account: account.name),
-                      ),
-                    ),
-                  )
-                  .toList(),
+              onOpenAccount: (account) => context.goPreservingSearch(
+                TransactionsRoute.location(account: account.name),
+              ),
             ),
             const SizedBox(height: 24),
             Material(
@@ -772,8 +759,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final format = ref.watch(localeFormattingProvider);
     final languageCode = ref.watch(localeProvider).languageCode;
     final accountsAsync = ref.watch(accountsProvider);
-    final transactionsAsync = ref.watch(transactionsProvider);
-    final colors = context.colors;
+    final budgetsAsync = ref.watch(budgetsProvider);
 
     return accountsAsync.when(
       skipLoadingOnReload: true,
@@ -790,7 +776,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               message: l10n.errorGeneric(error.toString()),
             ),
       data: (accounts) {
-        final transactions = transactionsAsync.value ?? [];
         final periodKey = filters.periodKey;
         final periodLabels = _periodContext(filters, l10n, format);
         final kpis = ref.watch(
@@ -809,180 +794,73 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             languageCode: languageCode,
           )),
         );
-        final outlook = ref.watch(projectionOutlookProvider(periodKey));
-        final now = DateTime.now();
-        final todayRange = DateRangeBounds(
-          start: DateTime(now.year, now.month, now.day),
-          end: DateTime(
-            now.year,
-            now.month,
-            now.day,
-          ).add(const Duration(days: 1)),
-        );
-        final today = transactionsInRange(
-          transactions,
-          todayRange,
-        ).where((t) => t.matchesSearch(searchQuery)).toList();
+        final outlook = ref.watch(ninetyDayOutlookProvider);
+        final coming = ref.watch(upcomingMovementsProvider);
+        final netWorth = ref.watch(netWorthBreakdownProvider);
+        final health = ref.watch(budgetHealthProvider);
+        final budgets =
+            (budgetsAsync.value ?? const <Budget>[])
+                .where((budget) => budget.active && budget.autoBudgetAmount > 0)
+                .toList()
+              ..sort(
+                (a, b) => (b.spent / b.autoBudgetAmount).compareTo(
+                  a.spent / a.autoBudgetAmount,
+                ),
+              );
 
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return Column(
           children: [
-            Expanded(
-              flex: 3,
-              child: Material(
-                color: colors.accent.deep,
-                borderRadius: BorderRadius.circular(16),
-                clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  onTap: _openAccounts,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: colors.accent.deep,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fun.netWorth,
-                          style: TextStyle(color: colors.accent.hi),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          format.formatMoney(kpis.totalBalance, kpis.currency),
-                          style: const TextStyle(
-                            fontFamily: 'Roboto Slab',
-                            fontSize: 46,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          formatDeltaLabel(
-                            l10n,
-                            format,
-                            kpis.savedDelta,
-                            comparisonPeriodLabel:
-                                periodLabels.comparisonPeriodLabel,
-                          ),
-                          style: TextStyle(
-                            color: kpis.savedDelta.isPositive
-                                ? colors.success
-                                : colors.warning,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        SimpleSparkline(
-                          values: sparkline,
-                          color: colors.accent.hi,
-                          width: double.infinity,
-                          height: 70,
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _InsetStat(
-                                label: fun.income,
-                                value: format.formatMoney(
-                                  kpis.periodIncome,
-                                  kpis.currency,
-                                  decimalDigits: 0,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _InsetStat(
-                                label: fun.spending,
-                                value: format.formatMoney(
-                                  kpis.periodSpending,
-                                  kpis.currency,
-                                  decimalDigits: 0,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: _NetWorthCard(
+                      netWorth: netWorth,
+                      kpis: kpis,
+                      sparkline: sparkline,
+                      format: format,
+                      fun: fun,
+                      comparisonPeriodLabel: periodLabels.comparisonPeriodLabel,
+                      onTap: _openAccounts,
                     ),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: _OutlookCard(
+                      outlook: outlook,
+                      currency: kpis.currency,
+                      format: format,
+                      onTap: _openProjection,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: Column(
+            const SizedBox(height: 16),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _DashboardTappableCard(
-                    tooltip: l10n.thirtyDayOutlook,
-                    onTap: _openProjection,
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.thirtyDayOutlook,
-                            style: context.textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 16),
-                          SimpleSparkline(
-                            values: outlook,
-                            color: colors.accent.acc,
-                            width: double.infinity,
-                            height: 80,
-                          ),
-                        ],
-                      ),
+                  Expanded(
+                    flex: 3,
+                    child: _UpcomingCard(
+                      movements: coming,
+                      format: format,
+                      onTap: _openTransactions,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  _DashboardTappableCard(
-                    tooltip: l10n.todaysTimeline,
-                    onTap: _openTransactions,
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            l10n.todaysTimeline,
-                            style: context.textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 16),
-                          if (today.isEmpty)
-                            Text(
-                              l10n.noActivityToday,
-                              style: TextStyle(color: colors.text3),
-                            )
-                          else
-                            ...today.map((transaction) {
-                              final isIncome = transaction.type == 'deposit';
-                              return Padding(
-                                padding: const EdgeInsets.only(bottom: 12),
-                                child: _ActivityRow(
-                                  transaction.displayTitle(),
-                                  transaction.displayCategorySummary(l10n),
-                                  format.formatSignedMoney(
-                                    isIncome
-                                        ? transaction.totalAmount
-                                        : -transaction.totalAmount,
-                                    transaction.currencySymbol,
-                                  ),
-                                  isIncome
-                                      ? LucideIcons.arrowDownLeft
-                                      : LucideIcons.arrowUpRight,
-                                ),
-                              );
-                            }),
-                        ],
-                      ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: _BudgetHealthCard(
+                      health: health,
+                      budgets: budgets,
+                      currency: kpis.currency,
+                      format: format,
+                      onTap: _openBudgets,
                     ),
                   ),
                 ],
@@ -991,6 +869,456 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+/// The headline card: what everything adds up to, what it is made of, and
+/// how the period has gone.
+class _NetWorthCard extends StatelessWidget {
+  const _NetWorthCard({
+    required this.netWorth,
+    required this.kpis,
+    required this.sparkline,
+    required this.format,
+    required this.fun,
+    required this.comparisonPeriodLabel,
+    required this.onTap,
+  });
+
+  final NetWorthBreakdown netWorth;
+  final DashboardKpis kpis;
+  final List<double> sparkline;
+  final LocaleFormatting format;
+  final FunL10n fun;
+  final String? comparisonPeriodLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = context.l10n;
+    final saved = kpis.periodSaved;
+    final rate = kpis.periodIncome <= 0 ? null : saved / kpis.periodIncome;
+
+    return Material(
+      color: colors.accent.deep,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(fun.netWorth, style: TextStyle(color: colors.accent.hi)),
+              const SizedBox(height: 12),
+              Text(
+                format.formatMoney(netWorth.netWorth, kpis.currency),
+                style: const TextStyle(
+                  fontFamily: 'Roboto Slab',
+                  fontSize: 42,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${l10n.filterAssetsShort} '
+                '${format.formatMoney(netWorth.assets, kpis.currency, decimalDigits: 0)}'
+                '   ·   '
+                '${l10n.filterLiabilitiesShort} '
+                '${format.formatMoney(netWorth.liabilities, kpis.currency, decimalDigits: 0)}',
+                style: TextStyle(color: colors.accent.hi, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                formatDeltaLabel(
+                  l10n,
+                  format,
+                  kpis.savedDelta,
+                  comparisonPeriodLabel: comparisonPeriodLabel,
+                ),
+                style: TextStyle(
+                  color: kpis.savedDelta.isPositive
+                      ? colors.success
+                      : colors.warning,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SimpleSparkline(
+                values: sparkline,
+                color: colors.accent.hi,
+                width: double.infinity,
+                height: 64,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _InsetStat(
+                      label: fun.income,
+                      value: format.formatMoney(
+                        kpis.periodIncome,
+                        kpis.currency,
+                        decimalDigits: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _InsetStat(
+                      label: fun.spending,
+                      value: format.formatMoney(
+                        kpis.periodSpending,
+                        kpis.currency,
+                        decimalDigits: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _InsetStat(
+                      label: rate == null
+                          ? fun.saved
+                          : '${fun.saved} · '
+                                '${format.formatPercent(rate * 100, decimalDigits: 0)}%',
+                      value: format.formatMoney(
+                        saved,
+                        kpis.currency,
+                        decimalDigits: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// What the forecast has dated over the next month: the rent, the salary,
+/// the subscriptions. The figures elsewhere on this tab are made of these,
+/// and until now the only way to see them was the projection page.
+class _UpcomingCard extends StatelessWidget {
+  const _UpcomingCard({
+    required this.movements,
+    required this.format,
+    required this.onTap,
+  });
+
+  final List<UpcomingMovement> movements;
+  final LocaleFormatting format;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = context.l10n;
+
+    return _DashboardTappableCard(
+      tooltip: l10n.whatIsComing,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.whatIsComing, style: context.textTheme.titleMedium),
+            const SizedBox(height: 16),
+            if (movements.isEmpty)
+              Text(
+                l10n.nothingScheduledAhead,
+                style: TextStyle(color: colors.text3),
+              )
+            else
+              for (final movement in movements)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 54,
+                        child: Text(
+                          format.formatDayMonth(movement.date),
+                          style: TextStyle(
+                            color: colors.text3,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        movement.isIncome
+                            ? LucideIcons.arrowDownLeft
+                            : LucideIcons.arrowUpRight,
+                        size: 15,
+                        color: movement.isIncome
+                            ? colors.success
+                            : colors.text3,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              movement.description,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              movement.accountName,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors.text3,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        format.formatSignedMoney(
+                          movement.amount,
+                          movement.currencySymbol,
+                          decimalDigits: 0,
+                        ),
+                        style: TextStyle(
+                          fontFamily: 'Roboto Slab',
+                          fontWeight: FontWeight.w700,
+                          color: movement.isIncome
+                              ? colors.success
+                              : colors.text,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Where the asset accounts are heading over the next ninety days, off the
+/// same forecast the projection page draws: scheduled transactions, recurring
+/// items and bills, not a line ruled through last month's spending.
+class _OutlookCard extends StatelessWidget {
+  const _OutlookCard({
+    required this.outlook,
+    required this.currency,
+    required this.format,
+    required this.onTap,
+  });
+
+  final ProjectionOutlook outlook;
+  final String currency;
+  final LocaleFormatting format;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = context.l10n;
+    final falling = outlook.delta < 0;
+    final negative = outlook.firstNegativeDate;
+
+    return _DashboardTappableCard(
+      tooltip: l10n.ninetyDayOutlook,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.ninetyDayOutlook, style: context.textTheme.titleMedium),
+            const SizedBox(height: 12),
+            Text(
+              format.formatMoney(outlook.atEnd, currency, decimalDigits: 0),
+              style: TextStyle(
+                fontFamily: 'Roboto Slab',
+                fontSize: 30,
+                fontWeight: FontWeight.w700,
+                color: outlook.atEnd < 0 ? colors.danger : colors.text,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              l10n.outlookDeltaFromToday(
+                format.formatSignedMoney(
+                  outlook.delta,
+                  currency,
+                  decimalDigits: 0,
+                ),
+              ),
+              style: TextStyle(
+                color: falling ? colors.warning : colors.success,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SimpleSparkline(
+              values: outlook.series,
+              color: negative == null ? colors.accent.acc : colors.danger,
+              width: double.infinity,
+              height: 70,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              negative != null
+                  ? l10n.outlookNegativeFrom(format.formatMediumDate(negative))
+                  : l10n.outlookLowOn(
+                      format.formatMoney(
+                        outlook.low,
+                        currency,
+                        decimalDigits: 0,
+                      ),
+                      format.formatMediumDate(outlook.lowDate),
+                    ),
+              style: TextStyle(
+                color: negative != null ? colors.danger : colors.text3,
+                fontSize: 12,
+                fontWeight: negative != null
+                    ? FontWeight.w600
+                    : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Budgets in a nutshell: what is spent against what was set, whether that is
+/// ahead of where the month has got to, and the ones running hottest.
+class _BudgetHealthCard extends StatelessWidget {
+  const _BudgetHealthCard({
+    required this.health,
+    required this.budgets,
+    required this.currency,
+    required this.format,
+    required this.onTap,
+  });
+
+  final BudgetHealth health;
+  final List<Budget> budgets;
+  final String currency;
+  final LocaleFormatting format;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = context.l10n;
+
+    return _DashboardTappableCard(
+      tooltip: l10n.budgetsInANutshell,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.budgetsInANutshell, style: context.textTheme.titleMedium),
+            const SizedBox(height: 12),
+            if (!health.hasBudgets)
+              Text(l10n.budgetsNoneSet, style: TextStyle(color: colors.text3))
+            else ...[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.budgetSpentFraction(
+                        format.formatMoney(
+                          health.spent,
+                          currency,
+                          decimalDigits: 0,
+                        ),
+                        format.formatMoney(
+                          health.budgeted,
+                          currency,
+                          decimalDigits: 0,
+                        ),
+                      ),
+                      style: const TextStyle(
+                        fontFamily: 'Roboto Slab',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    l10n.budgetsWithinCount(health.within, health.counted),
+                    style: TextStyle(
+                      color: health.over == 0 ? colors.success : colors.warning,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              LinearProgressIndicator(
+                value: health.progress.clamp(0.0, 1.0),
+                backgroundColor: colors.surface2,
+                color: health.progress > 1
+                    ? colors.danger
+                    : health.aheadOfPace
+                    ? colors.warning
+                    : colors.success,
+                minHeight: 8,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                health.aheadOfPace
+                    ? l10n.budgetsAheadOfPace(
+                        format.formatMoney(
+                          health.pace,
+                          currency,
+                          decimalDigits: 0,
+                        ),
+                      )
+                    : l10n.budgetsWithinPace(
+                        format.formatMoney(
+                          health.pace.abs(),
+                          currency,
+                          decimalDigits: 0,
+                        ),
+                      ),
+                style: TextStyle(
+                  color: health.aheadOfPace ? colors.warning : colors.success,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ...budgets
+                  .take(4)
+                  .map(
+                    (budget) => _BudgetGlanceRow(
+                      budget: budget,
+                      format: format,
+                      budgetSymbol: budget.currencySymbol ?? currency,
+                    ),
+                  ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
@@ -1136,48 +1464,75 @@ class _DashboardFilterChip extends StatelessWidget {
   }
 }
 
-class _MonthEndPrognosisPanel extends StatelessWidget {
-  final AccountPrognosisResult prognosis;
-  final List<Account> accounts;
-  final LocaleFormatting format;
-  final VoidCallback onOpenPrognosis;
-
-  const _MonthEndPrognosisPanel({
-    required this.prognosis,
+/// Every asset account in one list: where it stands, where the month leaves
+/// it, and the line between.
+///
+/// The month-end figures used to sit in a panel of their own over a grid of
+/// the same accounts, so each name was on the page twice and pairing the two
+/// up was the reader's job.
+class _AccountsOutlookTable extends StatelessWidget {
+  const _AccountsOutlookTable({
+    required this.title,
     required this.accounts,
+    required this.prognosis,
+    required this.balanceHistories,
     required this.format,
+    required this.currency,
     required this.onOpenPrognosis,
+    required this.onOpenAccount,
   });
+
+  final String title;
+  final List<Account> accounts;
+  final AccountPrognosisResult prognosis;
+  final Map<String, List<double>> balanceHistories;
+  final LocaleFormatting format;
+  final String currency;
+  final VoidCallback onOpenPrognosis;
+  final ValueChanged<Account> onOpenAccount;
 
   @override
   Widget build(BuildContext context) {
+    if (accounts.isEmpty) return const SizedBox.shrink();
     final colors = context.colors;
     final l10n = context.l10n;
+
+    // What needs watching goes to the top; the rest by what is in them.
+    final ordered = [...accounts]
+      ..sort((a, b) {
+        final riskA = prognosis.forAccount(a.id)?.showWarning ?? false;
+        final riskB = prognosis.forAccount(b.id)?.showWarning ?? false;
+        if (riskA != riskB) return riskA ? -1 : 1;
+        return b.currentBalance.compareTo(a.currentBalance);
+      });
+
+    var totalNow = 0.0;
+    var totalEnd = 0.0;
+    for (final account in ordered) {
+      final item = prognosis.forAccount(account.id);
+      totalNow += account.currentBalance;
+      totalEnd += item?.endOfMonth.expected ?? account.currentBalance;
+    }
 
     return Material(
       color: colors.surface,
       borderRadius: BorderRadius.circular(16),
       clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onOpenPrognosis,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: colors.border),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 12, 8),
+              child: Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      l10n.monthEndPrognosis,
-                      style: context.textTheme.titleMedium,
-                    ),
+                    child: Text(title, style: context.textTheme.titleMedium),
                   ),
                   TextButton(
                     onPressed: onOpenPrognosis,
@@ -1185,156 +1540,189 @@ class _MonthEndPrognosisPanel extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              ...accounts.take(3).map((account) {
-                final item = prognosis.forAccount(account.id);
-                if (item == null) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          account.name,
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Text(
-                            format.formatMoney(
-                              item.endOfMonth.expected,
-                              account.currencySymbol,
-                            ),
-                            style: TextStyle(
-                              fontFamily: 'Roboto Slab',
-                              fontWeight: FontWeight.w700,
-                              color: item.showWarning
-                                  ? colors.warning
-                                  : colors.text,
-                            ),
-                          ),
-                          Text(
-                            '${format.formatMoney(item.endOfMonth.pessimistic, account.currencySymbol)} – '
-                            '${format.formatMoney(item.endOfMonth.optimistic, account.currencySymbol)}',
-                            style: TextStyle(color: colors.text3, fontSize: 11),
-                          ),
-                        ],
-                      ),
-                    ],
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+              child: Row(
+                children: [
+                  const Spacer(),
+                  SizedBox(
+                    width: 120,
+                    child: Text(
+                      l10n.prognosisCurrentBalance,
+                      textAlign: TextAlign.right,
+                      style: TextStyle(color: colors.text3, fontSize: 11),
+                    ),
                   ),
-                );
-              }),
-            ],
-          ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 140,
+                    child: Text(
+                      l10n.projectedEndOfMonth,
+                      textAlign: TextAlign.right,
+                      style: TextStyle(color: colors.text3, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            for (final account in ordered)
+              _AccountOutlookRow(
+                account: account,
+                item: prognosis.forAccount(account.id),
+                history: balanceHistories[account.name],
+                format: format,
+                onTap: () => onOpenAccount(account),
+              ),
+            Divider(height: 1, color: colors.border),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 14, 24, 18),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      l10n.totalBalance,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 120,
+                    child: Text(
+                      format.formatMoney(totalNow, currency),
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(
+                        fontFamily: 'Roboto Slab',
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  SizedBox(
+                    width: 140,
+                    child: Text(
+                      format.formatMoney(totalEnd, currency),
+                      textAlign: TextAlign.right,
+                      style: TextStyle(
+                        fontFamily: 'Roboto Slab',
+                        fontWeight: FontWeight.w700,
+                        color: totalEnd < totalNow
+                            ? colors.warning
+                            : colors.success,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _AccountTile extends StatelessWidget {
-  final Account account;
-  final List<double>? balanceHistory;
-  final AccountPrognosis? prognosis;
-  final LocaleFormatting format;
-  final VoidCallback onTap;
-
-  const _AccountTile({
+class _AccountOutlookRow extends StatelessWidget {
+  const _AccountOutlookRow({
     required this.account,
-    required this.balanceHistory,
-    required this.prognosis,
+    required this.item,
+    required this.history,
     required this.format,
     required this.onTap,
   });
 
+  final Account account;
+  final AccountPrognosis? item;
+  final List<double>? history;
+  final LocaleFormatting format;
+  final VoidCallback onTap;
+
+  /// The forecast if there is one, since the figures beside it are forecasts
+  /// too; the balances behind it when there is not.
+  List<double> _line() {
+    final forecast = item?.forwardSparkline ?? const [];
+    if (forecast.length >= 2) return forecast;
+    final past = [...?history];
+    if (past.length >= 2) return past;
+    return [account.currentBalance, account.currentBalance];
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final history = [...?balanceHistory];
-    if (history.length < 2) {
-      history.addAll([account.currentBalance, account.currentBalance]);
-    }
-    if (prognosis != null) {
-      history.add(prognosis!.endOfMonth.expected);
-    }
+    final symbol = account.currencySymbol;
+    final endOfMonth = item?.endOfMonth;
+    final falling =
+        endOfMonth != null && endOfMonth.expected < account.currentBalance;
 
-    return Tooltip(
-      message: account.name,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          width: 300,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        child: Row(
+          children: [
+            Icon(
+              account.isLiability
+                  ? LucideIcons.creditCard
+                  : LucideIcons.landmark,
+              size: 18,
+              color: item?.showWarning ?? false
+                  ? colors.warning
+                  : colors.accent.acc,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                account.name,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            SimpleSparkline(
+              values: _line(),
+              color: falling ? colors.warning : colors.success,
+              width: 72,
+              height: 24,
+            ),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 120,
+              child: Text(
+                format.formatMoney(account.currentBalance, symbol),
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontFamily: 'Roboto Slab',
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            SizedBox(
+              width: 140,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Icon(LucideIcons.landmark, color: colors.accent.acc),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      account.name,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                  Text(
+                    endOfMonth == null
+                        ? '—'
+                        : format.formatMoney(endOfMonth.expected, symbol),
+                    style: TextStyle(
+                      fontFamily: 'Roboto Slab',
+                      fontWeight: FontWeight.w700,
+                      color: item?.showWarning ?? false
+                          ? colors.warning
+                          : colors.text,
                     ),
                   ),
+                  if (endOfMonth != null)
+                    Text(
+                      '${format.formatMoney(endOfMonth.pessimistic, symbol, decimalDigits: 0)} – '
+                      '${format.formatMoney(endOfMonth.optimistic, symbol, decimalDigits: 0)}',
+                      style: TextStyle(color: colors.text3, fontSize: 11),
+                    ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Text(
-                format.formatMoney(
-                  account.currentBalance,
-                  account.currencySymbol,
-                ),
-                style: context.textTheme.headlineSmall?.copyWith(
-                  fontFamily: 'Roboto Slab',
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (prognosis != null) ...[
-                const SizedBox(height: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      context.l10n.projectedEndOfMonth,
-                      style: TextStyle(color: colors.text3, fontSize: 12),
-                    ),
-                    Text(
-                      format.formatMoney(
-                        prognosis!.endOfMonth.expected,
-                        account.currencySymbol,
-                      ),
-                      style: TextStyle(
-                        fontFamily: 'Roboto Slab',
-                        fontWeight: FontWeight.w700,
-                        color: prognosis!.showWarning
-                            ? colors.warning
-                            : colors.text2,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 16),
-              SimpleSparkline(
-                values: history,
-                color: account.currentBalance >= 0
-                    ? colors.success
-                    : colors.danger,
-                width: 260,
-                height: 40,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -619,7 +619,49 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewAllAccounts => '查看所有账户';
 
   @override
-  String get thirtyDayOutlook => '30 天展望';
+  String get ninetyDayOutlook => '90天展望';
+
+  @override
+  String get whatIsComing => '即将发生';
+
+  @override
+  String get nothingScheduledAhead => '未来一个月没有安排';
+
+  @override
+  String get budgetsInANutshell => '预算概览';
+
+  @override
+  String get budgetsNoneSet => '尚未设置预算金额';
+
+  @override
+  String outlookDeltaFromToday(String amount) {
+    return '较今日 $amount';
+  }
+
+  @override
+  String outlookLowOn(String amount, String date) {
+    return '最低 $amount（$date）';
+  }
+
+  @override
+  String outlookNegativeFrom(String date) {
+    return '自 $date 起为负';
+  }
+
+  @override
+  String budgetsWithinCount(int within, int total) {
+    return '$total 个预算中 $within 个未超支';
+  }
+
+  @override
+  String budgetsAheadOfPace(String amount) {
+    return '比月度进度多 $amount';
+  }
+
+  @override
+  String budgetsWithinPace(String amount) {
+    return '比月度进度少 $amount';
+  }
 
   @override
   String get monthEndPrognosis => '月末预测';
@@ -768,12 +810,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get prognosisPredictedBalances => '预测余额';
-
-  @override
-  String get todaysTimeline => '今日时间线';
-
-  @override
-  String get noActivityToday => '今日无活动';
 
   @override
   String get noChangeVsLastMonth => '与上月相比无变化';

@@ -102,6 +102,11 @@ class LocaleFormatting {
     ).format(DateTime(2026, 1, 4 + weekday));
   }
 
+  /// A day and its month, for lists of dates inside one season.
+  String formatDayMonth(DateTime date) {
+    return _date('MMMd', () => DateFormat.MMMd(_dateTag)).format(date);
+  }
+
   String formatMediumDate(DateTime date) {
     return _date('yMMMd', () => DateFormat.yMMMd(_dateTag)).format(date);
   }

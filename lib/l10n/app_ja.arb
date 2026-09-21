@@ -281,7 +281,65 @@
   "yourAccounts": "あなたの口座",
   "budgetsAtGlance": "予算の概要",
   "viewAllAccounts": "すべての口座を表示",
-  "thirtyDayOutlook": "30 日間の見通し",
+  "ninetyDayOutlook": "90日間の見通し",
+  "whatIsComing": "これからの予定",
+  "nothingScheduledAhead": "今後1か月の予定はありません",
+  "budgetsInANutshell": "予算のあらまし",
+  "budgetsNoneSet": "予算額が未設定です",
+  "outlookDeltaFromToday": "本日から{amount}",
+  "@outlookDeltaFromToday": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookLowOn": "最低 {amount}（{date}）",
+  "@outlookLowOn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookNegativeFrom": "{date}以降はマイナス",
+  "@outlookNegativeFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinCount": "{total}件中{within}件が予算内",
+  "@budgetsWithinCount": {
+    "placeholders": {
+      "within": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "budgetsAheadOfPace": "月の進みより{amount}多い",
+  "@budgetsAheadOfPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinPace": "月の進みより{amount}余裕あり",
+  "@budgetsWithinPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "monthEndPrognosis": "月末の見通し",
   "projectedEndOfMonth": "月末",
   "includeCreditCardPayments": "クレジットカードの支払いを含める",
@@ -363,8 +421,6 @@
   },
   "prognosisCurrentBalance": "現在残高",
   "prognosisPredictedBalances": "予測残高",
-  "todaysTimeline": "今日のタイムライン",
-  "noActivityToday": "今日のアクティビティはありません",
   "noChangeVsLastMonth": "先月と変化なし",
   "newActivityThisMonth": "今月の新しいアクティビティ",
   "percentVsLastMonth": "{arrow}{percent}% 先月比",

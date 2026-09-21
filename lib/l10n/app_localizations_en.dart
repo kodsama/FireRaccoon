@@ -623,7 +623,49 @@ class AppLocalizationsEn extends AppLocalizations {
   String get viewAllAccounts => 'View all accounts';
 
   @override
-  String get thirtyDayOutlook => '30-day outlook';
+  String get ninetyDayOutlook => '90-day outlook';
+
+  @override
+  String get whatIsComing => 'What\'s coming';
+
+  @override
+  String get nothingScheduledAhead => 'Nothing scheduled in the next month';
+
+  @override
+  String get budgetsInANutshell => 'Budgets in a nutshell';
+
+  @override
+  String get budgetsNoneSet => 'No budget amounts set';
+
+  @override
+  String outlookDeltaFromToday(String amount) {
+    return '$amount from today';
+  }
+
+  @override
+  String outlookLowOn(String amount, String date) {
+    return 'Low $amount on $date';
+  }
+
+  @override
+  String outlookNegativeFrom(String date) {
+    return 'Below zero from $date';
+  }
+
+  @override
+  String budgetsWithinCount(int within, int total) {
+    return '$within of $total within budget';
+  }
+
+  @override
+  String budgetsAheadOfPace(String amount) {
+    return '$amount ahead of the month';
+  }
+
+  @override
+  String budgetsWithinPace(String amount) {
+    return '$amount in hand for the month';
+  }
 
   @override
   String get monthEndPrognosis => 'Month-end prognosis';
@@ -774,12 +816,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get prognosisPredictedBalances => 'Predicted balances';
-
-  @override
-  String get todaysTimeline => 'Today\'s timeline';
-
-  @override
-  String get noActivityToday => 'No activity today';
 
   @override
   String get noChangeVsLastMonth => 'No change vs last month';

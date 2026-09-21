@@ -288,7 +288,65 @@
   "yourAccounts": "Your Accounts",
   "budgetsAtGlance": "Budgets at a glance",
   "viewAllAccounts": "View all accounts",
-  "thirtyDayOutlook": "30-day outlook",
+  "ninetyDayOutlook": "90-day outlook",
+  "whatIsComing": "What's coming",
+  "nothingScheduledAhead": "Nothing scheduled in the next month",
+  "budgetsInANutshell": "Budgets in a nutshell",
+  "budgetsNoneSet": "No budget amounts set",
+  "outlookDeltaFromToday": "{amount} from today",
+  "@outlookDeltaFromToday": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookLowOn": "Low {amount} on {date}",
+  "@outlookLowOn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookNegativeFrom": "Below zero from {date}",
+  "@outlookNegativeFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinCount": "{within} of {total} within budget",
+  "@budgetsWithinCount": {
+    "placeholders": {
+      "within": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "budgetsAheadOfPace": "{amount} ahead of the month",
+  "@budgetsAheadOfPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinPace": "{amount} in hand for the month",
+  "@budgetsWithinPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "monthEndPrognosis": "Month-end prognosis",
   "projectedEndOfMonth": "End of month",
   "includeCreditCardPayments": "Include credit card payments",
@@ -370,8 +428,6 @@
   },
   "prognosisCurrentBalance": "Current balance",
   "prognosisPredictedBalances": "Predicted balances",
-  "todaysTimeline": "Today's timeline",
-  "noActivityToday": "No activity today",
   "noChangeVsLastMonth": "No change vs last month",
   "newActivityThisMonth": "New activity this month",
   "percentVsLastMonth": "{arrow}{percent}% vs last month",
