@@ -704,18 +704,8 @@ class AppLocalizationsFr extends AppLocalizations {
       'Shaded band shows min–max range; line is expected';
 
   @override
-  String get prognosisModeExpected => 'Real projection';
-
-  @override
-  String get prognosisModeProjected => 'Speculative projection';
-
-  @override
-  String get prognosisModeExpectedHint =>
+  String get prognosisSummaryHint =>
       'Month-end balances from current balances, scheduled transactions, recurring items, and bills';
-
-  @override
-  String get prognosisModeProjectedHint =>
-      'Trend-based forecast from historical net cash flow';
 
   @override
   String get prognosisHorizonLabel => 'Horizon';
@@ -3157,9 +3147,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get undoActionTypeTransactionPageSize => 'Transactions par page';
-
-  @override
-  String get undoActionTypePrognosisMode => 'Mode de vue projection';
 
   @override
   String get undoActionTypePrognosisHorizon => 'Horizon de projection';

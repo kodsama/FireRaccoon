@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- The speculative projection and the tab that chose it. It compounded a
+  historical monthly average forward at a fixed 3% a year, which is a guess
+  dressed as a forecast and sat one tab away from the real one, built from
+  scheduled transactions, recurring items and bills. The projection page shows
+  that forecast alone now
+
 ### Fixed
 
 - Nothing in the top strip of a page responded to a click while the header

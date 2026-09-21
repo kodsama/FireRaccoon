@@ -5,26 +5,22 @@ import '../models/account_prognosis.dart';
 import 'theme_provider.dart';
 
 class PrognosisSettings {
-  final PrognosisViewMode mode;
   final PrognosisHorizon horizon;
   final PrognosisInclusionOptions inclusion;
   final double marginPercent;
 
   const PrognosisSettings({
-    required this.mode,
     required this.horizon,
     required this.inclusion,
     required this.marginPercent,
   });
 
   PrognosisSettings copyWith({
-    PrognosisViewMode? mode,
     PrognosisHorizon? horizon,
     PrognosisInclusionOptions? inclusion,
     double? marginPercent,
   }) {
     return PrognosisSettings(
-      mode: mode ?? this.mode,
       horizon: horizon ?? this.horizon,
       inclusion: inclusion ?? this.inclusion,
       marginPercent: marginPercent ?? this.marginPercent,
@@ -33,7 +29,6 @@ class PrognosisSettings {
 
   PrognosisOptions toOptions({DateTime? reference}) {
     return PrognosisOptions(
-      mode: mode,
       horizon: horizon,
       inclusion: inclusion,
       marginPercent: marginPercent,
@@ -51,7 +46,6 @@ class PrognosisSettingsNotifier extends Notifier<PrognosisSettings> {
   PrognosisSettings build() {
     _prefs = ref.watch(sharedPreferencesProvider);
     return PrognosisSettings(
-      mode: _readMode(),
       horizon: _readHorizon(),
       inclusion: PrognosisInclusionOptions(
         includeScheduledTransactions:
@@ -82,25 +76,12 @@ class PrognosisSettingsNotifier extends Notifier<PrognosisSettings> {
     );
   }
 
-  PrognosisViewMode _readMode() {
-    final raw = _prefs.getString('prognosisViewMode');
-    return PrognosisViewMode.values.firstWhere(
-      (mode) => mode.name == raw,
-      orElse: () => PrognosisViewMode.expected,
-    );
-  }
-
   PrognosisHorizon _readHorizon() {
     final raw = _prefs.getString('prognosisHorizon');
     return PrognosisHorizon.values.firstWhere(
       (horizon) => horizon.name == raw,
       orElse: () => PrognosisHorizon.endOfNextMonth,
     );
-  }
-
-  void setMode(PrognosisViewMode mode) {
-    state = state.copyWith(mode: mode);
-    _prefs.setString('prognosisViewMode', mode.name);
   }
 
   void setHorizon(PrognosisHorizon horizon) {
@@ -138,7 +119,6 @@ class PrognosisSettingsNotifier extends Notifier<PrognosisSettings> {
 
   /// Overwrites all prognosis settings (settings import).
   void replaceAll(PrognosisSettings settings) {
-    setMode(settings.mode);
     setHorizon(settings.horizon);
     setInclusion(settings.inclusion);
     setMarginPercent(settings.marginPercent);

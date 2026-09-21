@@ -153,7 +153,6 @@ void main() {
         .read(prognosisSettingsProvider.notifier)
         .replaceAll(
           const PrognosisSettings(
-            mode: PrognosisViewMode.projected,
             horizon: PrognosisHorizon.oneYear,
             inclusion: PrognosisInclusionOptions(),
             marginPercent: 12,
@@ -177,7 +176,6 @@ void main() {
     expect(bundle.accountClassifications['acc1'], 'asset');
     expect(bundle.viewMode, isA<String>());
     expect(bundle.tightRowsColumns, isNotNull);
-    expect(bundle.prognosis?['mode'], 'projected');
     expect(bundle.prognosis?['horizon'], 'oneYear');
     expect(bundle.prognosis?['marginPercent'], 12);
     expect(bundle.sideMenu, isNotNull);
@@ -270,7 +268,6 @@ void main() {
       viewMode: 'standard',
       tightRowsColumns: const ['date'],
       prognosis: const {
-        'mode': 'expected',
         'horizon': 'endOfNextMonth',
         'marginPercent': 15,
         'inclusion': {
@@ -412,11 +409,7 @@ void main() {
       people: const SettingsPeopleBundle(),
       viewMode: 'nope',
       tightRowsColumns: const ['nope'],
-      prognosis: const {
-        'mode': 'nope',
-        'horizon': 'nope',
-        'marginPercent': 'bad',
-      },
+      prognosis: const {'horizon': 'nope', 'marginPercent': 'bad'},
       accountClassifications: const {'bad': 'not-a-category'},
     );
 

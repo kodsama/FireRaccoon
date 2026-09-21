@@ -6,7 +6,7 @@ import 'package:fireraccoon/screens/projection_screen.dart';
 import '../helpers/screen_test_app.dart';
 
 void main() {
-  testWidgets('ProjectionScreen renders real and speculative projection tabs', (
+  testWidgets('ProjectionScreen forecasts from scheduled cash flow', (
     tester,
   ) async {
     configureLargeScreen(tester);
@@ -15,8 +15,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Real projection'), findsOneWidget);
-    expect(find.text('Speculative projection'), findsOneWidget);
+    expect(find.text('Include in forecast'), findsOneWidget);
+    expect(find.text('Predicted balances'), findsOneWidget);
   });
 
   testWidgets('ProjectionScreen respects global compact view mode', (

@@ -91,7 +91,6 @@ enum UndoActionType {
   locale,
   viewMode,
   transactionPageSize,
-  prognosisMode,
   prognosisHorizon,
   prognosisInclusion,
   prognosisMarginPercent,
@@ -569,14 +568,6 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
       case UndoActionType.transactionPageSize:
         final raw = payload['pageSize'] as int? ?? kDefaultTransactionPageSize;
         await ref.read(transactionPageSizeProvider.notifier).setPageSize(raw);
-        break;
-      case UndoActionType.prognosisMode:
-        final value = payload['mode'] as String?;
-        final mode = PrognosisViewMode.values.firstWhere(
-          (m) => m.name == value,
-          orElse: () => PrognosisViewMode.expected,
-        );
-        ref.read(prognosisSettingsProvider.notifier).setMode(mode);
         break;
       case UndoActionType.prognosisHorizon:
         final value = payload['horizon'] as String?;

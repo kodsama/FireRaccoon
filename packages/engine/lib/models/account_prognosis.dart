@@ -66,9 +66,6 @@ class PrognosisEvent {
 
 enum PrognosisScenario { expected, min, max }
 
-/// How balances are forecast: cash-flow based vs compound projection.
-enum PrognosisViewMode { expected, projected }
-
 /// Chart / forecast horizon ending at the last day of a future month.
 enum PrognosisHorizon {
   endOfMonth,
@@ -296,14 +293,12 @@ class PrognosisOptions {
   final PrognosisInclusionOptions inclusion;
   final double marginPercent;
   final DateTime? reference;
-  final PrognosisViewMode mode;
   final PrognosisHorizon horizon;
 
   const PrognosisOptions({
     this.inclusion = const PrognosisInclusionOptions(),
     this.marginPercent = 15,
     this.reference,
-    this.mode = PrognosisViewMode.expected,
     this.horizon = PrognosisHorizon.endOfNextMonth,
   });
 
@@ -316,7 +311,6 @@ class AccountPrognosisResult {
   final DateTime endOfThisMonth;
   final DateTime endOfNextMonth;
   final DateTime horizonEnd;
-  final PrognosisViewMode mode;
   final PrognosisHorizon horizon;
   final List<AccountPrognosis> accounts;
 
@@ -325,7 +319,6 @@ class AccountPrognosisResult {
     required this.endOfThisMonth,
     required this.endOfNextMonth,
     required this.horizonEnd,
-    required this.mode,
     required this.horizon,
     required this.accounts,
   });
