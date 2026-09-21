@@ -1426,11 +1426,23 @@ abstract class AppLocalizations {
   /// **'Horizon'**
   String get prognosisHorizonLabel;
 
+  /// No description provided for @prognosisHorizonTwoWeeks.
+  ///
+  /// In en, this message translates to:
+  /// **'2 weeks'**
+  String get prognosisHorizonTwoWeeks;
+
   /// No description provided for @prognosisHorizonEndOfMonth.
   ///
   /// In en, this message translates to:
   /// **'End of month'**
   String get prognosisHorizonEndOfMonth;
+
+  /// No description provided for @prognosisHorizonMidNextMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Mid next month'**
+  String get prognosisHorizonMidNextMonth;
 
   /// No description provided for @prognosisHorizonEndOfNextMonth.
   ///
@@ -1479,6 +1491,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'10 years'**
   String get prognosisHorizonTenYears;
+
+  /// No description provided for @prognosisHorizonCustomDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick a date'**
+  String get prognosisHorizonCustomDate;
+
+  /// No description provided for @prognosisHorizonUntil.
+  ///
+  /// In en, this message translates to:
+  /// **'Until {date}'**
+  String prognosisHorizonUntil(String date);
 
   /// No description provided for @prognosisMilestoneThreeMonths.
   ///

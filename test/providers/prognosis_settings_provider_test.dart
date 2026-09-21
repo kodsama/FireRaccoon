@@ -77,6 +77,35 @@ void main() {
     expect(state.marginPercent, 50);
   });
 
+  test('a picked horizon date persists and rides into the options', () async {
+    final container = await buildContainer({});
+    final notifier = container.read(prognosisSettingsProvider.notifier);
+
+    notifier.setCustomHorizonDate(DateTime(2026, 11, 20, 16, 30));
+    notifier.setHorizon(PrognosisHorizon.customDate);
+
+    final state = container.read(prognosisSettingsProvider);
+    // The day is what was picked; the hour it was picked at is not part of it.
+    expect(state.customHorizonDate, DateTime(2026, 11, 20));
+    expect(state.toOptions().customHorizonDate, DateTime(2026, 11, 20));
+
+    // Choosing another horizon keeps the date, so coming back to it does not
+    // ask for one again.
+    notifier.setHorizon(PrognosisHorizon.sixMonths);
+    expect(
+      container.read(prognosisSettingsProvider).customHorizonDate,
+      DateTime(2026, 11, 20),
+    );
+
+    final reloaded = await buildContainer({
+      'prognosisHorizon': 'customDate',
+      'prognosisCustomHorizonDate': DateTime(2026, 11, 20).toIso8601String(),
+    });
+    final settings = reloaded.read(prognosisSettingsProvider);
+    expect(settings.horizon, PrognosisHorizon.customDate);
+    expect(settings.customHorizonDate, DateTime(2026, 11, 20));
+  });
+
   test('copyWith and toOptions keep selected values', () {
     const settings = PrognosisSettings(
       horizon: PrognosisHorizon.endOfMonth,

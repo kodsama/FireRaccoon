@@ -124,6 +124,7 @@ class SettingsExportImport {
       tightRowsColumns: tightColumns.map((c) => c.name).toList(),
       prognosis: {
         'horizon': prognosis.horizon.name,
+        'customHorizonDate': prognosis.customHorizonDate?.toIso8601String(),
         'marginPercent': prognosis.marginPercent,
         'inclusion': {
           'includeScheduledTransactions':
@@ -359,6 +360,9 @@ class SettingsExportImport {
         includeLiabilities: inclusionRaw['includeLiabilities'] as bool? ?? true,
       );
       final horizonName = prognosisJson['horizon'] as String?;
+      final customHorizonDate = DateTime.tryParse(
+        prognosisJson['customHorizonDate'] as String? ?? '',
+      );
       final margin = prognosisJson['marginPercent'];
       _ref
           .read(prognosisSettingsProvider.notifier)
@@ -368,6 +372,7 @@ class SettingsExportImport {
                 (h) => h.name == horizonName,
                 orElse: () => PrognosisHorizon.endOfNextMonth,
               ),
+              customHorizonDate: customHorizonDate,
               inclusion: inclusion,
               marginPercent: margin is num ? margin.toDouble() : 15,
             ),

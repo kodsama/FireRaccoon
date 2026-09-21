@@ -328,7 +328,9 @@
   "prognosisBandLegend": "余额区间",
   "prognosisSummaryHint": "基于已记录交易和定期规则。",
   "prognosisHorizonLabel": "时间范围",
+  "prognosisHorizonTwoWeeks": "2周",
   "prognosisHorizonEndOfMonth": "本月末",
+  "prognosisHorizonMidNextMonth": "下月中旬",
   "prognosisHorizonEndOfNextMonth": "下月末",
   "prognosisHorizonTwoMonths": "两个月",
   "prognosisHorizonThreeMonths": "三个月",
@@ -337,6 +339,15 @@
   "prognosisHorizonThreeYears": "三年",
   "prognosisHorizonFiveYears": "五年",
   "prognosisHorizonTenYears": "十年",
+  "prognosisHorizonCustomDate": "选择日期",
+  "prognosisHorizonUntil": "至 {date}",
+  "@prognosisHorizonUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "prognosisMilestoneThreeMonths": "三个月里程碑",
   "prognosisMilestoneSixMonths": "六个月里程碑",
   "prognosisMilestoneOneYear": "一年里程碑",

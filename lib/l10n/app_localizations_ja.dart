@@ -703,7 +703,13 @@ class AppLocalizationsJa extends AppLocalizations {
   String get prognosisHorizonLabel => '期間';
 
   @override
+  String get prognosisHorizonTwoWeeks => '2週間';
+
+  @override
   String get prognosisHorizonEndOfMonth => '月末';
+
+  @override
+  String get prognosisHorizonMidNextMonth => '翌月中旬';
 
   @override
   String get prognosisHorizonEndOfNextMonth => '翌月';
@@ -728,6 +734,14 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get prognosisHorizonTenYears => '10 年';
+
+  @override
+  String get prognosisHorizonCustomDate => '日付を選ぶ';
+
+  @override
+  String prognosisHorizonUntil(String date) {
+    return '$dateまで';
+  }
 
   @override
   String get prognosisMilestoneThreeMonths => '3 か月後';
