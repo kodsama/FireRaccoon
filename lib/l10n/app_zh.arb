@@ -281,7 +281,63 @@
   "yourAccounts": "您的账户",
   "budgetsAtGlance": "预算一览",
   "viewAllAccounts": "查看所有账户",
-  "thirtyDayOutlook": "30 天展望",
+  "ninetyDayOutlook": "90天展望",
+  "budgetsInANutshell": "预算概览",
+  "budgetsNoneSet": "尚未设置预算金额",
+  "outlookDeltaFromToday": "较今日 {amount}",
+  "@outlookDeltaFromToday": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookLowOn": "最低 {amount}（{date}）",
+  "@outlookLowOn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookNegativeFrom": "自 {date} 起为负",
+  "@outlookNegativeFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinCount": "{total} 个预算中 {within} 个未超支",
+  "@budgetsWithinCount": {
+    "placeholders": {
+      "within": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "budgetsAheadOfPace": "比月度进度多 {amount}",
+  "@budgetsAheadOfPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinPace": "比月度进度少 {amount}",
+  "@budgetsWithinPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "monthEndPrognosis": "月末预测",
   "projectedEndOfMonth": "月末",
   "includeCreditCardPayments": "包含信用卡还款",
@@ -363,8 +419,6 @@
   },
   "prognosisCurrentBalance": "当前余额",
   "prognosisPredictedBalances": "预测余额",
-  "todaysTimeline": "今日时间线",
-  "noActivityToday": "今日无活动",
   "noChangeVsLastMonth": "与上月相比无变化",
   "newActivityThisMonth": "本月新活动",
   "percentVsLastMonth": "较上月 {arrow}{percent}%",

@@ -74,6 +74,15 @@ final _sampleBudgets = [
     currencySymbol: '€',
     currencyCode: 'EUR',
   ),
+  Budget(
+    id: '2',
+    name: 'Transport',
+    active: true,
+    spent: 500,
+    autoBudgetAmount: 300,
+    currencySymbol: '€',
+    currencyCode: 'EUR',
+  ),
 ];
 
 Future<Widget> buildTestApp({
@@ -216,7 +225,50 @@ void main() {
     await tester.tap(find.text('Focus').first);
     await tester.pumpAndSettle();
     expect(find.text('Net worth'), findsOneWidget);
-    expect(find.text("Today's timeline"), findsOneWidget);
+    expect(find.text('90-day outlook'), findsOneWidget);
+    expect(find.text('Budgets in a nutshell'), findsOneWidget);
+  });
+
+  testWidgets('the accounts tab names each account once', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(await buildTestApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Accounts').first);
+    await tester.pumpAndSettle();
+
+    // The month-end figures used to be a panel of their own above a grid of
+    // the same accounts, so every name was on the page twice.
+    expect(find.text('Month-end prognosis'), findsNothing);
+    expect(find.text('Checking'), findsOneWidget);
+    expect(find.text('End of month'), findsOneWidget);
+    expect(find.textContaining('€2,500'), findsWidgets);
+  });
+
+  testWidgets('the focus tab sizes up the ninety days and the budgets', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(await buildTestApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Focus').first);
+    await tester.pumpAndSettle();
+
+    // Nothing scheduled ahead, so ninety days out is where the account
+    // stands today rather than a line ruled through last month.
+    expect(find.text('90-day outlook'), findsOneWidget);
+    expect(find.textContaining('€2,500'), findsWidgets);
+
+    // Transport is past its amount, Food is not.
+    expect(find.text('1 of 2 within budget'), findsOneWidget);
+    expect(find.text('€620 / €700'), findsOneWidget);
   });
 
   testWidgets('Dashboard KPI cards navigate to their destinations', (

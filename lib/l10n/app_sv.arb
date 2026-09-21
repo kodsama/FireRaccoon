@@ -281,7 +281,63 @@
   "yourAccounts": "Dina konton",
   "budgetsAtGlance": "Budgetar i korthet",
   "viewAllAccounts": "Visa alla konton",
-  "thirtyDayOutlook": "30-dagars utsikt",
+  "ninetyDayOutlook": "90-day outlook",
+  "budgetsInANutshell": "Budgets in a nutshell",
+  "budgetsNoneSet": "No budget amounts set",
+  "outlookDeltaFromToday": "{amount} from today",
+  "@outlookDeltaFromToday": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookLowOn": "Low {amount} on {date}",
+  "@outlookLowOn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookNegativeFrom": "Below zero from {date}",
+  "@outlookNegativeFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinCount": "{within} of {total} within budget",
+  "@budgetsWithinCount": {
+    "placeholders": {
+      "within": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "budgetsAheadOfPace": "{amount} ahead of the month",
+  "@budgetsAheadOfPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinPace": "{amount} in hand for the month",
+  "@budgetsWithinPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "monthEndPrognosis": "Prognos i månadens slut",
   "projectedEndOfMonth": "Månadens slut",
   "includeCreditCardPayments": "Inkludera kreditkortsbetalningar",
@@ -363,8 +419,6 @@
   },
   "prognosisCurrentBalance": "Current balance",
   "prognosisPredictedBalances": "Predicted balances",
-  "todaysTimeline": "Dagens tidslinje",
-  "noActivityToday": "Ingen aktivitet idag",
   "noChangeVsLastMonth": "Ingen förändring jämfört med förra månaden",
   "newActivityThisMonth": "Ny aktivitet denna månad",
   "percentVsLastMonth": "{arrow}{percent} % jämfört med förra månaden",

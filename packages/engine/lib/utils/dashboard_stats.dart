@@ -1,7 +1,10 @@
 import 'package:intl/intl.dart';
 
 import '../models/account.dart';
+import '../models/account_prognosis.dart';
+import '../models/budget.dart';
 import '../models/transaction.dart';
+import '../services/recurrence_scheduler.dart';
 import 'date_range.dart';
 import 'transaction_filters.dart';
 import 'transaction_splits.dart';
@@ -668,29 +671,138 @@ List<double> netWorthSparkline({
   );
 }
 
-List<double> projectionOutlook(
-  double currentNetWorth,
-  List<Transaction> transactions,
-  DateRangeBounds range, {
-  int days = 30,
-}) {
-  final recent = _transactionsInRange(transactions, range);
-  final income = recent
-      .where((t) => t.type == 'deposit')
-      .fold(0.0, (s, t) => s + t.totalAmount);
-  final spending = recent
-      .where((t) => t.type == 'withdrawal')
-      .fold(0.0, (s, t) => s + t.totalAmount);
-  final spanDays = range.start == null
-      ? days
-      : (range.end ?? DateTime.now().add(const Duration(days: 1)))
-            .difference(range.start!)
-            .inDays
-            .clamp(1, 365);
-  final dailyNet = (income - spending) / spanDays;
+/// The forecast for every asset account, added up day by day.
+class ProjectionOutlook {
+  /// One total per day, starting at [start] and running to the last day
+  /// covered. The first entry is where the accounts stand today.
+  final List<double> series;
+  final DateTime start;
 
-  return List.generate(days + 1, (index) {
-    final value = currentNetWorth + dailyNet * index;
-    return value < 0 ? 0 : value;
+  /// The lowest the total goes over the run, and the day it happens.
+  final double low;
+  final DateTime lowDate;
+
+  /// The first day the total is below zero, if it ever is.
+  final DateTime? firstNegativeDate;
+
+  const ProjectionOutlook({
+    required this.series,
+    required this.start,
+    required this.low,
+    required this.lowDate,
+    this.firstNegativeDate,
   });
+
+  double get today => series.first;
+  double get atEnd => series.last;
+  double get delta => atEnd - today;
+  bool get dipsBelowToday => low < today;
+}
+
+/// Adds the forecast of every asset account together, one figure per day.
+///
+/// [prognosis] has to reach at least [days] ahead; past its own end each
+/// account answers with its last forecast day, so a shorter one flattens out
+/// rather than reporting a fall it knows nothing about.
+ProjectionOutlook projectionOutlook(
+  AccountPrognosisResult prognosis, {
+  required DateTime reference,
+  int days = 90,
+}) {
+  final start = prognosisStartOfDay(reference);
+  final assets = prognosis.accounts
+      .where((account) => account.accountType == 'asset')
+      .toList();
+
+  final series = <double>[];
+  var low = double.infinity;
+  var lowDate = start;
+  DateTime? firstNegative;
+
+  for (var offset = 0; offset <= days; offset++) {
+    final day = DateTime(start.year, start.month, start.day + offset);
+    var total = 0.0;
+    for (final account in assets) {
+      total += account.snapshotOn(day).expected;
+    }
+    series.add(total);
+    if (total < low) {
+      low = total;
+      lowDate = day;
+    }
+    if (total < 0 && firstNegative == null) firstNegative = day;
+  }
+
+  return ProjectionOutlook(
+    series: series,
+    start: start,
+    low: series.isEmpty ? 0 : low,
+    lowDate: lowDate,
+    firstNegativeDate: firstNegative,
+  );
+}
+
+/// How the budgets are holding up.
+class BudgetHealth {
+  final double spent;
+  final double budgeted;
+
+  /// Budgets still inside what was set for them, and those past it.
+  final int within;
+  final int over;
+
+  /// What is spent beyond the share of the budget the month has earned so
+  /// far. Positive means spending faster than the month is passing; negative
+  /// means there is room in hand.
+  final double pace;
+
+  const BudgetHealth({
+    required this.spent,
+    required this.budgeted,
+    required this.within,
+    required this.over,
+    required this.pace,
+  });
+
+  int get counted => within + over;
+  bool get hasBudgets => counted > 0;
+  double get progress => budgeted == 0 ? 0 : spent / budgeted;
+  bool get aheadOfPace => pace > 0;
+}
+
+/// Reads [budgets] against the part of the month already gone.
+///
+/// Only budgets with an amount set are counted: one with nothing set has
+/// nothing to hold to. Firefly also runs weekly and yearly budgets, and this
+/// measures all of them against the calendar month, which is the period the
+/// dashboard itself is about.
+BudgetHealth budgetHealth(List<Budget> budgets, {required DateTime reference}) {
+  final counted = budgets
+      .where((budget) => budget.active && budget.autoBudgetAmount > 0)
+      .toList();
+
+  var spent = 0.0;
+  var budgeted = 0.0;
+  var within = 0;
+  var over = 0;
+  for (final budget in counted) {
+    spent += budget.spent;
+    budgeted += budget.autoBudgetAmount;
+    if (budget.spent > budget.autoBudgetAmount) {
+      over++;
+    } else {
+      within++;
+    }
+  }
+
+  final daysInMonth = DateTime(reference.year, reference.month + 1, 0).day;
+  final monthGone = reference.day / daysInMonth;
+
+  return BudgetHealth(
+    spent: spent,
+    budgeted: budgeted,
+    within: within,
+    over: over,
+    pace: spent - budgeted * monthGone,
+  );
 }

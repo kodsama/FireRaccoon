@@ -1270,11 +1270,59 @@ abstract class AppLocalizations {
   /// **'View all accounts'**
   String get viewAllAccounts;
 
-  /// No description provided for @thirtyDayOutlook.
+  /// No description provided for @ninetyDayOutlook.
   ///
   /// In en, this message translates to:
-  /// **'30-day outlook'**
-  String get thirtyDayOutlook;
+  /// **'90-day outlook'**
+  String get ninetyDayOutlook;
+
+  /// No description provided for @budgetsInANutshell.
+  ///
+  /// In en, this message translates to:
+  /// **'Budgets in a nutshell'**
+  String get budgetsInANutshell;
+
+  /// No description provided for @budgetsNoneSet.
+  ///
+  /// In en, this message translates to:
+  /// **'No budget amounts set'**
+  String get budgetsNoneSet;
+
+  /// No description provided for @outlookDeltaFromToday.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} from today'**
+  String outlookDeltaFromToday(String amount);
+
+  /// No description provided for @outlookLowOn.
+  ///
+  /// In en, this message translates to:
+  /// **'Low {amount} on {date}'**
+  String outlookLowOn(String amount, String date);
+
+  /// No description provided for @outlookNegativeFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'Below zero from {date}'**
+  String outlookNegativeFrom(String date);
+
+  /// No description provided for @budgetsWithinCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{within} of {total} within budget'**
+  String budgetsWithinCount(int within, int total);
+
+  /// No description provided for @budgetsAheadOfPace.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} ahead of the month'**
+  String budgetsAheadOfPace(String amount);
+
+  /// No description provided for @budgetsWithinPace.
+  ///
+  /// In en, this message translates to:
+  /// **'{amount} in hand for the month'**
+  String budgetsWithinPace(String amount);
 
   /// No description provided for @monthEndPrognosis.
   ///
@@ -1551,18 +1599,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Predicted balances'**
   String get prognosisPredictedBalances;
-
-  /// No description provided for @todaysTimeline.
-  ///
-  /// In en, this message translates to:
-  /// **'Today\'s timeline'**
-  String get todaysTimeline;
-
-  /// No description provided for @noActivityToday.
-  ///
-  /// In en, this message translates to:
-  /// **'No activity today'**
-  String get noActivityToday;
 
   /// No description provided for @noChangeVsLastMonth.
   ///

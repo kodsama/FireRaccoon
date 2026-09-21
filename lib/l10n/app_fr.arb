@@ -281,7 +281,63 @@
   "yourAccounts": "Vos comptes",
   "budgetsAtGlance": "Budgets en un coup d'œil",
   "viewAllAccounts": "Voir tous les comptes",
-  "thirtyDayOutlook": "Perspective sur 30 jours",
+  "ninetyDayOutlook": "90-day outlook",
+  "budgetsInANutshell": "Budgets in a nutshell",
+  "budgetsNoneSet": "No budget amounts set",
+  "outlookDeltaFromToday": "{amount} from today",
+  "@outlookDeltaFromToday": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookLowOn": "Low {amount} on {date}",
+  "@outlookLowOn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookNegativeFrom": "Below zero from {date}",
+  "@outlookNegativeFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinCount": "{within} of {total} within budget",
+  "@budgetsWithinCount": {
+    "placeholders": {
+      "within": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "budgetsAheadOfPace": "{amount} ahead of the month",
+  "@budgetsAheadOfPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinPace": "{amount} in hand for the month",
+  "@budgetsWithinPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "monthEndPrognosis": "Prévision de fin de mois",
   "projectedEndOfMonth": "Fin du mois",
   "includeCreditCardPayments": "Inclure les paiements de carte de crédit",
@@ -363,8 +419,6 @@
   },
   "prognosisCurrentBalance": "Current balance",
   "prognosisPredictedBalances": "Predicted balances",
-  "todaysTimeline": "Chronologie du jour",
-  "noActivityToday": "Aucune activité aujourd'hui",
   "noChangeVsLastMonth": "Aucun changement vs le mois dernier",
   "newActivityThisMonth": "Nouvelle activité ce mois-ci",
   "percentVsLastMonth": "{arrow}{percent} % vs le mois dernier",

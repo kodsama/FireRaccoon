@@ -180,17 +180,50 @@ final endOfMonthOutlookProvider = Provider<EndOfMonthOutlook>((ref) {
   return computeEndOfMonthOutlook(transactions: _transactions(ref));
 });
 
-/// Cached forward-looking net-worth projection for a period.
-final projectionOutlookProvider = Provider.autoDispose
-    .family<List<double>, DashboardPeriodKey>((ref, key) {
-      final period = ref.watch(dashboardPeriodContextProvider(key));
-      final netWorth = ref.watch(netWorthBreakdownProvider).netWorth;
-      return projectionOutlook(
-        netWorth,
-        _transactionsForPeriod(ref, key),
-        period.range,
-      );
-    });
+/// How far ahead the dashboard's outlook card looks.
+const kDashboardOutlookDays = 90;
+
+/// Ninety days of the real forecast, added up over the asset accounts.
+///
+/// Its own horizon rather than the projection page's: this card says ninety
+/// days on it, and reading whatever that page was left set to would make it
+/// say something else.
+final ninetyDayOutlookProvider = Provider<ProjectionOutlook>((ref) {
+  final reference = DateTime.now();
+  final bills = ref.watch(billsProvider).asData?.value ?? const [];
+  final recurrences = ref.watch(recurrencesProvider).asData?.value ?? const [];
+  final settings = ref.watch(prognosisSettingsProvider);
+
+  final prognosis = AccountPrognosisService.compute(
+    accounts: _accounts(ref),
+    transactions: _transactions(ref),
+    bills: bills,
+    recurrences: recurrences,
+    options: PrognosisOptions(
+      reference: reference,
+      inclusion: settings.inclusion,
+      marginPercent: settings.marginPercent,
+      horizon: PrognosisHorizon.customDate,
+      customHorizonDate: DateTime(
+        reference.year,
+        reference.month,
+        reference.day + kDashboardOutlookDays,
+      ),
+    ),
+  );
+
+  return projectionOutlook(
+    prognosis,
+    reference: reference,
+    days: kDashboardOutlookDays,
+  );
+});
+
+/// How the budgets are holding against the month so far.
+final budgetHealthProvider = Provider<BudgetHealth>((ref) {
+  final budgets = ref.watch(budgetsProvider).asData?.value ?? const [];
+  return budgetHealth(budgets, reference: DateTime.now());
+});
 
 /// Cached account prognosis shared across dashboard, accounts, and prognosis screens.
 final accountPrognosisProvider = Provider<AccountPrognosisResult>((ref) {
