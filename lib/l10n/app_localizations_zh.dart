@@ -697,16 +697,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get prognosisBandLegend => '余额区间';
 
   @override
-  String get prognosisModeExpected => '预期';
-
-  @override
-  String get prognosisModeProjected => '预测';
-
-  @override
-  String get prognosisModeExpectedHint => '基于已记录交易和定期规则。';
-
-  @override
-  String get prognosisModeProjectedHint => '包含计划与预测的未来现金流。';
+  String get prognosisSummaryHint => '基于已记录交易和定期规则。';
 
   @override
   String get prognosisHorizonLabel => '时间范围';
@@ -3043,9 +3034,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get undoActionTypeTransactionPageSize => '每页交易数';
-
-  @override
-  String get undoActionTypePrognosisMode => '预测视图模式';
 
   @override
   String get undoActionTypePrognosisHorizon => '预测时间范围';

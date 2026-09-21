@@ -216,7 +216,6 @@ void main() {
         endOfThisMonth: DateTime(2026, 7, 31),
         endOfNextMonth: DateTime(2026, 8, 31),
         horizonEnd: DateTime(2026, 8, 31),
-        mode: PrognosisViewMode.expected,
         horizon: PrognosisHorizon.endOfNextMonth,
         accounts: [prognosis],
       );

@@ -48,18 +48,6 @@ class AccountPrognosisService {
     final flowHorizonEnd = prognosisStartOfDay(horizonEnd)
         .add(const Duration(days: 1));
 
-    if (options.mode == PrognosisViewMode.projected) {
-      return _computeProjected(
-        accounts: accounts,
-        transactions: transactions,
-        reference: reference,
-        endOfThisMonth: endOfThisMonth,
-        endOfNextMonth: endOfNextMonth,
-        horizonEnd: horizonEnd,
-        options: options,
-      );
-    }
-
     return _computeExpected(
       accounts: accounts,
       transactions: transactions,
@@ -221,85 +209,6 @@ class AccountPrognosisService {
       endOfThisMonth: endOfThisMonth,
       endOfNextMonth: endOfNextMonth,
       horizonEnd: horizonEnd,
-      mode: options.mode,
-      horizon: options.horizon,
-      accounts: prognoses,
-    );
-  }
-
-  static AccountPrognosisResult _computeProjected({
-    required List<Account> accounts,
-    required List<Transaction> transactions,
-    required DateTime reference,
-    required DateTime endOfThisMonth,
-    required DateTime endOfNextMonth,
-    required DateTime horizonEnd,
-    required PrognosisOptions options,
-  }) {
-    final margin = options.marginPercent.clamp(0, 100) / 100;
-    final monthlyNets = _accountMonthlyNets(accounts, transactions);
-    final balances = resolvedAccountBalances(
-      accounts,
-      transactions,
-      reference: reference,
-    );
-
-    final prognoses = accounts
-        .where(
-          (account) => account.type == 'asset' || account.type == 'liability',
-        )
-        .map((account) {
-          final currentBalance = balances[account.id] ?? account.currentBalance;
-          final monthlyNet = monthlyNets[account.id] ?? 0;
-          final rawTimeline = _buildProjectedTimelineRaw(
-            startBalance: currentBalance,
-            monthlyNet: monthlyNet,
-            rangeStart: prognosisStartOfDay(reference),
-            rangeEnd: horizonEnd,
-            marginPercent: margin,
-            isLiability: account.isLiability,
-          );
-          final timeline = _sampleTimeline(rawTimeline);
-          final milestones = _buildMilestones(
-            timeline: rawTimeline,
-            reference: reference,
-            fallback: currentBalance,
-          );
-          final endOfMonthSnapshot = milestones[PrognosisMilestone.endOfMonth]!;
-          final endOfNextMonthSnapshot =
-              milestones[PrognosisMilestone.endOfNextMonth]!;
-          final firstNegativeDate = _firstNegativeDate(
-            timeline: rawTimeline,
-            accountType: account.type,
-          );
-          final showWarning = account.type == 'asset'
-              ? firstNegativeDate != null
-              : endOfMonthSnapshot.optimistic > currentBalance &&
-                    endOfMonthSnapshot.optimistic > 0;
-
-          return AccountPrognosis(
-            accountId: account.id,
-            accountName: account.name,
-            accountType: account.type,
-            currencySymbol: account.currencySymbol,
-            currentBalance: currentBalance,
-            endOfMonth: endOfMonthSnapshot,
-            endOfNextMonth: endOfNextMonthSnapshot,
-            milestones: milestones,
-            showWarning: showWarning,
-            firstNegativeDate: firstNegativeDate,
-            events: const [],
-            timeline: timeline,
-          );
-        })
-        .toList();
-
-    return AccountPrognosisResult(
-      reference: reference,
-      endOfThisMonth: endOfThisMonth,
-      endOfNextMonth: endOfNextMonth,
-      horizonEnd: horizonEnd,
-      mode: options.mode,
       horizon: options.horizon,
       accounts: prognoses,
     );
@@ -652,103 +561,6 @@ DateTime? _firstNegativeDate({
     }
   }
   return null;
-}
-
-Map<String, double> _accountMonthlyNets(
-  List<Account> accounts,
-  List<Transaction> transactions,
-) {
-  final accountIds = accounts.map((account) => account.id).toSet();
-  final nets = {for (final id in accountIds) id: 0.0};
-  if (transactions.isEmpty) return nets;
-
-  // Only the extremes matter; a min/max scan avoids sorting a full copy.
-  var minDate = transactions.first.date;
-  var maxDate = transactions.first.date;
-  for (final transaction in transactions) {
-    if (transaction.date.isBefore(minDate)) minDate = transaction.date;
-    if (transaction.date.isAfter(maxDate)) maxDate = transaction.date;
-  }
-  final spanDays = prognosisStartOfDay(maxDate)
-      .difference(prognosisStartOfDay(minDate))
-      .inDays
-      .clamp(30, 365);
-  final monthFactor = spanDays / 30.0;
-
-  for (final transaction in transactions) {
-    for (final split in transaction.resolvedSplits()) {
-      if (split.type == 'deposit' &&
-          split.destinationId != null &&
-          accountIds.contains(split.destinationId)) {
-        nets[split.destinationId!] = nets[split.destinationId!]! + split.amount;
-      }
-      if (split.type == 'withdrawal' &&
-          split.sourceId != null &&
-          accountIds.contains(split.sourceId)) {
-        nets[split.sourceId!] = nets[split.sourceId!]! - split.amount;
-      }
-      if (split.type == 'transfer') {
-        if (split.sourceId != null && accountIds.contains(split.sourceId)) {
-          nets[split.sourceId!] = nets[split.sourceId!]! - split.amount;
-        }
-        if (split.destinationId != null &&
-            accountIds.contains(split.destinationId)) {
-          nets[split.destinationId!] =
-              nets[split.destinationId!]! + split.amount;
-        }
-      }
-    }
-  }
-
-  return {
-    for (final entry in nets.entries) entry.key: entry.value / monthFactor,
-  };
-}
-
-List<PrognosisBalancePoint> _buildProjectedTimelineRaw({
-  required double startBalance,
-  required double monthlyNet,
-  required DateTime rangeStart,
-  required DateTime rangeEnd,
-  required double marginPercent,
-  required bool isLiability,
-}) {
-  const annualReturn = 0.03;
-  final monthlyRate = annualReturn / 12;
-  final liabilityFactor = isLiability ? 0.96 : 1.0;
-  final effectiveNet = monthlyNet * liabilityFactor;
-
-  final points = <PrognosisBalancePoint>[];
-  var expected = startBalance;
-  var pessimistic = startBalance;
-  var optimistic = startBalance;
-  var day = prognosisStartOfDay(rangeStart);
-
-  while (!day.isAfter(rangeEnd)) {
-    final monthEnd = DateTime(day.year, day.month + 1, 0);
-    if (prognosisStartOfDay(day) == prognosisStartOfDay(monthEnd)) {
-      expected = expected * (1 + monthlyRate) + effectiveNet;
-      pessimistic =
-          pessimistic * (1 + monthlyRate * (1 - marginPercent)) +
-          effectiveNet * (1 + marginPercent);
-      optimistic =
-          optimistic * (1 + monthlyRate * (1 + marginPercent)) +
-          effectiveNet * (1 - marginPercent);
-    }
-
-    points.add(
-      PrognosisBalancePoint(
-        date: day,
-        expected: expected,
-        pessimistic: pessimistic,
-        optimistic: optimistic,
-      ),
-    );
-
-    day = day.add(const Duration(days: 1));
-  }
-
-  return points;
 }
 
 List<ScheduledCashFlow> _scheduledTransactionFlows({

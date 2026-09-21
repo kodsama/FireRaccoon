@@ -279,7 +279,6 @@ extension UndoActionTypeL10n on UndoActionType {
     UndoActionType.viewMode => l10n.undoActionTypeViewMode,
     UndoActionType.transactionPageSize =>
       l10n.undoActionTypeTransactionPageSize,
-    UndoActionType.prognosisMode => l10n.undoActionTypePrognosisMode,
     UndoActionType.prognosisHorizon => l10n.undoActionTypePrognosisHorizon,
     UndoActionType.prognosisInclusion => l10n.undoActionTypePrognosisInclusion,
     UndoActionType.prognosisMarginPercent =>

@@ -1414,29 +1414,11 @@ abstract class AppLocalizations {
   /// **'Shaded band shows min–max range; line is expected'**
   String get prognosisBandLegend;
 
-  /// No description provided for @prognosisModeExpected.
-  ///
-  /// In en, this message translates to:
-  /// **'Real projection'**
-  String get prognosisModeExpected;
-
-  /// No description provided for @prognosisModeProjected.
-  ///
-  /// In en, this message translates to:
-  /// **'Speculative projection'**
-  String get prognosisModeProjected;
-
-  /// No description provided for @prognosisModeExpectedHint.
+  /// No description provided for @prognosisSummaryHint.
   ///
   /// In en, this message translates to:
   /// **'Month-end balances from current balances, scheduled transactions, recurring items, and bills'**
-  String get prognosisModeExpectedHint;
-
-  /// No description provided for @prognosisModeProjectedHint.
-  ///
-  /// In en, this message translates to:
-  /// **'Trend-based forecast from historical net cash flow'**
-  String get prognosisModeProjectedHint;
+  String get prognosisSummaryHint;
 
   /// No description provided for @prognosisHorizonLabel.
   ///
@@ -5685,12 +5667,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Transaction page size'**
   String get undoActionTypeTransactionPageSize;
-
-  /// No description provided for @undoActionTypePrognosisMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Projection view mode'**
-  String get undoActionTypePrognosisMode;
 
   /// No description provided for @undoActionTypePrognosisHorizon.
   ///

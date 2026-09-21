@@ -697,16 +697,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get prognosisBandLegend => '影付きの帯は最小〜最大の範囲、線は予想値を示します';
 
   @override
-  String get prognosisModeExpected => '実際の予測';
-
-  @override
-  String get prognosisModeProjected => '推測的な予測';
-
-  @override
-  String get prognosisModeExpectedHint => '現在残高、予定取引、定期項目、請求から算出した月末残高';
-
-  @override
-  String get prognosisModeProjectedHint => '過去の純キャッシュフローに基づくトレンド予測';
+  String get prognosisSummaryHint => '現在残高、予定取引、定期項目、請求から算出した月末残高';
 
   @override
   String get prognosisHorizonLabel => '期間';
@@ -3048,9 +3039,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get undoActionTypeTransactionPageSize => '取引ページサイズ';
-
-  @override
-  String get undoActionTypePrognosisMode => '予測表示モード';
 
   @override
   String get undoActionTypePrognosisHorizon => '予測期間';

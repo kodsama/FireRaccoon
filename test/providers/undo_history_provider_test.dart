@@ -537,13 +537,6 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 20));
 
     notifier.record(
-      title: 'Prognosis mode',
-      details: 'Projected',
-      type: UndoActionType.prognosisMode,
-      undoPayload: const {'mode': 'projected'},
-      redoPayload: const {'mode': 'expected'},
-    );
-    notifier.record(
       title: 'Prognosis horizon',
       details: 'Month',
       type: UndoActionType.prognosisHorizon,
@@ -568,10 +561,8 @@ void main() {
     await notifier.undo();
     await notifier.undo();
     await notifier.undo();
-    await notifier.undo();
 
     final settings = container.read(prognosisSettingsProvider);
-    expect(settings.mode, PrognosisViewMode.projected);
     expect(settings.horizon, PrognosisHorizon.endOfMonth);
     expect(settings.inclusion.includeExpenses, isFalse);
     expect(settings.marginPercent, 25);
@@ -927,11 +918,11 @@ void main() {
     await waitHydrated(container);
 
     notifier.record(
-      title: 'invalid prognosis mode',
+      title: 'invalid prognosis horizon',
       details: 'd',
-      type: UndoActionType.prognosisMode,
-      undoPayload: const {'mode': 'invalid'},
-      redoPayload: const {'mode': 'invalid'},
+      type: UndoActionType.prognosisHorizon,
+      undoPayload: const {'horizon': 'invalid'},
+      redoPayload: const {'horizon': 'invalid'},
     );
     notifier.record(
       title: 'invalid tx payload',
@@ -945,7 +936,7 @@ void main() {
     await notifier.undo();
 
     final settings = container.read(prognosisSettingsProvider);
-    expect(settings.mode, PrognosisViewMode.expected);
+    expect(settings.horizon, PrognosisHorizon.endOfNextMonth);
     expect(fake.updateTransactionCalls, 0);
   });
 

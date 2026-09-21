@@ -20,7 +20,6 @@ void main() {
     final container = await buildContainer({});
     final settings = container.read(prognosisSettingsProvider);
 
-    expect(settings.mode, PrognosisViewMode.expected);
     expect(settings.horizon, PrognosisHorizon.endOfNextMonth);
     expect(settings.marginPercent, 15);
     expect(settings.inclusion.includeCreditCards, isTrue);
@@ -28,7 +27,6 @@ void main() {
 
   test('loads persisted and legacy inclusion keys', () async {
     final container = await buildContainer({
-      'prognosisViewMode': 'projected',
       'prognosisHorizon': 'endOfMonth',
       'prognosisIncludeScheduledTransactions': false,
       'prognosisIncludeRecurringTransactions': false,
@@ -42,7 +40,6 @@ void main() {
     });
     final settings = container.read(prognosisSettingsProvider);
 
-    expect(settings.mode, PrognosisViewMode.projected);
     expect(settings.horizon, PrognosisHorizon.endOfMonth);
     expect(settings.inclusion.includeScheduledTransactions, isFalse);
     expect(settings.inclusion.includeRecurringTransactions, isFalse);
@@ -59,7 +56,6 @@ void main() {
     final container = await buildContainer({});
     final notifier = container.read(prognosisSettingsProvider.notifier);
 
-    notifier.setMode(PrognosisViewMode.projected);
     notifier.setHorizon(PrognosisHorizon.endOfMonth);
     notifier.setInclusion(
       const PrognosisInclusionOptions(
@@ -76,7 +72,6 @@ void main() {
     notifier.setMarginPercent(99);
 
     final state = container.read(prognosisSettingsProvider);
-    expect(state.mode, PrognosisViewMode.projected);
     expect(state.horizon, PrognosisHorizon.endOfMonth);
     expect(state.inclusion.includeCreditCards, isFalse);
     expect(state.marginPercent, 50);
@@ -84,7 +79,6 @@ void main() {
 
   test('copyWith and toOptions keep selected values', () {
     const settings = PrognosisSettings(
-      mode: PrognosisViewMode.expected,
       horizon: PrognosisHorizon.endOfMonth,
       inclusion: PrognosisInclusionOptions(includeIncome: false),
       marginPercent: 12,
