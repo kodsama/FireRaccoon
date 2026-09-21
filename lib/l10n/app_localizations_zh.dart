@@ -619,7 +619,49 @@ class AppLocalizationsZh extends AppLocalizations {
   String get viewAllAccounts => '查看所有账户';
 
   @override
-  String get thirtyDayOutlook => '30 天展望';
+  String get ninetyDayOutlook => '90天展望';
+
+  @override
+  String get whatIsComing => '即将发生';
+
+  @override
+  String get nothingScheduledAhead => '未来一个月没有安排';
+
+  @override
+  String get budgetsInANutshell => '预算概览';
+
+  @override
+  String get budgetsNoneSet => '尚未设置预算金额';
+
+  @override
+  String outlookDeltaFromToday(String amount) {
+    return '较今日 $amount';
+  }
+
+  @override
+  String outlookLowOn(String amount, String date) {
+    return '最低 $amount（$date）';
+  }
+
+  @override
+  String outlookNegativeFrom(String date) {
+    return '自 $date 起为负';
+  }
+
+  @override
+  String budgetsWithinCount(int within, int total) {
+    return '$total 个预算中 $within 个未超支';
+  }
+
+  @override
+  String budgetsAheadOfPace(String amount) {
+    return '比月度进度多 $amount';
+  }
+
+  @override
+  String budgetsWithinPace(String amount) {
+    return '比月度进度少 $amount';
+  }
 
   @override
   String get monthEndPrognosis => '月末预测';
@@ -697,22 +739,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get prognosisBandLegend => '余额区间';
 
   @override
-  String get prognosisModeExpected => '预期';
-
-  @override
-  String get prognosisModeProjected => '预测';
-
-  @override
-  String get prognosisModeExpectedHint => '基于已记录交易和定期规则。';
-
-  @override
-  String get prognosisModeProjectedHint => '包含计划与预测的未来现金流。';
+  String get prognosisSummaryHint => '基于已记录交易和定期规则。';
 
   @override
   String get prognosisHorizonLabel => '时间范围';
 
   @override
+  String get prognosisHorizonTwoWeeks => '2周';
+
+  @override
   String get prognosisHorizonEndOfMonth => '本月末';
+
+  @override
+  String get prognosisHorizonMidNextMonth => '下月中旬';
 
   @override
   String get prognosisHorizonEndOfNextMonth => '下月末';
@@ -739,6 +778,14 @@ class AppLocalizationsZh extends AppLocalizations {
   String get prognosisHorizonTenYears => '十年';
 
   @override
+  String get prognosisHorizonCustomDate => '选择日期';
+
+  @override
+  String prognosisHorizonUntil(String date) {
+    return '至 $date';
+  }
+
+  @override
   String get prognosisMilestoneThreeMonths => '三个月里程碑';
 
   @override
@@ -763,12 +810,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get prognosisPredictedBalances => '预测余额';
-
-  @override
-  String get todaysTimeline => '今日时间线';
-
-  @override
-  String get noActivityToday => '今日无活动';
 
   @override
   String get noChangeVsLastMonth => '与上月相比无变化';
@@ -3043,9 +3084,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get undoActionTypeTransactionPageSize => '每页交易数';
-
-  @override
-  String get undoActionTypePrognosisMode => '预测视图模式';
 
   @override
   String get undoActionTypePrognosisHorizon => '预测时间范围';

@@ -288,7 +288,65 @@
   "yourAccounts": "Your Accounts",
   "budgetsAtGlance": "Budgets at a glance",
   "viewAllAccounts": "View all accounts",
-  "thirtyDayOutlook": "30-day outlook",
+  "ninetyDayOutlook": "90-day outlook",
+  "whatIsComing": "What's coming",
+  "nothingScheduledAhead": "Nothing scheduled in the next month",
+  "budgetsInANutshell": "Budgets in a nutshell",
+  "budgetsNoneSet": "No budget amounts set",
+  "outlookDeltaFromToday": "{amount} from today",
+  "@outlookDeltaFromToday": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookLowOn": "Low {amount} on {date}",
+  "@outlookLowOn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookNegativeFrom": "Below zero from {date}",
+  "@outlookNegativeFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinCount": "{within} of {total} within budget",
+  "@budgetsWithinCount": {
+    "placeholders": {
+      "within": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "budgetsAheadOfPace": "{amount} ahead of the month",
+  "@budgetsAheadOfPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinPace": "{amount} in hand for the month",
+  "@budgetsWithinPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "monthEndPrognosis": "Month-end prognosis",
   "projectedEndOfMonth": "End of month",
   "includeCreditCardPayments": "Include credit card payments",
@@ -333,12 +391,11 @@
   "prognosisExpectedBalance": "Expected",
   "prognosisSelectAccount": "Account",
   "prognosisBandLegend": "Shaded band shows min–max range; line is expected",
-  "prognosisModeExpected": "Real projection",
-  "prognosisModeProjected": "Speculative projection",
-  "prognosisModeExpectedHint": "Month-end balances from current balances, scheduled transactions, recurring items, and bills",
-  "prognosisModeProjectedHint": "Trend-based forecast from historical net cash flow",
+  "prognosisSummaryHint": "Month-end balances from current balances, scheduled transactions, recurring items, and bills",
   "prognosisHorizonLabel": "Horizon",
+  "prognosisHorizonTwoWeeks": "2 weeks",
   "prognosisHorizonEndOfMonth": "End of month",
+  "prognosisHorizonMidNextMonth": "Mid next month",
   "prognosisHorizonEndOfNextMonth": "Next month",
   "prognosisHorizonTwoMonths": "2 months",
   "prognosisHorizonThreeMonths": "3 months",
@@ -347,6 +404,15 @@
   "prognosisHorizonThreeYears": "3 years",
   "prognosisHorizonFiveYears": "5 years",
   "prognosisHorizonTenYears": "10 years",
+  "prognosisHorizonCustomDate": "Pick a date",
+  "prognosisHorizonUntil": "Until {date}",
+  "@prognosisHorizonUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "prognosisMilestoneThreeMonths": "End of 3 months",
   "prognosisMilestoneSixMonths": "End of 6 months",
   "prognosisMilestoneOneYear": "End of 1 year",
@@ -362,8 +428,6 @@
   },
   "prognosisCurrentBalance": "Current balance",
   "prognosisPredictedBalances": "Predicted balances",
-  "todaysTimeline": "Today's timeline",
-  "noActivityToday": "No activity today",
   "noChangeVsLastMonth": "No change vs last month",
   "newActivityThisMonth": "New activity this month",
   "percentVsLastMonth": "{arrow}{percent}% vs last month",
@@ -1798,7 +1862,6 @@
   "undoActionTypeLocale": "Language",
   "undoActionTypeViewMode": "View mode",
   "undoActionTypeTransactionPageSize": "Transaction page size",
-  "undoActionTypePrognosisMode": "Projection view mode",
   "undoActionTypePrognosisHorizon": "Projection horizon",
   "undoActionTypePrognosisInclusion": "Projection inclusion",
   "undoActionTypePrognosisMarginPercent": "Projection margin",

@@ -11,7 +11,7 @@ import '../providers/dashboard_stats_providers.dart';
 import '../providers/undo_history_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/locale_formatting.dart';
-import '../widgets/autocomplete_text_field.dart';
+import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
 import '../widgets/entity_list_layout.dart';
 import '../widgets/loading_body.dart';
@@ -28,7 +28,7 @@ class PrognosisScreen extends StatelessWidget {
   }
 }
 
-/// Account balance projection: real cash-flow vs speculative trend forecast.
+/// Account balance projection from scheduled and recurring cash flow.
 class PrognosisView extends ConsumerStatefulWidget {
   const PrognosisView({super.key});
 
@@ -36,49 +36,8 @@ class PrognosisView extends ConsumerStatefulWidget {
   ConsumerState<PrognosisView> createState() => _PrognosisViewState();
 }
 
-class _PrognosisViewState extends ConsumerState<PrognosisView>
-    with SingleTickerProviderStateMixin {
+class _PrognosisViewState extends ConsumerState<PrognosisView> {
   String? _selectedAccountId;
-  late final TabController _modeTabController;
-
-  @override
-  void initState() {
-    super.initState();
-    final initialMode = ref.read(prognosisSettingsProvider).mode;
-    _modeTabController = TabController(
-      length: 2,
-      vsync: this,
-      initialIndex: initialMode == PrognosisViewMode.expected ? 0 : 1,
-    );
-    _modeTabController.addListener(_syncModeFromTab);
-  }
-
-  void _syncModeFromTab() {
-    if (_modeTabController.indexIsChanging) return;
-    final mode = _modeTabController.index == 0
-        ? PrognosisViewMode.expected
-        : PrognosisViewMode.projected;
-    final current = ref.read(prognosisSettingsProvider).mode;
-    if (mode != current) {
-      ref.read(prognosisSettingsProvider.notifier).setMode(mode);
-      ref
-          .read(undoHistoryProvider.notifier)
-          .record(
-            title: 'Projection view mode changed',
-            details: 'Projection mode: ${current.name} -> ${mode.name}',
-            type: UndoActionType.prognosisMode,
-            undoPayload: {'mode': current.name},
-            redoPayload: {'mode': mode.name},
-          );
-    }
-  }
-
-  @override
-  void dispose() {
-    _modeTabController.removeListener(_syncModeFromTab);
-    _modeTabController.dispose();
-    super.dispose();
-  }
 
   /// Accounts worth forecasting: open, and with a forecast to show.
   ///
@@ -125,75 +84,61 @@ class _PrognosisViewState extends ConsumerState<PrognosisView>
             ? null
             : accounts.where((a) => a.id == selectedId).firstOrNull;
 
-        final tabIndex = settings.mode == PrognosisViewMode.expected ? 0 : 1;
-        if (_modeTabController.index != tabIndex) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (!mounted || _modeTabController.index == tabIndex) return;
-            _modeTabController.animateTo(tabIndex);
-          });
-        }
-
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _ModeTabs(controller: _modeTabController),
-              const SizedBox(height: 6),
               Text(
-                settings.mode == PrognosisViewMode.expected
-                    ? l10n.prognosisModeExpectedHint
-                    : l10n.prognosisModeProjectedHint,
+                l10n.prognosisSummaryHint,
                 style: TextStyle(
                   fontSize: 12,
                   color: context.colors.text3,
                   height: 1.35,
                 ),
               ),
-              if (settings.mode == PrognosisViewMode.expected) ...[
-                const SizedBox(height: 14),
-                _InclusionPanel(
-                  inclusion: settings.inclusion,
-                  onChanged: (inclusion) {
-                    final previous = settings.inclusion;
-                    ref
-                        .read(prognosisSettingsProvider.notifier)
-                        .setInclusion(inclusion);
-                    ref
-                        .read(undoHistoryProvider.notifier)
-                        .record(
-                          title: 'Projection inclusion changed',
-                          details: 'Projection inclusion options updated',
-                          type: UndoActionType.prognosisInclusion,
-                          undoPayload: {
-                            'includeScheduledTransactions':
-                                previous.includeScheduledTransactions,
-                            'includeRecurringTransactions':
-                                previous.includeRecurringTransactions,
-                            'includeBills': previous.includeBills,
-                            'includeIncome': previous.includeIncome,
-                            'includeExpenses': previous.includeExpenses,
-                            'includeTransfers': previous.includeTransfers,
-                            'includeCreditCards': previous.includeCreditCards,
-                            'includeLiabilities': previous.includeLiabilities,
-                          },
-                          redoPayload: {
-                            'includeScheduledTransactions':
-                                inclusion.includeScheduledTransactions,
-                            'includeRecurringTransactions':
-                                inclusion.includeRecurringTransactions,
-                            'includeBills': inclusion.includeBills,
-                            'includeIncome': inclusion.includeIncome,
-                            'includeExpenses': inclusion.includeExpenses,
-                            'includeTransfers': inclusion.includeTransfers,
-                            'includeCreditCards': inclusion.includeCreditCards,
-                            'includeLiabilities': inclusion.includeLiabilities,
-                          },
-                        );
-                  },
-                ),
-              ],
+              const SizedBox(height: 14),
+              _InclusionPanel(
+                inclusion: settings.inclusion,
+                onChanged: (inclusion) {
+                  final previous = settings.inclusion;
+                  ref
+                      .read(prognosisSettingsProvider.notifier)
+                      .setInclusion(inclusion);
+                  ref
+                      .read(undoHistoryProvider.notifier)
+                      .record(
+                        title: 'Projection inclusion changed',
+                        details: 'Projection inclusion options updated',
+                        type: UndoActionType.prognosisInclusion,
+                        undoPayload: {
+                          'includeScheduledTransactions':
+                              previous.includeScheduledTransactions,
+                          'includeRecurringTransactions':
+                              previous.includeRecurringTransactions,
+                          'includeBills': previous.includeBills,
+                          'includeIncome': previous.includeIncome,
+                          'includeExpenses': previous.includeExpenses,
+                          'includeTransfers': previous.includeTransfers,
+                          'includeCreditCards': previous.includeCreditCards,
+                          'includeLiabilities': previous.includeLiabilities,
+                        },
+                        redoPayload: {
+                          'includeScheduledTransactions':
+                              inclusion.includeScheduledTransactions,
+                          'includeRecurringTransactions':
+                              inclusion.includeRecurringTransactions,
+                          'includeBills': inclusion.includeBills,
+                          'includeIncome': inclusion.includeIncome,
+                          'includeExpenses': inclusion.includeExpenses,
+                          'includeTransfers': inclusion.includeTransfers,
+                          'includeCreditCards': inclusion.includeCreditCards,
+                          'includeLiabilities': inclusion.includeLiabilities,
+                        },
+                      );
+                },
+              ),
               const SizedBox(height: 14),
               _ChartPanel(
                 prognosis: prognosis,
@@ -203,8 +148,8 @@ class _PrognosisViewState extends ConsumerState<PrognosisView>
                 selectedAccountId: selectedId,
                 format: format,
                 marginPercent: settings.marginPercent,
-                mode: settings.mode,
                 horizon: settings.horizon,
+                customHorizonDate: settings.customHorizonDate,
                 onAccountChanged: (id) =>
                     setState(() => _selectedAccountId = id),
                 onMarginChanged: (value) {
@@ -241,6 +186,31 @@ class _PrognosisViewState extends ConsumerState<PrognosisView>
                         redoPayload: {'horizon': horizon.name},
                       );
                 },
+                onCustomDateChanged: (date) {
+                  final previous = settings.horizon;
+                  final previousDate = settings.customHorizonDate;
+                  final notifier = ref.read(prognosisSettingsProvider.notifier);
+                  notifier.setCustomHorizonDate(date);
+                  notifier.setHorizon(PrognosisHorizon.customDate);
+                  ref
+                      .read(undoHistoryProvider.notifier)
+                      .record(
+                        title: 'Projection horizon changed',
+                        details:
+                            'Projection horizon: ${previous.name} -> '
+                            '${format.formatIsoDate(date)}',
+                        type: UndoActionType.prognosisHorizon,
+                        undoPayload: {
+                          'horizon': previous.name,
+                          if (previousDate != null)
+                            'customHorizonDate': previousDate.toIso8601String(),
+                        },
+                        redoPayload: {
+                          'horizon': PrognosisHorizon.customDate.name,
+                          'customHorizonDate': date.toIso8601String(),
+                        },
+                      );
+                },
               ),
               const SizedBox(height: 20),
               Text(l10n.yourAccounts, style: context.textTheme.titleLarge),
@@ -252,7 +222,6 @@ class _PrognosisViewState extends ConsumerState<PrognosisView>
                         account: account,
                         prognosis: prognosis.forAccount(account.id)!,
                         format: format,
-                        mode: settings.mode,
                         onTap: () =>
                             setState(() => _selectedAccountId = account.id),
                         selected: account.id == selectedId,
@@ -265,7 +234,6 @@ class _PrognosisViewState extends ConsumerState<PrognosisView>
                         account: account,
                         prognosis: prognosis.forAccount(account.id)!,
                         format: format,
-                        mode: settings.mode,
                         onTap: () =>
                             setState(() => _selectedAccountId = account.id),
                         selected: account.id == selectedId,
@@ -281,59 +249,6 @@ class _PrognosisViewState extends ConsumerState<PrognosisView>
   }
 }
 
-class _ModeTabs extends StatelessWidget {
-  final TabController controller;
-
-  const _ModeTabs({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    final colors = context.colors;
-
-    return TabBar(
-      controller: controller,
-      indicatorColor: colors.accent.acc,
-      indicatorWeight: 2.5,
-      indicatorSize: TabBarIndicatorSize.label,
-      dividerColor: colors.border,
-      dividerHeight: 1,
-      labelColor: colors.text,
-      unselectedLabelColor: colors.text3,
-      labelStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-      unselectedLabelStyle: const TextStyle(
-        fontWeight: FontWeight.w500,
-        fontSize: 14,
-      ),
-      labelPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-      tabs: [
-        Tab(
-          height: 40,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(LucideIcons.calendarClock, size: 15),
-              const SizedBox(width: 7),
-              Text(l10n.prognosisModeExpected),
-            ],
-          ),
-        ),
-        Tab(
-          height: 40,
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(LucideIcons.trendingUp, size: 15),
-              const SizedBox(width: 7),
-              Text(l10n.prognosisModeProjected),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 class _ChartPanel extends StatelessWidget {
   final AccountPrognosisResult prognosis;
   final AccountPrognosis? selected;
@@ -342,11 +257,12 @@ class _ChartPanel extends StatelessWidget {
   final String? selectedAccountId;
   final LocaleFormatting format;
   final double marginPercent;
-  final PrognosisViewMode mode;
   final PrognosisHorizon horizon;
+  final DateTime? customHorizonDate;
   final ValueChanged<String?> onAccountChanged;
   final ValueChanged<double> onMarginChanged;
   final ValueChanged<PrognosisHorizon> onHorizonChanged;
+  final ValueChanged<DateTime> onCustomDateChanged;
 
   const _ChartPanel({
     required this.prognosis,
@@ -356,11 +272,12 @@ class _ChartPanel extends StatelessWidget {
     required this.selectedAccountId,
     required this.format,
     required this.marginPercent,
-    required this.mode,
     required this.horizon,
+    required this.customHorizonDate,
     required this.onAccountChanged,
     required this.onMarginChanged,
     required this.onHorizonChanged,
+    required this.onCustomDateChanged,
   });
 
   @override
@@ -392,73 +309,46 @@ class _ChartPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: DropdownButtonFormField<PrognosisHorizon>(
-                    initialValue: horizon,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: l10n.prognosisHorizonLabel,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    items: PrognosisHorizon.values
-                        .map(
-                          (value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(l10n.labelForPrognosisHorizon(value)),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) onHorizonChanged(value);
-                    },
+                  child: _HorizonPicker(
+                    horizon: horizon,
+                    customDate: customHorizonDate,
+                    format: format,
+                    onHorizonChanged: onHorizonChanged,
+                    onCustomDateChanged: onCustomDateChanged,
                   ),
                 ),
               ],
             ),
-            if (mode == PrognosisViewMode.expected) ...[
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.prognosisMarginLabel,
-                      style: TextStyle(color: colors.text2, fontSize: 13),
-                    ),
-                  ),
-                  Text(
-                    l10n.prognosisMarginDetail(
-                      marginPercent.round().toString(),
-                    ),
-                    style: TextStyle(color: colors.text3, fontSize: 11),
-                  ),
-                ],
-              ),
-              SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  trackHeight: 3,
-                  thumbShape: const RoundSliderThumbShape(
-                    enabledThumbRadius: 7,
-                  ),
-                  overlayShape: const RoundSliderOverlayShape(
-                    overlayRadius: 14,
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    l10n.prognosisMarginLabel,
+                    style: TextStyle(color: colors.text2, fontSize: 13),
                   ),
                 ),
-                child: Slider(
-                  value: marginPercent,
-                  min: 0,
-                  max: 50,
-                  divisions: 10,
-                  label: '${marginPercent.round()}%',
-                  onChanged: onMarginChanged,
+                Text(
+                  l10n.prognosisMarginDetail(marginPercent.round().toString()),
+                  style: TextStyle(color: colors.text3, fontSize: 11),
                 ),
+              ],
+            ),
+            SliderTheme(
+              data: SliderTheme.of(context).copyWith(
+                trackHeight: 3,
+                thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
               ),
-            ],
+              child: Slider(
+                value: marginPercent,
+                min: 0,
+                max: 50,
+                divisions: 10,
+                label: '${marginPercent.round()}%',
+                onChanged: onMarginChanged,
+              ),
+            ),
             const SizedBox(height: 4),
             Text(
               l10n.prognosisBandLegend,
@@ -488,7 +378,6 @@ class _ChartPanel extends StatelessWidget {
                 account: selectedAccount!,
                 prognosis: selected!,
                 format: format,
-                mode: mode,
               ),
             ],
           ],
@@ -502,13 +391,11 @@ class _SelectedAccountBalances extends StatelessWidget {
   final Account account;
   final AccountPrognosis prognosis;
   final LocaleFormatting format;
-  final PrognosisViewMode mode;
 
   const _SelectedAccountBalances({
     required this.account,
     required this.prognosis,
     required this.format,
-    required this.mode,
   });
 
   @override
@@ -561,34 +448,32 @@ class _SelectedAccountBalances extends StatelessWidget {
             );
           },
         ),
-        if (mode == PrognosisViewMode.expected) ...[
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Expanded(
-                child: _BalanceRow(
-                  label: l10n.prognosisMinBalance,
-                  value: format.formatMoney(
-                    prognosis.endOfMonth.pessimistic,
-                    currency,
-                  ),
-                  color: colors.danger,
+        const SizedBox(height: 4),
+        Row(
+          children: [
+            Expanded(
+              child: _BalanceRow(
+                label: l10n.prognosisMinBalance,
+                value: format.formatMoney(
+                  prognosis.endOfMonth.pessimistic,
+                  currency,
                 ),
+                color: colors.danger,
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _BalanceRow(
-                  label: l10n.prognosisMaxBalance,
-                  value: format.formatMoney(
-                    prognosis.endOfMonth.optimistic,
-                    currency,
-                  ),
-                  color: colors.success,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _BalanceRow(
+                label: l10n.prognosisMaxBalance,
+                value: format.formatMoney(
+                  prognosis.endOfMonth.optimistic,
+                  currency,
                 ),
+                color: colors.success,
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
         if (prognosis.firstNegativeDate != null) ...[
           const SizedBox(height: 8),
           Container(
@@ -752,7 +637,6 @@ class _AccountPrognosisCard extends StatelessWidget {
   final Account account;
   final AccountPrognosis prognosis;
   final LocaleFormatting format;
-  final PrognosisViewMode mode;
   final VoidCallback onTap;
   final bool selected;
 
@@ -760,7 +644,6 @@ class _AccountPrognosisCard extends StatelessWidget {
     required this.account,
     required this.prognosis,
     required this.format,
-    required this.mode,
     required this.onTap,
     required this.selected,
   });
@@ -828,25 +711,23 @@ class _AccountPrognosisCard extends StatelessWidget {
                     prognosis.hasNegativeRisk &&
                     prognosis.milestone(milestone).expected <= 0,
               ),
-            if (mode == PrognosisViewMode.expected) ...[
-              const Divider(height: 16),
-              _BalanceRow(
-                label: l10n.prognosisMinBalance,
-                value: format.formatMoney(
-                  prognosis.endOfMonth.pessimistic,
-                  currency,
-                ),
-                color: colors.danger,
+            const Divider(height: 16),
+            _BalanceRow(
+              label: l10n.prognosisMinBalance,
+              value: format.formatMoney(
+                prognosis.endOfMonth.pessimistic,
+                currency,
               ),
-              _BalanceRow(
-                label: l10n.prognosisMaxBalance,
-                value: format.formatMoney(
-                  prognosis.endOfMonth.optimistic,
-                  currency,
-                ),
-                color: colors.success,
+              color: colors.danger,
+            ),
+            _BalanceRow(
+              label: l10n.prognosisMaxBalance,
+              value: format.formatMoney(
+                prognosis.endOfMonth.optimistic,
+                currency,
               ),
-            ],
+              color: colors.success,
+            ),
             if (prognosis.firstNegativeDate != null) ...[
               const SizedBox(height: 8),
               Text(
@@ -871,7 +752,6 @@ class _AccountPrognosisCompactRow extends StatelessWidget {
   final Account account;
   final AccountPrognosis prognosis;
   final LocaleFormatting format;
-  final PrognosisViewMode mode;
   final VoidCallback onTap;
   final bool selected;
 
@@ -879,7 +759,6 @@ class _AccountPrognosisCompactRow extends StatelessWidget {
     required this.account,
     required this.prognosis,
     required this.format,
-    required this.mode,
     required this.onTap,
     required this.selected,
   });
@@ -918,16 +797,14 @@ class _AccountPrognosisCompactRow extends StatelessWidget {
                     '${format.formatMoney(endOfMonth.expected, currency)}',
                     style: TextStyle(color: colors.text3, fontSize: 12),
                   ),
-                  if (mode == PrognosisViewMode.expected) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      '${l10n.prognosisMinBalance}: '
-                      '${format.formatMoney(prognosis.endOfMonth.pessimistic, currency)} · '
-                      '${l10n.prognosisMaxBalance}: '
-                      '${format.formatMoney(prognosis.endOfMonth.optimistic, currency)}',
-                      style: TextStyle(color: colors.text3, fontSize: 12),
-                    ),
-                  ],
+                  const SizedBox(height: 2),
+                  Text(
+                    '${l10n.prognosisMinBalance}: '
+                    '${format.formatMoney(prognosis.endOfMonth.pessimistic, currency)} · '
+                    '${l10n.prognosisMaxBalance}: '
+                    '${format.formatMoney(prognosis.endOfMonth.optimistic, currency)}',
+                    style: TextStyle(color: colors.text3, fontSize: 12),
+                  ),
                 ],
               ),
             ),
@@ -1006,10 +883,126 @@ class _BalanceRow extends StatelessWidget {
   }
 }
 
-/// Account chooser that can be typed into, as the pickers elsewhere can.
+/// Horizon chooser. Every entry but the last stands on its own; the last is a
+/// day taken from a calendar, and choosing it asks for that day before the
+/// horizon moves, so the forecast never runs to a date nobody named.
+class _HorizonPicker extends StatefulWidget {
+  const _HorizonPicker({
+    required this.horizon,
+    required this.customDate,
+    required this.format,
+    required this.onHorizonChanged,
+    required this.onCustomDateChanged,
+  });
+
+  final PrognosisHorizon horizon;
+  final DateTime? customDate;
+  final LocaleFormatting format;
+  final ValueChanged<PrognosisHorizon> onHorizonChanged;
+  final ValueChanged<DateTime> onCustomDateChanged;
+
+  @override
+  State<_HorizonPicker> createState() => _HorizonPickerState();
+}
+
+class _HorizonPickerState extends State<_HorizonPicker> {
+  /// What the dropdown shows. It parts from the settings for as long as the
+  /// calendar is open, since picking the date entry is only a request for one.
+  late PrognosisHorizon _shown = widget.horizon;
+
+  @override
+  void didUpdateWidget(_HorizonPicker old) {
+    super.didUpdateWidget(old);
+    if (widget.horizon != old.horizon) _shown = widget.horizon;
+  }
+
+  String _label(AppLocalizations l10n, PrognosisHorizon value) {
+    final picked = widget.customDate;
+    if (value.needsDate && picked != null) {
+      return l10n.prognosisHorizonUntil(widget.format.formatMediumDate(picked));
+    }
+    return l10n.labelForPrognosisHorizon(value);
+  }
+
+  Future<void> _pickDate() async {
+    final today = DateTime.now();
+    final tomorrow = DateTime(today.year, today.month, today.day + 1);
+    final stored = widget.customDate;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: stored != null && !stored.isBefore(tomorrow)
+          ? stored
+          : tomorrow,
+      firstDate: tomorrow,
+      lastDate: DateTime(today.year + 10, today.month, today.day),
+    );
+    if (!mounted) return;
+    if (picked == null) {
+      setState(() => _shown = widget.horizon);
+      return;
+    }
+    widget.onCustomDateChanged(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return Row(
+      children: [
+        Expanded(
+          // A FormField keeps the value it was last given rather than the one
+          // it is handed, so the key puts a cancelled pick back.
+          child: DropdownButtonFormField<PrognosisHorizon>(
+            key: ValueKey(_shown),
+            initialValue: _shown,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: l10n.prognosisHorizonLabel,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            items: PrognosisHorizon.values
+                .map(
+                  (value) => DropdownMenuItem(
+                    value: value,
+                    child: Text(_label(l10n, value)),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _shown = value);
+              if (value.needsDate) {
+                _pickDate();
+                return;
+              }
+              widget.onHorizonChanged(value);
+            },
+          ),
+        ),
+        if (widget.horizon.needsDate)
+          IconButton(
+            icon: const Icon(LucideIcons.calendar, size: 18),
+            tooltip: l10n.prognosisHorizonCustomDate,
+            onPressed: _pickDate,
+          ),
+      ],
+    );
+  }
+}
+
+/// Account chooser: a dropdown that filters as it is typed into.
 ///
-/// A dropdown is fine for a handful of entries and unusable for a ledger with
-/// dozens, which is why every other picker in the app filters as you type.
+/// Opening it lists every account, which is what a dropdown is for; a ledger
+/// with dozens of them is unusable that way, which is why typing narrows the
+/// list rather than replacing it.
 class _AccountPicker extends StatefulWidget {
   const _AccountPicker({
     required this.accounts,
@@ -1029,25 +1022,19 @@ class _AccountPicker extends StatefulWidget {
 
 class _AccountPickerState extends State<_AccountPicker> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _controller.text = _selectedName ?? '';
-  }
-
-  @override
-  void didUpdateWidget(_AccountPicker old) {
-    super.didUpdateWidget(old);
-    // Follow a selection made elsewhere, such as tapping an account card, but
-    // never overwrite what someone is part-way through typing.
-    if (widget.selectedAccountId != old.selectedAccountId) {
-      _controller.text = _selectedName ?? '';
-    }
+    _focusNode.addListener(_restoreSelectedName);
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_restoreSelectedName);
+    _focusNode.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -1057,21 +1044,26 @@ class _AccountPickerState extends State<_AccountPicker> {
       .firstOrNull
       ?.name;
 
-  void _select(String name) {
-    final match = widget.accounts
-        .where((account) => account.name == name)
-        .firstOrNull;
-    if (match == null) return;
-    widget.onAccountChanged(match.id);
+  /// Letters typed that matched nothing would otherwise stay in the field,
+  /// naming an account other than the one the chart is drawing.
+  void _restoreSelectedName() {
+    if (_focusNode.hasFocus) return;
+    final name = _selectedName ?? '';
+    if (_controller.text != name) _controller.text = name;
   }
 
   @override
   Widget build(BuildContext context) {
-    return AutocompleteTextField(
+    return DropdownMenu<String>(
       controller: _controller,
-      suggestions: widget.accounts.map((account) => account.name).toList(),
-      decoration: InputDecoration(
-        labelText: widget.label,
+      focusNode: _focusNode,
+      initialSelection: widget.selectedAccountId,
+      enableFilter: true,
+      requestFocusOnTap: true,
+      expandedInsets: EdgeInsets.zero,
+      menuHeight: 320,
+      label: Text(widget.label),
+      inputDecorationTheme: InputDecorationTheme(
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
@@ -1079,10 +1071,13 @@ class _AccountPickerState extends State<_AccountPicker> {
         ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      onSelected: _select,
-      // Typing a full name straight through counts as choosing it; anything
-      // else leaves the current selection alone rather than clearing the chart.
-      onSubmitted: _select,
+      dropdownMenuEntries: [
+        for (final account in widget.accounts)
+          DropdownMenuEntry(value: account.id, label: account.name),
+      ],
+      onSelected: (id) {
+        if (id != null) widget.onAccountChanged(id);
+      },
     );
   }
 }

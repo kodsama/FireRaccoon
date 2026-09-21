@@ -66,12 +66,14 @@ class PrognosisEvent {
 
 enum PrognosisScenario { expected, min, max }
 
-/// How balances are forecast: cash-flow based vs compound projection.
-enum PrognosisViewMode { expected, projected }
-
-/// Chart / forecast horizon ending at the last day of a future month.
+/// How far ahead a forecast runs.
+///
+/// Most of these land on a month end. The short ones do not, and
+/// [PrognosisHorizon.customDate] runs to whatever day was picked.
 enum PrognosisHorizon {
+  twoWeeks,
   endOfMonth,
+  midNextMonth,
   endOfNextMonth,
   twoMonths,
   threeMonths,
@@ -80,6 +82,7 @@ enum PrognosisHorizon {
   threeYears,
   fiveYears,
   tenYears,
+  customDate,
 }
 
 /// Key balance checkpoints shown on account cards.
@@ -119,48 +122,53 @@ const prognosisDisplayMilestones = [
 ];
 
 extension PrognosisHorizonX on PrognosisHorizon {
-  int get monthsAhead => switch (this) {
-    PrognosisHorizon.endOfMonth => 0,
-    PrognosisHorizon.endOfNextMonth => 1,
-    PrognosisHorizon.twoMonths => 2,
-    PrognosisHorizon.threeMonths => 3,
-    PrognosisHorizon.sixMonths => 6,
-    PrognosisHorizon.oneYear => 12,
-    PrognosisHorizon.threeYears => 36,
-    PrognosisHorizon.fiveYears => 60,
-    PrognosisHorizon.tenYears => 120,
+  /// Whether the horizon means nothing until a date is chosen for it.
+  bool get needsDate => this == PrognosisHorizon.customDate;
+}
+
+/// The last day a forecast on [horizon] covers, counted from [reference].
+///
+/// [customDate] is the day [PrognosisHorizon.customDate] runs to and is
+/// ignored by the rest. One already gone by leaves nothing to forecast, so it
+/// is held at [reference]: a date picked last month goes stale on its own,
+/// without anybody touching it.
+DateTime prognosisHorizonEnd(
+  DateTime reference,
+  PrognosisHorizon horizon, {
+  DateTime? customDate,
+}) {
+  final ref = prognosisStartOfDay(reference);
+  return switch (horizon) {
+    PrognosisHorizon.twoWeeks => DateTime(ref.year, ref.month, ref.day + 14),
+    PrognosisHorizon.midNextMonth => DateTime(ref.year, ref.month + 1, 15),
+    PrognosisHorizon.customDate => _pickedHorizonEnd(ref, customDate),
+    PrognosisHorizon.endOfMonth => _monthEnd(ref, 0),
+    PrognosisHorizon.endOfNextMonth => _monthEnd(ref, 1),
+    PrognosisHorizon.twoMonths => _monthEnd(ref, 2),
+    PrognosisHorizon.threeMonths => _monthEnd(ref, 3),
+    PrognosisHorizon.sixMonths => _monthEnd(ref, 6),
+    PrognosisHorizon.oneYear => _monthEnd(ref, 12),
+    PrognosisHorizon.threeYears => _monthEnd(ref, 36),
+    PrognosisHorizon.fiveYears => _monthEnd(ref, 60),
+    PrognosisHorizon.tenYears => _monthEnd(ref, 120),
   };
 }
 
-/// Last calendar day of the month [monthsAhead] months after [reference]'s month.
-DateTime prognosisHorizonEnd(DateTime reference, PrognosisHorizon horizon) {
-  final ref = DateTime(reference.year, reference.month, reference.day);
-  final targetMonth = ref.month + horizon.monthsAhead;
-  return DateTime(ref.year, targetMonth + 1, 0);
+DateTime _monthEnd(DateTime reference, int monthsAhead) =>
+    DateTime(reference.year, reference.month + monthsAhead + 1, 0);
+
+DateTime _pickedHorizonEnd(DateTime reference, DateTime? picked) {
+  if (picked == null) return _monthEnd(reference, 0);
+  final day = prognosisStartOfDay(picked);
+  return day.isBefore(reference) ? reference : day;
 }
 
 DateTime prognosisMilestoneDate(
   DateTime reference,
   PrognosisMilestone milestone,
 ) {
-  return prognosisHorizonEnd(
-    reference,
-    _horizonForMonths(milestone.monthsAhead),
-  );
+  return _monthEnd(prognosisStartOfDay(reference), milestone.monthsAhead);
 }
-
-PrognosisHorizon _horizonForMonths(int months) => switch (months) {
-  0 => PrognosisHorizon.endOfMonth,
-  1 => PrognosisHorizon.endOfNextMonth,
-  2 => PrognosisHorizon.twoMonths,
-  3 => PrognosisHorizon.threeMonths,
-  6 => PrognosisHorizon.sixMonths,
-  12 => PrognosisHorizon.oneYear,
-  36 => PrognosisHorizon.threeYears,
-  60 => PrognosisHorizon.fiveYears,
-  120 => PrognosisHorizon.tenYears,
-  _ => PrognosisHorizon.endOfMonth,
-};
 
 class AccountPrognosis {
   final String accountId;
@@ -296,15 +304,17 @@ class PrognosisOptions {
   final PrognosisInclusionOptions inclusion;
   final double marginPercent;
   final DateTime? reference;
-  final PrognosisViewMode mode;
   final PrognosisHorizon horizon;
+
+  /// The day [PrognosisHorizon.customDate] runs to; nothing to the others.
+  final DateTime? customHorizonDate;
 
   const PrognosisOptions({
     this.inclusion = const PrognosisInclusionOptions(),
     this.marginPercent = 15,
     this.reference,
-    this.mode = PrognosisViewMode.expected,
     this.horizon = PrognosisHorizon.endOfNextMonth,
+    this.customHorizonDate,
   });
 
   @Deprecated('Use inclusion.includeCreditCards')
@@ -316,7 +326,6 @@ class AccountPrognosisResult {
   final DateTime endOfThisMonth;
   final DateTime endOfNextMonth;
   final DateTime horizonEnd;
-  final PrognosisViewMode mode;
   final PrognosisHorizon horizon;
   final List<AccountPrognosis> accounts;
 
@@ -325,7 +334,6 @@ class AccountPrognosisResult {
     required this.endOfThisMonth,
     required this.endOfNextMonth,
     required this.horizonEnd,
-    required this.mode,
     required this.horizon,
     required this.accounts,
   });

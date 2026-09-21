@@ -86,10 +86,12 @@ void main() {
         _account(name: 'Checking', type: 'asset', balance: 1000),
         _account(name: 'Loan', type: 'liability', balance: -200),
         _account(name: 'Expense', type: 'expense', balance: 0),
+        _account(name: 'Closed', type: 'asset', balance: 0, active: false),
       ];
       expect(computeAssetsTotal(accounts), 1000);
       expect(computeLiabilitiesTotal(accounts), 200);
       expect(computeNetWorth(accounts), 800);
+      // A closed account is a row of zeroes on a dashboard.
       expect(assetAccounts(accounts).map((a) => a.name), ['Checking']);
     });
   });
@@ -436,26 +438,268 @@ void main() {
       expect(spark, isNotEmpty);
     });
 
-    test('projectionOutlook clamps negatives to zero', () {
-      final outlook = projectionOutlook(
-        100,
-        [_tx(type: 'withdrawal', date: DateTime(2026, 7, 2), amount: 50)],
-        DateRangeBounds(
-          start: DateTime(2026, 7, 1),
-          end: DateTime(2026, 7, 11),
+    test('projectionOutlook adds the asset forecasts up day by day', () {
+      final reference = DateTime(2026, 7, 7);
+      final transactions = [
+        _tx(
+          type: 'withdrawal',
+          date: DateTime(2026, 7, 10),
+          amount: 900,
+          source: 'Checking',
         ),
-        days: 5,
+      ];
+      final prognosis = AccountPrognosisService.compute(
+        accounts: [
+          Account(
+            id: '1',
+            name: 'Checking',
+            type: 'asset',
+            role: 'defaultAsset',
+            currentBalance: 800,
+            currencySymbol: 'kr',
+            currencyCode: 'SEK',
+          ),
+          Account(
+            id: '2',
+            name: 'Savings',
+            type: 'asset',
+            role: 'savingAsset',
+            currentBalance: 200,
+            currencySymbol: 'kr',
+            currencyCode: 'SEK',
+          ),
+          // Not an asset, so its balance is none of this total's business.
+          Account(
+            id: '3',
+            name: 'Visa',
+            type: 'liability',
+            role: 'ccAsset',
+            currentBalance: -5000,
+            currencySymbol: 'kr',
+            currencyCode: 'SEK',
+          ),
+        ],
+        transactions: transactions,
+        bills: const [],
+        recurrences: const [],
+        options: PrognosisOptions(
+          reference: reference,
+          horizon: PrognosisHorizon.customDate,
+          customHorizonDate: DateTime(2026, 8, 5),
+        ),
       );
-      expect(outlook, hasLength(6));
-      expect(outlook.every((v) => v >= 0), isTrue);
 
-      final allTime = projectionOutlook(
-        50,
-        [_tx(type: 'deposit', date: DateTime(2026, 1, 1), amount: 10)],
-        const DateRangeBounds(),
-        days: 3,
+      final outlook = projectionOutlook(
+        prognosis,
+        reference: reference,
+        days: 20,
       );
-      expect(allTime, hasLength(4));
+
+      expect(outlook.series, hasLength(21));
+      expect(outlook.today, 1000);
+      expect(outlook.atEnd, 100);
+      expect(outlook.delta, -900);
+      expect(outlook.low, 100);
+      expect(outlook.lowDate, DateTime(2026, 7, 10));
+      expect(outlook.dipsBelowToday, isTrue);
+      expect(outlook.firstNegativeDate, isNull);
+    });
+
+    test('projectionOutlook names the day the total goes under', () {
+      final reference = DateTime(2026, 7, 7);
+      final transactions = [
+        _tx(
+          type: 'withdrawal',
+          date: DateTime(2026, 7, 9),
+          amount: 500,
+          source: 'Checking',
+        ),
+      ];
+      final prognosis = AccountPrognosisService.compute(
+        accounts: [
+          Account(
+            id: '1',
+            name: 'Checking',
+            type: 'asset',
+            role: 'defaultAsset',
+            currentBalance: 300,
+            currencySymbol: 'kr',
+            currencyCode: 'SEK',
+          ),
+        ],
+        transactions: transactions,
+        bills: const [],
+        recurrences: const [],
+        options: PrognosisOptions(
+          reference: reference,
+          horizon: PrognosisHorizon.customDate,
+          customHorizonDate: DateTime(2026, 7, 20),
+        ),
+      );
+
+      final outlook = projectionOutlook(
+        prognosis,
+        reference: reference,
+        days: 10,
+      );
+
+      expect(outlook.firstNegativeDate, DateTime(2026, 7, 9));
+      expect(outlook.atEnd, -200);
+    });
+  });
+
+  group('upcomingMovements', () {
+    test('dates what is coming, soonest first, assets only', () {
+      final reference = DateTime(2026, 7, 7);
+      final transactions = [
+        _tx(
+          type: 'withdrawal',
+          date: DateTime(2026, 7, 20),
+          amount: 400,
+          source: 'Checking',
+          destination: 'Landlord',
+          id: 'rent',
+        ),
+        _tx(
+          type: 'deposit',
+          date: DateTime(2026, 7, 10),
+          amount: 2000,
+          source: 'Employer',
+          destination: 'Checking',
+          id: 'salary',
+        ),
+        // Past the window, so not yet anybody's business.
+        _tx(
+          type: 'withdrawal',
+          date: DateTime(2026, 9, 1),
+          amount: 100,
+          source: 'Checking',
+          destination: 'Shop',
+          id: 'later',
+        ),
+      ];
+      final prognosis = AccountPrognosisService.compute(
+        accounts: [
+          Account(
+            id: '1',
+            name: 'Checking',
+            type: 'asset',
+            role: 'defaultAsset',
+            currentBalance: 1000,
+            currencySymbol: 'kr',
+            currencyCode: 'SEK',
+          ),
+        ],
+        transactions: transactions,
+        bills: const [],
+        recurrences: const [],
+        options: PrognosisOptions(
+          reference: reference,
+          horizon: PrognosisHorizon.customDate,
+          customHorizonDate: DateTime(2026, 10, 1),
+        ),
+      );
+
+      final coming = upcomingMovements(
+        prognosis,
+        reference: reference,
+        days: 30,
+      );
+
+      expect(coming.map((m) => m.date), [
+        DateTime(2026, 7, 10),
+        DateTime(2026, 7, 20),
+      ]);
+      expect(coming.first.amount, 2000);
+      expect(coming.first.isIncome, isTrue);
+      expect(coming.first.accountName, 'Checking');
+      expect(coming.last.amount, -400);
+    });
+
+    test('takes only as many as asked for', () {
+      final reference = DateTime(2026, 7, 7);
+      final transactions = [
+        for (var day = 8; day < 20; day++)
+          _tx(
+            type: 'withdrawal',
+            date: DateTime(2026, 7, day),
+            amount: 10,
+            source: 'Checking',
+            destination: 'Shop',
+            id: 'spend-$day',
+          ),
+      ];
+      final prognosis = AccountPrognosisService.compute(
+        accounts: [
+          Account(
+            id: '1',
+            name: 'Checking',
+            type: 'asset',
+            role: 'defaultAsset',
+            currentBalance: 1000,
+            currencySymbol: 'kr',
+            currencyCode: 'SEK',
+          ),
+        ],
+        transactions: transactions,
+        bills: const [],
+        recurrences: const [],
+        options: PrognosisOptions(
+          reference: reference,
+          horizon: PrognosisHorizon.customDate,
+          customHorizonDate: DateTime(2026, 8, 20),
+        ),
+      );
+
+      expect(
+        upcomingMovements(prognosis, reference: reference, limit: 3),
+        hasLength(3),
+      );
+    });
+  });
+
+  group('budgetHealth', () {
+    Budget budget(
+      String name,
+      double spent,
+      double amount, {
+      bool active = true,
+    }) => Budget(
+      id: name,
+      name: name,
+      active: active,
+      spent: spent,
+      autoBudgetAmount: amount,
+    );
+
+    test('counts what is inside, what is past it, and the pace', () {
+      final health = budgetHealth(
+        [
+          budget('Food', 400, 1000),
+          budget('Transport', 1200, 1000),
+          // No amount set, so there is nothing to hold to.
+          budget('Fun', 300, 0),
+          // Archived budgets are not being held to either.
+          budget('Old', 5000, 1000, active: false),
+        ],
+        // Half of June gone, so half of 2000 is what the month has earned.
+        reference: DateTime(2026, 6, 15),
+      );
+
+      expect(health.counted, 2);
+      expect(health.within, 1);
+      expect(health.over, 1);
+      expect(health.spent, 1600);
+      expect(health.budgeted, 2000);
+      expect(health.progress, 0.8);
+      expect(health.pace, closeTo(600, 0.01));
+      expect(health.aheadOfPace, isTrue);
+    });
+
+    test('nothing set means nothing to report', () {
+      final health = budgetHealth(const [], reference: DateTime(2026, 6, 15));
+      expect(health.hasBudgets, isFalse);
+      expect(health.progress, 0);
     });
   });
 }

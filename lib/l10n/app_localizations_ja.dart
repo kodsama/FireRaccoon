@@ -619,7 +619,49 @@ class AppLocalizationsJa extends AppLocalizations {
   String get viewAllAccounts => 'すべての口座を表示';
 
   @override
-  String get thirtyDayOutlook => '30 日間の見通し';
+  String get ninetyDayOutlook => '90日間の見通し';
+
+  @override
+  String get whatIsComing => 'これからの予定';
+
+  @override
+  String get nothingScheduledAhead => '今後1か月の予定はありません';
+
+  @override
+  String get budgetsInANutshell => '予算のあらまし';
+
+  @override
+  String get budgetsNoneSet => '予算額が未設定です';
+
+  @override
+  String outlookDeltaFromToday(String amount) {
+    return '本日から$amount';
+  }
+
+  @override
+  String outlookLowOn(String amount, String date) {
+    return '最低 $amount（$date）';
+  }
+
+  @override
+  String outlookNegativeFrom(String date) {
+    return '$date以降はマイナス';
+  }
+
+  @override
+  String budgetsWithinCount(int within, int total) {
+    return '$total件中$within件が予算内';
+  }
+
+  @override
+  String budgetsAheadOfPace(String amount) {
+    return '月の進みより$amount多い';
+  }
+
+  @override
+  String budgetsWithinPace(String amount) {
+    return '月の進みより$amount余裕あり';
+  }
 
   @override
   String get monthEndPrognosis => '月末の見通し';
@@ -697,22 +739,19 @@ class AppLocalizationsJa extends AppLocalizations {
   String get prognosisBandLegend => '影付きの帯は最小〜最大の範囲、線は予想値を示します';
 
   @override
-  String get prognosisModeExpected => '実際の予測';
-
-  @override
-  String get prognosisModeProjected => '推測的な予測';
-
-  @override
-  String get prognosisModeExpectedHint => '現在残高、予定取引、定期項目、請求から算出した月末残高';
-
-  @override
-  String get prognosisModeProjectedHint => '過去の純キャッシュフローに基づくトレンド予測';
+  String get prognosisSummaryHint => '現在残高、予定取引、定期項目、請求から算出した月末残高';
 
   @override
   String get prognosisHorizonLabel => '期間';
 
   @override
+  String get prognosisHorizonTwoWeeks => '2週間';
+
+  @override
   String get prognosisHorizonEndOfMonth => '月末';
+
+  @override
+  String get prognosisHorizonMidNextMonth => '翌月中旬';
 
   @override
   String get prognosisHorizonEndOfNextMonth => '翌月';
@@ -739,6 +778,14 @@ class AppLocalizationsJa extends AppLocalizations {
   String get prognosisHorizonTenYears => '10 年';
 
   @override
+  String get prognosisHorizonCustomDate => '日付を選ぶ';
+
+  @override
+  String prognosisHorizonUntil(String date) {
+    return '$dateまで';
+  }
+
+  @override
   String get prognosisMilestoneThreeMonths => '3 か月後';
 
   @override
@@ -763,12 +810,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get prognosisPredictedBalances => '予測残高';
-
-  @override
-  String get todaysTimeline => '今日のタイムライン';
-
-  @override
-  String get noActivityToday => '今日のアクティビティはありません';
 
   @override
   String get noChangeVsLastMonth => '先月と変化なし';
@@ -3048,9 +3089,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get undoActionTypeTransactionPageSize => '取引ページサイズ';
-
-  @override
-  String get undoActionTypePrognosisMode => '予測表示モード';
 
   @override
   String get undoActionTypePrognosisHorizon => '予測期間';

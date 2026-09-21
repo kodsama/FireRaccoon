@@ -123,8 +123,8 @@ class SettingsExportImport {
       viewMode: viewMode.name,
       tightRowsColumns: tightColumns.map((c) => c.name).toList(),
       prognosis: {
-        'mode': prognosis.mode.name,
         'horizon': prognosis.horizon.name,
+        'customHorizonDate': prognosis.customHorizonDate?.toIso8601String(),
         'marginPercent': prognosis.marginPercent,
         'inclusion': {
           'includeScheduledTransactions':
@@ -359,21 +359,20 @@ class SettingsExportImport {
         includeCreditCards: inclusionRaw['includeCreditCards'] as bool? ?? true,
         includeLiabilities: inclusionRaw['includeLiabilities'] as bool? ?? true,
       );
-      final modeName = prognosisJson['mode'] as String?;
       final horizonName = prognosisJson['horizon'] as String?;
+      final customHorizonDate = DateTime.tryParse(
+        prognosisJson['customHorizonDate'] as String? ?? '',
+      );
       final margin = prognosisJson['marginPercent'];
       _ref
           .read(prognosisSettingsProvider.notifier)
           .replaceAll(
             PrognosisSettings(
-              mode: PrognosisViewMode.values.firstWhere(
-                (m) => m.name == modeName,
-                orElse: () => PrognosisViewMode.expected,
-              ),
               horizon: PrognosisHorizon.values.firstWhere(
                 (h) => h.name == horizonName,
                 orElse: () => PrognosisHorizon.endOfNextMonth,
               ),
+              customHorizonDate: customHorizonDate,
               inclusion: inclusion,
               marginPercent: margin is num ? margin.toDouble() : 15,
             ),

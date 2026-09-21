@@ -441,45 +441,21 @@ void main() {
       },
     );
 
-    test('projected mode compounds balance from historical net flow', () {
+    test('a picked horizon date is where the forecast stops', () {
       final result = AccountPrognosisService.compute(
         accounts: [_account(id: '1', name: 'Checking', balance: 1000)],
-        transactions: [
-          _tx(
-            id: 'income',
-            type: 'deposit',
-            date: DateTime(2026, 6, 1),
-            amount: 300,
-            destinationId: '1',
-            destinationName: 'Checking',
-          ),
-          _tx(
-            id: 'expense',
-            type: 'withdrawal',
-            date: DateTime(2026, 6, 15),
-            amount: 100,
-            sourceId: '1',
-            sourceName: 'Checking',
-          ),
-        ],
+        transactions: const [],
         bills: const [],
         recurrences: const [],
         options: PrognosisOptions(
           reference: reference,
-          mode: PrognosisViewMode.projected,
-          horizon: PrognosisHorizon.threeMonths,
+          horizon: PrognosisHorizon.customDate,
+          customHorizonDate: DateTime(2026, 7, 23),
         ),
       );
 
-      final checking = result.forAccount('1')!;
-      expect(
-        checking.endOfMonth.expected,
-        greaterThan(checking.currentBalance),
-      );
-      expect(
-        checking.milestones[PrognosisMilestone.threeMonths]!.expected,
-        greaterThan(checking.endOfMonth.expected),
-      );
+      expect(result.horizonEnd, DateTime(2026, 7, 23));
+      expect(result.forAccount('1')!.timeline.last.date, DateTime(2026, 7, 23));
     });
 
     test('excludes income when toggle is off', () {
@@ -733,72 +709,6 @@ void main() {
       );
 
       expect(result.forAccount('2')!.showWarning, isTrue);
-    });
-
-    test('projected mode computes liability prognosis timeline', () {
-      final result = AccountPrognosisService.compute(
-        accounts: [
-          _account(
-            id: '2',
-            name: 'Visa',
-            type: 'liability',
-            role: 'ccAsset',
-            balance: 200,
-          ),
-        ],
-        transactions: [
-          _tx(
-            id: 'purchase',
-            type: 'withdrawal',
-            date: DateTime(2026, 6, 1),
-            amount: 100,
-            sourceName: 'Visa',
-            destinationName: 'Store',
-            sourceId: '2',
-          ),
-        ],
-        bills: const [],
-        recurrences: const [],
-        options: PrognosisOptions(
-          reference: reference,
-          mode: PrognosisViewMode.projected,
-          horizon: PrognosisHorizon.threeMonths,
-        ),
-      );
-
-      final visa = result.forAccount('2')!;
-      expect(visa.timeline, isNotEmpty);
-      expect(visa.events, isEmpty);
-    });
-
-    test('transfer history contributes to projected monthly net', () {
-      final result = AccountPrognosisService.compute(
-        accounts: [
-          _account(id: '1', name: 'Checking', balance: 1000),
-          _account(id: '2', name: 'Savings', role: 'savingAsset', balance: 0),
-        ],
-        transactions: [
-          _tx(
-            id: 'xfer',
-            type: 'transfer',
-            date: DateTime(2026, 6, 1),
-            amount: 300,
-            sourceName: 'Checking',
-            destinationName: 'Savings',
-            sourceId: '1',
-            destinationId: '2',
-          ),
-        ],
-        bills: const [],
-        recurrences: const [],
-        options: PrognosisOptions(
-          reference: reference,
-          mode: PrognosisViewMode.projected,
-          horizon: PrognosisHorizon.threeMonths,
-        ),
-      );
-
-      expect(result.forAccount('1')!.endOfMonth.expected, lessThan(1000));
     });
 
     test('infers transfer bill template from historical transactions', () {

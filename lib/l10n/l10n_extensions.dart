@@ -279,7 +279,6 @@ extension UndoActionTypeL10n on UndoActionType {
     UndoActionType.viewMode => l10n.undoActionTypeViewMode,
     UndoActionType.transactionPageSize =>
       l10n.undoActionTypeTransactionPageSize,
-    UndoActionType.prognosisMode => l10n.undoActionTypePrognosisMode,
     UndoActionType.prognosisHorizon => l10n.undoActionTypePrognosisHorizon,
     UndoActionType.prognosisInclusion => l10n.undoActionTypePrognosisInclusion,
     UndoActionType.prognosisMarginPercent =>
@@ -318,7 +317,9 @@ extension AppLocaleL10n on AppLocalizations {
 
   String labelForPrognosisHorizon(PrognosisHorizon horizon) =>
       switch (horizon) {
+        PrognosisHorizon.twoWeeks => prognosisHorizonTwoWeeks,
         PrognosisHorizon.endOfMonth => prognosisHorizonEndOfMonth,
+        PrognosisHorizon.midNextMonth => prognosisHorizonMidNextMonth,
         PrognosisHorizon.endOfNextMonth => prognosisHorizonEndOfNextMonth,
         PrognosisHorizon.twoMonths => prognosisHorizonTwoMonths,
         PrognosisHorizon.threeMonths => prognosisHorizonThreeMonths,
@@ -327,6 +328,7 @@ extension AppLocaleL10n on AppLocalizations {
         PrognosisHorizon.threeYears => prognosisHorizonThreeYears,
         PrognosisHorizon.fiveYears => prognosisHorizonFiveYears,
         PrognosisHorizon.tenYears => prognosisHorizonTenYears,
+        PrognosisHorizon.customDate => prognosisHorizonCustomDate,
       };
 
   String labelForPrognosisMilestone(PrognosisMilestone milestone) {

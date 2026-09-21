@@ -59,16 +59,13 @@ void main() {
   });
 
   group('PrognosisHorizonX', () {
-    test('monthsAhead covers every horizon', () {
-      expect(PrognosisHorizon.endOfMonth.monthsAhead, 0);
-      expect(PrognosisHorizon.endOfNextMonth.monthsAhead, 1);
-      expect(PrognosisHorizon.twoMonths.monthsAhead, 2);
-      expect(PrognosisHorizon.threeMonths.monthsAhead, 3);
-      expect(PrognosisHorizon.sixMonths.monthsAhead, 6);
-      expect(PrognosisHorizon.oneYear.monthsAhead, 12);
-      expect(PrognosisHorizon.threeYears.monthsAhead, 36);
-      expect(PrognosisHorizon.fiveYears.monthsAhead, 60);
-      expect(PrognosisHorizon.tenYears.monthsAhead, 120);
+    test('only the picked date needs one', () {
+      expect(PrognosisHorizon.customDate.needsDate, isTrue);
+      for (final horizon in PrognosisHorizon.values.where(
+        (value) => value != PrognosisHorizon.customDate,
+      )) {
+        expect(horizon.needsDate, isFalse, reason: horizon.name);
+      }
     });
   });
 
@@ -85,6 +82,68 @@ void main() {
         PrognosisHorizon.endOfNextMonth,
       );
       expect(next, DateTime(2026, 8, 31));
+
+      final ten = prognosisHorizonEnd(
+        DateTime(2026, 7, 7),
+        PrognosisHorizon.tenYears,
+      );
+      expect(ten, DateTime(2036, 7, 31));
+    });
+
+    test('two weeks counts days, and crosses the month with them', () {
+      expect(
+        prognosisHorizonEnd(DateTime(2026, 7, 7), PrognosisHorizon.twoWeeks),
+        DateTime(2026, 7, 21),
+      );
+      expect(
+        prognosisHorizonEnd(DateTime(2026, 7, 25), PrognosisHorizon.twoWeeks),
+        DateTime(2026, 8, 8),
+      );
+    });
+
+    test('a month and a half lands on the 15th of next month', () {
+      expect(
+        prognosisHorizonEnd(
+          DateTime(2026, 7, 7),
+          PrognosisHorizon.midNextMonth,
+        ),
+        DateTime(2026, 8, 15),
+      );
+      expect(
+        prognosisHorizonEnd(
+          DateTime(2026, 12, 31),
+          PrognosisHorizon.midNextMonth,
+        ),
+        DateTime(2027, 1, 15),
+      );
+    });
+
+    test('a picked date is the end, and a stale one holds at today', () {
+      expect(
+        prognosisHorizonEnd(
+          DateTime(2026, 7, 7),
+          PrognosisHorizon.customDate,
+          customDate: DateTime(2026, 9, 3),
+        ),
+        DateTime(2026, 9, 3),
+      );
+
+      // A date picked last month is still stored when the month turns. It
+      // would leave nothing ahead to forecast, so the forecast stops today
+      // rather than starting after it has ended.
+      expect(
+        prognosisHorizonEnd(
+          DateTime(2026, 7, 7),
+          PrognosisHorizon.customDate,
+          customDate: DateTime(2026, 6, 3),
+        ),
+        DateTime(2026, 7, 7),
+      );
+
+      expect(
+        prognosisHorizonEnd(DateTime(2026, 7, 7), PrognosisHorizon.customDate),
+        DateTime(2026, 7, 31),
+      );
     });
   });
 
@@ -216,7 +275,6 @@ void main() {
         endOfThisMonth: DateTime(2026, 7, 31),
         endOfNextMonth: DateTime(2026, 8, 31),
         horizonEnd: DateTime(2026, 8, 31),
-        mode: PrognosisViewMode.expected,
         horizon: PrognosisHorizon.endOfNextMonth,
         accounts: [prognosis],
       );

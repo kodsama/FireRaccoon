@@ -623,7 +623,49 @@ class AppLocalizationsFr extends AppLocalizations {
   String get viewAllAccounts => 'Voir tous les comptes';
 
   @override
-  String get thirtyDayOutlook => 'Perspective sur 30 jours';
+  String get ninetyDayOutlook => '90-day outlook';
+
+  @override
+  String get whatIsComing => 'What\'s coming';
+
+  @override
+  String get nothingScheduledAhead => 'Nothing scheduled in the next month';
+
+  @override
+  String get budgetsInANutshell => 'Budgets in a nutshell';
+
+  @override
+  String get budgetsNoneSet => 'No budget amounts set';
+
+  @override
+  String outlookDeltaFromToday(String amount) {
+    return '$amount from today';
+  }
+
+  @override
+  String outlookLowOn(String amount, String date) {
+    return 'Low $amount on $date';
+  }
+
+  @override
+  String outlookNegativeFrom(String date) {
+    return 'Below zero from $date';
+  }
+
+  @override
+  String budgetsWithinCount(int within, int total) {
+    return '$within of $total within budget';
+  }
+
+  @override
+  String budgetsAheadOfPace(String amount) {
+    return '$amount ahead of the month';
+  }
+
+  @override
+  String budgetsWithinPace(String amount) {
+    return '$amount in hand for the month';
+  }
 
   @override
   String get monthEndPrognosis => 'Prévision de fin de mois';
@@ -704,24 +746,20 @@ class AppLocalizationsFr extends AppLocalizations {
       'Shaded band shows min–max range; line is expected';
 
   @override
-  String get prognosisModeExpected => 'Real projection';
-
-  @override
-  String get prognosisModeProjected => 'Speculative projection';
-
-  @override
-  String get prognosisModeExpectedHint =>
+  String get prognosisSummaryHint =>
       'Month-end balances from current balances, scheduled transactions, recurring items, and bills';
-
-  @override
-  String get prognosisModeProjectedHint =>
-      'Trend-based forecast from historical net cash flow';
 
   @override
   String get prognosisHorizonLabel => 'Horizon';
 
   @override
+  String get prognosisHorizonTwoWeeks => '2 weeks';
+
+  @override
   String get prognosisHorizonEndOfMonth => 'End of month';
+
+  @override
+  String get prognosisHorizonMidNextMonth => 'Mid next month';
 
   @override
   String get prognosisHorizonEndOfNextMonth => 'Next month';
@@ -748,6 +786,14 @@ class AppLocalizationsFr extends AppLocalizations {
   String get prognosisHorizonTenYears => '10 years';
 
   @override
+  String get prognosisHorizonCustomDate => 'Pick a date';
+
+  @override
+  String prognosisHorizonUntil(String date) {
+    return 'Until $date';
+  }
+
+  @override
   String get prognosisMilestoneThreeMonths => 'End of 3 months';
 
   @override
@@ -772,12 +818,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get prognosisPredictedBalances => 'Predicted balances';
-
-  @override
-  String get todaysTimeline => 'Chronologie du jour';
-
-  @override
-  String get noActivityToday => 'Aucune activité aujourd\'hui';
 
   @override
   String get noChangeVsLastMonth => 'Aucun changement vs le mois dernier';
@@ -3157,9 +3197,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get undoActionTypeTransactionPageSize => 'Transactions par page';
-
-  @override
-  String get undoActionTypePrognosisMode => 'Mode de vue projection';
 
   @override
   String get undoActionTypePrognosisHorizon => 'Horizon de projection';

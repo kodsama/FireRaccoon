@@ -281,7 +281,65 @@
   "yourAccounts": "あなたの口座",
   "budgetsAtGlance": "予算の概要",
   "viewAllAccounts": "すべての口座を表示",
-  "thirtyDayOutlook": "30 日間の見通し",
+  "ninetyDayOutlook": "90日間の見通し",
+  "whatIsComing": "これからの予定",
+  "nothingScheduledAhead": "今後1か月の予定はありません",
+  "budgetsInANutshell": "予算のあらまし",
+  "budgetsNoneSet": "予算額が未設定です",
+  "outlookDeltaFromToday": "本日から{amount}",
+  "@outlookDeltaFromToday": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookLowOn": "最低 {amount}（{date}）",
+  "@outlookLowOn": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      },
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "outlookNegativeFrom": "{date}以降はマイナス",
+  "@outlookNegativeFrom": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinCount": "{total}件中{within}件が予算内",
+  "@budgetsWithinCount": {
+    "placeholders": {
+      "within": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "budgetsAheadOfPace": "月の進みより{amount}多い",
+  "@budgetsAheadOfPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "budgetsWithinPace": "月の進みより{amount}余裕あり",
+  "@budgetsWithinPace": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
   "monthEndPrognosis": "月末の見通し",
   "projectedEndOfMonth": "月末",
   "includeCreditCardPayments": "クレジットカードの支払いを含める",
@@ -326,12 +384,11 @@
   "prognosisExpectedBalance": "予想",
   "prognosisSelectAccount": "口座",
   "prognosisBandLegend": "影付きの帯は最小〜最大の範囲、線は予想値を示します",
-  "prognosisModeExpected": "実際の予測",
-  "prognosisModeProjected": "推測的な予測",
-  "prognosisModeExpectedHint": "現在残高、予定取引、定期項目、請求から算出した月末残高",
-  "prognosisModeProjectedHint": "過去の純キャッシュフローに基づくトレンド予測",
+  "prognosisSummaryHint": "現在残高、予定取引、定期項目、請求から算出した月末残高",
   "prognosisHorizonLabel": "期間",
+  "prognosisHorizonTwoWeeks": "2週間",
   "prognosisHorizonEndOfMonth": "月末",
+  "prognosisHorizonMidNextMonth": "翌月中旬",
   "prognosisHorizonEndOfNextMonth": "翌月",
   "prognosisHorizonTwoMonths": "2 か月",
   "prognosisHorizonThreeMonths": "3 か月",
@@ -340,6 +397,15 @@
   "prognosisHorizonThreeYears": "3 年",
   "prognosisHorizonFiveYears": "5 年",
   "prognosisHorizonTenYears": "10 年",
+  "prognosisHorizonCustomDate": "日付を選ぶ",
+  "prognosisHorizonUntil": "{date}まで",
+  "@prognosisHorizonUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "prognosisMilestoneThreeMonths": "3 か月後",
   "prognosisMilestoneSixMonths": "6 か月後",
   "prognosisMilestoneOneYear": "1 年後",
@@ -355,8 +421,6 @@
   },
   "prognosisCurrentBalance": "現在残高",
   "prognosisPredictedBalances": "予測残高",
-  "todaysTimeline": "今日のタイムライン",
-  "noActivityToday": "今日のアクティビティはありません",
   "noChangeVsLastMonth": "先月と変化なし",
   "newActivityThisMonth": "今月の新しいアクティビティ",
   "percentVsLastMonth": "{arrow}{percent}% 先月比",
@@ -1700,7 +1764,6 @@
   "undoActionTypeLocale": "言語",
   "undoActionTypeViewMode": "表示モード",
   "undoActionTypeTransactionPageSize": "取引ページサイズ",
-  "undoActionTypePrognosisMode": "予測表示モード",
   "undoActionTypePrognosisHorizon": "予測期間",
   "undoActionTypePrognosisInclusion": "予測の含める項目",
   "undoActionTypePrognosisMarginPercent": "予測マージン",

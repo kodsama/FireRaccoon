@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-09-21
+
+### Added
+
+- The dashboard's Focus tab carries a 90-day outlook and a budget summary
+  where it had a bare 30-day line and a list of today's transactions. The
+  outlook is the real forecast, the one the projection page draws from
+  scheduled transactions, recurring items and bills, rather than last
+  month's spending ruled forward: it names where the accounts land in ninety
+  days, what that is against today, the low point on the way and the day the
+  total goes under if it does. The budget card says what is spent against
+  what was set, how many budgets are still inside, whether the spending is
+  ahead of where the month has got to, and the ones running hottest
+
+- The account picker on the projection page is a dropdown that filters as it
+  is typed into. It was a plain text field with suggestions, so seeing what
+  there was to choose from meant guessing a letter first. Clicking it now
+  lists every open account, and typing narrows that list rather than replacing
+  it
+
+- The projection horizon goes as short as two weeks, stops at the 15th of next
+  month, or runs to a date picked from a calendar. Every choice before this
+  was a month end, so a forecast for the fortnight ahead or up to a particular
+  day had to be read off a chart drawn to somewhere else. The picked date is
+  kept while another horizon is chosen, and one that has gone by holds the
+  forecast at today rather than ending it before it starts
+
+### Changed
+
+- The dashboard leaves closed accounts out. A closed account holds nothing
+  and has nothing ahead of it, so it was a row of zeroes taking up a line
+
+- The Focus tab is four cards in two rows rather than one tall column beside
+  a short one: net worth with what it is made of and the savings rate, the
+  90-day outlook, what the forecast has dated over the next month, and the
+  budgets. The upcoming movements are new: the rent, the salary and the
+  subscriptions that the figures elsewhere on the tab are made of, which
+  until now could only be read on the projection page
+
+- The dashboard's Accounts tab is one table instead of a month-end panel over
+  a grid of the same accounts. Each account is named once, with what is in it
+  now, where the month leaves it, the range around that, and the line between
+  the two; the ones at risk sort to the top and the totals close the table
+
+### Removed
+
+- The speculative projection and the tab that chose it. It compounded a
+  historical monthly average forward at a fixed 3% a year, which is a guess
+  dressed as a forecast and sat one tab away from the real one, built from
+  scheduled transactions, recurring items and bills. The projection page shows
+  that forecast alone now
+
+### Fixed
+
+- Nothing in the top strip of a page responded to a click while the header
+  search field had focus. Focusing it opens the suggestion box, and on an empty
+  query that box holds only the hint naming what the current page can be
+  searched by. It still covered what sat under it and took every click landing
+  there, which on the dashboard is exactly where the Insights / Accounts /
+  Focus pills are. The hint no longer accepts pointers, so the click reaches
+  the page and the box closes along with the focus it follows
+
 ## [0.13.0] - 2026-09-18
 
 ### Added

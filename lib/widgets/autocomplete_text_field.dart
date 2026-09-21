@@ -124,6 +124,19 @@ class AutocompleteTextField extends StatelessWidget {
           onSubmitted: onSubmitted,
         );
       },
+      decorationBuilder: (context, child) {
+        final suggestions = SuggestionsController.of<String>(context)
+            .suggestions;
+        return IgnorePointer(
+          // Focus alone opens this box, and it hangs over whatever the field
+          // sits above. Holding nothing but the empty-state hint there is
+          // nothing in it to click, so without this it would quietly swallow
+          // every tap on the page underneath for as long as the field is
+          // focused.
+          ignoring: suggestions?.isEmpty ?? true,
+          child: TypeAheadMaterialDefaults.decorationBuilder(context, child),
+        );
+      },
       itemBuilder: (context, suggestion) {
         if (suggestion.startsWith(_createPrefix)) {
           final label = suggestion.substring(_createPrefix.length);
