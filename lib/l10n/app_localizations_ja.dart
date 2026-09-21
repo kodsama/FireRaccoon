@@ -709,7 +709,7 @@ class AppLocalizationsJa extends AppLocalizations {
   String get prognosisHorizonEndOfMonth => '月末';
 
   @override
-  String get prognosisHorizonMidNextMonth => '1.5か月';
+  String get prognosisHorizonMidNextMonth => '翌月中旬';
 
   @override
   String get prognosisHorizonEndOfNextMonth => '翌月';

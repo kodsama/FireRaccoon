@@ -1441,7 +1441,7 @@ abstract class AppLocalizations {
   /// No description provided for @prognosisHorizonMidNextMonth.
   ///
   /// In en, this message translates to:
-  /// **'1.5 months'**
+  /// **'Mid next month'**
   String get prognosisHorizonMidNextMonth;
 
   /// No description provided for @prognosisHorizonEndOfNextMonth.

@@ -131,7 +131,7 @@ void main() {
     await pumpScreen(tester);
 
     expect(find.text('2 weeks'), findsWidgets);
-    expect(find.text('1.5 months'), findsWidgets);
+    expect(find.text('Mid next month'), findsWidgets);
   });
 
   testWidgets('the account dropdown opens, filters, and selects', (

@@ -717,7 +717,7 @@ class AppLocalizationsFr extends AppLocalizations {
   String get prognosisHorizonEndOfMonth => 'End of month';
 
   @override
-  String get prognosisHorizonMidNextMonth => '1.5 months';
+  String get prognosisHorizonMidNextMonth => 'Mid next month';
 
   @override
   String get prognosisHorizonEndOfNextMonth => 'Next month';

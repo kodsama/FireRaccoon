@@ -709,7 +709,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get prognosisHorizonEndOfMonth => '本月末';
 
   @override
-  String get prognosisHorizonMidNextMonth => '1.5个月';
+  String get prognosisHorizonMidNextMonth => '下月中旬';
 
   @override
   String get prognosisHorizonEndOfNextMonth => '下月末';
