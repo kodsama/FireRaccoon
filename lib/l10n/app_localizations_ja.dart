@@ -622,6 +622,12 @@ class AppLocalizationsJa extends AppLocalizations {
   String get ninetyDayOutlook => '90日間の見通し';
 
   @override
+  String get whatIsComing => 'これからの予定';
+
+  @override
+  String get nothingScheduledAhead => '今後1か月の予定はありません';
+
+  @override
   String get budgetsInANutshell => '予算のあらまし';
 
   @override

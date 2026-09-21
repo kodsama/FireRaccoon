@@ -282,6 +282,8 @@
   "budgetsAtGlance": "予算の概要",
   "viewAllAccounts": "すべての口座を表示",
   "ninetyDayOutlook": "90日間の見通し",
+  "whatIsComing": "これからの予定",
+  "nothingScheduledAhead": "今後1か月の予定はありません",
   "budgetsInANutshell": "予算のあらまし",
   "budgetsNoneSet": "予算額が未設定です",
   "outlookDeltaFromToday": "本日から{amount}",

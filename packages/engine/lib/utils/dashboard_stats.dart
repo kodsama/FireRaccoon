@@ -145,8 +145,14 @@ double computeNetWorth(List<Account> accounts) {
   return computeNetWorthBreakdown(accounts).netWorth;
 }
 
+/// The asset accounts still open.
+///
+/// A closed one has nothing ahead of it and usually nothing in it either, so
+/// listing it is listing a row of zeroes.
 List<Account> assetAccounts(List<Account> accounts) {
-  return accounts.where((account) => account.type == 'asset').toList();
+  return accounts
+      .where((account) => account.type == 'asset' && account.active)
+      .toList();
 }
 
 List<Transaction> _transactionsInRange(
@@ -740,6 +746,71 @@ ProjectionOutlook projectionOutlook(
     lowDate: lowDate,
     firstNegativeDate: firstNegative,
   );
+}
+
+/// One dated movement the forecast expects, named for a list.
+class UpcomingMovement {
+  final DateTime date;
+  final String description;
+  final String accountName;
+  final String currencySymbol;
+  final double amount;
+  final PrognosisEventSource source;
+
+  const UpcomingMovement({
+    required this.date,
+    required this.description,
+    required this.accountName,
+    required this.currencySymbol,
+    required this.amount,
+    required this.source,
+  });
+
+  bool get isIncome => amount > 0;
+}
+
+/// What the forecast has dated over the next [days], soonest first.
+///
+/// Only asset accounts: a scheduled card payment shows as the money leaving
+/// the account that pays it, and counting the card's own side would have it
+/// twice. The biggest movement wins a tie so that a day's rent sorts above
+/// its coffee.
+List<UpcomingMovement> upcomingMovements(
+  AccountPrognosisResult prognosis, {
+  required DateTime reference,
+  int days = 30,
+  int limit = 8,
+}) {
+  final start = prognosisStartOfDay(reference);
+  final end = DateTime(start.year, start.month, start.day + days);
+
+  final movements = <UpcomingMovement>[];
+  for (final account in prognosis.accounts) {
+    if (account.accountType != 'asset') continue;
+    for (final event in account.events) {
+      final day = prognosisStartOfDay(event.date);
+      if (day.isBefore(start) || day.isAfter(end)) continue;
+      if (event.expectedDelta == 0) continue;
+      movements.add(
+        UpcomingMovement(
+          date: day,
+          description: event.description,
+          accountName: account.accountName,
+          currencySymbol: account.currencySymbol,
+          amount: event.expectedDelta,
+          source: event.source,
+        ),
+      );
+    }
+  }
+
+  movements.sort((a, b) {
+    final byDate = a.date.compareTo(b.date);
+    if (byDate != 0) return byDate;
+    return b.amount.abs().compareTo(a.amount.abs());
+  });
+
+  return movements.take(limit).toList();
 }
 
 /// How the budgets are holding up.

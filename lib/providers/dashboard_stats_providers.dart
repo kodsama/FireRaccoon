@@ -183,18 +183,18 @@ final endOfMonthOutlookProvider = Provider<EndOfMonthOutlook>((ref) {
 /// How far ahead the dashboard's outlook card looks.
 const kDashboardOutlookDays = 90;
 
-/// Ninety days of the real forecast, added up over the asset accounts.
+/// The forecast the dashboard reads: ninety days ahead, on its own horizon
+/// rather than the projection page's.
 ///
-/// Its own horizon rather than the projection page's: this card says ninety
-/// days on it, and reading whatever that page was left set to would make it
-/// say something else.
-final ninetyDayOutlookProvider = Provider<ProjectionOutlook>((ref) {
+/// That page is where a horizon is chosen and changed; a card that says
+/// ninety days on it has to mean ninety days whatever was left set there.
+final dashboardForecastProvider = Provider<AccountPrognosisResult>((ref) {
   final reference = DateTime.now();
   final bills = ref.watch(billsProvider).asData?.value ?? const [];
   final recurrences = ref.watch(recurrencesProvider).asData?.value ?? const [];
   final settings = ref.watch(prognosisSettingsProvider);
 
-  final prognosis = AccountPrognosisService.compute(
+  return AccountPrognosisService.compute(
     accounts: _accounts(ref),
     transactions: _transactions(ref),
     bills: bills,
@@ -211,11 +211,22 @@ final ninetyDayOutlookProvider = Provider<ProjectionOutlook>((ref) {
       ),
     ),
   );
+});
 
+/// Ninety days of that forecast, added up over the asset accounts.
+final ninetyDayOutlookProvider = Provider<ProjectionOutlook>((ref) {
   return projectionOutlook(
-    prognosis,
-    reference: reference,
+    ref.watch(dashboardForecastProvider),
+    reference: DateTime.now(),
     days: kDashboardOutlookDays,
+  );
+});
+
+/// What the forecast has dated over the next month.
+final upcomingMovementsProvider = Provider<List<UpcomingMovement>>((ref) {
+  return upcomingMovements(
+    ref.watch(dashboardForecastProvider),
+    reference: DateTime.now(),
   );
 });
 

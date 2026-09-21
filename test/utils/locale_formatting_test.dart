@@ -58,6 +58,14 @@ void main() {
       expect(formatting.formatMediumDate(date), contains('2026'));
     });
 
+    test('formatDayMonth drops the year a dated list does not need', () {
+      final date = DateTime(2026, 7, 6);
+      final dayMonth = formatting.formatDayMonth(date);
+      expect(dayMonth, isNot(contains('2026')));
+      expect(dayMonth, contains('6'));
+      expect(formatting.formatMediumDate(date), contains(dayMonth));
+    });
+
     test('formatMediumDate omits time that formatDateTime includes', () {
       final date = DateTime(2026, 6, 30, 22, 45);
       final medium = formatting.formatMediumDate(date);

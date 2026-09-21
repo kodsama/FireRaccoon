@@ -1276,6 +1276,18 @@ abstract class AppLocalizations {
   /// **'90-day outlook'**
   String get ninetyDayOutlook;
 
+  /// No description provided for @whatIsComing.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s coming'**
+  String get whatIsComing;
+
+  /// No description provided for @nothingScheduledAhead.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing scheduled in the next month'**
+  String get nothingScheduledAhead;
+
   /// No description provided for @budgetsInANutshell.
   ///
   /// In en, this message translates to:

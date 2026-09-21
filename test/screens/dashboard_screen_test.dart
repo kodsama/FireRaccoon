@@ -62,6 +62,16 @@ final _sampleAccounts = [
     currencySymbol: '€',
     currencyCode: 'EUR',
   ),
+  Account(
+    id: '2',
+    name: 'Old Savings',
+    type: 'asset',
+    role: 'savingAsset',
+    currentBalance: 0,
+    currencySymbol: '€',
+    currencyCode: 'EUR',
+    active: false,
+  ),
 ];
 
 final _sampleBudgets = [
@@ -244,6 +254,8 @@ void main() {
     // the same accounts, so every name was on the page twice.
     expect(find.text('Month-end prognosis'), findsNothing);
     expect(find.text('Checking'), findsOneWidget);
+    // A closed account is a row of zeroes nobody asked for.
+    expect(find.text('Old Savings'), findsNothing);
     expect(find.text('End of month'), findsOneWidget);
     expect(find.textContaining('€2,500'), findsWidgets);
   });
@@ -269,6 +281,11 @@ void main() {
     // Transport is past its amount, Food is not.
     expect(find.text('1 of 2 within budget'), findsOneWidget);
     expect(find.text('€620 / €700'), findsOneWidget);
+
+    // Nothing is dated ahead in the fixture, and the card says so rather
+    // than sitting there empty.
+    expect(find.text("What's coming"), findsOneWidget);
+    expect(find.text('Nothing scheduled in the next month'), findsOneWidget);
   });
 
   testWidgets('Dashboard KPI cards navigate to their destinations', (

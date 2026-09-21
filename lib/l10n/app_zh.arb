@@ -282,6 +282,8 @@
   "budgetsAtGlance": "预算一览",
   "viewAllAccounts": "查看所有账户",
   "ninetyDayOutlook": "90天展望",
+  "whatIsComing": "即将发生",
+  "nothingScheduledAhead": "未来一个月没有安排",
   "budgetsInANutshell": "预算概览",
   "budgetsNoneSet": "尚未设置预算金额",
   "outlookDeltaFromToday": "较今日 {amount}",

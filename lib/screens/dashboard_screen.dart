@@ -27,6 +27,7 @@ import '../widgets/simple_charts.dart';
 import '../widgets/fun_decorated_surface.dart';
 
 import '../l10n/app_localizations.dart';
+import '../l10n/fun_l10n.dart';
 import '../l10n/l10n_extensions.dart';
 import '../utils/locale_formatting.dart';
 import '../providers/default_period_provider.dart';
@@ -759,7 +760,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final languageCode = ref.watch(localeProvider).languageCode;
     final accountsAsync = ref.watch(accountsProvider);
     final budgetsAsync = ref.watch(budgetsProvider);
-    final colors = context.colors;
 
     return accountsAsync.when(
       skipLoadingOnReload: true,
@@ -795,6 +795,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           )),
         );
         final outlook = ref.watch(ninetyDayOutlookProvider);
+        final coming = ref.watch(upcomingMovementsProvider);
+        final netWorth = ref.watch(netWorthBreakdownProvider);
         final health = ref.watch(budgetHealthProvider);
         final budgets =
             (budgetsAsync.value ?? const <Budget>[])
@@ -806,114 +808,60 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               );
 
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        return Column(
           children: [
-            Expanded(
-              flex: 3,
-              child: Material(
-                color: colors.accent.deep,
-                borderRadius: BorderRadius.circular(16),
-                clipBehavior: Clip.antiAlias,
-                child: InkWell(
-                  onTap: _openAccounts,
-                  borderRadius: BorderRadius.circular(16),
-                  child: Container(
-                    padding: const EdgeInsets.all(28),
-                    decoration: BoxDecoration(
-                      color: colors.accent.deep,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          fun.netWorth,
-                          style: TextStyle(color: colors.accent.hi),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          format.formatMoney(kpis.totalBalance, kpis.currency),
-                          style: const TextStyle(
-                            fontFamily: 'Roboto Slab',
-                            fontSize: 46,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          formatDeltaLabel(
-                            l10n,
-                            format,
-                            kpis.savedDelta,
-                            comparisonPeriodLabel:
-                                periodLabels.comparisonPeriodLabel,
-                          ),
-                          style: TextStyle(
-                            color: kpis.savedDelta.isPositive
-                                ? colors.success
-                                : colors.warning,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        SimpleSparkline(
-                          values: sparkline,
-                          color: colors.accent.hi,
-                          width: double.infinity,
-                          height: 70,
-                        ),
-                        const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            Expanded(
-                              child: _InsetStat(
-                                label: fun.income,
-                                value: format.formatMoney(
-                                  kpis.periodIncome,
-                                  kpis.currency,
-                                  decimalDigits: 0,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _InsetStat(
-                                label: fun.spending,
-                                value: format.formatMoney(
-                                  kpis.periodSpending,
-                                  kpis.currency,
-                                  decimalDigits: 0,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: _NetWorthCard(
+                      netWorth: netWorth,
+                      kpis: kpis,
+                      sparkline: sparkline,
+                      format: format,
+                      fun: fun,
+                      comparisonPeriodLabel: periodLabels.comparisonPeriodLabel,
+                      onTap: _openAccounts,
                     ),
                   ),
-                ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: _OutlookCard(
+                      outlook: outlook,
+                      currency: kpis.currency,
+                      format: format,
+                      onTap: _openProjection,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              flex: 2,
-              child: Column(
+            const SizedBox(height: 16),
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _OutlookCard(
-                    outlook: outlook,
-                    currency: kpis.currency,
-                    format: format,
-                    onTap: _openProjection,
+                  Expanded(
+                    flex: 3,
+                    child: _UpcomingCard(
+                      movements: coming,
+                      format: format,
+                      onTap: _openTransactions,
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  _BudgetHealthCard(
-                    health: health,
-                    budgets: budgets,
-                    currency: kpis.currency,
-                    format: format,
-                    onTap: _openBudgets,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: _BudgetHealthCard(
+                      health: health,
+                      budgets: budgets,
+                      currency: kpis.currency,
+                      format: format,
+                      onTap: _openBudgets,
+                    ),
                   ),
                 ],
               ),
@@ -921,6 +869,244 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ],
         );
       },
+    );
+  }
+}
+
+/// The headline card: what everything adds up to, what it is made of, and
+/// how the period has gone.
+class _NetWorthCard extends StatelessWidget {
+  const _NetWorthCard({
+    required this.netWorth,
+    required this.kpis,
+    required this.sparkline,
+    required this.format,
+    required this.fun,
+    required this.comparisonPeriodLabel,
+    required this.onTap,
+  });
+
+  final NetWorthBreakdown netWorth;
+  final DashboardKpis kpis;
+  final List<double> sparkline;
+  final LocaleFormatting format;
+  final FunL10n fun;
+  final String? comparisonPeriodLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = context.l10n;
+    final saved = kpis.periodSaved;
+    final rate = kpis.periodIncome <= 0 ? null : saved / kpis.periodIncome;
+
+    return Material(
+      color: colors.accent.deep,
+      borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(28),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(fun.netWorth, style: TextStyle(color: colors.accent.hi)),
+              const SizedBox(height: 12),
+              Text(
+                format.formatMoney(netWorth.netWorth, kpis.currency),
+                style: const TextStyle(
+                  fontFamily: 'Roboto Slab',
+                  fontSize: 42,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '${l10n.filterAssetsShort} '
+                '${format.formatMoney(netWorth.assets, kpis.currency, decimalDigits: 0)}'
+                '   ·   '
+                '${l10n.filterLiabilitiesShort} '
+                '${format.formatMoney(netWorth.liabilities, kpis.currency, decimalDigits: 0)}',
+                style: TextStyle(color: colors.accent.hi, fontSize: 12),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                formatDeltaLabel(
+                  l10n,
+                  format,
+                  kpis.savedDelta,
+                  comparisonPeriodLabel: comparisonPeriodLabel,
+                ),
+                style: TextStyle(
+                  color: kpis.savedDelta.isPositive
+                      ? colors.success
+                      : colors.warning,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SimpleSparkline(
+                values: sparkline,
+                color: colors.accent.hi,
+                width: double.infinity,
+                height: 64,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: _InsetStat(
+                      label: fun.income,
+                      value: format.formatMoney(
+                        kpis.periodIncome,
+                        kpis.currency,
+                        decimalDigits: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _InsetStat(
+                      label: fun.spending,
+                      value: format.formatMoney(
+                        kpis.periodSpending,
+                        kpis.currency,
+                        decimalDigits: 0,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _InsetStat(
+                      label: rate == null
+                          ? fun.saved
+                          : '${fun.saved} · '
+                                '${format.formatPercent(rate * 100, decimalDigits: 0)}%',
+                      value: format.formatMoney(
+                        saved,
+                        kpis.currency,
+                        decimalDigits: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// What the forecast has dated over the next month: the rent, the salary,
+/// the subscriptions. The figures elsewhere on this tab are made of these,
+/// and until now the only way to see them was the projection page.
+class _UpcomingCard extends StatelessWidget {
+  const _UpcomingCard({
+    required this.movements,
+    required this.format,
+    required this.onTap,
+  });
+
+  final List<UpcomingMovement> movements;
+  final LocaleFormatting format;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    final l10n = context.l10n;
+
+    return _DashboardTappableCard(
+      tooltip: l10n.whatIsComing,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l10n.whatIsComing, style: context.textTheme.titleMedium),
+            const SizedBox(height: 16),
+            if (movements.isEmpty)
+              Text(
+                l10n.nothingScheduledAhead,
+                style: TextStyle(color: colors.text3),
+              )
+            else
+              for (final movement in movements)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 54,
+                        child: Text(
+                          format.formatDayMonth(movement.date),
+                          style: TextStyle(
+                            color: colors.text3,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      Icon(
+                        movement.isIncome
+                            ? LucideIcons.arrowDownLeft
+                            : LucideIcons.arrowUpRight,
+                        size: 15,
+                        color: movement.isIncome
+                            ? colors.success
+                            : colors.text3,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              movement.description,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            Text(
+                              movement.accountName,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors.text3,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        format.formatSignedMoney(
+                          movement.amount,
+                          movement.currencySymbol,
+                          decimalDigits: 0,
+                        ),
+                        style: TextStyle(
+                          fontFamily: 'Roboto Slab',
+                          fontWeight: FontWeight.w700,
+                          color: movement.isIncome
+                              ? colors.success
+                              : colors.text,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+          ],
+        ),
+      ),
     );
   }
 }

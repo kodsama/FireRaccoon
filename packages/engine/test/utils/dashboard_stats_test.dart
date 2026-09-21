@@ -86,10 +86,12 @@ void main() {
         _account(name: 'Checking', type: 'asset', balance: 1000),
         _account(name: 'Loan', type: 'liability', balance: -200),
         _account(name: 'Expense', type: 'expense', balance: 0),
+        _account(name: 'Closed', type: 'asset', balance: 0, active: false),
       ];
       expect(computeAssetsTotal(accounts), 1000);
       expect(computeLiabilitiesTotal(accounts), 200);
       expect(computeNetWorth(accounts), 800);
+      // A closed account is a row of zeroes on a dashboard.
       expect(assetAccounts(accounts).map((a) => a.name), ['Checking']);
     });
   });
@@ -543,6 +545,116 @@ void main() {
 
       expect(outlook.firstNegativeDate, DateTime(2026, 7, 9));
       expect(outlook.atEnd, -200);
+    });
+  });
+
+  group('upcomingMovements', () {
+    test('dates what is coming, soonest first, assets only', () {
+      final reference = DateTime(2026, 7, 7);
+      final transactions = [
+        _tx(
+          type: 'withdrawal',
+          date: DateTime(2026, 7, 20),
+          amount: 400,
+          source: 'Checking',
+          destination: 'Landlord',
+          id: 'rent',
+        ),
+        _tx(
+          type: 'deposit',
+          date: DateTime(2026, 7, 10),
+          amount: 2000,
+          source: 'Employer',
+          destination: 'Checking',
+          id: 'salary',
+        ),
+        // Past the window, so not yet anybody's business.
+        _tx(
+          type: 'withdrawal',
+          date: DateTime(2026, 9, 1),
+          amount: 100,
+          source: 'Checking',
+          destination: 'Shop',
+          id: 'later',
+        ),
+      ];
+      final prognosis = AccountPrognosisService.compute(
+        accounts: [
+          Account(
+            id: '1',
+            name: 'Checking',
+            type: 'asset',
+            role: 'defaultAsset',
+            currentBalance: 1000,
+            currencySymbol: 'kr',
+            currencyCode: 'SEK',
+          ),
+        ],
+        transactions: transactions,
+        bills: const [],
+        recurrences: const [],
+        options: PrognosisOptions(
+          reference: reference,
+          horizon: PrognosisHorizon.customDate,
+          customHorizonDate: DateTime(2026, 10, 1),
+        ),
+      );
+
+      final coming = upcomingMovements(
+        prognosis,
+        reference: reference,
+        days: 30,
+      );
+
+      expect(coming.map((m) => m.date), [
+        DateTime(2026, 7, 10),
+        DateTime(2026, 7, 20),
+      ]);
+      expect(coming.first.amount, 2000);
+      expect(coming.first.isIncome, isTrue);
+      expect(coming.first.accountName, 'Checking');
+      expect(coming.last.amount, -400);
+    });
+
+    test('takes only as many as asked for', () {
+      final reference = DateTime(2026, 7, 7);
+      final transactions = [
+        for (var day = 8; day < 20; day++)
+          _tx(
+            type: 'withdrawal',
+            date: DateTime(2026, 7, day),
+            amount: 10,
+            source: 'Checking',
+            destination: 'Shop',
+            id: 'spend-$day',
+          ),
+      ];
+      final prognosis = AccountPrognosisService.compute(
+        accounts: [
+          Account(
+            id: '1',
+            name: 'Checking',
+            type: 'asset',
+            role: 'defaultAsset',
+            currentBalance: 1000,
+            currencySymbol: 'kr',
+            currencyCode: 'SEK',
+          ),
+        ],
+        transactions: transactions,
+        bills: const [],
+        recurrences: const [],
+        options: PrognosisOptions(
+          reference: reference,
+          horizon: PrognosisHorizon.customDate,
+          customHorizonDate: DateTime(2026, 8, 20),
+        ),
+      );
+
+      expect(
+        upcomingMovements(prognosis, reference: reference, limit: 3),
+        hasLength(3),
+      );
     });
   });
 

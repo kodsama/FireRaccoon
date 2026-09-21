@@ -622,6 +622,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get ninetyDayOutlook => '90天展望';
 
   @override
+  String get whatIsComing => '即将发生';
+
+  @override
+  String get nothingScheduledAhead => '未来一个月没有安排';
+
+  @override
   String get budgetsInANutshell => '预算概览';
 
   @override

@@ -34,6 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The dashboard leaves closed accounts out. A closed account holds nothing
+  and has nothing ahead of it, so it was a row of zeroes taking up a line
+
+- The Focus tab is four cards in two rows rather than one tall column beside
+  a short one: net worth with what it is made of and the savings rate, the
+  90-day outlook, what the forecast has dated over the next month, and the
+  budgets. The upcoming movements are new: the rent, the salary and the
+  subscriptions that the figures elsewhere on the tab are made of, which
+  until now could only be read on the projection page
+
 - The dashboard's Accounts tab is one table instead of a month-end panel over
   a grid of the same accounts. Each account is named once, with what is in it
   now, where the month leaves it, the range around that, and the line between

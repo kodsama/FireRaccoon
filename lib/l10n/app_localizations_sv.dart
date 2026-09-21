@@ -626,6 +626,12 @@ class AppLocalizationsSv extends AppLocalizations {
   String get ninetyDayOutlook => '90-day outlook';
 
   @override
+  String get whatIsComing => 'What\'s coming';
+
+  @override
+  String get nothingScheduledAhead => 'Nothing scheduled in the next month';
+
+  @override
   String get budgetsInANutshell => 'Budgets in a nutshell';
 
   @override
