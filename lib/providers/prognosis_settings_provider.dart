@@ -6,6 +6,10 @@ import 'theme_provider.dart';
 
 class PrognosisSettings {
   final PrognosisHorizon horizon;
+
+  /// The day the forecast runs to on [PrognosisHorizon.customDate]. Kept while
+  /// another horizon is chosen, so coming back to it does not ask again.
+  final DateTime? customHorizonDate;
   final PrognosisInclusionOptions inclusion;
   final double marginPercent;
 
@@ -13,15 +17,18 @@ class PrognosisSettings {
     required this.horizon,
     required this.inclusion,
     required this.marginPercent,
+    this.customHorizonDate,
   });
 
   PrognosisSettings copyWith({
     PrognosisHorizon? horizon,
+    DateTime? customHorizonDate,
     PrognosisInclusionOptions? inclusion,
     double? marginPercent,
   }) {
     return PrognosisSettings(
       horizon: horizon ?? this.horizon,
+      customHorizonDate: customHorizonDate ?? this.customHorizonDate,
       inclusion: inclusion ?? this.inclusion,
       marginPercent: marginPercent ?? this.marginPercent,
     );
@@ -30,6 +37,7 @@ class PrognosisSettings {
   PrognosisOptions toOptions({DateTime? reference}) {
     return PrognosisOptions(
       horizon: horizon,
+      customHorizonDate: customHorizonDate,
       inclusion: inclusion,
       marginPercent: marginPercent,
       reference: reference,
@@ -47,6 +55,7 @@ class PrognosisSettingsNotifier extends Notifier<PrognosisSettings> {
     _prefs = ref.watch(sharedPreferencesProvider);
     return PrognosisSettings(
       horizon: _readHorizon(),
+      customHorizonDate: _readCustomHorizonDate(),
       inclusion: PrognosisInclusionOptions(
         includeScheduledTransactions:
             _prefs.getBool('prognosisIncludeScheduledTransactions') ??
@@ -84,9 +93,20 @@ class PrognosisSettingsNotifier extends Notifier<PrognosisSettings> {
     );
   }
 
+  DateTime? _readCustomHorizonDate() {
+    final raw = _prefs.getString('prognosisCustomHorizonDate');
+    return raw == null ? null : DateTime.tryParse(raw);
+  }
+
   void setHorizon(PrognosisHorizon horizon) {
     state = state.copyWith(horizon: horizon);
     _prefs.setString('prognosisHorizon', horizon.name);
+  }
+
+  void setCustomHorizonDate(DateTime date) {
+    final day = DateTime(date.year, date.month, date.day);
+    state = state.copyWith(customHorizonDate: day);
+    _prefs.setString('prognosisCustomHorizonDate', day.toIso8601String());
   }
 
   void setInclusion(PrognosisInclusionOptions inclusion) {
@@ -119,6 +139,8 @@ class PrognosisSettingsNotifier extends Notifier<PrognosisSettings> {
 
   /// Overwrites all prognosis settings (settings import).
   void replaceAll(PrognosisSettings settings) {
+    final customDate = settings.customHorizonDate;
+    if (customDate != null) setCustomHorizonDate(customDate);
     setHorizon(settings.horizon);
     setInclusion(settings.inclusion);
     setMarginPercent(settings.marginPercent);

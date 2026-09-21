@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The projection horizon goes as short as two weeks, stops at the 15th of next
+  month, or runs to a date picked from a calendar. Every choice before this
+  was a month end, so a forecast for the fortnight ahead or up to a particular
+  day had to be read off a chart drawn to somewhere else. The picked date is
+  kept while another horizon is chosen, and one that has gone by holds the
+  forecast at today rather than ending it before it starts
+
 ### Removed
 
 - The speculative projection and the tab that chose it. It compounded a

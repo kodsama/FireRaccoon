@@ -711,7 +711,13 @@ class AppLocalizationsFr extends AppLocalizations {
   String get prognosisHorizonLabel => 'Horizon';
 
   @override
+  String get prognosisHorizonTwoWeeks => '2 weeks';
+
+  @override
   String get prognosisHorizonEndOfMonth => 'End of month';
+
+  @override
+  String get prognosisHorizonMidNextMonth => '1.5 months';
 
   @override
   String get prognosisHorizonEndOfNextMonth => 'Next month';
@@ -736,6 +742,14 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get prognosisHorizonTenYears => '10 years';
+
+  @override
+  String get prognosisHorizonCustomDate => 'Pick a date';
+
+  @override
+  String prognosisHorizonUntil(String date) {
+    return 'Until $date';
+  }
 
   @override
   String get prognosisMilestoneThreeMonths => 'End of 3 months';

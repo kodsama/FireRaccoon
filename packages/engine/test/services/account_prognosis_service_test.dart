@@ -441,6 +441,23 @@ void main() {
       },
     );
 
+    test('a picked horizon date is where the forecast stops', () {
+      final result = AccountPrognosisService.compute(
+        accounts: [_account(id: '1', name: 'Checking', balance: 1000)],
+        transactions: const [],
+        bills: const [],
+        recurrences: const [],
+        options: PrognosisOptions(
+          reference: reference,
+          horizon: PrognosisHorizon.customDate,
+          customHorizonDate: DateTime(2026, 7, 23),
+        ),
+      );
+
+      expect(result.horizonEnd, DateTime(2026, 7, 23));
+      expect(result.forAccount('1')!.timeline.last.date, DateTime(2026, 7, 23));
+    });
+
     test('excludes income when toggle is off', () {
       final transactions = [
         _tx(

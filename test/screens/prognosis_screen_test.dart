@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:fireraccoon/providers/view_mode_provider.dart';
 import 'package:fireraccoon/screens/prognosis_screen.dart';
 import 'package:fireraccoon/widgets/autocomplete_text_field.dart';
@@ -80,6 +81,57 @@ void main() {
       expect(suggestions, isNot(contains('Old Savings')));
     },
   );
+
+  testWidgets('the horizon runs from two weeks to a day of your own', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final accounts = [_account(id: '1', name: 'Everyday')];
+    final transactions = [_tx('Everyday')];
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const PrognosisScreen(),
+        fireflyService: FakeFireflyService(
+          accounts: accounts,
+          transactions: transactions,
+          transactionPages: {
+            1: TransactionPageResult(
+              transactions: transactions,
+              currentPage: 1,
+              totalPages: 1,
+              total: transactions.length,
+            ),
+          },
+        ),
+        viewMode: ViewMode.compact,
+        prefsValues: {
+          'isRaccoonMode': false,
+          'prognosisHorizon': 'customDate',
+          'prognosisCustomHorizonDate': DateTime(
+            2026,
+            11,
+            20,
+          ).toIso8601String(),
+        },
+      ),
+    );
+    await pumpScreen(tester);
+
+    // A horizon of one's own reads as the day it runs to, not as the invitation
+    // to pick one.
+    expect(find.text('Until Nov 20, 2026'), findsWidgets);
+
+    await tester.tap(
+      find.byType(DropdownButtonFormField<PrognosisHorizon>).first,
+    );
+    await pumpScreen(tester);
+
+    expect(find.text('2 weeks'), findsWidgets);
+    expect(find.text('1.5 months'), findsWidgets);
+  });
 
   testWidgets('PrognosisScreen picks the account by name, not by position', (
     tester,

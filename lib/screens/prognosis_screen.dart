@@ -12,6 +12,7 @@ import '../providers/undo_history_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/locale_formatting.dart';
 import '../widgets/autocomplete_text_field.dart';
+import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
 import '../widgets/entity_list_layout.dart';
 import '../widgets/loading_body.dart';
@@ -149,6 +150,7 @@ class _PrognosisViewState extends ConsumerState<PrognosisView> {
                 format: format,
                 marginPercent: settings.marginPercent,
                 horizon: settings.horizon,
+                customHorizonDate: settings.customHorizonDate,
                 onAccountChanged: (id) =>
                     setState(() => _selectedAccountId = id),
                 onMarginChanged: (value) {
@@ -183,6 +185,31 @@ class _PrognosisViewState extends ConsumerState<PrognosisView> {
                         type: UndoActionType.prognosisHorizon,
                         undoPayload: {'horizon': previous.name},
                         redoPayload: {'horizon': horizon.name},
+                      );
+                },
+                onCustomDateChanged: (date) {
+                  final previous = settings.horizon;
+                  final previousDate = settings.customHorizonDate;
+                  final notifier = ref.read(prognosisSettingsProvider.notifier);
+                  notifier.setCustomHorizonDate(date);
+                  notifier.setHorizon(PrognosisHorizon.customDate);
+                  ref
+                      .read(undoHistoryProvider.notifier)
+                      .record(
+                        title: 'Projection horizon changed',
+                        details:
+                            'Projection horizon: ${previous.name} -> '
+                            '${format.formatIsoDate(date)}',
+                        type: UndoActionType.prognosisHorizon,
+                        undoPayload: {
+                          'horizon': previous.name,
+                          if (previousDate != null)
+                            'customHorizonDate': previousDate.toIso8601String(),
+                        },
+                        redoPayload: {
+                          'horizon': PrognosisHorizon.customDate.name,
+                          'customHorizonDate': date.toIso8601String(),
+                        },
                       );
                 },
               ),
@@ -232,9 +259,11 @@ class _ChartPanel extends StatelessWidget {
   final LocaleFormatting format;
   final double marginPercent;
   final PrognosisHorizon horizon;
+  final DateTime? customHorizonDate;
   final ValueChanged<String?> onAccountChanged;
   final ValueChanged<double> onMarginChanged;
   final ValueChanged<PrognosisHorizon> onHorizonChanged;
+  final ValueChanged<DateTime> onCustomDateChanged;
 
   const _ChartPanel({
     required this.prognosis,
@@ -245,9 +274,11 @@ class _ChartPanel extends StatelessWidget {
     required this.format,
     required this.marginPercent,
     required this.horizon,
+    required this.customHorizonDate,
     required this.onAccountChanged,
     required this.onMarginChanged,
     required this.onHorizonChanged,
+    required this.onCustomDateChanged,
   });
 
   @override
@@ -279,31 +310,12 @@ class _ChartPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: DropdownButtonFormField<PrognosisHorizon>(
-                    initialValue: horizon,
-                    isExpanded: true,
-                    decoration: InputDecoration(
-                      labelText: l10n.prognosisHorizonLabel,
-                      isDense: true,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    items: PrognosisHorizon.values
-                        .map(
-                          (value) => DropdownMenuItem(
-                            value: value,
-                            child: Text(l10n.labelForPrognosisHorizon(value)),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: (value) {
-                      if (value != null) onHorizonChanged(value);
-                    },
+                  child: _HorizonPicker(
+                    horizon: horizon,
+                    customDate: customHorizonDate,
+                    format: format,
+                    onHorizonChanged: onHorizonChanged,
+                    onCustomDateChanged: onCustomDateChanged,
                   ),
                 ),
               ],
@@ -868,6 +880,121 @@ class _BalanceRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Horizon chooser. Every entry but the last stands on its own; the last is a
+/// day taken from a calendar, and choosing it asks for that day before the
+/// horizon moves, so the forecast never runs to a date nobody named.
+class _HorizonPicker extends StatefulWidget {
+  const _HorizonPicker({
+    required this.horizon,
+    required this.customDate,
+    required this.format,
+    required this.onHorizonChanged,
+    required this.onCustomDateChanged,
+  });
+
+  final PrognosisHorizon horizon;
+  final DateTime? customDate;
+  final LocaleFormatting format;
+  final ValueChanged<PrognosisHorizon> onHorizonChanged;
+  final ValueChanged<DateTime> onCustomDateChanged;
+
+  @override
+  State<_HorizonPicker> createState() => _HorizonPickerState();
+}
+
+class _HorizonPickerState extends State<_HorizonPicker> {
+  /// What the dropdown shows. It parts from the settings for as long as the
+  /// calendar is open, since picking the date entry is only a request for one.
+  late PrognosisHorizon _shown = widget.horizon;
+
+  @override
+  void didUpdateWidget(_HorizonPicker old) {
+    super.didUpdateWidget(old);
+    if (widget.horizon != old.horizon) _shown = widget.horizon;
+  }
+
+  String _label(AppLocalizations l10n, PrognosisHorizon value) {
+    final picked = widget.customDate;
+    if (value.needsDate && picked != null) {
+      return l10n.prognosisHorizonUntil(widget.format.formatMediumDate(picked));
+    }
+    return l10n.labelForPrognosisHorizon(value);
+  }
+
+  Future<void> _pickDate() async {
+    final today = DateTime.now();
+    final tomorrow = DateTime(today.year, today.month, today.day + 1);
+    final stored = widget.customDate;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: stored != null && !stored.isBefore(tomorrow)
+          ? stored
+          : tomorrow,
+      firstDate: tomorrow,
+      lastDate: DateTime(today.year + 10, today.month, today.day),
+    );
+    if (!mounted) return;
+    if (picked == null) {
+      setState(() => _shown = widget.horizon);
+      return;
+    }
+    widget.onCustomDateChanged(picked);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+
+    return Row(
+      children: [
+        Expanded(
+          // A FormField keeps the value it was last given rather than the one
+          // it is handed, so the key puts a cancelled pick back.
+          child: DropdownButtonFormField<PrognosisHorizon>(
+            key: ValueKey(_shown),
+            initialValue: _shown,
+            isExpanded: true,
+            decoration: InputDecoration(
+              labelText: l10n.prognosisHorizonLabel,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            items: PrognosisHorizon.values
+                .map(
+                  (value) => DropdownMenuItem(
+                    value: value,
+                    child: Text(_label(l10n, value)),
+                  ),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              setState(() => _shown = value);
+              if (value.needsDate) {
+                _pickDate();
+                return;
+              }
+              widget.onHorizonChanged(value);
+            },
+          ),
+        ),
+        if (widget.horizon.needsDate)
+          IconButton(
+            icon: const Icon(LucideIcons.calendar, size: 18),
+            tooltip: l10n.prognosisHorizonCustomDate,
+            onPressed: _pickDate,
+          ),
+      ],
     );
   }
 }

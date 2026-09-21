@@ -575,7 +575,12 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
           (h) => h.name == value,
           orElse: () => PrognosisHorizon.endOfNextMonth,
         );
-        ref.read(prognosisSettingsProvider.notifier).setHorizon(horizon);
+        final notifier = ref.read(prognosisSettingsProvider.notifier);
+        final customDate = DateTime.tryParse(
+          payload['customHorizonDate'] as String? ?? '',
+        );
+        if (customDate != null) notifier.setCustomHorizonDate(customDate);
+        notifier.setHorizon(horizon);
         break;
       case UndoActionType.prognosisInclusion:
         final options = PrognosisInclusionOptions(

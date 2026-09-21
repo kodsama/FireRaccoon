@@ -328,7 +328,9 @@
   "prognosisBandLegend": "Shaded band shows min–max range; line is expected",
   "prognosisSummaryHint": "Month-end balances from current balances, scheduled transactions, recurring items, and bills",
   "prognosisHorizonLabel": "Horizon",
+  "prognosisHorizonTwoWeeks": "2 weeks",
   "prognosisHorizonEndOfMonth": "End of month",
+  "prognosisHorizonMidNextMonth": "1.5 months",
   "prognosisHorizonEndOfNextMonth": "Next month",
   "prognosisHorizonTwoMonths": "2 months",
   "prognosisHorizonThreeMonths": "3 months",
@@ -337,6 +339,15 @@
   "prognosisHorizonThreeYears": "3 years",
   "prognosisHorizonFiveYears": "5 years",
   "prognosisHorizonTenYears": "10 years",
+  "prognosisHorizonCustomDate": "Pick a date",
+  "prognosisHorizonUntil": "Until {date}",
+  "@prognosisHorizonUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "prognosisMilestoneThreeMonths": "End of 3 months",
   "prognosisMilestoneSixMonths": "End of 6 months",
   "prognosisMilestoneOneYear": "End of 1 year",

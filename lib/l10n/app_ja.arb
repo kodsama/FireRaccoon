@@ -328,7 +328,9 @@
   "prognosisBandLegend": "影付きの帯は最小〜最大の範囲、線は予想値を示します",
   "prognosisSummaryHint": "現在残高、予定取引、定期項目、請求から算出した月末残高",
   "prognosisHorizonLabel": "期間",
+  "prognosisHorizonTwoWeeks": "2週間",
   "prognosisHorizonEndOfMonth": "月末",
+  "prognosisHorizonMidNextMonth": "1.5か月",
   "prognosisHorizonEndOfNextMonth": "翌月",
   "prognosisHorizonTwoMonths": "2 か月",
   "prognosisHorizonThreeMonths": "3 か月",
@@ -337,6 +339,15 @@
   "prognosisHorizonThreeYears": "3 年",
   "prognosisHorizonFiveYears": "5 年",
   "prognosisHorizonTenYears": "10 年",
+  "prognosisHorizonCustomDate": "日付を選ぶ",
+  "prognosisHorizonUntil": "{date}まで",
+  "@prognosisHorizonUntil": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "prognosisMilestoneThreeMonths": "3 か月後",
   "prognosisMilestoneSixMonths": "6 か月後",
   "prognosisMilestoneOneYear": "1 年後",

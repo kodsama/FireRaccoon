@@ -42,7 +42,11 @@ class AccountPrognosisService {
       reference,
       PrognosisHorizon.endOfNextMonth,
     );
-    final horizonEnd = prognosisHorizonEnd(reference, options.horizon);
+    final horizonEnd = prognosisHorizonEnd(
+      reference,
+      options.horizon,
+      customDate: options.customHorizonDate,
+    );
     final rangeStart = prognosisStartOfDay(reference)
         .add(const Duration(days: 1));
     final flowHorizonEnd = prognosisStartOfDay(horizonEnd)
