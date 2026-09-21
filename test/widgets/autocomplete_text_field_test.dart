@@ -114,4 +114,49 @@ void main() {
     // Trailing separator: the next tag can be typed straight away.
     expect(controller.text, 'groceries, rent, ');
   });
+
+  testWidgets('the empty-state hint does not swallow taps beneath it', (
+    tester,
+  ) async {
+    final controller = TextEditingController();
+    addTearDown(controller.dispose);
+    var tapped = false;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Column(
+            children: [
+              SizedBox(
+                width: 400,
+                child: AutocompleteTextField(
+                  controller: controller,
+                  suggestions: const ['Rent'],
+                  emptyBuilder: (context) =>
+                      const SizedBox(height: 90, child: Text('Search hint')),
+                ),
+              ),
+              SizedBox(
+                width: 400,
+                height: 90,
+                child: ElevatedButton(
+                  onPressed: () => tapped = true,
+                  child: const Text('Underneath'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byType(TextField));
+    await tester.pumpAndSettle();
+    expect(find.text('Search hint'), findsOneWidget);
+
+    await tester.tapAt(tester.getCenter(find.text('Underneath')));
+    await tester.pumpAndSettle();
+
+    expect(tapped, isTrue);
+  });
 }
