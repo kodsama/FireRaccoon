@@ -11,7 +11,6 @@ import '../providers/dashboard_stats_providers.dart';
 import '../providers/undo_history_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/locale_formatting.dart';
-import '../widgets/autocomplete_text_field.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
 import '../widgets/entity_list_layout.dart';
@@ -999,10 +998,11 @@ class _HorizonPickerState extends State<_HorizonPicker> {
   }
 }
 
-/// Account chooser that can be typed into, as the pickers elsewhere can.
+/// Account chooser: a dropdown that filters as it is typed into.
 ///
-/// A dropdown is fine for a handful of entries and unusable for a ledger with
-/// dozens, which is why every other picker in the app filters as you type.
+/// Opening it lists every account, which is what a dropdown is for; a ledger
+/// with dozens of them is unusable that way, which is why typing narrows the
+/// list rather than replacing it.
 class _AccountPicker extends StatefulWidget {
   const _AccountPicker({
     required this.accounts,
@@ -1022,25 +1022,19 @@ class _AccountPicker extends StatefulWidget {
 
 class _AccountPickerState extends State<_AccountPicker> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _controller.text = _selectedName ?? '';
-  }
-
-  @override
-  void didUpdateWidget(_AccountPicker old) {
-    super.didUpdateWidget(old);
-    // Follow a selection made elsewhere, such as tapping an account card, but
-    // never overwrite what someone is part-way through typing.
-    if (widget.selectedAccountId != old.selectedAccountId) {
-      _controller.text = _selectedName ?? '';
-    }
+    _focusNode.addListener(_restoreSelectedName);
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_restoreSelectedName);
+    _focusNode.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -1050,21 +1044,26 @@ class _AccountPickerState extends State<_AccountPicker> {
       .firstOrNull
       ?.name;
 
-  void _select(String name) {
-    final match = widget.accounts
-        .where((account) => account.name == name)
-        .firstOrNull;
-    if (match == null) return;
-    widget.onAccountChanged(match.id);
+  /// Letters typed that matched nothing would otherwise stay in the field,
+  /// naming an account other than the one the chart is drawing.
+  void _restoreSelectedName() {
+    if (_focusNode.hasFocus) return;
+    final name = _selectedName ?? '';
+    if (_controller.text != name) _controller.text = name;
   }
 
   @override
   Widget build(BuildContext context) {
-    return AutocompleteTextField(
+    return DropdownMenu<String>(
       controller: _controller,
-      suggestions: widget.accounts.map((account) => account.name).toList(),
-      decoration: InputDecoration(
-        labelText: widget.label,
+      focusNode: _focusNode,
+      initialSelection: widget.selectedAccountId,
+      enableFilter: true,
+      requestFocusOnTap: true,
+      expandedInsets: EdgeInsets.zero,
+      menuHeight: 320,
+      label: Text(widget.label),
+      inputDecorationTheme: InputDecorationTheme(
         isDense: true,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
@@ -1072,10 +1071,13 @@ class _AccountPickerState extends State<_AccountPicker> {
         ),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      onSelected: _select,
-      // Typing a full name straight through counts as choosing it; anything
-      // else leaves the current selection alone rather than clearing the chart.
-      onSubmitted: _select,
+      dropdownMenuEntries: [
+        for (final account in widget.accounts)
+          DropdownMenuEntry(value: account.id, label: account.name),
+      ],
+      onSelected: (id) {
+        if (id != null) widget.onAccountChanged(id);
+      },
     );
   }
 }

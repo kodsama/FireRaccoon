@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fireraccoon/providers/view_mode_provider.dart';
 import 'package:fireraccoon/screens/prognosis_screen.dart';
-import 'package:fireraccoon/widgets/autocomplete_text_field.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -71,14 +70,16 @@ void main() {
       );
       await pumpScreen(tester);
 
-      final field = find.byType(AutocompleteTextField);
+      final field = find.byType(DropdownMenu<String>);
       expect(field, findsOneWidget);
 
-      final suggestions = tester
-          .widget<AutocompleteTextField>(field)
-          .suggestions;
-      expect(suggestions, contains('Everyday'));
-      expect(suggestions, isNot(contains('Old Savings')));
+      final offered = tester
+          .widget<DropdownMenu<String>>(field)
+          .dropdownMenuEntries
+          .map((entry) => entry.label)
+          .toList();
+      expect(offered, contains('Everyday'));
+      expect(offered, isNot(contains('Old Savings')));
     },
   );
 
@@ -133,14 +134,14 @@ void main() {
     expect(find.text('1.5 months'), findsWidgets);
   });
 
-  testWidgets('PrognosisScreen picks the account by name, not by position', (
+  testWidgets('the account dropdown opens, filters, and selects', (
     tester,
   ) async {
     configureLargeScreen(tester);
     addTearDown(tester.view.resetPhysicalSize);
 
-    // A dropdown is unusable once a ledger has dozens of accounts, which is why
-    // every other picker in the app filters as you type.
+    // Both halves matter: the list opens on a click for a ledger of three
+    // accounts, and narrows as it is typed into for a ledger of eighty.
     final accounts = [
       _account(id: '1', name: 'Everyday'),
       _account(id: '2', name: 'Holiday fund'),
@@ -167,20 +168,28 @@ void main() {
     );
     await pumpScreen(tester);
 
-    final picker = tester.widget<AutocompleteTextField>(
-      find.byType(AutocompleteTextField),
-    );
-    expect(picker.suggestions, containsAll(['Everyday', 'Holiday fund']));
+    final picker = find.byType(DropdownMenu<String>);
+    final field = find.descendant(of: picker, matching: find.byType(TextField));
 
-    // Choosing by name selects that account rather than whatever sat there.
-    picker.onSelected!('Holiday fund');
+    await tester.tap(field);
+    await pumpScreen(tester);
+    expect(find.text('Holiday fund'), findsWidgets);
+
+    await tester.enterText(field, 'Holi');
+    await pumpScreen(tester);
+    expect(
+      find.descendant(
+        of: find.byType(MenuItemButton),
+        matching: find.text('Everyday'),
+      ),
+      findsNothing,
+    );
+
+    await tester.tap(find.text('Holiday fund').last);
     await pumpScreen(tester);
 
     expect(
-      tester
-          .widget<AutocompleteTextField>(find.byType(AutocompleteTextField))
-          .controller
-          .text,
+      tester.widget<DropdownMenu<String>>(picker).controller!.text,
       'Holiday fund',
     );
   });

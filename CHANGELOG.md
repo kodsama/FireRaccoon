@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The account picker on the projection page is a dropdown that filters as it
+  is typed into. It was a plain text field with suggestions, so seeing what
+  there was to choose from meant guessing a letter first. Clicking it now
+  lists every open account, and typing narrows that list rather than replacing
+  it
+
 - The projection horizon goes as short as two weeks, stops at the 15th of next
   month, or runs to a date picked from a calendar. Every choice before this
   was a month end, so a forecast for the fortnight ahead or up to a particular
