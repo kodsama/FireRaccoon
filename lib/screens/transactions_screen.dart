@@ -19,12 +19,12 @@ import '../providers/theme_provider.dart';
 import '../providers/undo_history_provider.dart';
 import '../router/route_navigation.dart';
 import '../router/route_query.dart';
-import '../router/transaction_analytics_route.dart';
+import '../router/stats_route.dart';
 import '../router/transactions_route.dart';
 import '../utils/balance_check_selection.dart';
 import '../utils/transaction_list_grouping.dart';
 import '../widgets/account_balance_check_panel.dart';
-import '../widgets/account_filter_dialog.dart';
+import '../widgets/name_filter_dialog.dart';
 import '../widgets/entity_screen_header.dart';
 import '../widgets/not_connected_view.dart';
 import '../widgets/small_loading_indicator.dart';
@@ -992,12 +992,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                           period: routeFilters.period,
                           type: routeFilters.type,
                           from: routeFilters.from != null
-                              ? ExpenseRouteFilters.formatDate(
-                                  routeFilters.from!,
-                                )
+                              ? StatsRouteFilters.formatDate(routeFilters.from!)
                               : null,
                           to: routeFilters.to != null
-                              ? ExpenseRouteFilters.formatDate(routeFilters.to!)
+                              ? StatsRouteFilters.formatDate(routeFilters.to!)
                               : null,
                           reconcile: routeFilters.reconcile,
                           reconciledFilter: routeFilters.reconciledFilter,
@@ -1019,12 +1017,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                           period: routeFilters.period,
                           type: routeFilters.type,
                           from: routeFilters.from != null
-                              ? ExpenseRouteFilters.formatDate(
-                                  routeFilters.from!,
-                                )
+                              ? StatsRouteFilters.formatDate(routeFilters.from!)
                               : null,
                           to: routeFilters.to != null
-                              ? ExpenseRouteFilters.formatDate(routeFilters.to!)
+                              ? StatsRouteFilters.formatDate(routeFilters.to!)
                               : null,
                           reconcile: routeFilters.reconcile,
                           reconciledFilter: value,
@@ -1065,14 +1061,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                             period: routeFilters.period,
                             type: routeFilters.type,
                             from: routeFilters.from != null
-                                ? ExpenseRouteFilters.formatDate(
+                                ? StatsRouteFilters.formatDate(
                                     routeFilters.from!,
                                   )
                                 : null,
                             to: routeFilters.to != null
-                                ? ExpenseRouteFilters.formatDate(
-                                    routeFilters.to!,
-                                  )
+                                ? StatsRouteFilters.formatDate(routeFilters.to!)
                                 : null,
                             reconcile: routeFilters.reconcile,
                           ),
@@ -1091,14 +1085,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                             period: routeFilters.period,
                             type: routeFilters.type,
                             from: routeFilters.from != null
-                                ? ExpenseRouteFilters.formatDate(
+                                ? StatsRouteFilters.formatDate(
                                     routeFilters.from!,
                                   )
                                 : null,
                             to: routeFilters.to != null
-                                ? ExpenseRouteFilters.formatDate(
-                                    routeFilters.to!,
-                                  )
+                                ? StatsRouteFilters.formatDate(routeFilters.to!)
                                 : null,
                             reconcile: routeFilters.reconcile,
                           ),
@@ -1128,14 +1120,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                             period: routeFilters.period,
                             type: TransactionTypeFilter.all,
                             from: routeFilters.from != null
-                                ? ExpenseRouteFilters.formatDate(
+                                ? StatsRouteFilters.formatDate(
                                     routeFilters.from!,
                                   )
                                 : null,
                             to: routeFilters.to != null
-                                ? ExpenseRouteFilters.formatDate(
-                                    routeFilters.to!,
-                                  )
+                                ? StatsRouteFilters.formatDate(routeFilters.to!)
                                 : null,
                             reconcile: routeFilters.reconcile,
                           ),
@@ -1173,14 +1163,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                             period: routeFilters.period,
                             type: routeFilters.type,
                             from: routeFilters.from != null
-                                ? ExpenseRouteFilters.formatDate(
+                                ? StatsRouteFilters.formatDate(
                                     routeFilters.from!,
                                   )
                                 : null,
                             to: routeFilters.to != null
-                                ? ExpenseRouteFilters.formatDate(
-                                    routeFilters.to!,
-                                  )
+                                ? StatsRouteFilters.formatDate(routeFilters.to!)
                                 : null,
                             reconcile: routeFilters.reconcile,
                             reconciledFilter: ReconciledFilter.all,
@@ -1678,7 +1666,6 @@ class _AccountFilterButton extends ConsumerWidget {
     final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final accountsAsync = ref.watch(accountsProvider);
 
-    const allAccountsSentinel = '__all__';
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () async {
@@ -1693,7 +1680,7 @@ class _AccountFilterButton extends ConsumerWidget {
           context.goPreservingSearch(
             TransactionsRoute.locationPreservingScope(
               routeFilters,
-              account: selected == allAccountsSentinel ? null : selected,
+              account: selected == allNamesSentinel ? null : selected,
               group: currentGroupType,
             ),
           );

@@ -172,24 +172,6 @@ abstract class AppLocalizations {
   /// **'Piggy banks'**
   String get navPiggyBanks;
 
-  /// No description provided for @navExpenses.
-  ///
-  /// In en, this message translates to:
-  /// **'Expenses'**
-  String get navExpenses;
-
-  /// No description provided for @navIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Income'**
-  String get navIncome;
-
-  /// No description provided for @navTransfers.
-  ///
-  /// In en, this message translates to:
-  /// **'Transfers'**
-  String get navTransfers;
-
   /// No description provided for @navLiabilities.
   ///
   /// In en, this message translates to:
@@ -814,12 +796,6 @@ abstract class AppLocalizations {
   /// **'Mini Stashes'**
   String get navPiggyBanksRaccoon;
 
-  /// No description provided for @navExpensesRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Burn Report'**
-  String get navExpensesRaccoon;
-
   /// No description provided for @navProjectionRaccoon.
   ///
   /// In en, this message translates to:
@@ -867,12 +843,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hoard Plans'**
   String get budgetsTitleRaccoon;
-
-  /// No description provided for @expensesTitleRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Burn Report'**
-  String get expensesTitleRaccoon;
 
   /// No description provided for @projectionTitleRaccoon.
   ///
@@ -3250,12 +3220,6 @@ abstract class AppLocalizations {
   /// **'Currency for the budget amount'**
   String get tooltipBudgetCurrency;
 
-  /// No description provided for @expensesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Expenses'**
-  String get expensesTitle;
-
   /// No description provided for @clearFilters.
   ///
   /// In en, this message translates to:
@@ -4570,18 +4534,6 @@ abstract class AppLocalizations {
   /// **'You have no subscriptions yet. Create some on the Subscriptions page to link recurring expenses.'**
   String get noSubscriptionsHint;
 
-  /// No description provided for @incomeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Income'**
-  String get incomeTitle;
-
-  /// No description provided for @transfersTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Transfers'**
-  String get transfersTitle;
-
   /// No description provided for @newTransferAction.
   ///
   /// In en, this message translates to:
@@ -4762,35 +4714,11 @@ abstract class AppLocalizations {
   /// **'Failed to create liability: {error}'**
   String failedToCreateLiability(String error);
 
-  /// No description provided for @navIncomeRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Snatched'**
-  String get navIncomeRaccoon;
-
-  /// No description provided for @navTransfersRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Stash Shuffles'**
-  String get navTransfersRaccoon;
-
   /// No description provided for @navLiabilitiesRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Debts'**
   String get navLiabilitiesRaccoon;
-
-  /// No description provided for @incomeTitleRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Snatched Funds'**
-  String get incomeTitleRaccoon;
-
-  /// No description provided for @transfersTitleRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Stash Shuffles'**
-  String get transfersTitleRaccoon;
 
   /// No description provided for @newTransferActionRaccoon.
   ///
@@ -7257,6 +7185,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This rule produces no dates.'**
   String get scheduleRuleNoDates;
+
+  /// No description provided for @navStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get navStats;
+
+  /// No description provided for @navStatsRaccoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Heist Report'**
+  String get navStatsRaccoon;
+
+  /// No description provided for @statsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get statsTitle;
+
+  /// No description provided for @statsTitleRaccoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Heist Report'**
+  String get statsTitleRaccoon;
+
+  /// No description provided for @filterTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag'**
+  String get filterTag;
+
+  /// No description provided for @allTags.
+  ///
+  /// In en, this message translates to:
+  /// **'All tags'**
+  String get allTags;
+
+  /// No description provided for @noTagsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags found.'**
+  String get noTagsFound;
+
+  /// No description provided for @filterBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get filterBudget;
+
+  /// No description provided for @allBudgets.
+  ///
+  /// In en, this message translates to:
+  /// **'All budgets'**
+  String get allBudgets;
+
+  /// No description provided for @noBudgetsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No budgets found.'**
+  String get noBudgetsFound;
+
+  /// No description provided for @noCategoriesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories found.'**
+  String get noCategoriesFound;
+
+  /// No description provided for @filterWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Words'**
+  String get filterWords;
+
+  /// No description provided for @filterWordsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Every word has to appear'**
+  String get filterWordsHint;
+
+  /// No description provided for @applyFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get applyFilter;
+
+  /// No description provided for @netFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get netFlow;
 }
 
 class _AppLocalizationsDelegate

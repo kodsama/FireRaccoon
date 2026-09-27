@@ -43,15 +43,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navPiggyBanks => '存钱罐';
 
   @override
-  String get navExpenses => '支出';
-
-  @override
-  String get navIncome => '收入';
-
-  @override
-  String get navTransfers => '转账';
-
-  @override
   String get navLiabilities => '负债';
 
   @override
@@ -383,9 +374,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navPiggyBanksRaccoon => '迷你藏匿处';
 
   @override
-  String get navExpensesRaccoon => '燃烧报告';
-
-  @override
   String get navProjectionRaccoon => '水晶宝藏';
 
   @override
@@ -408,9 +396,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get budgetsTitleRaccoon => '囤积计划';
-
-  @override
-  String get expensesTitleRaccoon => '燃烧报告';
 
   @override
   String get projectionTitleRaccoon => '水晶宝藏';
@@ -1725,9 +1710,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipBudgetCurrency => '预算金额的货币';
 
   @override
-  String get expensesTitle => '支出';
-
-  @override
   String get clearFilters => '清除筛选';
 
   @override
@@ -2464,12 +2446,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noSubscriptionsHint => '您还没有订阅。请在订阅页面创建以关联定期支出。';
 
   @override
-  String get incomeTitle => '收入';
-
-  @override
-  String get transfersTitle => '转账';
-
-  @override
   String get newTransferAction => '新建转账';
 
   @override
@@ -2566,19 +2542,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRaccoon => '截获';
-
-  @override
-  String get navTransfersRaccoon => '藏匿转移';
-
-  @override
   String get navLiabilitiesRaccoon => '欠债';
-
-  @override
-  String get incomeTitleRaccoon => '截获资金';
-
-  @override
-  String get transfersTitleRaccoon => '藏匿转移';
 
   @override
   String get newTransferActionRaccoon => '新建藏匿转移';
@@ -3926,4 +3890,49 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get scheduleRuleNoDates => '此规则不会产生任何日期。';
+
+  @override
+  String get navStats => '统计';
+
+  @override
+  String get navStatsRaccoon => '战利品报告';
+
+  @override
+  String get statsTitle => '统计';
+
+  @override
+  String get statsTitleRaccoon => '战利品报告';
+
+  @override
+  String get filterTag => '标签';
+
+  @override
+  String get allTags => '所有标签';
+
+  @override
+  String get noTagsFound => '未找到标签。';
+
+  @override
+  String get filterBudget => '预算';
+
+  @override
+  String get allBudgets => '所有预算';
+
+  @override
+  String get noBudgetsFound => '未找到预算。';
+
+  @override
+  String get noCategoriesFound => '未找到类别。';
+
+  @override
+  String get filterWords => '关键词';
+
+  @override
+  String get filterWordsHint => '必须包含每个词';
+
+  @override
+  String get applyFilter => '应用';
+
+  @override
+  String get netFlow => '净额';
 }

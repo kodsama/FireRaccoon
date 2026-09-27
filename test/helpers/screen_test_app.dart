@@ -75,11 +75,7 @@ Future<Widget> buildScreenTestApp({
         builder: (context, state) => Scaffold(body: child),
       ),
       GoRoute(
-        path: '/expenses',
-        builder: (context, state) => Scaffold(body: child),
-      ),
-      GoRoute(
-        path: '/income',
+        path: '/stats',
         builder: (context, state) => Scaffold(body: child),
       ),
       GoRoute(

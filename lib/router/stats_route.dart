@@ -30,26 +30,46 @@ extension TransactionTypeFilterX on TransactionTypeFilter {
   };
 }
 
-class ExpenseRouteFilters {
+/// The kinds of movement Stats can show, in the order the page lists them.
+const statsTypes = [
+  TransactionTypeFilter.expense,
+  TransactionTypeFilter.income,
+  TransactionTypeFilter.transfer,
+];
+
+class StatsRouteFilters {
+  static const defaultTypes = {TransactionTypeFilter.expense};
+
+  /// Which of [statsTypes] are shown; never empty and never holds `all`.
+  final Set<TransactionTypeFilter> types;
   final String? category;
+  final String? tag;
+  final String? budget;
   final ExpensePeriod period;
-  final TransactionTypeFilter type;
   final String? account;
   final DateTime? from;
   final DateTime? to;
-  final TransactionTypeFilter defaultType;
   final DashboardPeriod defaultDashboardPeriod;
 
-  const ExpenseRouteFilters({
+  const StatsRouteFilters({
+    this.types = defaultTypes,
     this.category,
+    this.tag,
+    this.budget,
     this.period = ExpensePeriod.month,
-    this.type = TransactionTypeFilter.expense,
     this.account,
     this.from,
     this.to,
-    this.defaultType = TransactionTypeFilter.expense,
     this.defaultDashboardPeriod = kDefaultDashboardPeriod,
   });
+
+  /// [types] in page order, whatever order the link named them in.
+  List<TransactionTypeFilter> get orderedTypes =>
+      statsTypes.where(types.contains).toList();
+
+  /// The one type shown, or `null` when several are.
+  TransactionTypeFilter? get singleType =>
+      types.length == 1 ? types.first : null;
 
   bool get hasCustomDateRange => from != null || to != null;
 
@@ -57,9 +77,10 @@ class ExpenseRouteFilters {
       expenseParamsFromDashboardPeriod(defaultDashboardPeriod);
 
   bool get hasActiveFilters {
-    if (category != null || type != defaultType || account != null) {
+    if (category != null || tag != null || budget != null || account != null) {
       return true;
     }
+    if (!_sameTypes(types, defaultTypes)) return true;
     return !expenseFiltersMatchParams(period, from, to, _defaultPeriodParams);
   }
 
@@ -84,23 +105,58 @@ class ExpenseRouteFilters {
     return period.localizedLabel(l10n);
   }
 
+  /// This view with the named filters changed and the rest kept.
+  ///
+  /// A filter passed as `null` is cleared. Choosing a [period] drops custom
+  /// dates, and passing [from] and [to] replaces the period with them.
+  String location({
+    Set<TransactionTypeFilter>? types,
+    Object? category = _keep,
+    Object? tag = _keep,
+    Object? budget = _keep,
+    Object? account = _keep,
+    ExpensePeriod? period,
+    DateTime? from,
+    DateTime? to,
+  }) {
+    final hasNewDates = from != null || to != null;
+    final keepDates = period == null && !hasNewDates;
+    final datedFrom = keepDates ? this.from : from;
+    final datedTo = keepDates ? this.to : to;
+    return StatsRoute.location(
+      types: types ?? this.types,
+      category: _pick(category, this.category),
+      tag: _pick(tag, this.tag),
+      budget: _pick(budget, this.budget),
+      account: _pick(account, this.account),
+      period: hasNewDates ? null : (period ?? this.period),
+      from: datedFrom != null ? formatDate(datedFrom) : null,
+      to: datedTo != null ? formatDate(datedTo) : null,
+      defaultDashboardPeriod: defaultDashboardPeriod,
+    );
+  }
+
+  static const _keep = Object();
+
+  static String? _pick(Object? change, String? current) =>
+      identical(change, _keep) ? current : change as String?;
+
   static String formatDate(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 }
 
-class TransactionAnalyticsRoute {
-  final String path;
-  final TransactionTypeFilter defaultType;
+bool _sameTypes(Set<TransactionTypeFilter> a, Set<TransactionTypeFilter> b) =>
+    a.length == b.length && a.containsAll(b);
 
-  const TransactionAnalyticsRoute({
-    required this.path,
-    required this.defaultType,
-  });
+class StatsRoute {
+  static const path = '/stats';
 
-  String location({
+  static String location({
+    Set<TransactionTypeFilter> types = StatsRouteFilters.defaultTypes,
     String? category,
+    String? tag,
+    String? budget,
     ExpensePeriod? period,
-    TransactionTypeFilter? type,
     String? account,
     String? from,
     String? to,
@@ -110,19 +166,25 @@ class TransactionAnalyticsRoute {
       defaultDashboardPeriod,
     );
     final resolvedPeriod = period ?? defaultParams.period;
-    final resolvedType = type ?? defaultType;
     final resolvedFrom =
         from ??
         (period == null && defaultParams.from != null
-            ? ExpenseRouteFilters.formatDate(defaultParams.from!)
+            ? StatsRouteFilters.formatDate(defaultParams.from!)
             : null);
     final resolvedTo =
         to ??
         (period == null && defaultParams.to != null
-            ? ExpenseRouteFilters.formatDate(defaultParams.to!)
+            ? StatsRouteFilters.formatDate(defaultParams.to!)
             : null);
+    final shown = statsTypes.where(types.contains);
     return RouteQuery.build(path, {
+      'types':
+          _sameTypes(types, StatsRouteFilters.defaultTypes) || shown.isEmpty
+          ? null
+          : shown.map((type) => type.name).join(','),
       'category': category,
+      'tag': tag,
+      'budget': budget,
       'period': encodeExpensePeriodParam(
         resolvedPeriod: resolvedPeriod,
         defaultParams: defaultParams,
@@ -130,71 +192,63 @@ class TransactionAnalyticsRoute {
         to: resolvedTo,
         periodWasExplicit: period != null,
       ),
-      'type': resolvedType != defaultType ? resolvedType.name : null,
       'account': account,
       'from': resolvedFrom,
       'to': resolvedTo,
     });
   }
 
-  ExpenseRouteFilters filtersFrom(
+  static StatsRouteFilters filtersFrom(
     GoRouterState state, {
     DashboardPeriod defaultDashboardPeriod = kDefaultDashboardPeriod,
   }) =>
       filtersFromUri(state.uri, defaultDashboardPeriod: defaultDashboardPeriod);
 
-  ExpenseRouteFilters filtersFromUri(
+  static StatsRouteFilters filtersFromUri(
     Uri uri, {
     DashboardPeriod defaultDashboardPeriod = kDefaultDashboardPeriod,
   }) {
     final defaultParams = expenseParamsFromDashboardPeriod(
       defaultDashboardPeriod,
     );
-    final from = _parseDate(RouteQuery.param(uri, 'from'));
-    final to = _parseDate(RouteQuery.param(uri, 'to'));
     final hasPeriodParam = uri.queryParameters.containsKey('period');
     final hasCustomDates =
         uri.queryParameters.containsKey('from') ||
         uri.queryParameters.containsKey('to');
+    final useDefaultPeriod = !hasPeriodParam && !hasCustomDates;
 
-    if (!hasPeriodParam && !hasCustomDates) {
-      return ExpenseRouteFilters(
-        category: RouteQuery.param(uri, 'category'),
-        period: defaultParams.period,
-        type: RouteQuery.enumFrom(
-          uri,
-          'type',
-          TransactionTypeFilter.values,
-          defaultType,
-        ),
-        account: RouteQuery.param(uri, 'account'),
-        from: defaultParams.from,
-        to: defaultParams.to,
-        defaultType: defaultType,
-        defaultDashboardPeriod: defaultDashboardPeriod,
-      );
-    }
-
-    return ExpenseRouteFilters(
+    return StatsRouteFilters(
+      types: typesFromUri(uri),
       category: RouteQuery.param(uri, 'category'),
-      period: RouteQuery.enumFrom(
-        uri,
-        'period',
-        ExpensePeriod.values,
-        defaultParams.period,
-      ),
-      type: RouteQuery.enumFrom(
-        uri,
-        'type',
-        TransactionTypeFilter.values,
-        defaultType,
-      ),
+      tag: RouteQuery.param(uri, 'tag'),
+      budget: RouteQuery.param(uri, 'budget'),
+      period: useDefaultPeriod
+          ? defaultParams.period
+          : RouteQuery.enumFrom(
+              uri,
+              'period',
+              ExpensePeriod.values,
+              defaultParams.period,
+            ),
       account: RouteQuery.param(uri, 'account'),
-      from: from,
-      to: to,
-      defaultType: defaultType,
+      from: useDefaultPeriod
+          ? defaultParams.from
+          : _parseDate(RouteQuery.param(uri, 'from')),
+      to: useDefaultPeriod
+          ? defaultParams.to
+          : _parseDate(RouteQuery.param(uri, 'to')),
       defaultDashboardPeriod: defaultDashboardPeriod,
     );
+  }
+
+  /// The types named in `types`, skipping anything unrecognised; a link
+  /// that names none of them shows the default rather than an empty page.
+  static Set<TransactionTypeFilter> typesFromUri(Uri uri) {
+    final raw = RouteQuery.param(uri, 'types');
+    if (raw == null) return StatsRouteFilters.defaultTypes;
+    final named = raw.split(',').map((name) => name.trim()).toSet();
+    final types = statsTypes.where((type) => named.contains(type.name)).toSet();
+    return types.isEmpty ? StatsRouteFilters.defaultTypes : types;
   }
 
   static DateTime? _parseDate(String? value) {
@@ -208,18 +262,3 @@ class TransactionAnalyticsRoute {
     return DateTime(year, month, day);
   }
 }
-
-const expensesAnalyticsRoute = TransactionAnalyticsRoute(
-  path: '/expenses',
-  defaultType: TransactionTypeFilter.expense,
-);
-
-const incomeAnalyticsRoute = TransactionAnalyticsRoute(
-  path: '/income',
-  defaultType: TransactionTypeFilter.income,
-);
-
-const transfersAnalyticsRoute = TransactionAnalyticsRoute(
-  path: '/transfers',
-  defaultType: TransactionTypeFilter.transfer,
-);

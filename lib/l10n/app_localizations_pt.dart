@@ -43,15 +43,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get navPiggyBanks => 'Piggy banks';
 
   @override
-  String get navExpenses => 'Despesas';
-
-  @override
-  String get navIncome => 'Income';
-
-  @override
-  String get navTransfers => 'Transfers';
-
-  @override
   String get navLiabilities => 'Liabilities';
 
   @override
@@ -385,9 +376,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get navPiggyBanksRaccoon => 'Mini Stashes';
 
   @override
-  String get navExpensesRaccoon => 'Relatório de queima';
-
-  @override
   String get navProjectionRaccoon => 'Tesouro de cristal';
 
   @override
@@ -410,9 +398,6 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get budgetsTitleRaccoon => 'Planos de tesouro';
-
-  @override
-  String get expensesTitleRaccoon => 'Relatório de queima';
 
   @override
   String get projectionTitleRaccoon => 'Tesouro de cristal';
@@ -1765,9 +1750,6 @@ class AppLocalizationsPt extends AppLocalizations {
   String get tooltipBudgetCurrency => 'Moeda do montante do orçamento';
 
   @override
-  String get expensesTitle => 'Despesas';
-
-  @override
   String get clearFilters => 'Limpar filtros';
 
   @override
@@ -2520,12 +2502,6 @@ class AppLocalizationsPt extends AppLocalizations {
       'You have no subscriptions yet. Create some on the Subscriptions page to link recurring expenses.';
 
   @override
-  String get incomeTitle => 'Income';
-
-  @override
-  String get transfersTitle => 'Transfers';
-
-  @override
   String get newTransferAction => 'New Transfer';
 
   @override
@@ -2624,19 +2600,7 @@ class AppLocalizationsPt extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRaccoon => 'Snatched';
-
-  @override
-  String get navTransfersRaccoon => 'Stash Shuffles';
-
-  @override
   String get navLiabilitiesRaccoon => 'Debts';
-
-  @override
-  String get incomeTitleRaccoon => 'Snatched Funds';
-
-  @override
-  String get transfersTitleRaccoon => 'Stash Shuffles';
 
   @override
   String get newTransferActionRaccoon => 'New Stash Shuffle';
@@ -4049,4 +4013,49 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get scheduleRuleNoDates => 'Esta regra não produz datas.';
+
+  @override
+  String get navStats => 'Estatísticas';
+
+  @override
+  String get navStatsRaccoon => 'Relatório do saque';
+
+  @override
+  String get statsTitle => 'Estatísticas';
+
+  @override
+  String get statsTitleRaccoon => 'Relatório do saque';
+
+  @override
+  String get filterTag => 'Etiqueta';
+
+  @override
+  String get allTags => 'Todas as etiquetas';
+
+  @override
+  String get noTagsFound => 'Nenhuma etiqueta encontrada.';
+
+  @override
+  String get filterBudget => 'Orçamento';
+
+  @override
+  String get allBudgets => 'Todos os orçamentos';
+
+  @override
+  String get noBudgetsFound => 'Nenhum orçamento encontrado.';
+
+  @override
+  String get noCategoriesFound => 'Nenhuma categoria encontrada.';
+
+  @override
+  String get filterWords => 'Palavras';
+
+  @override
+  String get filterWordsHint => 'Todas as palavras têm de aparecer';
+
+  @override
+  String get applyFilter => 'Aplicar';
+
+  @override
+  String get netFlow => 'Líquido';
 }

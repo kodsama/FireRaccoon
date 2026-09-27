@@ -7,7 +7,7 @@ import 'app_localizations.dart';
 import 'fun_l10n.dart';
 import '../providers/undo_history_provider.dart';
 import '../router/dashboard_route.dart';
-import '../router/expenses_route.dart';
+import '../router/stats_route.dart';
 import '../router/projection_route.dart';
 import '../utils/locale_formatting.dart';
 import '../utils/password_policy.dart';
@@ -247,7 +247,7 @@ extension ProjectionChartStyleL10n on ProjectionChartStyle {
   };
 }
 
-extension ExpenseRouteFiltersL10n on ExpenseRouteFilters {
+extension StatsRouteFiltersL10n on StatsRouteFilters {
   String localizedPeriodLabel(AppLocalizations l10n, LocaleFormatting format) {
     if (hasCustomDateRange) {
       return format.formatDateRange(

@@ -43,15 +43,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get navPiggyBanks => 'Piggy banks';
 
   @override
-  String get navExpenses => 'Utgifter';
-
-  @override
-  String get navIncome => 'Income';
-
-  @override
-  String get navTransfers => 'Transfers';
-
-  @override
   String get navLiabilities => 'Liabilities';
 
   @override
@@ -386,9 +377,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get navPiggyBanksRaccoon => 'Mini Stashes';
 
   @override
-  String get navExpensesRaccoon => 'Brännrapport';
-
-  @override
   String get navProjectionRaccoon => 'Kristallbyte';
 
   @override
@@ -411,9 +399,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get budgetsTitleRaccoon => 'Bytplans';
-
-  @override
-  String get expensesTitleRaccoon => 'Brännrapport';
 
   @override
   String get projectionTitleRaccoon => 'Kristallbyte';
@@ -1758,9 +1743,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tooltipBudgetCurrency => 'Valuta för budgetbeloppet';
 
   @override
-  String get expensesTitle => 'Utgifter';
-
-  @override
   String get clearFilters => 'Rensa filter';
 
   @override
@@ -2513,12 +2495,6 @@ class AppLocalizationsSv extends AppLocalizations {
       'You have no subscriptions yet. Create some on the Subscriptions page to link recurring expenses.';
 
   @override
-  String get incomeTitle => 'Income';
-
-  @override
-  String get transfersTitle => 'Transfers';
-
-  @override
   String get newTransferAction => 'New Transfer';
 
   @override
@@ -2617,19 +2593,7 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRaccoon => 'Snatched';
-
-  @override
-  String get navTransfersRaccoon => 'Stash Shuffles';
-
-  @override
   String get navLiabilitiesRaccoon => 'Debts';
-
-  @override
-  String get incomeTitleRaccoon => 'Snatched Funds';
-
-  @override
-  String get transfersTitleRaccoon => 'Stash Shuffles';
 
   @override
   String get newTransferActionRaccoon => 'New Stash Shuffle';
@@ -4032,4 +3996,49 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get scheduleRuleNoDates => 'Regeln ger inga datum.';
+
+  @override
+  String get navStats => 'Statistik';
+
+  @override
+  String get navStatsRaccoon => 'Bytesrapport';
+
+  @override
+  String get statsTitle => 'Statistik';
+
+  @override
+  String get statsTitleRaccoon => 'Bytesrapport';
+
+  @override
+  String get filterTag => 'Tagg';
+
+  @override
+  String get allTags => 'Alla taggar';
+
+  @override
+  String get noTagsFound => 'Inga taggar hittades.';
+
+  @override
+  String get filterBudget => 'Budget';
+
+  @override
+  String get allBudgets => 'Alla budgetar';
+
+  @override
+  String get noBudgetsFound => 'Inga budgetar hittades.';
+
+  @override
+  String get noCategoriesFound => 'Inga kategorier hittades.';
+
+  @override
+  String get filterWords => 'Ord';
+
+  @override
+  String get filterWordsHint => 'Varje ord måste finnas med';
+
+  @override
+  String get applyFilter => 'Använd';
+
+  @override
+  String get netFlow => 'Netto';
 }
