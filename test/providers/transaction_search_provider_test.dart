@@ -27,6 +27,39 @@ void main() {
     );
   });
 
+  test('finds rows by tag and by notes, once each', () async {
+    final base = sampleTransactions.first;
+    final tagged = base.copyWith(
+      id: 'tagged',
+      description: 'Plov in Samarkand',
+      tags: ['5-stan trip 2026'],
+    );
+    final noted = base.copyWith(
+      id: 'noted',
+      description: 'Taxi',
+      notes: 'part of the 5-stan trip 2026',
+      tags: ['5-stan trip 2026'],
+    );
+    final fake = FakeFireflyService(transactions: [base, tagged, noted]);
+    final container = ProviderContainer(
+      overrides: [apiServiceProvider.overrideWithValue(fake)],
+    );
+    addTearDown(container.dispose);
+
+    final results = await container.read(
+      serverSearchResultsProvider('5-stan "trip" 2026').future,
+    );
+
+    expect(results.map((t) => t.id), unorderedEquals(['tagged', 'noted']));
+    expect(
+      fake.searchQueries,
+      containsAll([
+        'tag_contains:"5-stan trip 2026"',
+        'notes_contains:"5-stan trip 2026"',
+      ]),
+    );
+  });
+
   test('empty query returns no results without calling the API', () async {
     final fake = FakeFireflyService(transactions: sampleTransactions)
       ..throwOn = Exception('should not be called');
