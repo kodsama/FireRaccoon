@@ -233,6 +233,23 @@ void main() {
       expect(updated.includeLiabilities, isFalse);
     });
 
+    test('toJson and fromJson round-trip, missing keys include', () {
+      const options = PrognosisInclusionOptions(
+        includeBills: false,
+        includeTransfers: false,
+      );
+      final back = PrognosisInclusionOptions.fromJson(options.toJson());
+      expect(back.includeBills, isFalse);
+      expect(back.includeTransfers, isFalse);
+      expect(back.includeIncome, isTrue);
+
+      final empty = PrognosisInclusionOptions.fromJson(const {});
+      expect(
+        empty.toJson().values.every((included) => included == true),
+        isTrue,
+      );
+    });
+
     test('copyWith without args preserves defaults', () {
       const base = PrognosisInclusionOptions(includeBills: false);
       final clone = base.copyWith();

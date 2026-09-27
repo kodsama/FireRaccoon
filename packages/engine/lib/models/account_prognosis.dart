@@ -298,6 +298,32 @@ class PrognosisInclusionOptions {
       includeLiabilities: includeLiabilities ?? this.includeLiabilities,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'includeScheduledTransactions': includeScheduledTransactions,
+    'includeRecurringTransactions': includeRecurringTransactions,
+    'includeBills': includeBills,
+    'includeIncome': includeIncome,
+    'includeExpenses': includeExpenses,
+    'includeTransfers': includeTransfers,
+    'includeCreditCards': includeCreditCards,
+    'includeLiabilities': includeLiabilities,
+  };
+
+  /// Anything [json] leaves out is included, the default for every source.
+  factory PrognosisInclusionOptions.fromJson(Map<String, dynamic> json) =>
+      PrognosisInclusionOptions(
+        includeScheduledTransactions:
+            json['includeScheduledTransactions'] as bool? ?? true,
+        includeRecurringTransactions:
+            json['includeRecurringTransactions'] as bool? ?? true,
+        includeBills: json['includeBills'] as bool? ?? true,
+        includeIncome: json['includeIncome'] as bool? ?? true,
+        includeExpenses: json['includeExpenses'] as bool? ?? true,
+        includeTransfers: json['includeTransfers'] as bool? ?? true,
+        includeCreditCards: json['includeCreditCards'] as bool? ?? true,
+        includeLiabilities: json['includeLiabilities'] as bool? ?? true,
+      );
 }
 
 class PrognosisOptions {

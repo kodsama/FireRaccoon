@@ -112,30 +112,8 @@ class _PrognosisViewState extends ConsumerState<PrognosisView> {
                         title: 'Projection inclusion changed',
                         details: 'Projection inclusion options updated',
                         type: UndoActionType.prognosisInclusion,
-                        undoPayload: {
-                          'includeScheduledTransactions':
-                              previous.includeScheduledTransactions,
-                          'includeRecurringTransactions':
-                              previous.includeRecurringTransactions,
-                          'includeBills': previous.includeBills,
-                          'includeIncome': previous.includeIncome,
-                          'includeExpenses': previous.includeExpenses,
-                          'includeTransfers': previous.includeTransfers,
-                          'includeCreditCards': previous.includeCreditCards,
-                          'includeLiabilities': previous.includeLiabilities,
-                        },
-                        redoPayload: {
-                          'includeScheduledTransactions':
-                              inclusion.includeScheduledTransactions,
-                          'includeRecurringTransactions':
-                              inclusion.includeRecurringTransactions,
-                          'includeBills': inclusion.includeBills,
-                          'includeIncome': inclusion.includeIncome,
-                          'includeExpenses': inclusion.includeExpenses,
-                          'includeTransfers': inclusion.includeTransfers,
-                          'includeCreditCards': inclusion.includeCreditCards,
-                          'includeLiabilities': inclusion.includeLiabilities,
-                        },
+                        undoPayload: previous.toJson(),
+                        redoPayload: inclusion.toJson(),
                       );
                 },
               ),

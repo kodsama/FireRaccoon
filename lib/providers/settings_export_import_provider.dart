@@ -126,18 +126,7 @@ class SettingsExportImport {
         'horizon': prognosis.horizon.name,
         'customHorizonDate': prognosis.customHorizonDate?.toIso8601String(),
         'marginPercent': prognosis.marginPercent,
-        'inclusion': {
-          'includeScheduledTransactions':
-              prognosis.inclusion.includeScheduledTransactions,
-          'includeRecurringTransactions':
-              prognosis.inclusion.includeRecurringTransactions,
-          'includeBills': prognosis.inclusion.includeBills,
-          'includeIncome': prognosis.inclusion.includeIncome,
-          'includeExpenses': prognosis.inclusion.includeExpenses,
-          'includeTransfers': prognosis.inclusion.includeTransfers,
-          'includeCreditCards': prognosis.inclusion.includeCreditCards,
-          'includeLiabilities': prognosis.inclusion.includeLiabilities,
-        },
+        'inclusion': prognosis.inclusion.toJson(),
       },
     );
   }
@@ -347,18 +336,7 @@ class SettingsExportImport {
     if (prognosisJson != null) {
       final inclusionRaw =
           prognosisJson['inclusion'] as Map<String, dynamic>? ?? const {};
-      final inclusion = PrognosisInclusionOptions(
-        includeScheduledTransactions:
-            inclusionRaw['includeScheduledTransactions'] as bool? ?? true,
-        includeRecurringTransactions:
-            inclusionRaw['includeRecurringTransactions'] as bool? ?? true,
-        includeBills: inclusionRaw['includeBills'] as bool? ?? true,
-        includeIncome: inclusionRaw['includeIncome'] as bool? ?? true,
-        includeExpenses: inclusionRaw['includeExpenses'] as bool? ?? true,
-        includeTransfers: inclusionRaw['includeTransfers'] as bool? ?? true,
-        includeCreditCards: inclusionRaw['includeCreditCards'] as bool? ?? true,
-        includeLiabilities: inclusionRaw['includeLiabilities'] as bool? ?? true,
-      );
+      final inclusion = PrognosisInclusionOptions.fromJson(inclusionRaw);
       final horizonName = prognosisJson['horizon'] as String?;
       final customHorizonDate = DateTime.tryParse(
         prognosisJson['customHorizonDate'] as String? ?? '',
