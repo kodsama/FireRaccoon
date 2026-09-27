@@ -20,7 +20,7 @@ import '../widgets/simple_charts.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
 import '../utils/locale_formatting.dart';
-import '../widgets/account_filter_dialog.dart';
+import '../widgets/name_filter_dialog.dart';
 
 class TransactionAnalyticsScreen extends ConsumerWidget {
   final String title;
@@ -709,7 +709,7 @@ class _AccountFilterButton extends ConsumerWidget {
               category: filters.category,
               period: filters.period,
               type: filters.type,
-              account: selected == allAccountsSentinel ? null : selected,
+              account: selected == allNamesSentinel ? null : selected,
               from: filters.from != null
                   ? ExpenseRouteFilters.formatDate(filters.from!)
                   : null,

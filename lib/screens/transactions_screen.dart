@@ -24,7 +24,7 @@ import '../router/transactions_route.dart';
 import '../utils/balance_check_selection.dart';
 import '../utils/transaction_list_grouping.dart';
 import '../widgets/account_balance_check_panel.dart';
-import '../widgets/account_filter_dialog.dart';
+import '../widgets/name_filter_dialog.dart';
 import '../widgets/entity_screen_header.dart';
 import '../widgets/not_connected_view.dart';
 import '../widgets/small_loading_indicator.dart';
@@ -1678,7 +1678,6 @@ class _AccountFilterButton extends ConsumerWidget {
     final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final accountsAsync = ref.watch(accountsProvider);
 
-    const allAccountsSentinel = '__all__';
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () async {
@@ -1693,7 +1692,7 @@ class _AccountFilterButton extends ConsumerWidget {
           context.goPreservingSearch(
             TransactionsRoute.locationPreservingScope(
               routeFilters,
-              account: selected == allAccountsSentinel ? null : selected,
+              account: selected == allNamesSentinel ? null : selected,
               group: currentGroupType,
             ),
           );
