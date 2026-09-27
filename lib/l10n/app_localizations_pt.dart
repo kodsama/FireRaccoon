@@ -4058,4 +4058,11 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get netFlow => 'Líquido';
+
+  @override
+  String get prognosisLeaveOut => 'Deixar de fora';
+
+  @override
+  String get prognosisLeaveOutHelp =>
+      'Os fluxos destas categorias ou etiquetas, ou que tenham todas estas palavras, ficam fora da previsão.';
 }

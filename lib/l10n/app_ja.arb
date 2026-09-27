@@ -2090,5 +2090,7 @@
   "filterWords": "単語",
   "filterWordsHint": "すべての単語を含むもの",
   "applyFilter": "適用",
-  "netFlow": "差引"
+  "netFlow": "差引",
+  "prognosisLeaveOut": "除外",
+  "prognosisLeaveOutHelp": "これらのカテゴリやタグの流れ、またはこれらの単語をすべて含む流れは予測に含めません。"
 }

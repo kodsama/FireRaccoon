@@ -14,10 +14,12 @@ const allNamesSentinel = '__all__';
 
 /// Searchable single-choice picker over [names], for filters whose options
 /// can run to hundreds (accounts, tags) where a popup menu would not fit.
+/// Without an [allLabel] there is no row for "all", for pickers that add
+/// one name to a set rather than narrow to it.
 Future<String?> showNameFilterDialog({
   required BuildContext context,
   required String title,
-  required String allLabel,
+  required String? allLabel,
   required String emptyLabel,
   required List<String> names,
   required String? currentFilter,
@@ -58,7 +60,7 @@ Future<String?> showAccountFilterDialog({
 
 class _NameFilterDialog extends ConsumerStatefulWidget {
   final String title;
-  final String allLabel;
+  final String? allLabel;
   final String emptyLabel;
   final List<String> names;
   final String? currentFilter;
@@ -115,9 +117,11 @@ class _NameFilterDialogState extends ConsumerState<_NameFilterDialog> {
       sortedLabels,
     );
 
+    final allLabel = widget.allLabel;
     final showAll =
-        _query.isEmpty ||
-        widget.allLabel.toLowerCase().contains(_query.toLowerCase());
+        allLabel != null &&
+        (_query.isEmpty ||
+            allLabel.toLowerCase().contains(_query.toLowerCase()));
 
     return Dialog(
       backgroundColor: colors.surface,
@@ -218,7 +222,7 @@ class _NameFilterDialogState extends ConsumerState<_NameFilterDialog> {
                     children: [
                       if (showAll) ...[
                         _NameOptionTile(
-                          title: widget.allLabel,
+                          title: allLabel,
                           isSelected: widget.currentFilter == null,
                           icon: LucideIcons.layers,
                           onTap: () =>

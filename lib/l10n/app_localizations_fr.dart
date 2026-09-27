@@ -4071,4 +4071,11 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get netFlow => 'Solde net';
+
+  @override
+  String get prognosisLeaveOut => 'Exclure';
+
+  @override
+  String get prognosisLeaveOutHelp =>
+      'Les flux de ces catégories ou étiquettes, ou portant chacun de ces mots, restent hors de la prévision.';
 }

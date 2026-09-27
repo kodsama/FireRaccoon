@@ -18,6 +18,9 @@ class ScheduledCashFlow {
   final String? billId;
   final String? recurrenceId;
   final ScheduledFlowSource source;
+  final String? categoryName;
+  final List<String> tags;
+  final String? notes;
 
   const ScheduledCashFlow({
     required this.date,
@@ -33,6 +36,9 @@ class ScheduledCashFlow {
     this.billId,
     this.recurrenceId,
     this.source = ScheduledFlowSource.transaction,
+    this.categoryName,
+    this.tags = const [],
+    this.notes,
   });
 }
 
@@ -361,6 +367,8 @@ List<ScheduledCashFlow> expandRecurrenceCashFlows({
           amount: line.amount,
           recurrenceId: recurrence.id,
           source: ScheduledFlowSource.recurrence,
+          categoryName: line.categoryName,
+          tags: line.tags,
         ),
       );
     }

@@ -4,6 +4,7 @@ import '../models/bill.dart';
 import '../models/recurrence.dart';
 import '../models/transaction.dart';
 import '../utils/account_balance.dart';
+import '../utils/transaction_filters.dart';
 import 'recurrence_scheduler.dart';
 
 class BillAccountTemplate {
@@ -12,6 +13,8 @@ class BillAccountTemplate {
   final String? sourceName;
   final String? destinationId;
   final String? destinationName;
+  final String? categoryName;
+  final List<String> tags;
 
   const BillAccountTemplate({
     required this.transactionType,
@@ -19,6 +22,8 @@ class BillAccountTemplate {
     this.sourceName,
     this.destinationId,
     this.destinationName,
+    this.categoryName,
+    this.tags = const [],
   });
 }
 
@@ -241,6 +246,7 @@ bool _shouldIncludeFlow(
   final isCcPayment = _isCreditCardPayment(flow, accountsById, accountsByName);
 
   if (!inclusion.includeCreditCards && isCcRelated) return false;
+  if (_isLeftOut(flow, inclusion)) return false;
 
   if (flow.source == ScheduledFlowSource.recurrence &&
       !inclusion.includeRecurringTransactions) {
@@ -267,6 +273,29 @@ bool _shouldIncludeFlow(
   }
 
   return true;
+}
+
+bool _isLeftOut(ScheduledCashFlow flow, PrognosisInclusionOptions inclusion) {
+  final category = categoryGroupKey(flow.categoryName);
+  if (inclusion.excludedCategories.any(
+    (excluded) => categoryGroupKey(excluded) == category,
+  )) {
+    return true;
+  }
+  if (flow.tags.any(inclusion.excludedTags.contains)) return true;
+  final words = inclusion.excludedWords
+      .toLowerCase()
+      .split(RegExp(r'\s+'))
+      .where((word) => word.isNotEmpty)
+      .toList();
+  if (words.isEmpty) return false;
+  final fields = [
+    flow.description,
+    ?flow.categoryName,
+    ?flow.notes,
+    ...flow.tags,
+  ].map((field) => field.toLowerCase()).toList();
+  return words.every((word) => fields.any((field) => field.contains(word)));
 }
 
 Map<String, _ScenarioDelta> _flowScenarioDeltas({
@@ -597,6 +626,9 @@ List<ScheduledCashFlow> _scheduledTransactionFlows({
         amount: transaction.amount,
         billId: transaction.billId,
         source: ScheduledFlowSource.transaction,
+        categoryName: transaction.categoryName,
+        tags: [for (final split in transaction.resolvedSplits()) ...split.tags],
+        notes: transaction.notes,
       ),
     );
   }
@@ -666,6 +698,8 @@ List<ScheduledCashFlow> _billFlows({
           amountMax: bill.amountMax,
           billId: bill.id,
           source: ScheduledFlowSource.bill,
+          categoryName: template.categoryName,
+          tags: template.tags,
         ),
       );
     }
@@ -699,6 +733,8 @@ Map<String, BillAccountTemplate> _inferBillTemplates(
         sourceName: transaction.sourceName,
         destinationId: transaction.destinationId,
         destinationName: transaction.destinationName,
+        categoryName: transaction.categoryName,
+        tags: transaction.tags,
       );
       final key = _templateKey(template);
       final count = (counts[key] ?? 0) + 1;

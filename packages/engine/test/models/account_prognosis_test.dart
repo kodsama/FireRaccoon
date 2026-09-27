@@ -243,9 +243,24 @@ void main() {
       expect(back.includeTransfers, isFalse);
       expect(back.includeIncome, isTrue);
 
+      const leaving = PrognosisInclusionOptions(
+        excludedCategories: {'Housing'},
+        excludedTags: {'Holiday'},
+        excludedWords: 'samarkand',
+      );
+      final restored = PrognosisInclusionOptions.fromJson(leaving.toJson());
+      expect(restored.excludedCategories, {'Housing'});
+      expect(restored.excludedTags, {'Holiday'});
+      expect(restored.excludedWords, 'samarkand');
+      expect(leaving.copyWith(excludedTags: const {}).excludedCategories, {
+        'Housing',
+      });
+
       final empty = PrognosisInclusionOptions.fromJson(const {});
+      expect(empty.excludedCategories, isEmpty);
+      expect(empty.excludedWords, isEmpty);
       expect(
-        empty.toJson().values.every((included) => included == true),
+        empty.toJson().values.whereType<bool>().every((included) => included),
         isTrue,
       );
     });

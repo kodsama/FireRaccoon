@@ -4041,4 +4041,11 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get netFlow => 'Netto';
+
+  @override
+  String get prognosisLeaveOut => 'Utelämna';
+
+  @override
+  String get prognosisLeaveOutHelp =>
+      'Flöden i dessa kategorier eller taggar, eller som innehåller vart och ett av dessa ord, hålls utanför prognosen.';
 }
