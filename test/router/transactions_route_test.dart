@@ -8,6 +8,71 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
+  group('TransactionsRoute tag and budget', () {
+    test('round-trip and open on all time like a category link', () {
+      final uri = Uri.parse(
+        TransactionsRoute.location(tag: '5-stan trip 2026', budget: 'Travel'),
+      );
+      expect(uri.queryParameters['tag'], '5-stan trip 2026');
+      expect(uri.queryParameters['budget'], 'Travel');
+      expect(uri.queryParameters['period'], 'all');
+
+      final filters = TransactionsRoute.filtersFromUri(uri);
+      expect(filters.tag, '5-stan trip 2026');
+      expect(filters.budget, 'Travel');
+      expect(filters.hasScopedFilters, isTrue);
+      expect(
+        filters.localizedSummary(
+          AppLocalizationsEn(),
+          LocaleFormatting(const Locale('en')),
+        ),
+        contains('5-stan trip 2026 · Travel'),
+      );
+    });
+
+    test('are read on the default-period branch too', () {
+      final filters = TransactionsRoute.filtersFromUri(
+        Uri.parse('/transactions?tag=Holiday'),
+      );
+      expect(filters.tag, 'Holiday');
+      expect(filters.hasScopedFilters, isTrue);
+    });
+
+    test('locationWithEntities changes one and keeps the rest', () {
+      final base = TransactionsRoute.filtersFromUri(
+        Uri.parse(
+          '/transactions?category=Food&tag=Holiday&period=year'
+          '&type=expense&reconciled_filter=reconciled&group=category',
+        ),
+      );
+      final next = TransactionsRoute.filtersFromUri(
+        Uri.parse(
+          TransactionsRoute.locationWithEntities(
+            base,
+            tag: null,
+            budget: 'Fun',
+          ),
+        ),
+      );
+      expect(next.tag, isNull);
+      expect(next.budget, 'Fun');
+      expect(next.category, 'Food');
+      expect(next.period, ExpensePeriod.year);
+      expect(next.type, TransactionTypeFilter.expense);
+      expect(next.reconciledFilter, ReconciledFilter.reconciled);
+      expect(next.group, TransactionGroupType.category);
+    });
+
+    test('locationPreservingScope carries them', () {
+      const base = TransactionsRouteFilters(tag: 'Holiday', budget: 'Fun');
+      final uri = Uri.parse(
+        TransactionsRoute.locationPreservingScope(base, account: 'Checking'),
+      );
+      expect(uri.queryParameters['tag'], 'Holiday');
+      expect(uri.queryParameters['budget'], 'Fun');
+    });
+  });
+
   group('TransactionsRoute', () {
     test('location without filters returns base path', () {
       expect(TransactionsRoute.location(), '/transactions');

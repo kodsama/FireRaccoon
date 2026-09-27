@@ -90,6 +90,8 @@ void main() {
         type: TransactionTypeFilter.all,
         account: null,
         category: null,
+        tag: null,
+        budget: null,
       )).future,
     );
     final food = await container.read(
@@ -100,6 +102,8 @@ void main() {
         type: TransactionTypeFilter.all,
         account: null,
         category: 'Food',
+        tag: null,
+        budget: null,
       )).future,
     );
 
@@ -108,5 +112,40 @@ void main() {
       food.every((transaction) => transaction.categoryName == 'Food'),
       isTrue,
     );
+  });
+
+  test('filtered list scopes transactions by tag and budget', () async {
+    final base = sampleTransactions.last;
+    final container = ProviderContainer(
+      overrides: [
+        apiServiceProvider.overrideWithValue(
+          FakeFireflyService(
+            transactions: [
+              base.copyWith(id: 'tagged', tags: ['Holiday']),
+              base.copyWith(id: 'budgeted', budgetName: 'Fun'),
+              base.copyWith(id: 'plain'),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    Future<List<String>> ids({String? tag, String? budget}) async =>
+        (await container.read(
+          filteredTransactionListProvider((
+            period: ExpensePeriod.all,
+            from: null,
+            to: null,
+            type: TransactionTypeFilter.all,
+            account: null,
+            category: null,
+            tag: tag,
+            budget: budget,
+          )).future,
+        )).map((t) => t.id).toList();
+
+    expect(await ids(tag: 'Holiday'), ['tagged']);
+    expect(await ids(budget: 'Fun'), ['budgeted']);
   });
 }

@@ -127,6 +127,8 @@ List<Transaction> filterTransactions(
   List<Transaction> transactions, {
   TransactionTypeFilter type = TransactionTypeFilter.expense,
   String? category,
+  String? tag,
+  String? budget,
   String? account,
   DateRangeBounds? dateRange,
 }) {
@@ -140,6 +142,18 @@ List<Transaction> filterTransactions(
             categoryGroupKey(split.categoryName) == categoryGroupKey(category),
       );
       if (!matchesCategory) return false;
+    }
+    if (tag != null &&
+        !transaction.resolvedSplits().any(
+          (split) => split.tags.contains(tag),
+        )) {
+      return false;
+    }
+    if (budget != null &&
+        !transaction.resolvedSplits().any(
+          (split) => (split.budgetName ?? '').trim() == budget,
+        )) {
+      return false;
     }
     if (account != null) {
       final matchesAccount = transaction.resolvedSplits().any(

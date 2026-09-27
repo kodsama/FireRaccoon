@@ -412,9 +412,7 @@ class _TagCard extends ConsumerWidget {
         side: BorderSide(color: colors.border),
       ),
       child: InkWell(
-        onTap: () => context.go(
-          RouteQuery.build(TransactionsRoute.path, {'q': tag.name}),
-        ),
+        onTap: () => context.go(TransactionsRoute.location(tag: tag.name)),
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -511,9 +509,7 @@ class _TagRow extends ConsumerWidget {
       borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.go(
-          RouteQuery.build(TransactionsRoute.path, {'q': tag.name}),
-        ),
+        onTap: () => context.go(TransactionsRoute.location(tag: tag.name)),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(

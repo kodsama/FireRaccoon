@@ -258,6 +258,8 @@ class _StatsBodyState extends State<_StatsBody> {
     final filters = widget.filters;
     return TransactionsRoute.location(
       category: category ?? filters.category,
+      tag: filters.tag,
+      budget: filters.budget,
       period: filters.period,
       type: type ?? filters.singleType ?? TransactionTypeFilter.all,
       account: filters.account,

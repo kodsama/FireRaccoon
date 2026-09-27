@@ -69,6 +69,35 @@ void main() {
     expect(find.text('New Tag'), findsWidgets);
   });
 
+  testWidgets('a tag opens the transactions filtered to it, not searched', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const CategoriesTagsScreen(),
+        initialLocation: CategoriesTagsRoute.location(
+          tab: CategoriesTagsTab.tags,
+        ),
+        extraRoutes: [categoriesTagsRoute()],
+        fireflyService: buildDialogFireflyService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('#groceries').first);
+    await tester.pumpAndSettle();
+
+    final uri = GoRouterState.of(
+      tester.element(find.byType(CategoriesTagsScreen)),
+    ).uri;
+    expect(uri.path, '/transactions');
+    expect(uri.queryParameters['tag'], 'groceries');
+    expect(uri.queryParameters.containsKey('q'), isFalse);
+  });
+
   testWidgets('CategoriesTagsScreen opens entity linking from category card', (
     tester,
   ) async {
