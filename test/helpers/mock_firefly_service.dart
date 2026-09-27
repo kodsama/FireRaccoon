@@ -56,6 +56,7 @@ class FakeFireflyService implements FireflyService {
   /// Firefly returns nothing for a range with only one bound, which a fake that
   /// treats a missing bound as unbounded will happily hide.
   final List<({DateTime? start, DateTime? end})> accountPageWindows = [];
+  final List<String> searchQueries = [];
   final List<Transaction> updatedTransactions = [];
   final List<RecurrenceInput> savedRecurrences = [];
 
@@ -194,9 +195,17 @@ class FakeFireflyService implements FireflyService {
     required int limit,
   }) async {
     _maybeThrow();
-    final matches = transactions
-        .where((t) => t.description.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+    searchQueries.add(query);
+    bool contains(String? field, String needle) =>
+        (field ?? '').toLowerCase().contains(needle.toLowerCase());
+    final operator = RegExp(r'^(tag|notes)_contains:"(.*)"$').firstMatch(query);
+    final matches = transactions.where((t) {
+      if (operator == null) return contains(t.description, query);
+      final needle = operator.group(2)!;
+      return operator.group(1) == 'tag'
+          ? t.tags.any((tag) => contains(tag, needle))
+          : contains(t.notes, needle);
+    }).toList();
     return TransactionPageResult(
       transactions: matches,
       currentPage: page,

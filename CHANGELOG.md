@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Searching for a tag found nothing. The search box says it reads tags and
+  notes, but the local match never looked at either, and Firefly matches bare
+  words against the description and group title only. The local match now
+  reads every leg's tags and notes, and the server search also asks Firefly
+  for `tag_contains:` and `notes_contains:` matches, so a tagged row turns up
+  whether or not it has been scrolled into view (#215)
+
 ## [0.14.0] - 2026-09-21
 
 ### Added
