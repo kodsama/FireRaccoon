@@ -23,6 +23,7 @@ import '../utils/stats_breakdown.dart';
 import '../widgets/entity_screen_header.dart';
 import '../widgets/name_filter_dialog.dart';
 import '../widgets/simple_charts.dart';
+import '../widgets/words_filter_dialog.dart';
 
 /// Expenses, income and transfers on one page, any mix of them, narrowed by
 /// category, tag, budget, account, period and words.
@@ -727,10 +728,7 @@ class _WordsFilterButton extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () async {
-        final result = await showDialog<String>(
-          context: context,
-          builder: (_) => _WordsDialog(words: words),
-        );
+        final result = await showWordsFilterDialog(context, words: words);
         if (result == null || !context.mounted) return;
         context.go(
           RouteQuery.withSearch(GoRouterState.of(context).uri, result),
@@ -741,51 +739,6 @@ class _WordsFilterButton extends StatelessWidget {
         label: words == null ? l10n.filterWords : '"$words"',
         tooltip: l10n.filterWordsHint,
       ),
-    );
-  }
-}
-
-class _WordsDialog extends StatefulWidget {
-  final String? words;
-
-  const _WordsDialog({required this.words});
-
-  @override
-  State<_WordsDialog> createState() => _WordsDialogState();
-}
-
-class _WordsDialogState extends State<_WordsDialog> {
-  late final TextEditingController _controller = TextEditingController(
-    text: widget.words,
-  );
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = context.l10n;
-    return AlertDialog(
-      title: Text(l10n.filterWords),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: InputDecoration(hintText: l10n.filterWordsHint),
-        onSubmitted: (value) => Navigator.of(context).pop(value),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(''),
-          child: Text(l10n.clear),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).pop(_controller.text),
-          child: Text(l10n.applyFilter),
-        ),
-      ],
     );
   }
 }
