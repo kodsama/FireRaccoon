@@ -257,6 +257,39 @@ void main() {
       _tx(type: 'transfer', date: DateTime(2026, 6, 1), category: 'Savings'),
     ];
 
+    test('keeps a group when any leg carries the tag or budget', () {
+      final base = transactions.first;
+      final group = base.copyWith(
+        id: 'group',
+        splits: [
+          base.copyWith(id: 'a'),
+          base.copyWith(id: 'b', tags: ['Holiday'], budgetName: 'Fun'),
+        ],
+      );
+      final all = [...transactions, group];
+
+      expect(
+        filterTransactions(
+          all,
+          type: TransactionTypeFilter.all,
+          tag: 'Holiday',
+        ).map((t) => t.id),
+        ['group'],
+      );
+      expect(
+        filterTransactions(
+          all,
+          type: TransactionTypeFilter.all,
+          budget: 'Fun',
+        ).map((t) => t.id),
+        ['group'],
+      );
+      expect(
+        filterTransactions(all, type: TransactionTypeFilter.all, tag: 'Work'),
+        isEmpty,
+      );
+    });
+
     test('filters by type, category, account, and date', () {
       expect(
         filterTransactions(

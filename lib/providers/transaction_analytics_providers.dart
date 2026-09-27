@@ -19,6 +19,8 @@ typedef TransactionListFilterKey = ({
   TransactionTypeFilter type,
   String? account,
   String? category,
+  String? tag,
+  String? budget,
 });
 
 /// What Stats fetches: the period, account and types, and none of the
@@ -131,12 +133,11 @@ final filteredTransactionListProvider =
       final transactions = await ref.watch(
         scopedTransactionsProvider(analyticsKey).future,
       );
-      if (key.category == null) return transactions;
-      final categoryKey = categoryGroupKey(key.category);
-      return transactions
-          .where(
-            (transaction) =>
-                categoryGroupKey(transaction.categoryName) == categoryKey,
-          )
-          .toList();
+      return filterTransactions(
+        transactions,
+        type: TransactionTypeFilter.all,
+        category: key.category,
+        tag: key.tag,
+        budget: key.budget,
+      );
     });

@@ -11,6 +11,8 @@ import 'stats_route.dart';
 
 class TransactionsRouteFilters {
   final String? category;
+  final String? tag;
+  final String? budget;
   final ExpensePeriod period;
   final TransactionTypeFilter type;
   final String? account;
@@ -27,6 +29,8 @@ class TransactionsRouteFilters {
 
   const TransactionsRouteFilters({
     this.category,
+    this.tag,
+    this.budget,
     this.period = ExpensePeriod.month,
     this.type = TransactionTypeFilter.all,
     this.account,
@@ -46,7 +50,12 @@ class TransactionsRouteFilters {
       expenseParamsFromDashboardPeriod(defaultDashboardPeriod);
 
   bool get hasScopedFilters {
-    if (category != null || type != TransactionTypeFilter.all) return true;
+    if (category != null ||
+        tag != null ||
+        budget != null ||
+        type != TransactionTypeFilter.all) {
+      return true;
+    }
     if (period == ExpensePeriod.all && !hasCustomDateRange) return false;
     return !expenseFiltersMatchParams(period, from, to, _defaultPeriodParams);
   }
@@ -58,6 +67,8 @@ class TransactionsRouteFilters {
   }) {
     final parts = <String>[
       if (category != null && category!.isNotEmpty) category!,
+      ?tag,
+      ?budget,
       if (hasCustomDateRange)
         format.formatDateRange(
           from,
@@ -89,6 +100,8 @@ class TransactionsRoute {
     List<String>? accounts,
     TransactionGroupType group = TransactionGroupType.date,
     String? category,
+    String? tag,
+    String? budget,
     ExpensePeriod? period,
     TransactionTypeFilter type = TransactionTypeFilter.all,
     String? from,
@@ -104,7 +117,9 @@ class TransactionsRoute {
     final hasSpecificEntityFilter =
         account != null ||
         (accounts != null && accounts.isNotEmpty) ||
-        category != null;
+        category != null ||
+        tag != null ||
+        budget != null;
     final resolvedPeriod =
         period ??
         (hasSpecificEntityFilter ? ExpensePeriod.all : defaultParams.period);
@@ -135,6 +150,8 @@ class TransactionsRoute {
           : normalizedAccounts.join(_accountsSeparator),
       'group': group != TransactionGroupType.date ? group.name : null,
       'category': category,
+      'tag': tag,
+      'budget': budget,
       'period': encodeExpensePeriodParam(
         resolvedPeriod: resolvedPeriod,
         defaultParams: defaultParams,
@@ -191,6 +208,8 @@ class TransactionsRoute {
     if (!hasPeriodParam && !hasCustomDates) {
       return TransactionsRouteFilters(
         category: RouteQuery.param(uri, 'category'),
+        tag: RouteQuery.param(uri, 'tag'),
+        budget: RouteQuery.param(uri, 'budget'),
         period: defaultParams.period,
         type: RouteQuery.enumFrom(
           uri,
@@ -212,6 +231,8 @@ class TransactionsRoute {
 
     return TransactionsRouteFilters(
       category: RouteQuery.param(uri, 'category'),
+      tag: RouteQuery.param(uri, 'tag'),
+      budget: RouteQuery.param(uri, 'budget'),
       period: RouteQuery.enumFrom(
         uri,
         'period',
@@ -302,10 +323,42 @@ class TransactionsRoute {
       accounts: accounts ?? base.accounts,
       group: group ?? base.group,
       category: base.category,
+      tag: base.tag,
+      budget: base.budget,
       period: base.period,
       type: base.type,
       from: base.from != null ? StatsRouteFilters.formatDate(base.from!) : null,
       to: base.to != null ? StatsRouteFilters.formatDate(base.to!) : null,
+    );
+  }
+
+  static const _keep = Object();
+
+  /// [base] with its category, tag or budget changed and every other filter
+  /// kept; a filter passed as `null` is cleared.
+  static String locationWithEntities(
+    TransactionsRouteFilters base, {
+    Object? category = _keep,
+    Object? tag = _keep,
+    Object? budget = _keep,
+  }) {
+    String? pick(Object? change, String? current) =>
+        identical(change, _keep) ? current : change as String?;
+    return location(
+      account: base.account,
+      accounts: base.accounts,
+      group: base.group,
+      category: pick(category, base.category),
+      tag: pick(tag, base.tag),
+      budget: pick(budget, base.budget),
+      period: base.period,
+      type: base.type,
+      from: base.from != null ? StatsRouteFilters.formatDate(base.from!) : null,
+      to: base.to != null ? StatsRouteFilters.formatDate(base.to!) : null,
+      reconcile: base.reconcile,
+      reconciledFilter: base.reconciledFilter,
+      missingFields: base.missingFields,
+      defaultDashboardPeriod: base.defaultDashboardPeriod,
     );
   }
 }

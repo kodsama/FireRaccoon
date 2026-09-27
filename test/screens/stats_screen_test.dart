@@ -267,4 +267,37 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('StatsScreen hands its tag and budget to the transaction list', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final base = sampleTransactions.last;
+    final service = FakeFireflyService(
+      accounts: sampleAccounts,
+      transactions: [
+        base.copyWith(tags: ['Holiday'], budgetName: 'Fun'),
+      ],
+      primaryCurrency: sampleCurrency,
+      currentUser: sampleUser,
+    );
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation: '/stats?tag=Holiday&budget=Fun',
+        fireflyService: service,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(TextButton, 'Transactions'));
+    await tester.pumpAndSettle();
+
+    final uri = GoRouterState.of(tester.element(find.byType(StatsScreen))).uri;
+    expect(uri.path, '/transactions');
+    expect(uri.queryParameters['tag'], 'Holiday');
+    expect(uri.queryParameters['budget'], 'Fun');
+  });
 }

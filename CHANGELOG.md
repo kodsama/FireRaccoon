@@ -19,6 +19,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Stats group gives way to a single Stats item, and a saved or imported menu
   layout that still names the three old pages is moved over on load
 
+### Added
+
+- The transaction list filters by category, tag and budget from pickers in
+  its filter row, each with a chip to take it off again. A group is kept when
+  any of its legs matches. Stats hands its tag and budget on when it opens the
+  list, and a tag on the Categories & Tags page opens the list filtered to it
+  rather than searched for its name
+
 ### Fixed
 
 - Searching for a tag found nothing. The search box says it reads tags and
