@@ -2015,5 +2015,7 @@
   "filterWords": "Ord",
   "filterWordsHint": "Varje ord måste finnas med",
   "applyFilter": "Använd",
-  "netFlow": "Netto"
+  "netFlow": "Netto",
+  "prognosisLeaveOut": "Utelämna",
+  "prognosisLeaveOutHelp": "Flöden i dessa kategorier eller taggar, eller som innehåller vart och ett av dessa ord, hålls utanför prognosen."
 }

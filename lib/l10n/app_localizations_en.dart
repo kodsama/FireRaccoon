@@ -4039,4 +4039,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get netFlow => 'Net';
+
+  @override
+  String get prognosisLeaveOut => 'Leave out';
+
+  @override
+  String get prognosisLeaveOutHelp =>
+      'Flows in these categories or tags, or carrying every one of these words, stay out of the forecast.';
 }

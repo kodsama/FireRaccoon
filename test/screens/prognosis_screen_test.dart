@@ -193,4 +193,59 @@ void main() {
       'Holiday fund',
     );
   });
+
+  testWidgets('a tag can be left out of the forecast and put back', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final accounts = [_account(id: '1', name: 'Everyday')];
+    final transactions = [_tx('Everyday')];
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const PrognosisScreen(),
+        fireflyService: FakeFireflyService(
+          accounts: accounts,
+          transactions: transactions,
+          tags: const [
+            Tag(id: '1', name: 'Holiday'),
+            Tag(id: '2', name: 'Work'),
+          ],
+          transactionPages: {
+            1: TransactionPageResult(
+              transactions: transactions,
+              currentPage: 1,
+              totalPages: 1,
+              total: transactions.length,
+            ),
+          },
+        ),
+        viewMode: ViewMode.compact,
+      ),
+    );
+    await pumpScreen(tester);
+
+    await tester.tap(find.widgetWithText(ActionChip, 'Tag'));
+    await tester.pumpAndSettle();
+    expect(find.text('All tags'), findsNothing);
+    await tester.tap(find.text('Holiday'));
+    await tester.pumpAndSettle();
+
+    final chip = find.widgetWithText(InputChip, 'Holiday');
+    expect(chip, findsOneWidget);
+
+    await tester.tap(find.widgetWithText(ActionChip, 'Words'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).last, 'samarkand');
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(InputChip, '"samarkand"'), findsOneWidget);
+
+    await tester.tap(
+      find.descendant(of: chip, matching: find.byIcon(Icons.clear)),
+    );
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(InputChip, 'Holiday'), findsNothing);
+  });
 }

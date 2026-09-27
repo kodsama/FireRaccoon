@@ -2015,5 +2015,7 @@
   "filterWords": "关键词",
   "filterWordsHint": "必须包含每个词",
   "applyFilter": "应用",
-  "netFlow": "净额"
+  "netFlow": "净额",
+  "prognosisLeaveOut": "排除",
+  "prognosisLeaveOutHelp": "属于这些类别或标签、或包含所有这些词的资金流不计入预测。"
 }

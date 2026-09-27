@@ -7275,6 +7275,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Net'**
   String get netFlow;
+
+  /// No description provided for @prognosisLeaveOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave out'**
+  String get prognosisLeaveOut;
+
+  /// No description provided for @prognosisLeaveOutHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Flows in these categories or tags, or carrying every one of these words, stay out of the forecast.'**
+  String get prognosisLeaveOutHelp;
 }
 
 class _AppLocalizationsDelegate

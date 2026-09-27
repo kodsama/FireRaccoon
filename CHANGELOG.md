@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   any of its legs matches. Stats hands its tag and budget on when it opens the
   list, and a tag on the Categories & Tags page opens the list filtered to it
   rather than searched for its name
+- The projection can leave flows out by category, tag or words, under Leave
+  out below the sources it includes. Scheduled rows, recurrences and bills
+  each carry the category and tags of what they were made from; a bill takes
+  them from the past payment its accounts are read from. What is left out is kept
+  with the other projection settings and travels in a settings export
 
 ### Fixed
 

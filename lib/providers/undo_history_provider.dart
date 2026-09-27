@@ -583,18 +583,7 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
         notifier.setHorizon(horizon);
         break;
       case UndoActionType.prognosisInclusion:
-        final options = PrognosisInclusionOptions(
-          includeScheduledTransactions:
-              payload['includeScheduledTransactions'] as bool? ?? true,
-          includeRecurringTransactions:
-              payload['includeRecurringTransactions'] as bool? ?? true,
-          includeBills: payload['includeBills'] as bool? ?? true,
-          includeIncome: payload['includeIncome'] as bool? ?? true,
-          includeExpenses: payload['includeExpenses'] as bool? ?? true,
-          includeTransfers: payload['includeTransfers'] as bool? ?? true,
-          includeCreditCards: payload['includeCreditCards'] as bool? ?? true,
-          includeLiabilities: payload['includeLiabilities'] as bool? ?? true,
-        );
+        final options = PrognosisInclusionOptions.fromJson(payload);
         ref.read(prognosisSettingsProvider.notifier).setInclusion(options);
         break;
       case UndoActionType.prognosisMarginPercent:

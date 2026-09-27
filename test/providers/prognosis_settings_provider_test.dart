@@ -77,6 +77,29 @@ void main() {
     expect(state.marginPercent, 50);
   });
 
+  test('what the forecast leaves out survives a restart', () async {
+    final container = await buildContainer({});
+    container
+        .read(prognosisSettingsProvider.notifier)
+        .setInclusion(
+          const PrognosisInclusionOptions(
+            excludedCategories: {'Housing'},
+            excludedTags: {'Holiday'},
+            excludedWords: 'samarkand',
+          ),
+        );
+
+    final prefs = container.read(sharedPreferencesProvider);
+    final reopened = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(reopened.dispose);
+    final inclusion = reopened.read(prognosisSettingsProvider).inclusion;
+    expect(inclusion.excludedCategories, {'Housing'});
+    expect(inclusion.excludedTags, {'Holiday'});
+    expect(inclusion.excludedWords, 'samarkand');
+  });
+
   test('a picked horizon date persists and rides into the options', () async {
     final container = await buildContainer({});
     final notifier = container.read(prognosisSettingsProvider.notifier);

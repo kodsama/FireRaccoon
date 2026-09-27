@@ -2015,5 +2015,7 @@
   "filterWords": "Palavras",
   "filterWordsHint": "Todas as palavras têm de aparecer",
   "applyFilter": "Aplicar",
-  "netFlow": "Líquido"
+  "netFlow": "Líquido",
+  "prognosisLeaveOut": "Deixar de fora",
+  "prognosisLeaveOutHelp": "Os fluxos destas categorias ou etiquetas, ou que tenham todas estas palavras, ficam fora da previsão."
 }

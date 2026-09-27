@@ -3935,4 +3935,10 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get netFlow => '净额';
+
+  @override
+  String get prognosisLeaveOut => '排除';
+
+  @override
+  String get prognosisLeaveOutHelp => '属于这些类别或标签、或包含所有这些词的资金流不计入预测。';
 }

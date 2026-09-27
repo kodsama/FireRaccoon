@@ -3944,4 +3944,11 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get netFlow => '差引';
+
+  @override
+  String get prognosisLeaveOut => '除外';
+
+  @override
+  String get prognosisLeaveOutHelp =>
+      'これらのカテゴリやタグの流れ、またはこれらの単語をすべて含む流れは予測に含めません。';
 }

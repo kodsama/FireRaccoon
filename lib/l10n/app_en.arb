@@ -2410,5 +2410,7 @@
   "filterWords": "Words",
   "filterWordsHint": "Every word has to appear",
   "applyFilter": "Apply",
-  "netFlow": "Net"
+  "netFlow": "Net",
+  "prognosisLeaveOut": "Leave out",
+  "prognosisLeaveOutHelp": "Flows in these categories or tags, or carrying every one of these words, stay out of the forecast."
 }
