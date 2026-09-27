@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Expenses, Income and Transfers are one Stats page. Chips at the top pick
+  which of the three it shows, any mix of them, and with income and expenses
+  both on it the page gives the net of the two. It filters by tag and budget
+  as it did by category, and by words: every word has to turn up on a leg for
+  that leg to count, and the words narrow the totals and the donut, where the
+  header search used to narrow only the list under them. A tag or budget on
+  one leg of a split counts that leg, not the whole group. The side menu's
+  Stats group gives way to a single Stats item, and a saved or imported menu
+  layout that still names the three old pages is moved over on load
+
 ### Fixed
 
 - Searching for a tag found nothing. The search box says it reads tags and

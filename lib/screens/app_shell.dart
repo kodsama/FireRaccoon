@@ -277,12 +277,8 @@ class _Sidebar extends ConsumerWidget {
           return fun.navPiggyBanks;
         case 'navSubscriptions':
           return fun.navSubscriptions;
-        case 'navExpenses':
-          return fun.navExpenses;
-        case 'navIncome':
-          return fun.navIncome;
-        case 'navTransfers':
-          return fun.navTransfers;
+        case 'navStats':
+          return fun.navStats;
         case 'payees':
           return 'Payees';
         case 'categoriesTags':
@@ -868,9 +864,7 @@ class _HeaderState extends ConsumerState<_Header> {
       contextualHintSubtitle =
           'Search by account name, type, role, IBAN, or number.';
     } else if (location.startsWith('/transactions') ||
-        location.startsWith('/expenses') ||
-        location.startsWith('/income') ||
-        location.startsWith('/transfers')) {
+        location.startsWith('/stats')) {
       contextualHintSubtitle =
           'Search by description, account, category, tag, or note.';
     } else if (location.startsWith('/budgets')) {
@@ -896,9 +890,7 @@ class _HeaderState extends ConsumerState<_Header> {
     if (location.startsWith('/budgets')) title = fun.navBudgets;
     if (location.startsWith('/subscriptions')) title = fun.navSubscriptions;
     if (location.startsWith('/piggy-banks')) title = fun.navPiggyBanks;
-    if (location.startsWith('/expenses')) title = fun.navExpenses;
-    if (location.startsWith('/income')) title = fun.navIncome;
-    if (location.startsWith('/transfers')) title = fun.navTransfers;
+    if (location.startsWith('/stats')) title = fun.navStats;
     if (location.startsWith('/liabilities')) title = fun.navLiabilities;
     if (location.startsWith('/projection')) title = fun.navProjection;
     if (location.startsWith('/history')) title = fun.navHistory;

@@ -7,7 +7,7 @@ import '../providers/data_providers.dart';
 import '../utils/locale_formatting.dart';
 import '../utils/period_defaults.dart';
 import 'route_query.dart';
-import 'transaction_analytics_route.dart';
+import 'stats_route.dart';
 
 class TransactionsRouteFilters {
   final String? category;
@@ -114,14 +114,14 @@ class TransactionsRoute {
         (period == null && isAllPeriod
             ? null
             : (period == null && defaultParams.from != null
-                  ? ExpenseRouteFilters.formatDate(defaultParams.from!)
+                  ? StatsRouteFilters.formatDate(defaultParams.from!)
                   : null));
     final resolvedTo =
         to ??
         (period == null && isAllPeriod
             ? null
             : (period == null && defaultParams.to != null
-                  ? ExpenseRouteFilters.formatDate(defaultParams.to!)
+                  ? StatsRouteFilters.formatDate(defaultParams.to!)
                   : null));
     final normalizedAccounts = (accounts ?? const <String>[])
         .map((name) => name.trim())
@@ -304,10 +304,8 @@ class TransactionsRoute {
       category: base.category,
       period: base.period,
       type: base.type,
-      from: base.from != null
-          ? ExpenseRouteFilters.formatDate(base.from!)
-          : null,
-      to: base.to != null ? ExpenseRouteFilters.formatDate(base.to!) : null,
+      from: base.from != null ? StatsRouteFilters.formatDate(base.from!) : null,
+      to: base.to != null ? StatsRouteFilters.formatDate(base.to!) : null,
     );
   }
 }

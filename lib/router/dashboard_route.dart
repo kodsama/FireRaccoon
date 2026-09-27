@@ -2,7 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../utils/dashboard_period.dart';
 import '../utils/period_defaults.dart';
-import 'expenses_route.dart';
+import 'stats_route.dart';
 import 'route_query.dart';
 
 enum DashboardTab { insights, accounts, focus }
@@ -97,5 +97,5 @@ class DashboardRoute {
     return DateTime(year, month, day);
   }
 
-  static String formatDate(DateTime date) => ExpensesRoute.formatDate(date);
+  static String formatDate(DateTime date) => StatsRouteFilters.formatDate(date);
 }

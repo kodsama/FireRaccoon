@@ -83,9 +83,7 @@ proxies Firefly through `/api/firefly`.
 | `/accounts` | Accounts |
 | `/transactions` | Transactions |
 | `/budgets` | Budgets |
-| `/expenses` | Expenses analytics |
-| `/income` | Income analytics |
-| `/transfers` | Transfers analytics |
+| `/stats` | Expenses, income and transfers by category, alone or together; filtered by category, tag, budget, account, period and words |
 | `/subscriptions` | Bills / subscriptions |
 | `/piggy-banks` | Piggy banks |
 | `/liabilities` | Liabilities |

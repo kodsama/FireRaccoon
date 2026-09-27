@@ -297,10 +297,7 @@ abstract final class AutocompleteSuggestions {
         ...liabilityAccountNumbers(accounts),
       ]);
     }
-    if (location.startsWith('/transactions') ||
-        location.startsWith('/expenses') ||
-        location.startsWith('/income') ||
-        location.startsWith('/transfers')) {
+    if (location.startsWith('/transactions') || location.startsWith('/stats')) {
       return distinctNonEmpty([
         ...transactionDescriptions(transactions),
         ...transactions.map((t) => t.sourceName),

@@ -329,26 +329,12 @@ class SideMenuConfig {
       defaultTitle: 'Subscriptions',
       iconName: 'repeat',
     ),
-    'expenses': SideMenuItem(
-      id: 'expenses',
-      routePath: '/expenses',
-      defaultTitleKey: 'navExpenses',
-      defaultTitle: 'Expenses',
+    'stats': SideMenuItem(
+      id: 'stats',
+      routePath: '/stats',
+      defaultTitleKey: 'navStats',
+      defaultTitle: 'Stats',
       iconName: 'pieChart',
-    ),
-    'income': SideMenuItem(
-      id: 'income',
-      routePath: '/income',
-      defaultTitleKey: 'navIncome',
-      defaultTitle: 'Income',
-      iconName: 'arrowDownLeft',
-    ),
-    'transfers': SideMenuItem(
-      id: 'transfers',
-      routePath: '/transfers',
-      defaultTitleKey: 'navTransfers',
-      defaultTitle: 'Transfers',
-      iconName: 'arrowLeftRight',
     ),
     'payees': SideMenuItem(
       id: 'payees',
@@ -403,19 +389,7 @@ class SideMenuConfig {
         ),
       ),
       SideMenuNode.item(defaultItems['subscriptions']!),
-      SideMenuNode.group(
-        SideMenuGroup(
-          id: 'group_stats',
-          title: 'Stats',
-          iconName: 'pieChart',
-          isCollapsible: true,
-          items: [
-            defaultItems['expenses']!,
-            defaultItems['income']!,
-            defaultItems['transfers']!,
-          ],
-        ),
-      ),
+      SideMenuNode.item(defaultItems['stats']!),
       SideMenuNode.group(
         SideMenuGroup(
           id: 'group_details',

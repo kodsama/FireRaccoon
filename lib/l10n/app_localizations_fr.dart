@@ -43,15 +43,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navPiggyBanks => 'Piggy banks';
 
   @override
-  String get navExpenses => 'Dépenses';
-
-  @override
-  String get navIncome => 'Income';
-
-  @override
-  String get navTransfers => 'Transfers';
-
-  @override
   String get navLiabilities => 'Liabilities';
 
   @override
@@ -386,9 +377,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get navPiggyBanksRaccoon => 'Mini Stashes';
 
   @override
-  String get navExpensesRaccoon => 'Rapport de crame';
-
-  @override
   String get navProjectionRaccoon => 'Butin de cristal';
 
   @override
@@ -411,9 +399,6 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get budgetsTitleRaccoon => 'Plans de butin';
-
-  @override
-  String get expensesTitleRaccoon => 'Rapport de crame';
 
   @override
   String get projectionTitleRaccoon => 'Butin de cristal';
@@ -1766,9 +1751,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get tooltipBudgetCurrency => 'Devise du montant du budget';
 
   @override
-  String get expensesTitle => 'Dépenses';
-
-  @override
   String get clearFilters => 'Effacer les filtres';
 
   @override
@@ -2521,12 +2503,6 @@ class AppLocalizationsFr extends AppLocalizations {
       'You have no subscriptions yet. Create some on the Subscriptions page to link recurring expenses.';
 
   @override
-  String get incomeTitle => 'Income';
-
-  @override
-  String get transfersTitle => 'Transfers';
-
-  @override
   String get newTransferAction => 'New Transfer';
 
   @override
@@ -2625,19 +2601,7 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRaccoon => 'Snatched';
-
-  @override
-  String get navTransfersRaccoon => 'Stash Shuffles';
-
-  @override
   String get navLiabilitiesRaccoon => 'Debts';
-
-  @override
-  String get incomeTitleRaccoon => 'Snatched Funds';
-
-  @override
-  String get transfersTitleRaccoon => 'Stash Shuffles';
 
   @override
   String get newTransferActionRaccoon => 'New Stash Shuffle';
@@ -4062,4 +4026,49 @@ class AppLocalizationsFr extends AppLocalizations {
 
   @override
   String get scheduleRuleNoDates => 'Cette règle ne produit aucune date.';
+
+  @override
+  String get navStats => 'Statistiques';
+
+  @override
+  String get navStatsRaccoon => 'Rapport de butin';
+
+  @override
+  String get statsTitle => 'Statistiques';
+
+  @override
+  String get statsTitleRaccoon => 'Rapport de butin';
+
+  @override
+  String get filterTag => 'Étiquette';
+
+  @override
+  String get allTags => 'Toutes les étiquettes';
+
+  @override
+  String get noTagsFound => 'Aucune étiquette trouvée.';
+
+  @override
+  String get filterBudget => 'Budget';
+
+  @override
+  String get allBudgets => 'Tous les budgets';
+
+  @override
+  String get noBudgetsFound => 'Aucun budget trouvé.';
+
+  @override
+  String get noCategoriesFound => 'Aucune catégorie trouvée.';
+
+  @override
+  String get filterWords => 'Mots';
+
+  @override
+  String get filterWordsHint => 'Chaque mot doit apparaître';
+
+  @override
+  String get applyFilter => 'Appliquer';
+
+  @override
+  String get netFlow => 'Solde net';
 }

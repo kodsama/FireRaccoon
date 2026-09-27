@@ -1,6 +1,6 @@
 import 'package:fireraccoon/providers/data_providers.dart';
 import 'package:fireraccoon/providers/transaction_analytics_providers.dart';
-import 'package:fireraccoon/router/transaction_analytics_route.dart';
+import 'package:fireraccoon/router/stats_route.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,34 +9,68 @@ import '../helpers/mock_firefly_service.dart';
 import '../helpers/test_data.dart';
 
 void main() {
-  test('analyticsKey preserves expense route filters', () {
-    final filters = ExpenseRouteFilters(
-      period: ExpensePeriod.year,
-      from: DateTime(2026, 1, 1),
-      to: DateTime(2026, 12, 31),
-      type: TransactionTypeFilter.expense,
-      account: 'Checking',
+  test('the scope compares types as a set and ignores narrowing filters', () {
+    const a = StatsRouteFilters(
+      types: {TransactionTypeFilter.income, TransactionTypeFilter.expense},
+      tag: 'Holiday',
     );
+    const b = StatsRouteFilters(
+      types: {TransactionTypeFilter.expense, TransactionTypeFilter.income},
+      budget: 'Fun',
+    );
+    const other = StatsRouteFilters(types: {TransactionTypeFilter.expense});
 
-    expect(filters.analyticsKey, (
-      period: ExpensePeriod.year,
-      from: DateTime(2026, 1, 1),
-      to: DateTime(2026, 12, 31),
-      type: TransactionTypeFilter.expense,
-      account: 'Checking',
-    ));
+    expect(a.scope, b.scope);
+    expect(a.scope.hashCode, b.scope.hashCode);
+    expect(a.scope, isNot(other.scope));
+    expect(
+      a.scope.keyFor(TransactionTypeFilter.income).type,
+      TransactionTypeFilter.income,
+    );
   });
 
-  test('summary exposes sorted category names and period total', () {
-    final summary = TransactionAnalyticsSummary(
-      dateRange: resolveExpenseDateRange(period: ExpensePeriod.all),
-      periodTransactions: sampleTransactions,
-      categorySums: const {'Travel': 20, 'Food': 45},
+  test('stats transactions merge the selected types, newest first', () async {
+    Transaction row(String id, String type, DateTime date) => Transaction(
+      id: id,
+      type: type,
+      date: date,
+      amount: 10,
+      description: id,
+      sourceName: 'Checking',
+      destinationName: 'Shop',
+      categoryName: 'Food',
+      currencySymbol: '€',
+      currencyCode: 'EUR',
+    );
+    final container = ProviderContainer(
+      overrides: [
+        apiServiceProvider.overrideWithValue(
+          FakeFireflyService(
+            transactions: [
+              row('spent', 'withdrawal', DateTime(2026, 7, 2)),
+              row('paid', 'deposit', DateTime(2026, 7, 5)),
+              row('moved', 'transfer', DateTime(2026, 7, 4)),
+              row('june', 'withdrawal', DateTime(2026, 6, 30)),
+            ],
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+
+    final rows = await container.read(
+      statsTransactionsProvider(
+        StatsScope(
+          period: ExpensePeriod.month,
+          from: DateTime(2026, 7, 1),
+          to: DateTime(2026, 7, 31),
+          types: {TransactionTypeFilter.expense, TransactionTypeFilter.income},
+          account: null,
+        ),
+      ).future,
     );
 
-    expect(summary.categoryNames, ['Food', 'Travel']);
-    expect(summary.sortedCategoryEntries.first.key, 'Food');
-    expect(summary.periodTotal, 1245);
+    expect(rows.map((t) => t.id), ['paid', 'spent']);
   });
 
   test('filtered list scopes transactions by category', () async {

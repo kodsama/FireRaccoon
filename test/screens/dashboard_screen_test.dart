@@ -122,12 +122,10 @@ Future<Widget> buildTestApp({
         builder: (context, state) => const Scaffold(body: Text('Accounts')),
       ),
       GoRoute(
-        path: '/income',
-        builder: (context, state) => const Scaffold(body: Text('Income')),
-      ),
-      GoRoute(
-        path: '/expenses',
-        builder: (context, state) => const Scaffold(body: Text('Expenses')),
+        path: '/stats',
+        builder: (context, state) => Scaffold(
+          body: Text('Stats of ${state.uri.queryParameters['types'] ?? ''}'),
+        ),
       ),
       GoRoute(
         path: '/piggy-banks',
@@ -307,14 +305,14 @@ void main() {
 
     await tester.tap(find.textContaining('Income ·'));
     await tester.pumpAndSettle();
-    expect(find.text('Income'), findsOneWidget);
+    expect(find.text('Stats of income'), findsOneWidget);
 
     await tester.pumpWidget(await buildTestApp());
     await tester.pumpAndSettle();
 
     await tester.tap(find.textContaining('Spending ·'));
     await tester.pumpAndSettle();
-    expect(find.text('Expenses'), findsOneWidget);
+    expect(find.text('Stats of '), findsOneWidget);
 
     await tester.pumpWidget(await buildTestApp());
     await tester.pumpAndSettle();

@@ -15,12 +15,10 @@ import '../screens/transactions_screen.dart';
 import '../screens/budgets_screen.dart';
 import '../screens/subscriptions_screen.dart';
 import '../screens/piggy_banks_screen.dart';
-import '../screens/expenses_screen.dart';
-import '../screens/income_screen.dart';
-import '../screens/transfers_screen.dart';
 import '../screens/liabilities_screen.dart';
 import '../screens/projection_screen.dart';
 import '../screens/settings_screen.dart';
+import '../screens/stats_screen.dart';
 import '../screens/history_screen.dart';
 import '../screens/categories_tags_screen.dart';
 import '../screens/payees_screen.dart';
@@ -149,16 +147,8 @@ final routerProvider = Provider<GoRouter>((ref) {
             builder: (context, state) => const PiggyBanksScreen(),
           ),
           GoRoute(
-            path: '/expenses',
-            builder: (context, state) => const ExpensesScreen(),
-          ),
-          GoRoute(
-            path: '/income',
-            builder: (context, state) => const IncomeScreen(),
-          ),
-          GoRoute(
-            path: '/transfers',
-            builder: (context, state) => const TransfersScreen(),
+            path: '/stats',
+            builder: (context, state) => const StatsScreen(),
           ),
           GoRoute(
             path: '/liabilities',

@@ -43,15 +43,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navPiggyBanks => '貯金箱';
 
   @override
-  String get navExpenses => '支出';
-
-  @override
-  String get navIncome => '収入';
-
-  @override
-  String get navTransfers => '振替';
-
-  @override
   String get navLiabilities => '負債';
 
   @override
@@ -383,9 +374,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navPiggyBanksRaccoon => 'ミニ隠し場所';
 
   @override
-  String get navExpensesRaccoon => '消費レポート';
-
-  @override
   String get navProjectionRaccoon => '水晶の宝物庫';
 
   @override
@@ -408,9 +396,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get budgetsTitleRaccoon => '宝物計画';
-
-  @override
-  String get expensesTitleRaccoon => '消費レポート';
 
   @override
   String get projectionTitleRaccoon => '水晶の宝物庫';
@@ -1726,9 +1711,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipBudgetCurrency => '予算額の通貨';
 
   @override
-  String get expensesTitle => '支出';
-
-  @override
   String get clearFilters => 'フィルターをクリア';
 
   @override
@@ -2466,12 +2448,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'サブスクリプションはまだありません。サブスクリプションページで作成して、定期支出をリンクしてください。';
 
   @override
-  String get incomeTitle => '収入';
-
-  @override
-  String get transfersTitle => '振替';
-
-  @override
   String get newTransferAction => '新しい振替';
 
   @override
@@ -2568,19 +2544,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRaccoon => 'ゲット';
-
-  @override
-  String get navTransfersRaccoon => '隠し場所の移動';
-
-  @override
   String get navLiabilitiesRaccoon => '借金';
-
-  @override
-  String get incomeTitleRaccoon => 'ゲットした資金';
-
-  @override
-  String get transfersTitleRaccoon => '隠し場所の移動';
 
   @override
   String get newTransferActionRaccoon => '新しい隠し場所の移動';
@@ -3935,4 +3899,49 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get scheduleRuleNoDates => 'このルールでは日付が生成されません。';
+
+  @override
+  String get navStats => '統計';
+
+  @override
+  String get navStatsRaccoon => '戦利品レポート';
+
+  @override
+  String get statsTitle => '統計';
+
+  @override
+  String get statsTitleRaccoon => '戦利品レポート';
+
+  @override
+  String get filterTag => 'タグ';
+
+  @override
+  String get allTags => 'すべてのタグ';
+
+  @override
+  String get noTagsFound => 'タグが見つかりません。';
+
+  @override
+  String get filterBudget => '予算';
+
+  @override
+  String get allBudgets => 'すべての予算';
+
+  @override
+  String get noBudgetsFound => '予算が見つかりません。';
+
+  @override
+  String get noCategoriesFound => 'カテゴリが見つかりません。';
+
+  @override
+  String get filterWords => '単語';
+
+  @override
+  String get filterWordsHint => 'すべての単語を含むもの';
+
+  @override
+  String get applyFilter => '適用';
+
+  @override
+  String get netFlow => '差引';
 }

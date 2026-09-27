@@ -19,7 +19,7 @@ import '../providers/theme_provider.dart';
 import '../providers/undo_history_provider.dart';
 import '../router/route_navigation.dart';
 import '../router/route_query.dart';
-import '../router/transaction_analytics_route.dart';
+import '../router/stats_route.dart';
 import '../router/transactions_route.dart';
 import '../utils/balance_check_selection.dart';
 import '../utils/transaction_list_grouping.dart';
@@ -992,12 +992,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                           period: routeFilters.period,
                           type: routeFilters.type,
                           from: routeFilters.from != null
-                              ? ExpenseRouteFilters.formatDate(
-                                  routeFilters.from!,
-                                )
+                              ? StatsRouteFilters.formatDate(routeFilters.from!)
                               : null,
                           to: routeFilters.to != null
-                              ? ExpenseRouteFilters.formatDate(routeFilters.to!)
+                              ? StatsRouteFilters.formatDate(routeFilters.to!)
                               : null,
                           reconcile: routeFilters.reconcile,
                           reconciledFilter: routeFilters.reconciledFilter,
@@ -1019,12 +1017,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                           period: routeFilters.period,
                           type: routeFilters.type,
                           from: routeFilters.from != null
-                              ? ExpenseRouteFilters.formatDate(
-                                  routeFilters.from!,
-                                )
+                              ? StatsRouteFilters.formatDate(routeFilters.from!)
                               : null,
                           to: routeFilters.to != null
-                              ? ExpenseRouteFilters.formatDate(routeFilters.to!)
+                              ? StatsRouteFilters.formatDate(routeFilters.to!)
                               : null,
                           reconcile: routeFilters.reconcile,
                           reconciledFilter: value,
@@ -1065,14 +1061,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                             period: routeFilters.period,
                             type: routeFilters.type,
                             from: routeFilters.from != null
-                                ? ExpenseRouteFilters.formatDate(
+                                ? StatsRouteFilters.formatDate(
                                     routeFilters.from!,
                                   )
                                 : null,
                             to: routeFilters.to != null
-                                ? ExpenseRouteFilters.formatDate(
-                                    routeFilters.to!,
-                                  )
+                                ? StatsRouteFilters.formatDate(routeFilters.to!)
                                 : null,
                             reconcile: routeFilters.reconcile,
                           ),
@@ -1091,14 +1085,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                             period: routeFilters.period,
                             type: routeFilters.type,
                             from: routeFilters.from != null
-                                ? ExpenseRouteFilters.formatDate(
+                                ? StatsRouteFilters.formatDate(
                                     routeFilters.from!,
                                   )
                                 : null,
                             to: routeFilters.to != null
-                                ? ExpenseRouteFilters.formatDate(
-                                    routeFilters.to!,
-                                  )
+                                ? StatsRouteFilters.formatDate(routeFilters.to!)
                                 : null,
                             reconcile: routeFilters.reconcile,
                           ),
@@ -1128,14 +1120,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                             period: routeFilters.period,
                             type: TransactionTypeFilter.all,
                             from: routeFilters.from != null
-                                ? ExpenseRouteFilters.formatDate(
+                                ? StatsRouteFilters.formatDate(
                                     routeFilters.from!,
                                   )
                                 : null,
                             to: routeFilters.to != null
-                                ? ExpenseRouteFilters.formatDate(
-                                    routeFilters.to!,
-                                  )
+                                ? StatsRouteFilters.formatDate(routeFilters.to!)
                                 : null,
                             reconcile: routeFilters.reconcile,
                           ),
@@ -1173,14 +1163,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                             period: routeFilters.period,
                             type: routeFilters.type,
                             from: routeFilters.from != null
-                                ? ExpenseRouteFilters.formatDate(
+                                ? StatsRouteFilters.formatDate(
                                     routeFilters.from!,
                                   )
                                 : null,
                             to: routeFilters.to != null
-                                ? ExpenseRouteFilters.formatDate(
-                                    routeFilters.to!,
-                                  )
+                                ? StatsRouteFilters.formatDate(routeFilters.to!)
                                 : null,
                             reconcile: routeFilters.reconcile,
                             reconciledFilter: ReconciledFilter.all,
