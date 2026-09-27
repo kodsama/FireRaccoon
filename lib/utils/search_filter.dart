@@ -25,6 +25,8 @@ extension TransactionSearch on Transaction {
       categoryName,
       type,
       ?groupTitle,
+      ?notes,
+      ...tags,
     ];
     for (final split in resolvedSplits()) {
       fields.addAll([
@@ -32,6 +34,8 @@ extension TransactionSearch on Transaction {
         split.sourceName,
         split.destinationName,
         split.categoryName,
+        ?split.notes,
+        ...split.tags,
       ]);
     }
     return matchesSearchQuery(query, fields);
