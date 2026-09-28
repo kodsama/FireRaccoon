@@ -17,6 +17,22 @@ class StatsTypeTotals {
       sortedCategorySumEntries(categorySums);
 }
 
+/// One stretch of a series over time and what each type came to in it.
+class StatsBucket {
+  final DateRangeBounds bounds;
+  final Map<TransactionTypeFilter, double> totals;
+
+  const StatsBucket({required this.bounds, required this.totals});
+
+  DateTime get start => bounds.start!;
+
+  double totalFor(TransactionTypeFilter type) => totals[type] ?? 0;
+
+  double get net =>
+      totalFor(TransactionTypeFilter.income) -
+      totalFor(TransactionTypeFilter.expense);
+}
+
 class StatsBreakdown {
   /// One entry per selected type, in page order, each summed with the tag,
   /// budget and word filters applied but not the category one, so the
@@ -32,12 +48,18 @@ class StatsBreakdown {
   final List<String> tags;
   final List<String> budgets;
 
+  /// Every bucket of the period in order, empty ones included, summed with
+  /// every filter applied, categories too, since a series has no category
+  /// list beside it to switch between. Empty when no interval was asked for.
+  final List<StatsBucket> series;
+
   const StatsBreakdown({
     required this.types,
     required this.transactions,
     required this.categories,
     required this.tags,
     required this.budgets,
+    this.series = const [],
   });
 
   StatsTypeTotals? totalsFor(TransactionTypeFilter type) {
@@ -68,6 +90,9 @@ StatsBreakdown buildStatsBreakdown(
   Set<String> budgets = const {},
   Set<String> accounts = const {},
   String? words,
+  StatsInterval? interval,
+  DateRangeBounds range = const DateRangeBounds(),
+  DateTime? today,
 }) {
   final wordList = (words ?? '')
       .split(RegExp(r'\s+'))
@@ -79,10 +104,12 @@ StatsBreakdown buildStatsBreakdown(
   final tagOptions = <String>{};
   final budgetOptions = <String>{};
   final counted = <Transaction>[];
+  final byBucket = <DateTime, Map<TransactionTypeFilter, double>>{};
 
   for (final transaction in periodTransactions) {
-    final typeSums = sums[_statsTypeOf(transaction.type)];
-    if (typeSums == null) continue;
+    final type = _statsTypeOf(transaction.type);
+    final typeSums = sums[type];
+    if (type == null || typeSums == null) continue;
     if (accounts.isNotEmpty &&
         !transaction.resolvedSplits().any(
           (split) =>
@@ -106,6 +133,13 @@ StatsBreakdown buildStatsBreakdown(
       typeSums[key] = (typeSums[key] ?? 0) + split.amount;
       if (categoryKeys.isEmpty || categoryKeys.contains(key)) {
         countsTransaction = true;
+        if (interval != null) {
+          final bucket = byBucket.putIfAbsent(
+            statsBucketStart(transaction.date, interval),
+            () => {},
+          );
+          bucket[type] = (bucket[type] ?? 0) + split.amount;
+        }
       }
     }
     if (countsTransaction) counted.add(transaction);
@@ -120,7 +154,40 @@ StatsBreakdown buildStatsBreakdown(
     categories: categoryOptions.toList()..sort(),
     tags: _sortedIgnoringCase(tagOptions),
     budgets: _sortedIgnoringCase(budgetOptions),
+    series: interval == null
+        ? const []
+        : _series(byBucket, interval, range, counted, today ?? DateTime.now()),
   );
+}
+
+List<StatsBucket> _series(
+  Map<DateTime, Map<TransactionTypeFilter, double>> byBucket,
+  StatsInterval interval,
+  DateRangeBounds range,
+  List<Transaction> counted,
+  DateTime today,
+) {
+  // An open period (all time) runs from the first row counted to the last.
+  // One reaching past today stops at today or at the last row dated ahead,
+  // whichever is later, so the months still to come do not plot as zeros
+  // and read as a collapse.
+  final dates = counted.map((t) => t.date).toList()..sort();
+  final first = range.start ?? (dates.isEmpty ? null : dates.first);
+  final end = range.end;
+  final latest = dates.isEmpty || dates.last.isBefore(today)
+      ? today
+      : dates.last;
+  final periodLast = end == null
+      ? null
+      : DateTime(end.year, end.month, end.day - 1);
+  final last = periodLast == null
+      ? (dates.isEmpty ? null : dates.last)
+      : (periodLast.isAfter(latest) ? latest : periodLast);
+  if (first == null || last == null || last.isBefore(first)) return const [];
+  return [
+    for (final bounds in statsBuckets(first, last, interval))
+      StatsBucket(bounds: bounds, totals: byBucket[bounds.start] ?? const {}),
+  ];
 }
 
 TransactionTypeFilter? _statsTypeOf(String firefly) {

@@ -2015,5 +2015,19 @@
   "netFlow": "Solde net",
   "prognosisLeaveOut": "Exclure",
   "prognosisLeaveOutHelp": "Les flux de ces catégories ou étiquettes, ou portant chacun de ces mots, restent hors de la prévision.",
-  "filterSelectedCount": "{count} sélectionné(s)"
+  "filterSelectedCount": "{count} sélectionné(s)",
+  "statsByCategory": "Par catégorie",
+  "statsOverTime": "Dans le temps",
+  "statsIntervalAuto": "Automatique",
+  "statsIntervalDay": "Jour par jour",
+  "statsIntervalWeek": "Semaine par semaine",
+  "statsIntervalMonth": "Mois par mois",
+  "statsIntervalQuarter": "Trimestre par trimestre",
+  "statsIntervalYear": "Année par année",
+  "statsChartBars": "Barres",
+  "statsChartLine": "Courbes",
+  "statsTableTotal": "Total",
+  "statsTablePeriod": "Période",
+  "statsQuarterLabel": "T{quarter} {year}",
+  "statsWeekOf": "Semaine du {date}"
 }

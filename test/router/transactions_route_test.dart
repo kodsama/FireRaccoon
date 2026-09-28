@@ -66,6 +66,21 @@ void main() {
       expect(next.group, TransactionGroupType.category);
     });
 
+    test('locationWithEntities keeps the sets it is not handed', () {
+      const base = TransactionsRouteFilters(
+        tags: {'Holiday'},
+        budgets: {'Fun'},
+      );
+      final next = TransactionsRoute.filtersFromUri(
+        Uri.parse(
+          TransactionsRoute.locationWithEntities(base, categories: {'Food'}),
+        ),
+      );
+      expect(next.categories, {'Food'});
+      expect(next.tags, {'Holiday'});
+      expect(next.budgets, {'Fun'});
+    });
+
     test('locationPreservingScope carries them', () {
       const base = TransactionsRouteFilters(
         tags: {'Holiday', 'Work'},

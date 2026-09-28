@@ -26,6 +26,7 @@ import '../widgets/filter_pill.dart';
 import '../widgets/loading_body.dart';
 import '../widgets/name_filter_dialog.dart';
 import '../widgets/simple_charts.dart';
+import '../widgets/stats_over_time.dart';
 import '../widgets/words_filter_dialog.dart';
 
 /// Expenses, income and transfers on one page, any mix of them, narrowed by
@@ -49,6 +50,13 @@ class StatsScreen extends ConsumerWidget {
     final transactionsAsync = ref.watch(
       statsTransactionsProvider(filters.scope),
     );
+    final range = resolveExpenseDateRange(
+      period: filters.period,
+      customFrom: filters.from,
+      customTo: filters.to,
+    );
+    final overTime = filters.grouping == StatsGrouping.time;
+    final interval = filters.interval ?? autoStatsInterval(range);
     final breakdown = transactionsAsync.whenData(
       (transactions) => buildStatsBreakdown(
         transactions,
@@ -58,6 +66,8 @@ class StatsScreen extends ConsumerWidget {
         budgets: filters.budgets,
         accounts: filters.accounts,
         words: words,
+        interval: overTime ? interval : null,
+        range: range,
       ),
     );
     final options = breakdown.asData?.value;
@@ -94,11 +104,7 @@ class StatsScreen extends ConsumerWidget {
                   Tooltip(
                     message: l10n.clearFilters,
                     child: TextButton(
-                      onPressed: () => context.go(
-                        StatsRoute.location(
-                          defaultDashboardPeriod: defaultPeriod,
-                        ),
-                      ),
+                      onPressed: () => context.go(filters.clearedLocation),
                       child: Text(l10n.clearFilters),
                     ),
                   ),
@@ -106,6 +112,8 @@ class StatsScreen extends ConsumerWidget {
             ),
             const SizedBox(height: 16),
             _TypeToggles(filters: filters, fun: fun),
+            const SizedBox(height: 12),
+            _ViewControls(filters: filters, autoInterval: interval),
             const SizedBox(height: 12),
             Wrap(
               spacing: 12,
@@ -160,15 +168,29 @@ class StatsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(l10n.errorGeneric(e.toString())),
               ),
-              data: (breakdown) => _StatsBody(
-                key: ValueKey('${filters.scope.hashCode}|$uri'),
-                breakdown: breakdown,
-                filters: filters,
-                currency: ref.watch(primaryCurrencyProvider).value?.symbol,
-                format: format,
-                l10n: l10n,
-                fun: fun,
-              ),
+              data: (breakdown) => overTime
+                  ? _StatsOverTimeBody(
+                      breakdown: breakdown,
+                      filters: filters,
+                      interval: interval,
+                      currency:
+                          ref.watch(primaryCurrencyProvider).value?.symbol ??
+                          '€',
+                      format: format,
+                      fun: fun,
+                    )
+                  : _StatsBody(
+                      key: ValueKey('${filters.scope.hashCode}|$uri'),
+                      breakdown: breakdown,
+                      filters: filters,
+                      currency: ref
+                          .watch(primaryCurrencyProvider)
+                          .value
+                          ?.symbol,
+                      format: format,
+                      l10n: l10n,
+                      fun: fun,
+                    ),
             ),
           ],
         ),
@@ -197,6 +219,31 @@ class StatsScreen extends ConsumerWidget {
     ];
     return parts.join(' · ');
   }
+}
+
+/// The transaction list holding what Stats counted, narrowed further to
+/// [category], [type] or the days from [from] to [to] when given.
+String _transactionsFor(
+  StatsRouteFilters filters, {
+  String? category,
+  TransactionTypeFilter? type,
+  DateTime? from,
+  DateTime? to,
+}) {
+  String? date(DateTime? value) =>
+      value == null ? null : StatsRouteFilters.formatDate(value);
+  final dated = from != null || to != null;
+  return TransactionsRoute.location(
+    categories: category != null ? [category] : filters.categories,
+    tags: filters.tags,
+    budgets: filters.budgets,
+    period: filters.period,
+    type: type ?? filters.singleType ?? TransactionTypeFilter.all,
+    accounts: filters.accounts.toList(),
+    from: date(dated ? from : filters.from),
+    to: date(dated ? to : filters.to),
+    defaultDashboardPeriod: filters.defaultDashboardPeriod,
+  );
 }
 
 class _StatsBody extends StatefulWidget {
@@ -247,26 +294,10 @@ class _StatsBodyState extends State<_StatsBody> {
   String _typeLabel(TransactionTypeFilter type) =>
       type.localizedLabel(widget.l10n, isRaccoon: widget.fun.isRaccoon);
 
-  String? _date(DateTime? date) =>
-      date == null ? null : StatsRouteFilters.formatDate(date);
-
   String _transactionsLocation({
     String? category,
     TransactionTypeFilter? type,
-  }) {
-    final filters = widget.filters;
-    return TransactionsRoute.location(
-      categories: category != null ? [category] : filters.categories,
-      tags: filters.tags,
-      budgets: filters.budgets,
-      period: filters.period,
-      type: type ?? filters.singleType ?? TransactionTypeFilter.all,
-      accounts: filters.accounts.toList(),
-      from: _date(filters.from),
-      to: _date(filters.to),
-      defaultDashboardPeriod: filters.defaultDashboardPeriod,
-    );
-  }
+  }) => _transactionsFor(widget.filters, category: category, type: type);
 
   @override
   Widget build(BuildContext context) {
@@ -542,6 +573,192 @@ class _StatsBodyState extends State<_StatsBody> {
         ),
       );
     });
+  }
+}
+
+/// How the page lays out what it counts: by category, or over time with
+/// an interval, bars or lines, and an optional net series.
+class _ViewControls extends StatelessWidget {
+  static const _automatic = 'automatic';
+
+  final StatsRouteFilters filters;
+
+  /// The interval the period picks when none is chosen, named in the menu.
+  final StatsInterval autoInterval;
+
+  const _ViewControls({required this.filters, required this.autoInterval});
+
+  static String intervalLabel(AppLocalizations l10n, StatsInterval interval) =>
+      switch (interval) {
+        StatsInterval.day => l10n.statsIntervalDay,
+        StatsInterval.week => l10n.statsIntervalWeek,
+        StatsInterval.month => l10n.statsIntervalMonth,
+        StatsInterval.quarter => l10n.statsIntervalQuarter,
+        StatsInterval.year => l10n.statsIntervalYear,
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final overTime = filters.grouping == StatsGrouping.time;
+    final canNet =
+        filters.types.contains(TransactionTypeFilter.expense) &&
+        filters.types.contains(TransactionTypeFilter.income);
+    final chosen = filters.interval;
+
+    return Wrap(
+      spacing: 12,
+      runSpacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        SegmentedButton<StatsGrouping>(
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment(
+              value: StatsGrouping.category,
+              icon: const Icon(LucideIcons.chartPie, size: 16),
+              label: Text(l10n.statsByCategory),
+            ),
+            ButtonSegment(
+              value: StatsGrouping.time,
+              icon: const Icon(LucideIcons.chartColumn, size: 16),
+              label: Text(l10n.statsOverTime),
+            ),
+          ],
+          selected: {filters.grouping},
+          onSelectionChanged: (value) => context.goPreservingSearch(
+            filters.location(grouping: value.single),
+          ),
+        ),
+        if (overTime) ...[
+          // A menu treats a null pick as dismissed, so automatic has a value
+          // of its own.
+          PopupMenuButton<Object>(
+            onSelected: (picked) => context.goPreservingSearch(
+              picked is StatsInterval
+                  ? filters.location(interval: picked)
+                  : filters.location(autoInterval: true),
+            ),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: _automatic,
+                child: Text(
+                  '${l10n.statsIntervalAuto} · ${intervalLabel(l10n, autoInterval)}',
+                ),
+              ),
+              const PopupMenuDivider(),
+              for (final interval in StatsInterval.values)
+                PopupMenuItem(
+                  value: interval,
+                  child: Text(intervalLabel(l10n, interval)),
+                ),
+            ],
+            child: FilterPill(
+              icon: LucideIcons.calendarDays,
+              label: intervalLabel(l10n, chosen ?? autoInterval),
+              tooltip: chosen == null ? l10n.statsIntervalAuto : null,
+            ),
+          ),
+          SegmentedButton<StatsChart>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: StatsChart.bars,
+                icon: const Icon(LucideIcons.chartColumn, size: 16),
+                label: Text(l10n.statsChartBars),
+              ),
+              ButtonSegment(
+                value: StatsChart.line,
+                icon: const Icon(LucideIcons.chartLine, size: 16),
+                label: Text(l10n.statsChartLine),
+              ),
+            ],
+            selected: {filters.chart},
+            onSelectionChanged: (value) => context.goPreservingSearch(
+              filters.location(chart: value.single),
+            ),
+          ),
+          if (canNet)
+            FilterChip(
+              label: Text(l10n.netFlow),
+              selected: filters.showNet,
+              onSelected: (value) =>
+                  context.goPreservingSearch(filters.location(showNet: value)),
+            ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatsOverTimeBody extends StatelessWidget {
+  final StatsBreakdown breakdown;
+  final StatsRouteFilters filters;
+  final StatsInterval interval;
+  final String currency;
+  final LocaleFormatting format;
+  final FunL10n fun;
+
+  const _StatsOverTimeBody({
+    required this.breakdown,
+    required this.filters,
+    required this.interval,
+    required this.currency,
+    required this.format,
+    required this.fun,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final canNet =
+        filters.types.contains(TransactionTypeFilter.expense) &&
+        filters.types.contains(TransactionTypeFilter.income);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        StatsOverTime(
+          series: breakdown.series,
+          types: filters.orderedTypes,
+          interval: interval,
+          chart: filters.chart,
+          showNet: filters.showNet && canNet,
+          currency: currency,
+          format: format,
+          fun: fun,
+          onOpenBucket: (bucket) => context.goPreservingSearch(
+            _transactionsFor(
+              filters,
+              from: bucket.start,
+              to: DateTime(
+                bucket.bounds.end!.year,
+                bucket.bounds.end!.month,
+                bucket.bounds.end!.day - 1,
+              ),
+            ),
+          ),
+        ),
+        if (breakdown.transactions.isNotEmpty) ...[
+          const SizedBox(height: 32),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  l10n.transactionsCount(breakdown.transactions.length),
+                  style: context.textTheme.titleMedium,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () =>
+                    context.goPreservingSearch(_transactionsFor(filters)),
+                icon: const Icon(LucideIcons.arrowLeftRight),
+                label: Text(l10n.navTransactions),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
   }
 }
 

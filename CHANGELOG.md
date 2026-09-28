@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stats can lay its totals out over time as well as by category. Over time
+  draws each type shown as its own bars or line, day by day, week by week,
+  month by month, quarter by quarter or year by year, with the interval
+  picked from the period unless chosen, an optional net series when income
+  and expenses are both on, and a table of the same figures under the chart.
+  Hovering shows the amounts, and a bar, point or row opens the transactions
+  of that stretch. The layout lives in the link, and clearing the filters
+  keeps it. Stats now opens on expenses and income together
+
 - Category, tag and budget filters take several names at once on Stats, on
   the transaction list and on the projection's Leave out, and so does the
   account filter on Stats. The

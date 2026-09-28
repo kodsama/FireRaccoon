@@ -3937,4 +3937,55 @@ class AppLocalizationsZh extends AppLocalizations {
   String filterSelectedCount(int count) {
     return '已选 $count 项';
   }
+
+  @override
+  String get statsByCategory => '按类别';
+
+  @override
+  String get statsOverTime => '随时间';
+
+  @override
+  String get statsIntervalAuto => '自动';
+
+  @override
+  String get statsIntervalDay => '按天';
+
+  @override
+  String get statsIntervalWeek => '按周';
+
+  @override
+  String get statsIntervalMonth => '按月';
+
+  @override
+  String get statsIntervalQuarter => '按季度';
+
+  @override
+  String get statsIntervalYear => '按年';
+
+  @override
+  String get statsChartBars => '柱状图';
+
+  @override
+  String get statsChartLine => '折线图';
+
+  @override
+  String get statsTableTotal => '合计';
+
+  @override
+  String get statsTablePeriod => '期间';
+
+  @override
+  String statsQuarterLabel(int quarter, int year) {
+    final intl.NumberFormat yearNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String yearString = yearNumberFormat.format(year);
+
+    return '$yearString 年第 $quarter 季度';
+  }
+
+  @override
+  String statsWeekOf(String date) {
+    return '$date 当周';
+  }
 }

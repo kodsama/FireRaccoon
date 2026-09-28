@@ -197,4 +197,111 @@ void main() {
     expect(breakdown.transactions.map((t) => t.id), ['card', 'cash']);
     expect(breakdown.totalsFor(TransactionTypeFilter.expense)!.total, 15);
   });
+
+  group('series over time', () {
+    Transaction on(
+      DateTime date,
+      String id, {
+      String type = 'withdrawal',
+      double amount = 10,
+      String category = 'Food',
+    }) => _row(
+      id,
+      type: type,
+      amount: amount,
+      category: category,
+    ).copyWith(date: date);
+
+    final july = DateRangeBounds(
+      start: DateTime(2026, 7, 1),
+      end: DateTime(2026, 10, 1),
+    );
+
+    test('sums each type per bucket and keeps the empty ones', () {
+      final breakdown = buildStatsBreakdown(
+        [
+          on(DateTime(2026, 7, 3), 'rent', amount: 900),
+          on(DateTime(2026, 7, 25), 'pay', type: 'deposit', amount: 3000),
+          on(DateTime(2026, 9, 2), 'food', amount: 40),
+        ],
+        types: [TransactionTypeFilter.expense, TransactionTypeFilter.income],
+        interval: StatsInterval.month,
+        range: july,
+        today: DateTime(2026, 9, 30),
+      );
+
+      final series = breakdown.series;
+      expect(series.map((b) => b.start.month), [7, 8, 9]);
+      expect(series[0].totalFor(TransactionTypeFilter.expense), 900);
+      expect(series[0].totalFor(TransactionTypeFilter.income), 3000);
+      expect(series[0].net, 2100);
+      expect(series[1].totals, isEmpty);
+      expect(series[2].totalFor(TransactionTypeFilter.expense), 40);
+    });
+
+    test('a category filter narrows the series too', () {
+      final breakdown = buildStatsBreakdown(
+        [
+          on(DateTime(2026, 7, 3), 'rent', amount: 900, category: 'Housing'),
+          on(DateTime(2026, 7, 4), 'food', amount: 40),
+        ],
+        types: _expense,
+        categories: {'Food'},
+        interval: StatsInterval.month,
+        range: july,
+        today: DateTime(2026, 9, 30),
+      );
+      expect(
+        breakdown.series.first.totalFor(TransactionTypeFilter.expense),
+        40,
+      );
+    });
+
+    test('a period reaching past today stops at today or the last row', () {
+      final year = DateRangeBounds(
+        start: DateTime(2026, 1, 1),
+        end: DateTime(2027, 1, 1),
+      );
+      List<int> months(List<Transaction> rows) => buildStatsBreakdown(
+        rows,
+        types: _expense,
+        interval: StatsInterval.month,
+        range: year,
+        today: DateTime(2026, 9, 28),
+      ).series.map((b) => b.start.month).toList();
+
+      expect(months([on(DateTime(2026, 2, 1), 'feb')]), hasLength(9));
+      expect(
+        months([on(DateTime(2026, 11, 3), 'scheduled')]).last,
+        11,
+        reason: 'a row already dated ahead is still shown',
+      );
+    });
+
+    test('all time runs from the first row counted to the last', () {
+      final breakdown = buildStatsBreakdown(
+        [on(DateTime(2024, 5, 1), 'old'), on(DateTime(2026, 2, 1), 'new')],
+        types: _expense,
+        interval: StatsInterval.year,
+      );
+      expect(breakdown.series.map((b) => b.start.year), [2024, 2025, 2026]);
+    });
+
+    test('no interval, or nothing counted in an open period, gives none', () {
+      expect(
+        buildStatsBreakdown([
+          on(DateTime(2026, 7, 3), 'x'),
+        ], types: _expense).series,
+        isEmpty,
+      );
+      expect(
+        buildStatsBreakdown(
+          const [],
+          types: _expense,
+          interval: StatsInterval.month,
+        ).series,
+        isEmpty,
+      );
+    });
+  });
 }

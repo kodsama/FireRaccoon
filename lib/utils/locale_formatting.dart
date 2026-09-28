@@ -44,6 +44,12 @@ class LocaleFormatting {
   DateFormat _date(String key, DateFormat Function() create) =>
       _dateFormats.putIfAbsent(key, create);
 
+  /// A short figure for a chart axis, such as 12K, in the number locale.
+  String formatCompactNumber(double value) =>
+      (_compact ??= NumberFormat.compact(locale: _numberTag)).format(value);
+
+  NumberFormat? _compact;
+
   String formatNumber(double value, {int decimalDigits = 2}) {
     return _decimal(decimalDigits: decimalDigits).format(value);
   }
@@ -85,6 +91,11 @@ class LocaleFormatting {
 
   String formatShortMonth(DateTime date) {
     return _date('MMM', () => DateFormat.MMM(_dateTag)).format(date);
+  }
+
+  /// A month and its year in short, for axis labels that cross a year.
+  String formatShortMonthYear(DateTime date) {
+    return _date('yMMM', () => DateFormat.yMMM(_dateTag)).format(date);
   }
 
   String formatMonthYear(DateTime date) {

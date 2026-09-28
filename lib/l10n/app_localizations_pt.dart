@@ -4061,4 +4061,55 @@ class AppLocalizationsPt extends AppLocalizations {
   String filterSelectedCount(int count) {
     return '$count selecionado(s)';
   }
+
+  @override
+  String get statsByCategory => 'Por categoria';
+
+  @override
+  String get statsOverTime => 'Ao longo do tempo';
+
+  @override
+  String get statsIntervalAuto => 'Automático';
+
+  @override
+  String get statsIntervalDay => 'Dia a dia';
+
+  @override
+  String get statsIntervalWeek => 'Semana a semana';
+
+  @override
+  String get statsIntervalMonth => 'Mês a mês';
+
+  @override
+  String get statsIntervalQuarter => 'Trimestre a trimestre';
+
+  @override
+  String get statsIntervalYear => 'Ano a ano';
+
+  @override
+  String get statsChartBars => 'Barras';
+
+  @override
+  String get statsChartLine => 'Linhas';
+
+  @override
+  String get statsTableTotal => 'Total';
+
+  @override
+  String get statsTablePeriod => 'Período';
+
+  @override
+  String statsQuarterLabel(int quarter, int year) {
+    final intl.NumberFormat yearNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String yearString = yearNumberFormat.format(year);
+
+    return 'T$quarter $yearString';
+  }
+
+  @override
+  String statsWeekOf(String date) {
+    return 'Semana de $date';
+  }
 }

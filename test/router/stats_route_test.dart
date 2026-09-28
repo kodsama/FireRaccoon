@@ -103,19 +103,26 @@ void main() {
       expect(filters.hasActiveFilters, isTrue);
     });
 
-    test('defaults to this month of expenses', () {
+    test('defaults to this month of expenses and income, by category', () {
       final filters = StatsRoute.filtersFromUri(Uri.parse('/stats'));
-      expect(filters.types, {TransactionTypeFilter.expense});
-      expect(filters.singleType, TransactionTypeFilter.expense);
+      expect(filters.types, {
+        TransactionTypeFilter.expense,
+        TransactionTypeFilter.income,
+      });
+      expect(filters.singleType, isNull);
+      expect(filters.grouping, StatsGrouping.category);
+      expect(filters.interval, isNull);
+      expect(filters.chart, StatsChart.bars);
+      expect(filters.showNet, isFalse);
       expect(filters.period, ExpensePeriod.month);
       expect(filters.hasActiveFilters, isFalse);
     });
 
-    test('falls back to expenses when no type it names is real', () {
+    test('falls back to the default types when none it names is real', () {
       final filters = StatsRoute.filtersFromUri(
         Uri.parse('/stats?types=all,nonsense'),
       );
-      expect(filters.types, {TransactionTypeFilter.expense});
+      expect(filters.types, StatsRouteFilters.defaultTypes);
     });
 
     test('tolerates malformed dates', () {
@@ -138,7 +145,10 @@ void main() {
 
   group('StatsRoute.fromRetiredLink', () {
     test('each old page opens Stats on its own type', () {
-      expect(StatsRoute.fromRetiredLink(Uri.parse('/expenses')), '/stats');
+      expect(
+        StatsRoute.fromRetiredLink(Uri.parse('/expenses')),
+        '/stats?types=expense',
+      );
       expect(
         StatsRoute.fromRetiredLink(Uri.parse('/income')),
         '/stats?types=income',
@@ -171,6 +181,49 @@ void main() {
         Uri.parse(StatsRoute.fromRetiredLink(Uri.parse('/transfers?type=all'))),
       );
       expect(filters.types, statsTypes.toSet());
+    });
+  });
+
+  group('StatsRoute view', () {
+    test('round-trips the layout and leaves defaults out of the link', () {
+      const view = StatsRouteFilters(
+        grouping: StatsGrouping.time,
+        interval: StatsInterval.week,
+        chart: StatsChart.line,
+        showNet: true,
+      );
+      final uri = Uri.parse(view.location());
+      expect(uri.queryParameters, {
+        'view': 'time',
+        'interval': 'week',
+        'chart': 'line',
+        'net': '1',
+      });
+      final back = StatsRoute.filtersFromUri(uri);
+      expect(back.grouping, StatsGrouping.time);
+      expect(back.interval, StatsInterval.week);
+      expect(back.chart, StatsChart.line);
+      expect(back.showNet, isTrue);
+      expect(back.hasActiveFilters, isFalse);
+
+      expect(
+        StatsRoute.filtersFromUri(Uri.parse(view.location(autoInterval: true)))
+            .interval,
+        isNull,
+      );
+    });
+
+    test('clearing the filters keeps the layout', () {
+      final filters = StatsRoute.filtersFromUri(
+        Uri.parse('/stats?view=time&chart=line&tag=Holiday&types=transfer'),
+      );
+      final cleared = StatsRoute.filtersFromUri(
+        Uri.parse(filters.clearedLocation),
+      );
+      expect(cleared.tags, isEmpty);
+      expect(cleared.types, StatsRouteFilters.defaultTypes);
+      expect(cleared.grouping, StatsGrouping.time);
+      expect(cleared.chart, StatsChart.line);
     });
   });
 

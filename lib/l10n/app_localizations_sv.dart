@@ -4044,4 +4044,55 @@ class AppLocalizationsSv extends AppLocalizations {
   String filterSelectedCount(int count) {
     return '$count valda';
   }
+
+  @override
+  String get statsByCategory => 'Per kategori';
+
+  @override
+  String get statsOverTime => 'Över tid';
+
+  @override
+  String get statsIntervalAuto => 'Automatiskt';
+
+  @override
+  String get statsIntervalDay => 'Dag för dag';
+
+  @override
+  String get statsIntervalWeek => 'Vecka för vecka';
+
+  @override
+  String get statsIntervalMonth => 'Månad för månad';
+
+  @override
+  String get statsIntervalQuarter => 'Kvartal för kvartal';
+
+  @override
+  String get statsIntervalYear => 'År för år';
+
+  @override
+  String get statsChartBars => 'Staplar';
+
+  @override
+  String get statsChartLine => 'Linjer';
+
+  @override
+  String get statsTableTotal => 'Totalt';
+
+  @override
+  String get statsTablePeriod => 'Period';
+
+  @override
+  String statsQuarterLabel(int quarter, int year) {
+    final intl.NumberFormat yearNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String yearString = yearNumberFormat.format(year);
+
+    return 'K$quarter $yearString';
+  }
+
+  @override
+  String statsWeekOf(String date) {
+    return 'Veckan från $date';
+  }
 }
