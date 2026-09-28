@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fireraccoon/screens/stats_screen.dart';
+import 'package:fireraccoon/widgets/filter_pill.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../helpers/mock_firefly_service.dart';
@@ -165,11 +167,47 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    final chip = tester.widget<FilterChip>(
-      find.widgetWithText(FilterChip, 'Expenses'),
+    final expenses = find.widgetWithText(FilterChip, 'Expenses');
+    // Left enabled so it keeps its selected look, and a tap does nothing.
+    expect(tester.widget<FilterChip>(expenses).onSelected, isNotNull);
+    await tester.tap(expenses);
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byType(StatsScreen));
+    expect(GoRouterState.of(context).uri.toString(), '/stats');
+    expect(tester.widget<FilterChip>(expenses).selected, isTrue);
+  });
+
+  testWidgets('StatsScreen marks a filter in use and clears it in place', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation: '/stats?budget=Holidays',
+      ),
     );
-    expect(chip.selected, isTrue);
-    expect(chip.onSelected, isNull);
+    await tester.pumpAndSettle();
+
+    FilterPill pill(String label) =>
+        tester.widget<FilterPill>(find.widgetWithText(FilterPill, label));
+    expect(pill('Holidays').active, isTrue);
+    expect(pill('Tag').active, isFalse);
+
+    await tester.tap(
+      find.descendant(
+        of: find.widgetWithText(FilterPill, 'Holidays'),
+        matching: find.byIcon(LucideIcons.x),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.byType(StatsScreen));
+    expect(GoRouterState.of(context).uri.queryParameters['budget'], isNull);
+    expect(pill('Budget').active, isFalse);
   });
 
   testWidgets('StatsScreen narrows the totals to a picked tag', (tester) async {

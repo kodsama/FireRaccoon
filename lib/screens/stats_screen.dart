@@ -21,6 +21,7 @@ import '../utils/display_labels.dart';
 import '../utils/locale_formatting.dart';
 import '../utils/stats_breakdown.dart';
 import '../widgets/entity_screen_header.dart';
+import '../widgets/filter_pill.dart';
 import '../widgets/name_filter_dialog.dart';
 import '../widgets/simple_charts.dart';
 import '../widgets/words_filter_dialog.dart';
@@ -563,8 +564,9 @@ class _TypeToggles extends StatelessWidget {
           Builder(
             builder: (context) {
               final selected = filters.types.contains(type);
-              // The last type shown cannot be switched off: a page showing
-              // no kind of movement has nothing to say.
+              // The last type shown stays on: a page showing no kind of
+              // movement has nothing to say. It is not disabled for that,
+              // since a disabled chip greys out and reads as switched off.
               final isOnlyOne = selected && filters.types.length == 1;
               return FilterChip(
                 label: Text(
@@ -584,56 +586,20 @@ class _TypeToggles extends StatelessWidget {
                 ),
                 backgroundColor: colors.surface2,
                 selectedColor: colors.accent.acc.withValues(alpha: 0.14),
-                onSelected: isOnlyOne
-                    ? null
-                    : (value) => context.goPreservingSearch(
-                        filters.location(
-                          types: value
-                              ? {...filters.types, type}
-                              : ({...filters.types}..remove(type)),
-                        ),
-                      ),
+                onSelected: (value) {
+                  if (isOnlyOne) return;
+                  context.goPreservingSearch(
+                    filters.location(
+                      types: value
+                          ? {...filters.types, type}
+                          : ({...filters.types}..remove(type)),
+                    ),
+                  );
+                },
               );
             },
           ),
       ],
-    );
-  }
-}
-
-class _FilterButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String? tooltip;
-
-  const _FilterButton({required this.icon, required this.label, this.tooltip});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    return Tooltip(
-      message: tooltip ?? label,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        decoration: BoxDecoration(
-          color: colors.surface2,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: colors.border),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: colors.text),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(color: colors.text, fontWeight: FontWeight.w500),
-            ),
-            const SizedBox(width: 4),
-            Icon(LucideIcons.chevronDown, size: 14, color: colors.text3),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -657,7 +623,7 @@ class _PeriodFilterButton extends StatelessWidget {
             ),
           )
           .toList(),
-      child: _FilterButton(
+      child: FilterPill(
         icon: LucideIcons.calendar,
         label: filters.localizedPeriodLabel(l10n, context.format),
         tooltip: l10n.expensePeriodMonth,
@@ -710,7 +676,13 @@ class _NameFilterButton extends StatelessWidget {
           onPicked(picked == allNamesSentinel ? null : picked),
         );
       },
-      child: _FilterButton(icon: icon, label: label, tooltip: title),
+      child: FilterPill(
+        icon: icon,
+        label: label,
+        tooltip: title,
+        active: current != null,
+        onClear: () => context.goPreservingSearch(onPicked(null)),
+      ),
     );
   }
 }
@@ -734,10 +706,14 @@ class _WordsFilterButton extends StatelessWidget {
           RouteQuery.withSearch(GoRouterState.of(context).uri, result),
         );
       },
-      child: _FilterButton(
+      child: FilterPill(
         icon: LucideIcons.textSearch,
         label: words == null ? l10n.filterWords : '"$words"',
         tooltip: l10n.filterWordsHint,
+        active: words != null,
+        onClear: () => context.go(
+          RouteQuery.withSearch(GoRouterState.of(context).uri, null),
+        ),
       ),
     );
   }
@@ -767,10 +743,13 @@ class _AccountFilterButton extends ConsumerWidget {
           ),
         );
       },
-      child: _FilterButton(
+      child: FilterPill(
         icon: LucideIcons.wallet,
         label: filters.account ?? l10n.accountFilterLabel,
         tooltip: l10n.accountFilterLabel,
+        active: filters.account != null,
+        onClear: () =>
+            context.goPreservingSearch(filters.location(account: null)),
       ),
     );
   }
@@ -783,59 +762,35 @@ class _DateRangeFilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap: () async {
+        final now = DateTime.now();
+        final initialRange = filters.from != null && filters.to != null
+            ? DateTimeRange(start: filters.from!, end: filters.to!)
+            : DateTimeRange(start: DateTime(now.year, now.month, 1), end: now);
 
-    return Tooltip(
-      message: context.l10n.pickDates,
-      child: Material(
-        color: colors.surface2,
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          onTap: () async {
-            final now = DateTime.now();
-            final initialRange = filters.from != null && filters.to != null
-                ? DateTimeRange(start: filters.from!, end: filters.to!)
-                : DateTimeRange(
-                    start: DateTime(now.year, now.month, 1),
-                    end: now,
-                  );
+        final range = await showDateRangePicker(
+          context: context,
+          firstDate: DateTime(2000),
+          lastDate: now,
+          initialDateRange: initialRange,
+        );
 
-            final range = await showDateRangePicker(
-              context: context,
-              firstDate: DateTime(2000),
-              lastDate: now,
-              initialDateRange: initialRange,
-            );
-
-            if (!context.mounted || range == null) return;
-            context.goPreservingSearch(
-              filters.location(from: range.start, to: range.end),
-            );
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: colors.border),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(LucideIcons.calendarRange, size: 16, color: colors.text),
-                const SizedBox(width: 8),
-                Text(
-                  filters.hasCustomDateRange
-                      ? context.l10n.customDateRange
-                      : context.l10n.pickDates,
-                  style: TextStyle(
-                    color: colors.text,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        if (!context.mounted || range == null) return;
+        context.goPreservingSearch(
+          filters.location(from: range.start, to: range.end),
+        );
+      },
+      child: FilterPill(
+        icon: LucideIcons.calendarRange,
+        label: filters.hasCustomDateRange
+            ? filters.localizedPeriodLabel(context.l10n, context.format)
+            : context.l10n.pickDates,
+        tooltip: context.l10n.pickDates,
+        active: filters.hasCustomDateRange,
+        onClear: () => context.goPreservingSearch(
+          filters.location(period: filters.period),
         ),
       ),
     );
