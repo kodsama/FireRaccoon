@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:fireraccoon/screens/stats_screen.dart';
 import 'package:fireraccoon/widgets/filter_pill.dart';
+import 'package:fireraccoon/widgets/loading_body.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
@@ -53,7 +54,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 50));
 
     expect(find.text('This Month'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(RaccoonLoader), findsOneWidget);
   });
 
   testWidgets('StatsScreen keeps period filter visible when analytics fail', (

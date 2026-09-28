@@ -655,26 +655,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
           .toList();
     }
 
-    var mergedTransactions = _mergeWithSearchResults(
+    final mergedTransactions = _mergeWithSearchResults(
       paginatedState.transactions,
       serverSearchResults,
     );
-
-    final activePersonId = ref.watch(activePersonFilterProvider);
-    if (activePersonId != null) {
-      final peopleConfig = ref.watch(peopleSettingsProvider);
-      mergedTransactions = mergedTransactions.where((tx) {
-        final srcId = tx.sourceId;
-        final dstId = tx.destinationId;
-        final srcRatio = srcId != null
-            ? peopleConfig.getOwnershipRatio(srcId, activePersonId)
-            : 0.0;
-        final dstRatio = dstId != null
-            ? peopleConfig.getOwnershipRatio(dstId, activePersonId)
-            : 0.0;
-        return srcRatio > 0.0 || dstRatio > 0.0;
-      }).toList();
-    }
 
     return _buildTransactionsScaffold(
       allTransactions: mergedTransactions,
@@ -716,6 +700,17 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
     AsyncValue<FireflyCurrency>? currencyAsync,
     VoidCallback? onScheduleScrollCheck,
   }) {
+    // Applied here so the scoped list, reached through a category, tag or
+    // budget filter, narrows to the person as the paginated one does.
+    final activePersonId = ref.watch(activePersonFilterProvider);
+    if (activePersonId != null) {
+      final peopleConfig = ref.watch(peopleSettingsProvider);
+      allTransactions = [
+        for (final transaction in allTransactions)
+          if (touchesPersonAccounts(transaction, peopleConfig, activePersonId))
+            transaction,
+      ];
+    }
     final activeAccountFilters = filterAccounts.toSet();
     final listGroups = _computeTransactionListGroups(
       allTransactions,

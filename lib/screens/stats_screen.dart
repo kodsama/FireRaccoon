@@ -9,6 +9,7 @@ import '../l10n/fun_l10n.dart';
 import '../l10n/l10n_extensions.dart';
 import '../providers/data_providers.dart';
 import '../providers/default_period_provider.dart';
+import '../providers/people_providers.dart';
 import '../providers/theme_provider.dart';
 import '../providers/transaction_analytics_providers.dart';
 import '../router/route_navigation.dart';
@@ -22,6 +23,7 @@ import '../utils/locale_formatting.dart';
 import '../utils/stats_breakdown.dart';
 import '../widgets/entity_screen_header.dart';
 import '../widgets/filter_pill.dart';
+import '../widgets/loading_body.dart';
 import '../widgets/name_filter_dialog.dart';
 import '../widgets/simple_charts.dart';
 import '../widgets/words_filter_dialog.dart';
@@ -141,9 +143,7 @@ class StatsScreen extends ConsumerWidget {
                   idleLabel: l10n.accountFilterLabel,
                   emptyLabel: l10n.noAccountsFound,
                   names: [
-                    for (final account
-                        in ref.watch(accountsProvider).value ??
-                            const <Account>[])
+                    for (final account in ref.watch(ownedAccountsProvider))
                       account.name,
                   ],
                   selected: filters.accounts,
@@ -155,10 +155,7 @@ class StatsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             breakdown.when(
               skipLoadingOnReload: true,
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 48),
-                child: Center(child: CircularProgressIndicator()),
-              ),
+              loading: () => const LoadingBody(),
               error: (e, st) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(l10n.errorGeneric(e.toString())),

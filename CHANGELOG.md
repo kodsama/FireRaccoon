@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A screen waiting on its data shows the raccoon, hopping inside a spinning
+  ring and dressed for the fun mode on, where it showed a bare spinner
+
 - Expenses, Income and Transfers are one Stats page. Chips at the top pick
   which of the three it shows, any mix of them, and with income and expenses
   both on it the page gives the net of the two. It filters by tag and budget
@@ -43,6 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with the other projection settings and travels in a settings export
 
 ### Fixed
+
+- Stats ignored the person picked in the header: switching to one person,
+  or back to everyone, left every total as it was. It now counts only
+  transactions touching that person's accounts, offers only their accounts
+  in its account filter, and redraws at once, since the ledger is already
+  on the device and nothing has to be fetched again. The transaction list
+  had the same gap whenever a category, tag or budget filter was on (#224)
 
 - A filter in use on Stats or Transactions looked the same as one that was
   not, so a page narrowed to a budget read like the whole ledger. A filter in

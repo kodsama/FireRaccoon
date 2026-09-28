@@ -1,4 +1,6 @@
+import 'package:fireraccoon/models/people_models.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
 import 'package:fireraccoon/providers/transaction_analytics_providers.dart';
 import 'package:fireraccoon/router/stats_route.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
@@ -45,6 +47,9 @@ void main() {
     );
     final container = ProviderContainer(
       overrides: [
+        peopleSettingsProvider.overrideWithValue(
+          const AccountOwnershipConfig(),
+        ),
         apiServiceProvider.overrideWithValue(
           FakeFireflyService(
             transactions: [
@@ -176,5 +181,66 @@ void main() {
         tags: {'b', 'a'},
       ),
     );
+  });
+
+  test('stats follow the selected person without fetching again', () async {
+    Transaction row(String id, String accountId) => Transaction(
+      id: id,
+      type: 'withdrawal',
+      date: DateTime(2026, 7, 2),
+      amount: 10,
+      description: id,
+      sourceId: accountId,
+      sourceName: accountId,
+      destinationName: 'Shop',
+      categoryName: 'Food',
+      currencySymbol: '€',
+      currencyCode: 'EUR',
+    );
+    final fake = FakeFireflyService(
+      transactions: [row('hers', 'olivier-card'), row('his', 'alex-card')],
+    );
+    final container = ProviderContainer(
+      overrides: [
+        apiServiceProvider.overrideWithValue(fake),
+        peopleSettingsProvider.overrideWithValue(
+          const AccountOwnershipConfig(
+            accountOwnerships: {
+              'olivier-card': AccountOwnership(
+                accountId: 'olivier-card',
+                personShares: {'olivier': 1},
+              ),
+              'alex-card': AccountOwnership(
+                accountId: 'alex-card',
+                personShares: {'alex': 1},
+              ),
+            },
+          ),
+        ),
+      ],
+    );
+    addTearDown(container.dispose);
+    final scope = StatsScope(
+      period: ExpensePeriod.month,
+      from: DateTime(2026, 7, 1),
+      to: DateTime(2026, 7, 31),
+      types: const {TransactionTypeFilter.expense},
+    );
+    final sub = container.listen(statsTransactionsProvider(scope), (_, _) {});
+    addTearDown(sub.close);
+
+    Future<List<String>> ids() async =>
+        (await container.read(statsTransactionsProvider(scope).future))
+            .map((t) => t.id)
+            .toList();
+
+    expect(await ids(), unorderedEquals(['hers', 'his']));
+    container
+        .read(activePersonFilterProvider.notifier)
+        .setPersonFilter('olivier');
+    expect(await ids(), ['hers']);
+    container.read(activePersonFilterProvider.notifier).setPersonFilter('alex');
+    expect(await ids(), ['his']);
+    expect(fake.getTransactionsCalls, 1);
   });
 }

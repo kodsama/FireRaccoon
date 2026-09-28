@@ -57,6 +57,7 @@ class FakeFireflyService implements FireflyService {
   /// treats a missing bound as unbounded will happily hide.
   final List<({DateTime? start, DateTime? end})> accountPageWindows = [];
   final List<String> searchQueries = [];
+  int getTransactionsCalls = 0;
   final List<Transaction> updatedTransactions = [];
   final List<RecurrenceInput> savedRecurrences = [];
 
@@ -152,6 +153,7 @@ class FakeFireflyService implements FireflyService {
     void Function(List<Transaction> firstPage)? onFirstPage,
     void Function(int loadedPages, int totalPages)? onPageProgress,
   }) async {
+    getTransactionsCalls++;
     _maybeThrow();
     await _maybeDelay();
     // One page, reported the way the real walk reports its first.
