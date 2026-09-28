@@ -3,6 +3,7 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../router/stats_route.dart';
 import 'data_providers.dart';
+import 'people_providers.dart';
 
 typedef TransactionAnalyticsKey = ({
   ExpensePeriod period,
@@ -120,18 +121,26 @@ final scopedTransactionsProvider =
       return filtered;
     });
 
-/// Every transaction of the scope's types, newest first. Each type is
-/// fetched on its own so switching one on or off reuses what the others
-/// already loaded.
+/// Every transaction of the scope's types touching the selected person's
+/// accounts, newest first. Each type is fetched on its own so switching one
+/// on or off reuses what the others already loaded, and switching person
+/// narrows what is already here rather than fetching again.
 final statsTransactionsProvider =
     FutureProvider.family<List<Transaction>, StatsScope>((ref, scope) async {
       final perType = [
         for (final type in statsTypes.where(scope.types.contains))
           ref.watch(scopedTransactionsProvider(scope.keyFor(type)).future),
       ];
+      final personId = ref.watch(activePersonFilterProvider);
+      final config = ref.watch(peopleSettingsProvider);
       final lists = await Future.wait(perType);
-      return [for (final list in lists) ...list]
-        ..sort((a, b) => b.date.compareTo(a.date));
+      return [
+        for (final list in lists)
+          for (final transaction in list)
+            if (personId == null ||
+                touchesPersonAccounts(transaction, config, personId))
+              transaction,
+      ]..sort((a, b) => b.date.compareTo(a.date));
     });
 
 /// Scoped transaction list for analytics drill-down and filtered list routes.

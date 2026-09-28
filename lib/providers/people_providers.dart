@@ -1261,25 +1261,30 @@ final shareWeightedAccountsProvider = Provider<List<Account>>((ref) {
   ];
 });
 
+/// Whether [transaction] moves money in or out of an account [personId]
+/// holds any share of, the test every person-scoped view narrows by.
+bool touchesPersonAccounts(
+  Transaction transaction,
+  AccountOwnershipConfig config,
+  String personId,
+) {
+  final sourceId = transaction.sourceId;
+  final destId = transaction.destinationId;
+  return (sourceId != null &&
+          config.getOwnershipRatio(sourceId, personId) > 0.0) ||
+      (destId != null && config.getOwnershipRatio(destId, personId) > 0.0);
+}
+
 final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
   final transactions =
       ref.watch(transactionsProvider).asData?.value ?? const [];
   final config = ref.watch(peopleProvider).config;
   final activePersonId = ref.watch(activePersonFilterProvider);
 
-  if (activePersonId == null) {
-    return transactions;
-  }
-
-  return transactions.where((tx) {
-    final sourceId = tx.sourceId;
-    final destId = tx.destinationId;
-    final sourceRatio = sourceId != null
-        ? config.getOwnershipRatio(sourceId, activePersonId)
-        : 0.0;
-    final destRatio = destId != null
-        ? config.getOwnershipRatio(destId, activePersonId)
-        : 0.0;
-    return sourceRatio > 0.0 || destRatio > 0.0;
-  }).toList();
+  if (activePersonId == null) return transactions;
+  return [
+    for (final transaction in transactions)
+      if (touchesPersonAccounts(transaction, config, activePersonId))
+        transaction,
+  ];
 });

@@ -47,6 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Stats ignored the person picked in the header: switching to one person,
+  or back to everyone, left every total as it was. It now counts only
+  transactions touching that person's accounts, offers only their accounts
+  in its account filter, and redraws at once, since the ledger is already
+  on the device and nothing has to be fetched again. The transaction list
+  had the same gap whenever a category, tag or budget filter was on (#224)
+
 - A filter in use on Stats or Transactions looked the same as one that was
   not, so a page narrowed to a budget read like the whole ledger. A filter in
   use is now filled with the accent and has its own clear button, and the

@@ -9,6 +9,7 @@ import '../l10n/fun_l10n.dart';
 import '../l10n/l10n_extensions.dart';
 import '../providers/data_providers.dart';
 import '../providers/default_period_provider.dart';
+import '../providers/people_providers.dart';
 import '../providers/theme_provider.dart';
 import '../providers/transaction_analytics_providers.dart';
 import '../router/route_navigation.dart';
@@ -142,9 +143,7 @@ class StatsScreen extends ConsumerWidget {
                   idleLabel: l10n.accountFilterLabel,
                   emptyLabel: l10n.noAccountsFound,
                   names: [
-                    for (final account
-                        in ref.watch(accountsProvider).value ??
-                            const <Account>[])
+                    for (final account in ref.watch(ownedAccountsProvider))
                       account.name,
                   ],
                   selected: filters.accounts,
