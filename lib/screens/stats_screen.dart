@@ -22,6 +22,7 @@ import '../utils/locale_formatting.dart';
 import '../utils/stats_breakdown.dart';
 import '../widgets/entity_screen_header.dart';
 import '../widgets/filter_pill.dart';
+import '../widgets/loading_body.dart';
 import '../widgets/name_filter_dialog.dart';
 import '../widgets/simple_charts.dart';
 import '../widgets/words_filter_dialog.dart';
@@ -155,10 +156,7 @@ class StatsScreen extends ConsumerWidget {
             const SizedBox(height: 24),
             breakdown.when(
               skipLoadingOnReload: true,
-              loading: () => const Padding(
-                padding: EdgeInsets.symmetric(vertical: 48),
-                child: Center(child: CircularProgressIndicator()),
-              ),
+              loading: () => const LoadingBody(),
               error: (e, st) => Padding(
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 child: Text(l10n.errorGeneric(e.toString())),

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A screen waiting on its data shows the raccoon, hopping inside a spinning
+  ring and dressed for the fun mode on, where it showed a bare spinner
+
 - Expenses, Income and Transfers are one Stats page. Chips at the top pick
   which of the three it shows, any mix of them, and with income and expenses
   both on it the page gives the net of the two. It filters by tag and budget
