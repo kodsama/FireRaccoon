@@ -2015,5 +2015,19 @@
   "netFlow": "Netto",
   "prognosisLeaveOut": "Utelämna",
   "prognosisLeaveOutHelp": "Flöden i dessa kategorier eller taggar, eller som innehåller vart och ett av dessa ord, hålls utanför prognosen.",
-  "filterSelectedCount": "{count} valda"
+  "filterSelectedCount": "{count} valda",
+  "statsByCategory": "Per kategori",
+  "statsOverTime": "Över tid",
+  "statsIntervalAuto": "Automatiskt",
+  "statsIntervalDay": "Dag för dag",
+  "statsIntervalWeek": "Vecka för vecka",
+  "statsIntervalMonth": "Månad för månad",
+  "statsIntervalQuarter": "Kvartal för kvartal",
+  "statsIntervalYear": "År för år",
+  "statsChartBars": "Staplar",
+  "statsChartLine": "Linjer",
+  "statsTableTotal": "Totalt",
+  "statsTablePeriod": "Period",
+  "statsQuarterLabel": "K{quarter} {year}",
+  "statsWeekOf": "Veckan från {date}"
 }

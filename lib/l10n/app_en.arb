@@ -2417,5 +2417,21 @@
         "type": "int"
       }
     }
-  }
+  },
+  "statsByCategory": "By category",
+  "statsOverTime": "Over time",
+  "statsIntervalAuto": "Automatic",
+  "statsIntervalDay": "Day by day",
+  "statsIntervalWeek": "Week by week",
+  "statsIntervalMonth": "Month by month",
+  "statsIntervalQuarter": "Quarter by quarter",
+  "statsIntervalYear": "Year by year",
+  "statsChartBars": "Bars",
+  "statsChartLine": "Lines",
+  "statsTableTotal": "Total",
+  "statsTablePeriod": "Period",
+  "statsQuarterLabel": "Q{quarter} {year}",
+  "@statsQuarterLabel": {"placeholders": {"quarter": {"type": "int"}, "year": {"type": "int", "format": "decimalPattern"}}},
+  "statsWeekOf": "Week of {date}",
+  "@statsWeekOf": {"placeholders": {"date": {"type": "String"}}}
 }

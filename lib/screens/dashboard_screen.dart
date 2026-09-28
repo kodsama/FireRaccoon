@@ -85,6 +85,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final params = analyticsRouteParamsFromDashboard(filters);
     context.goPreservingSearch(
       StatsRoute.location(
+        types: const {TransactionTypeFilter.expense},
         period: params.period,
         from: params.from,
         to: params.to,

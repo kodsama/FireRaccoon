@@ -7275,6 +7275,90 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count} selected'**
   String filterSelectedCount(int count);
+
+  /// No description provided for @statsByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'By category'**
+  String get statsByCategory;
+
+  /// No description provided for @statsOverTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Over time'**
+  String get statsOverTime;
+
+  /// No description provided for @statsIntervalAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get statsIntervalAuto;
+
+  /// No description provided for @statsIntervalDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day by day'**
+  String get statsIntervalDay;
+
+  /// No description provided for @statsIntervalWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week by week'**
+  String get statsIntervalWeek;
+
+  /// No description provided for @statsIntervalMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month by month'**
+  String get statsIntervalMonth;
+
+  /// No description provided for @statsIntervalQuarter.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarter by quarter'**
+  String get statsIntervalQuarter;
+
+  /// No description provided for @statsIntervalYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year by year'**
+  String get statsIntervalYear;
+
+  /// No description provided for @statsChartBars.
+  ///
+  /// In en, this message translates to:
+  /// **'Bars'**
+  String get statsChartBars;
+
+  /// No description provided for @statsChartLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Lines'**
+  String get statsChartLine;
+
+  /// No description provided for @statsTableTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get statsTableTotal;
+
+  /// No description provided for @statsTablePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get statsTablePeriod;
+
+  /// No description provided for @statsQuarterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Q{quarter} {year}'**
+  String statsQuarterLabel(int quarter, int year);
+
+  /// No description provided for @statsWeekOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Week of {date}'**
+  String statsWeekOf(String date);
 }
 
 class _AppLocalizationsDelegate

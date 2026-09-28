@@ -2015,5 +2015,19 @@
   "netFlow": "Líquido",
   "prognosisLeaveOut": "Deixar de fora",
   "prognosisLeaveOutHelp": "Os fluxos destas categorias ou etiquetas, ou que tenham todas estas palavras, ficam fora da previsão.",
-  "filterSelectedCount": "{count} selecionado(s)"
+  "filterSelectedCount": "{count} selecionado(s)",
+  "statsByCategory": "Por categoria",
+  "statsOverTime": "Ao longo do tempo",
+  "statsIntervalAuto": "Automático",
+  "statsIntervalDay": "Dia a dia",
+  "statsIntervalWeek": "Semana a semana",
+  "statsIntervalMonth": "Mês a mês",
+  "statsIntervalQuarter": "Trimestre a trimestre",
+  "statsIntervalYear": "Ano a ano",
+  "statsChartBars": "Barras",
+  "statsChartLine": "Linhas",
+  "statsTableTotal": "Total",
+  "statsTablePeriod": "Período",
+  "statsQuarterLabel": "T{quarter} {year}",
+  "statsWeekOf": "Semana de {date}"
 }

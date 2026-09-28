@@ -37,8 +37,17 @@ const statsTypes = [
   TransactionTypeFilter.transfer,
 ];
 
+/// What the page lays its totals out along.
+enum StatsGrouping { category, time }
+
+/// How a series over time is drawn.
+enum StatsChart { bars, line }
+
 class StatsRouteFilters {
-  static const defaultTypes = {TransactionTypeFilter.expense};
+  static const defaultTypes = {
+    TransactionTypeFilter.expense,
+    TransactionTypeFilter.income,
+  };
 
   /// Which of [statsTypes] are shown; never empty and never holds `all`.
   final Set<TransactionTypeFilter> types;
@@ -54,6 +63,13 @@ class StatsRouteFilters {
   final DateTime? to;
   final DashboardPeriod defaultDashboardPeriod;
 
+  /// How the page is laid out rather than what it counts, so clearing the
+  /// filters leaves these alone. A `null` [interval] follows the period.
+  final StatsGrouping grouping;
+  final StatsInterval? interval;
+  final StatsChart chart;
+  final bool showNet;
+
   const StatsRouteFilters({
     this.types = defaultTypes,
     this.categories = const {},
@@ -64,6 +80,10 @@ class StatsRouteFilters {
     this.from,
     this.to,
     this.defaultDashboardPeriod = kDefaultDashboardPeriod,
+    this.grouping = StatsGrouping.category,
+    this.interval,
+    this.chart = StatsChart.bars,
+    this.showNet = false,
   });
 
   /// [types] in page order, whatever order the link named them in.
@@ -124,6 +144,11 @@ class StatsRouteFilters {
     ExpensePeriod? period,
     DateTime? from,
     DateTime? to,
+    StatsGrouping? grouping,
+    StatsInterval? interval,
+    bool autoInterval = false,
+    StatsChart? chart,
+    bool? showNet,
   }) {
     final hasNewDates = from != null || to != null;
     final keepDates = period == null && !hasNewDates;
@@ -139,8 +164,21 @@ class StatsRouteFilters {
       from: datedFrom != null ? formatDate(datedFrom) : null,
       to: datedTo != null ? formatDate(datedTo) : null,
       defaultDashboardPeriod: defaultDashboardPeriod,
+      grouping: grouping ?? this.grouping,
+      interval: autoInterval ? null : (interval ?? this.interval),
+      chart: chart ?? this.chart,
+      showNet: showNet ?? this.showNet,
     );
   }
+
+  /// Every filter back to its default, the layout kept.
+  String get clearedLocation => StatsRoute.location(
+    defaultDashboardPeriod: defaultDashboardPeriod,
+    grouping: grouping,
+    interval: interval,
+    chart: chart,
+    showNet: showNet,
+  );
 
   static String formatDate(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -162,6 +200,10 @@ class StatsRoute {
     String? from,
     String? to,
     DashboardPeriod defaultDashboardPeriod = kDefaultDashboardPeriod,
+    StatsGrouping grouping = StatsGrouping.category,
+    StatsInterval? interval,
+    StatsChart chart = StatsChart.bars,
+    bool showNet = false,
   }) {
     final defaultParams = expenseParamsFromDashboardPeriod(
       defaultDashboardPeriod,
@@ -196,6 +238,10 @@ class StatsRoute {
       'account': accounts,
       'from': resolvedFrom,
       'to': resolvedTo,
+      'view': grouping == StatsGrouping.category ? null : grouping.name,
+      'interval': interval?.name,
+      'chart': chart == StatsChart.bars ? null : chart.name,
+      'net': showNet ? '1' : null,
     });
   }
 
@@ -208,6 +254,7 @@ class StatsRoute {
 
   /// Where a link to one of [retiredPaths] lands now. Its filters come along,
   /// and its single `type` becomes `types`, with `all` meaning all three.
+  /// None of those is the two-type default, so `types` is always written.
   static String fromRetiredLink(Uri uri) {
     final named = RouteQuery.enumFrom(
       uri,
@@ -224,9 +271,6 @@ class StatsRoute {
         .where(types.contains)
         .map((type) => type.name)
         .join(',');
-    if (_sameTypes(types, StatsRouteFilters.defaultTypes)) {
-      params.remove('types');
-    }
     return RouteQuery.build(path, params);
   }
 
@@ -270,7 +314,29 @@ class StatsRoute {
           ? defaultParams.to
           : _parseDate(RouteQuery.param(uri, 'to')),
       defaultDashboardPeriod: defaultDashboardPeriod,
+      grouping: RouteQuery.enumFrom(
+        uri,
+        'view',
+        StatsGrouping.values,
+        StatsGrouping.category,
+      ),
+      interval: _intervalFrom(uri),
+      chart: RouteQuery.enumFrom(
+        uri,
+        'chart',
+        StatsChart.values,
+        StatsChart.bars,
+      ),
+      showNet: RouteQuery.param(uri, 'net') == '1',
     );
+  }
+
+  static StatsInterval? _intervalFrom(Uri uri) {
+    final raw = RouteQuery.param(uri, 'interval');
+    for (final interval in StatsInterval.values) {
+      if (interval.name == raw) return interval;
+    }
+    return null;
   }
 
   /// The types named in `types`, skipping anything unrecognised; a link

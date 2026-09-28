@@ -312,7 +312,7 @@ void main() {
 
     await tester.tap(find.textContaining('Spending ·'));
     await tester.pumpAndSettle();
-    expect(find.text('Stats of '), findsOneWidget);
+    expect(find.text('Stats of expense'), findsOneWidget);
 
     await tester.pumpWidget(await buildTestApp());
     await tester.pumpAndSettle();

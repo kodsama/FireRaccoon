@@ -2015,5 +2015,19 @@
   "netFlow": "净额",
   "prognosisLeaveOut": "排除",
   "prognosisLeaveOutHelp": "属于这些类别或标签、或包含所有这些词的资金流不计入预测。",
-  "filterSelectedCount": "已选 {count} 项"
+  "filterSelectedCount": "已选 {count} 项",
+  "statsByCategory": "按类别",
+  "statsOverTime": "随时间",
+  "statsIntervalAuto": "自动",
+  "statsIntervalDay": "按天",
+  "statsIntervalWeek": "按周",
+  "statsIntervalMonth": "按月",
+  "statsIntervalQuarter": "按季度",
+  "statsIntervalYear": "按年",
+  "statsChartBars": "柱状图",
+  "statsChartLine": "折线图",
+  "statsTableTotal": "合计",
+  "statsTablePeriod": "期间",
+  "statsQuarterLabel": "{year} 年第 {quarter} 季度",
+  "statsWeekOf": "{date} 当周"
 }

@@ -2090,5 +2090,19 @@
   "netFlow": "差引",
   "prognosisLeaveOut": "除外",
   "prognosisLeaveOutHelp": "これらのカテゴリやタグの流れ、またはこれらの単語をすべて含む流れは予測に含めません。",
-  "filterSelectedCount": "{count} 件を選択"
+  "filterSelectedCount": "{count} 件を選択",
+  "statsByCategory": "カテゴリ別",
+  "statsOverTime": "推移",
+  "statsIntervalAuto": "自動",
+  "statsIntervalDay": "日別",
+  "statsIntervalWeek": "週別",
+  "statsIntervalMonth": "月別",
+  "statsIntervalQuarter": "四半期別",
+  "statsIntervalYear": "年別",
+  "statsChartBars": "棒グラフ",
+  "statsChartLine": "折れ線",
+  "statsTableTotal": "合計",
+  "statsTablePeriod": "期間",
+  "statsQuarterLabel": "{year}年 第{quarter}四半期",
+  "statsWeekOf": "{date} の週"
 }

@@ -3947,4 +3947,55 @@ class AppLocalizationsJa extends AppLocalizations {
   String filterSelectedCount(int count) {
     return '$count 件を選択';
   }
+
+  @override
+  String get statsByCategory => 'カテゴリ別';
+
+  @override
+  String get statsOverTime => '推移';
+
+  @override
+  String get statsIntervalAuto => '自動';
+
+  @override
+  String get statsIntervalDay => '日別';
+
+  @override
+  String get statsIntervalWeek => '週別';
+
+  @override
+  String get statsIntervalMonth => '月別';
+
+  @override
+  String get statsIntervalQuarter => '四半期別';
+
+  @override
+  String get statsIntervalYear => '年別';
+
+  @override
+  String get statsChartBars => '棒グラフ';
+
+  @override
+  String get statsChartLine => '折れ線';
+
+  @override
+  String get statsTableTotal => '合計';
+
+  @override
+  String get statsTablePeriod => '期間';
+
+  @override
+  String statsQuarterLabel(int quarter, int year) {
+    final intl.NumberFormat yearNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String yearString = yearNumberFormat.format(year);
+
+    return '$yearString年 第$quarter四半期';
+  }
+
+  @override
+  String statsWeekOf(String date) {
+    return '$date の週';
+  }
 }

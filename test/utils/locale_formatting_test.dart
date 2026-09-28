@@ -58,6 +58,15 @@ void main() {
       expect(formatting.formatMediumDate(date), contains('2026'));
     });
 
+    test('formatCompactNumber shortens a figure for an axis', () {
+      expect(formatting.formatCompactNumber(12000), '12K');
+      expect(formatting.formatCompactNumber(950), '950');
+    });
+
+    test('formatShortMonthYear keeps the year an axis across years needs', () {
+      expect(formatting.formatShortMonthYear(DateTime(2026, 7, 6)), 'Jul 2026');
+    });
+
     test('formatDayMonth drops the year a dated list does not need', () {
       final date = DateTime(2026, 7, 6);
       final dayMonth = formatting.formatDayMonth(date);

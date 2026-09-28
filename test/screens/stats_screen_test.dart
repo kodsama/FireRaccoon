@@ -3,7 +3,10 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:fireraccoon/router/stats_route.dart';
 import 'package:fireraccoon/screens/stats_screen.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:intl/intl.dart';
 import 'package:fireraccoon/widgets/filter_pill.dart';
 import 'package:fireraccoon/widgets/loading_body.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -107,7 +110,7 @@ void main() {
     expect(find.text('This Year'), findsWidgets);
   });
 
-  testWidgets('StatsScreen shows expenses by category by default', (
+  testWidgets('StatsScreen shows expenses and income by category by default', (
     tester,
   ) async {
     configureLargeScreen(tester);
@@ -123,9 +126,14 @@ void main() {
 
     expect(find.text('Stats'), findsWidgets);
     expect(find.text('Food'), findsWidgets);
-    expect(find.text('Income'), findsOneWidget);
+    expect(
+      tester
+          .widget<FilterChip>(find.widgetWithText(FilterChip, 'Income'))
+          .selected,
+      isTrue,
+    );
     expect(find.text('Clear filters'), findsNothing);
-    expect(find.textContaining('Net:'), findsNothing);
+    expect(find.textContaining('Net:'), findsOneWidget);
   });
 
   testWidgets('StatsScreen adds a type and shows the net of the two', (
@@ -137,7 +145,7 @@ void main() {
     await tester.pumpWidget(
       await buildScreenTestApp(
         child: const StatsScreen(),
-        initialLocation: '/stats',
+        initialLocation: '/stats?types=expense',
       ),
     );
     await tester.pumpAndSettle();
@@ -146,10 +154,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(StatsScreen));
-    expect(
-      GoRouterState.of(context).uri.toString(),
-      '/stats?types=expense%2Cincome',
-    );
+    expect(GoRouterState.of(context).uri.toString(), '/stats');
     expect(find.textContaining('Net:'), findsOneWidget);
     expect(find.textContaining('1,155'), findsOneWidget);
   });
@@ -163,7 +168,7 @@ void main() {
     await tester.pumpWidget(
       await buildScreenTestApp(
         child: const StatsScreen(),
-        initialLocation: '/stats',
+        initialLocation: '/stats?types=expense',
       ),
     );
     await tester.pumpAndSettle();
@@ -175,7 +180,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(StatsScreen));
-    expect(GoRouterState.of(context).uri.toString(), '/stats');
+    expect(GoRouterState.of(context).uri.toString(), '/stats?types=expense');
     expect(tester.widget<FilterChip>(expenses).selected, isTrue);
   });
 
@@ -355,5 +360,63 @@ void main() {
     expect(uri.path, '/transactions');
     expect(uri.queryParameters['tag'], 'Holiday');
     expect(uri.queryParameters['budget'], 'Fun');
+  });
+
+  testWidgets('StatsScreen lays the types out over time and opens a month', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation: '/stats?period=year',
+      ),
+    );
+    await tester.pumpAndSettle();
+    Uri uri() => GoRouterState.of(tester.element(find.byType(StatsScreen))).uri;
+
+    await tester.tap(find.text('Over time'));
+    await tester.pumpAndSettle();
+    expect(uri().queryParameters['view'], 'time');
+    expect(find.byType(BarChart), findsOneWidget);
+    // A year picks months on its own and says so.
+    expect(find.widgetWithText(FilterPill, 'Month by month'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilterPill, 'Month by month'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Quarter by quarter'));
+    await tester.pumpAndSettle();
+    expect(uri().queryParameters['interval'], 'quarter');
+    await tester.tap(find.widgetWithText(FilterPill, 'Quarter by quarter'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.textContaining('Automatic'));
+    await tester.pumpAndSettle();
+    expect(uri().queryParameters.containsKey('interval'), isFalse);
+
+    await tester.tap(find.text('Lines'));
+    await tester.pumpAndSettle();
+    expect(uri().queryParameters['chart'], 'line');
+    expect(find.byType(LineChart), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilterChip, 'Net'));
+    await tester.pumpAndSettle();
+    expect(uri().queryParameters['net'], '1');
+    // Income 1,200 less expenses 45, in the month the samples sit in.
+    expect(find.textContaining('1,155'), findsWidgets);
+
+    final now = DateTime.now();
+    await tester.tap(find.text(DateFormat.yMMMM('en').format(now)));
+    await tester.pumpAndSettle();
+    expect(uri().path, '/transactions');
+    expect(
+      uri().queryParameters['from'],
+      StatsRouteFilters.formatDate(DateTime(now.year, now.month)),
+    );
+    expect(
+      uri().queryParameters['to'],
+      StatsRouteFilters.formatDate(DateTime(now.year, now.month + 1, 0)),
+    );
   });
 }
