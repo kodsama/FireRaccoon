@@ -71,9 +71,16 @@ void main() {
 
   File historyFile() => File('${tempDir.path}/undo_history_v1.json');
 
+  // Gives a loaded machine far longer than the file read ever needs, and
+  // stops the test there rather than letting it carry on against a history
+  // that has not loaded, which is how a slow run turned into a wrong count.
   Future<UndoHistoryState> waitHydrated(ProviderContainer container) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 10));
     var state = container.read(undoHistoryProvider);
-    for (var i = 0; i < 50 && !state.isHydrated; i++) {
+    while (!state.isHydrated) {
+      if (DateTime.now().isAfter(deadline)) {
+        fail('undo history never finished loading');
+      }
       await Future<void>.delayed(const Duration(milliseconds: 20));
       state = container.read(undoHistoryProvider);
     }
