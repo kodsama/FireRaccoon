@@ -423,7 +423,7 @@ void main() {
     );
   });
 
-  testWidgets('StatsScreen groups by tag as ranked bars and opens a tag', (
+  testWidgets('StatsScreen groups by tag as columns and opens a tag', (
     tester,
   ) async {
     configureLargeScreen(tester);
@@ -462,8 +462,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(uri().queryParameters['chart'], 'bars');
     expect(find.byType(SimpleDonutChart), findsNothing);
+    // Upright columns, named along the bottom.
+    expect(find.byType(BarChart), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(BarChart), matching: find.text('Work')),
+      findsOneWidget,
+    );
 
-    await tester.tap(find.text('Work').first);
+    await tester.tap(find.text('Work').last);
     await tester.pumpAndSettle();
     expect(uri().path, '/transactions');
     expect(uri().queryParametersAll['tag'], ['Work']);

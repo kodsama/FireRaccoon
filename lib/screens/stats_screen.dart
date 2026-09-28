@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -378,7 +379,7 @@ class _StatsBodyState extends State<_StatsBody> {
                       asBars
                           ? _rankedBars(
                               context,
-                              totals,
+                              totals: totals,
                               selectedKeys: selectedKeys,
                               chartColors: chartColors,
                               width: multiple ? 420 : 720,
@@ -531,11 +532,11 @@ class _StatsBodyState extends State<_StatsBody> {
     );
   }
 
-  /// The largest groups of one type as bars against the largest of them,
-  /// coloured as in the list below, each opening its transactions.
+  /// The largest groups of one type as columns, largest first, coloured as
+  /// in the list below, each opening its transactions.
   Widget _rankedBars(
-    BuildContext context,
-    StatsTypeTotals totals, {
+    BuildContext context, {
+    required StatsTypeTotals totals,
     required Set<String> selectedKeys,
     required List<Color> chartColors,
     required double width,
@@ -548,8 +549,10 @@ class _StatsBodyState extends State<_StatsBody> {
             !_hidden.contains(_hiddenKey(totals.type, legend[i].key)))
           (i, legend[i]),
     ].take(12).toList();
-    final largest = rows.isEmpty ? 0.0 : rows.first.$2.value;
     final shownTotal = rows.fold<double>(0, (sum, row) => sum + row.$2.value);
+    final labelStyle = TextStyle(color: colors.text3, fontSize: 11);
+    // Names turn to fit under a column once each has under ~90px of axis.
+    final slanted = rows.length * 90 > width - 56;
 
     return SizedBox(
       width: width,
@@ -576,56 +579,107 @@ class _StatsBodyState extends State<_StatsBody> {
               widget.l10n.noTransactionsMatchFilters,
               textAlign: TextAlign.center,
               style: TextStyle(color: colors.text3),
-            ),
-          for (final (index, entry) in rows)
-            InkWell(
-              onTap: () => context.goPreservingSearch(
-                _transactionsForGroup(entry.key, totals.type),
-              ),
-              borderRadius: BorderRadius.circular(6),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: width * 0.26,
-                      child: Text(
-                        _label(entry.key),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: FractionallySizedBox(
-                          widthFactor: largest > 0
-                              ? (entry.value / largest).clamp(0.01, 1.0)
-                              : 0,
-                          child: Container(
-                            height: 14,
-                            decoration: BoxDecoration(
-                              color: chartColors[index % chartColors.length],
-                              borderRadius: BorderRadius.circular(4),
+            )
+          else
+            SizedBox(
+              height: slanted ? 320 : 280,
+              child: BarChart(
+                BarChartData(
+                  barGroups: [
+                    for (var i = 0; i < rows.length; i++)
+                      BarChartGroupData(
+                        x: i,
+                        barRods: [
+                          BarChartRodData(
+                            toY: rows[i].$2.value,
+                            color: chartColors[rows[i].$1 % chartColors.length],
+                            width: ((width - 56) / rows.length * 0.6).clamp(
+                              6.0,
+                              36.0,
                             ),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(4),
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                  gridData: FlGridData(
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (_) =>
+                        FlLine(color: colors.border, strokeWidth: 1),
+                  ),
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(),
+                    rightTitles: const AxisTitles(),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 56,
+                        minIncluded: false,
+                        maxIncluded: false,
+                        getTitlesWidget: (value, meta) => SideTitleWidget(
+                          meta: meta,
+                          child: Text(
+                            widget.format.formatCompactNumber(value),
+                            style: labelStyle,
                           ),
                         ),
                       ),
                     ),
-                    SizedBox(
-                      width: width * 0.3,
-                      child: Text(
-                        _money(entry.value),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        textAlign: TextAlign.end,
-                        style: const TextStyle(
-                          fontFamily: 'Roboto Slab',
-                          fontWeight: FontWeight.w600,
-                        ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: slanted ? 72 : 28,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.round();
+                          if (index < 0 || index >= rows.length) {
+                            return const SizedBox.shrink();
+                          }
+                          return SideTitleWidget(
+                            meta: meta,
+                            angle: slanted ? -0.6 : 0,
+                            child: SizedBox(
+                              width: slanted ? 80 : null,
+                              child: Text(
+                                _label(rows[index].$2.key),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                textAlign: TextAlign.center,
+                                style: labelStyle,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
-                  ],
+                  ),
+                  barTouchData: BarTouchData(
+                    touchTooltipData: BarTouchTooltipData(
+                      getTooltipColor: (_) => colors.surface2,
+                      getTooltipItem: (group, groupIndex, rod, rodIndex) =>
+                          BarTooltipItem(
+                            '${_label(rows[groupIndex].$2.key)}\n'
+                            '${_money(rod.toY)}',
+                            TextStyle(
+                              color: rod.color,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                    ),
+                    touchCallback: (event, response) {
+                      final spot = response?.spot;
+                      if (event is FlTapUpEvent && spot != null) {
+                        context.goPreservingSearch(
+                          _transactionsForGroup(
+                            rows[spot.touchedBarGroupIndex].$2.key,
+                            totals.type,
+                          ),
+                        );
+                      }
+                    },
+                  ),
                 ),
               ),
             ),
