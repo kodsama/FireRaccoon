@@ -46,4 +46,31 @@ void main() {
       expect(RouteQuery.searchFrom(Uri.parse('/budgets')), isNull);
     });
   });
+
+  group('repeated keys', () {
+    test('build writes one pair per value and values reads them back', () {
+      final link = RouteQuery.build('/stats', {
+        'tag': ['Holiday', 'Work, travel'],
+        'budget': const <String>[],
+        'period': 'year',
+      });
+      final uri = Uri.parse(link);
+      expect(RouteQuery.values(uri, 'tag'), {'Holiday', 'Work, travel'});
+      expect(RouteQuery.values(uri, 'budget'), isEmpty);
+      expect(uri.queryParameters['period'], 'year');
+    });
+
+    test('adding or dropping the search keeps every repeated value', () {
+      final uri = Uri.parse('/stats?tag=a&tag=b');
+      final searched = Uri.parse(RouteQuery.withSearch(uri, 'rent'));
+      expect(RouteQuery.values(searched, 'tag'), {'a', 'b'});
+      expect(RouteQuery.searchFrom(searched), 'rent');
+
+      final carried = Uri.parse(
+        RouteQuery.preserveSearch(searched, '/transactions?tag=a&tag=b'),
+      );
+      expect(RouteQuery.values(carried, 'tag'), {'a', 'b'});
+      expect(RouteQuery.searchFrom(carried), 'rent');
+    });
+  });
 }
