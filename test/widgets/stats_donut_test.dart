@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fireraccoon/widgets/stats_donut.dart';
@@ -11,7 +12,7 @@ DonutSlice _slice(String label, double value, [VoidCallback? onTap]) =>
       label: label,
       value: value,
       color: Colors.red,
-      inside: '$value',
+      amount: '$value',
       onTap: onTap,
     );
 
@@ -68,6 +69,7 @@ void main() {
         child: SizedBox(
           width: 800,
           child: StatsDonut(
+            formatPercent: (p) => '${p.toStringAsFixed(1)}%',
             outer: [
               _slice('Food', 1, () => tapped = 'Food'),
               _slice('Rent', 3, () => tapped = 'Rent'),
@@ -85,5 +87,42 @@ void main() {
       box.topLeft + geometry.center + Offset((from + to) / 2, 10),
     );
     expect(tapped, 'Rent');
+  });
+
+  testWidgets('hovering a slice names it in full with its share and amount', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      buildLocalizedTestApp(
+        child: SizedBox(
+          width: 800,
+          child: StatsDonut(
+            formatPercent: (p) => '${p.toStringAsFixed(1)}%',
+            outer: [
+              _slice('Holiday > Souvenirs and small gifts', 1),
+              _slice('Rent', 3),
+            ],
+            height: 400,
+          ),
+        ),
+      ),
+    );
+    final box = tester.getRect(find.byType(StatsDonut));
+    final geometry = DonutGeometry(box.size, hasInner: false);
+    final (from, to) = geometry.outerRing;
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    addTearDown(mouse.removePointer);
+
+    // Just right of twelve o'clock is the first, smaller slice.
+    await mouse.moveTo(
+      box.topLeft + geometry.center + Offset(10, -(from + to) / 2),
+    );
+    await tester.pump();
+    expect(find.text('Holiday > Souvenirs and small gifts'), findsOneWidget);
+    expect(find.text('25.0% · 1.0'), findsOneWidget);
+
+    await mouse.moveTo(box.topLeft + geometry.center);
+    await tester.pump();
+    expect(find.textContaining('25.0%'), findsNothing);
   });
 }

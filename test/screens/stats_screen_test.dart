@@ -575,4 +575,30 @@ void main() {
       closeTo(HSLColor.fromColor(donut.inner.first.color).hue, 1),
     );
   });
+
+  testWidgets(
+    'StatsScreen writes donut shares the way the number locale does',
+    (tester) async {
+      configureLargeScreen(tester);
+      addTearDown(tester.view.resetPhysicalSize);
+
+      await tester.pumpWidget(
+        await buildScreenTestApp(
+          child: const StatsScreen(),
+          initialLocation: '/stats',
+          prefsValues: const {
+            'isRaccoonMode': false,
+            'statsMerged': true,
+            'numberLocale': 'sv-SE',
+          },
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final donut = tester.widget<StatsDonut>(find.byType(StatsDonut));
+      // A Swedish reader sees a decimal comma, not a point.
+      expect(donut.formatPercent(14.7), '14,7%');
+      expect(donut.outer.first.amount, contains(','));
+    },
+  );
 }
