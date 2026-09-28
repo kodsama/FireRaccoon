@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -70,9 +71,16 @@ void main() {
 
   File historyFile() => File('${tempDir.path}/undo_history_v1.json');
 
+  // Gives a loaded machine far longer than the file read ever needs, and
+  // stops the test there rather than letting it carry on against a history
+  // that has not loaded, which is how a slow run turned into a wrong count.
   Future<UndoHistoryState> waitHydrated(ProviderContainer container) async {
+    final deadline = DateTime.now().add(const Duration(seconds: 10));
     var state = container.read(undoHistoryProvider);
-    for (var i = 0; i < 50 && !state.isHydrated; i++) {
+    while (!state.isHydrated) {
+      if (DateTime.now().isAfter(deadline)) {
+        fail('undo history never finished loading');
+      }
       await Future<void>.delayed(const Duration(milliseconds: 20));
       state = container.read(undoHistoryProvider);
     }
@@ -599,6 +607,66 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 50));
     final raw = await file.readAsString();
     expect(raw, contains('"entries"'));
+  });
+
+  test('changes made while the history file loads survive the load', () async {
+    // At launch the file read is still in flight when the first change can be
+    // recorded or the limit changed. The load used to put the limit it read
+    // at build back and swap its entries in for whatever had been recorded.
+    final store = _GatedUndoHistoryStore();
+    final prefs = await SharedPreferences.getInstance();
+    final container = ProviderContainer(
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(prefs),
+        undoHistoryStoreProvider.overrideWithValue(store),
+      ],
+    );
+    addTearDown(container.dispose);
+    final sub = container.listen(undoHistoryProvider, (_, _) {});
+    addTearDown(sub.close);
+    final notifier = container.read(undoHistoryProvider.notifier);
+
+    UndoEntry saved(String id) => UndoEntry(
+      id: id,
+      timestampUtc: DateTime.utc(2026, 1, 1),
+      title: id,
+      details: 'd',
+      type: UndoActionType.themeMode,
+      undoPayload: const {'mode': 'light'},
+      redoPayload: const {'mode': 'dark'},
+    );
+
+    await notifier.setLimit(10);
+    for (var i = 0; i < 3; i++) {
+      notifier.record(
+        title: 'Early $i',
+        details: 'd',
+        type: UndoActionType.themeMode,
+        undoPayload: const {'mode': 'light'},
+        redoPayload: const {'mode': 'dark'},
+      );
+    }
+    expect(container.read(undoHistoryProvider).isHydrated, isFalse);
+
+    store.release(
+      jsonEncode({
+        // The saved cursor sits one back: the last saved change was undone,
+        // and recording a new one drops it as a redo would be dropped.
+        'cursor': 8,
+        'entries': [for (var i = 0; i < 10; i++) saved('saved $i').toJson()],
+      }),
+    );
+    final state = await waitHydrated(container);
+
+    expect(state.limit, 10);
+    expect(state.entries, hasLength(10));
+    expect(state.entries.map((e) => e.title).toList().sublist(7), [
+      'Early 0',
+      'Early 1',
+      'Early 2',
+    ]);
+    expect(state.entries.map((e) => e.title), isNot(contains('saved 9')));
+    expect(state.cursor, 9);
   });
 
   test('record trims when entry count exceeds limit', () async {
@@ -1234,4 +1302,19 @@ class _RecordingFireflyService extends FakeFireflyService {
     createLiabilityCalls++;
     return super.createLiability(input);
   }
+}
+
+/// A store whose read waits until the test lets it through, so a change can
+/// be made while the history is still loading.
+class _GatedUndoHistoryStore implements UndoHistoryStore {
+  final _contents = Completer<String?>();
+  String? written;
+
+  void release(String? contents) => _contents.complete(contents);
+
+  @override
+  Future<String?> read() => _contents.future;
+
+  @override
+  Future<void> write(String contents) async => written = contents;
 }

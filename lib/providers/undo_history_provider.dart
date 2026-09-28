@@ -224,13 +224,16 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
     final limit = normalizeUndoHistoryLimit(
       _prefs.getInt(_undoHistoryLimitPrefsKey) ?? kUndoHistoryDefaultLimit,
     );
-    _hydrate(limit);
+    _hydrate();
     return UndoHistoryState(limit: limit);
   }
 
-  Future<void> _hydrate(int limit) async {
+  // The load finishes with [state.limit] rather than the limit build read:
+  // a change to the limit while the history was still loading is the one
+  // that stands.
+  Future<void> _hydrate() async {
     if (ref.read(deploymentConfigProvider).isServer) {
-      await _hydrateFromServer(limit);
+      await _hydrateFromServer();
       return;
     }
     // Reading the file is three async gaps wide, and whoever asked for this
@@ -242,32 +245,29 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
       final raw = await ref.read(undoHistoryStoreProvider).read();
       if (!ref.mounted) return;
       if (raw == null || raw.trim().isEmpty) {
-        state = state.copyWith(isHydrated: true, limit: limit);
+        state = state.copyWith(isHydrated: true);
         return;
       }
       final decoded = jsonDecode(raw);
       if (decoded is! Map) {
-        state = state.copyWith(isHydrated: true, limit: limit);
+        state = state.copyWith(isHydrated: true);
         return;
       }
-      await _applyDecodedHistory(
-        Map<String, Object?>.from(decoded),
-        limit: limit,
-      );
+      await _applyDecodedHistory(Map<String, Object?>.from(decoded));
     } on Object {
       if (!ref.mounted) return;
-      state = state.copyWith(isHydrated: true, limit: limit);
+      state = state.copyWith(isHydrated: true);
     }
   }
 
-  Future<void> _hydrateFromServer(int limit) async {
+  Future<void> _hydrateFromServer() async {
     try {
       // Yield so Notifier.build can finish before we touch [state].
       await Future<void>.value();
       if (!ref.mounted) return;
       final client = ref.read(serverSessionProvider.notifier).client;
       if (client == null || client.sessionToken == null) {
-        state = state.copyWith(isHydrated: true, limit: limit);
+        state = state.copyWith(isHydrated: true);
         return;
       }
       final snap = await client.fetchState();
@@ -276,21 +276,25 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
       if (undo is Map) {
         await _applyDecodedHistory(
           Map<String, Object?>.from(undo),
-          limit: limit,
           persistAfter: false,
         );
         return;
       }
-      state = state.copyWith(isHydrated: true, limit: limit);
+      state = state.copyWith(isHydrated: true);
     } on Object {
       if (!ref.mounted) return;
-      state = state.copyWith(isHydrated: true, limit: limit);
+      state = state.copyWith(isHydrated: true);
     }
   }
 
+  /// Lays the loaded history under whatever was recorded while it loaded.
+  ///
+  /// A change made in that window is newer than anything saved, so it goes
+  /// last, and the saved changes past the saved cursor are dropped the way
+  /// recording drops a redo. Swapping the loaded list in wholesale lost the
+  /// first change made after launch.
   Future<void> _applyDecodedHistory(
     Map<String, Object?> map, {
-    required int limit,
     bool persistAfter = true,
   }) async {
     final cursor = map['cursor'] is int
@@ -302,18 +306,26 @@ class UndoHistoryNotifier extends Notifier<UndoHistoryState> {
         .map((item) => UndoEntry.fromJson(Map<String, Object?>.from(item)))
         .whereType<UndoEntry>()
         .toList();
-    final normalizedEntries = entries.length > limit
-        ? entries.sublist(entries.length - limit)
-        : entries;
-    final adjustedCursor = normalizedEntries.isEmpty
-        ? -1
-        : cursor.clamp(-1, normalizedEntries.length - 1);
     if (!ref.mounted) return;
+    final limit = state.limit;
+    final recorded = state.entries;
+    final loadedCursor = entries.isEmpty
+        ? -1
+        : cursor.clamp(-1, entries.length - 1);
+    final combined = recorded.isEmpty
+        ? entries
+        : [...entries.sublist(0, loadedCursor + 1), ...recorded];
+    final combinedCursor = recorded.isEmpty
+        ? loadedCursor
+        : loadedCursor + 1 + state.cursor;
+    final trimCount = combined.length > limit ? combined.length - limit : 0;
+    final trimmed = combined.sublist(trimCount);
     state = state.copyWith(
-      entries: normalizedEntries,
-      cursor: adjustedCursor,
+      entries: trimmed,
+      cursor: trimmed.isEmpty
+          ? -1
+          : (combinedCursor - trimCount).clamp(-1, trimmed.length - 1),
       isHydrated: true,
-      limit: limit,
     );
     if (persistAfter) await _persist();
   }
