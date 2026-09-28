@@ -10,32 +10,37 @@ class DonutSlice {
   final double value;
   final Color color;
 
-  /// What is written inside the slice when it has room, such as its amount.
-  final String inside;
+  /// The slice's amount as the page formats money, shown on hover.
+  final String amount;
   final VoidCallback? onTap;
 
   const DonutSlice({
     required this.label,
     required this.value,
     required this.color,
-    required this.inside,
+    required this.amount,
     this.onTap,
   });
 }
 
-/// A donut with the figures on it: amounts inside the slices that have
-/// room, and each outer slice named outside on a leader line with its
-/// share. An [inner] ring, when given, sits inside the outer one and must
-/// run in the same order, so each inner slice spans the outer slices that
-/// belong to it: types inside, their categories around them.
+/// A donut with its parts named: each outer slice outside on a leader line
+/// with its share, each inner slice by name inside it, and the part under
+/// the pointer in full with its share and amount. An [inner] ring, when
+/// given, sits inside the outer one and must run in the same order, so each
+/// inner slice spans the outer slices that belong to it: types inside,
+/// their categories around them.
 class StatsDonut extends StatefulWidget {
   final List<DonutSlice> outer;
   final List<DonutSlice> inner;
   final double height;
 
+  /// Writes a share, given in percent, the way the user's locale does.
+  final String Function(double percent) formatPercent;
+
   const StatsDonut({
     super.key,
     required this.outer,
+    required this.formatPercent,
     this.inner = const [],
     this.height = 360,
   });
@@ -90,6 +95,7 @@ class _StatsDonutState extends State<StatsDonut> {
                     lineColor: colors.text3,
                     textColor: colors.text,
                     mutedColor: colors.text3,
+                    formatPercent: widget.formatPercent,
                   ),
                 ),
                 if (_hovered case final hovered?)
@@ -144,7 +150,7 @@ extension on _StatsDonutState {
               ),
               const SizedBox(height: 2),
               Text(
-                '${share.toStringAsFixed(1)}% · ${slice.inside}',
+                '${widget.formatPercent(share)} · ${slice.amount}',
                 style: TextStyle(color: colors.text2),
               ),
             ],
@@ -162,7 +168,8 @@ class DonutGeometry {
 
   DonutGeometry(this.size, {required this.hasInner});
 
-  /// Room left each side for the names outside.
+  /// The least room kept each side of the ring for the names outside;
+  /// wider canvases give them the rest.
   static const labelRoom = 150.0;
 
   Offset get center => Offset(size.width / 2, size.height / 2);
@@ -230,6 +237,7 @@ class _DonutPainter extends CustomPainter {
   final Color lineColor;
   final Color textColor;
   final Color mutedColor;
+  final String Function(double percent) formatPercent;
 
   _DonutPainter({
     required this.geometry,
@@ -240,6 +248,7 @@ class _DonutPainter extends CustomPainter {
     required this.lineColor,
     required this.textColor,
     required this.mutedColor,
+    required this.formatPercent,
   });
 
   @override
@@ -290,32 +299,63 @@ class _DonutPainter extends CustomPainter {
             ..strokeWidth = 1.5,
         );
       }
-      final text = isInner ? slices[i].label : slices[i].inside;
-      final middle = start + sweep / 2;
-      final radius = (from + to) / 2;
+      // Only the inner ring is written on: its slices are the types, few
+      // and wide. The outer parts are named outside the ring instead.
+      if (!isInner) continue;
       final painter = _text(
-        text,
+        slices[i].label,
         TextStyle(
           color: _onColor(slices[i].color),
-          fontSize: isInner ? 12 : 11,
+          fontSize: 12,
           fontWeight: FontWeight.w700,
         ),
       );
-      // Written only where the whole label, corner to corner, sits inside
-      // its own slice; a label that crosses the ring's edge or into the next
-      // slice would read as a band across the chart.
-      final at = center + Offset(math.cos(middle), math.sin(middle)) * radius;
-      final box = Rect.fromCenter(
-        center: at,
-        width: painter.width + 6,
-        height: painter.height + 2,
-      );
-      if (_insideSlice(box, center, from, to, start, sweep)) {
-        painter.paint(
-          canvas,
-          box.center - Offset(painter.width / 2, painter.height / 2),
+      final radius = (from + to) / 2;
+      // Level text fits a ring best where the ring runs across it, so the
+      // label goes to the spot nearest the slice's middle where it fits.
+      var placed = false;
+      for (final at in _spotsNearMiddle(start, sweep)) {
+        final box = Rect.fromCenter(
+          center: center + Offset(math.cos(at), math.sin(at)) * radius,
+          width: painter.width + 6,
+          height: painter.height + 2,
         );
+        if (_insideSlice(box, center, from, to, start, sweep)) {
+          painter.paint(
+            canvas,
+            box.center - Offset(painter.width / 2, painter.height / 2),
+          );
+          placed = true;
+          break;
+        }
       }
+      // Where no level spot fits, the name runs along the ring at the
+      // slice's middle instead, turned to read upright on either half.
+      final middle = start + sweep / 2;
+      if (!placed &&
+          sweep * radius > painter.width + 8 &&
+          to - from > painter.height + 4) {
+        final at = center + Offset(math.cos(middle), math.sin(middle)) * radius;
+        final lowerHalf = math.sin(middle) > 0;
+        canvas
+          ..save()
+          ..translate(at.dx, at.dy)
+          ..rotate(lowerHalf ? middle - math.pi / 2 : middle + math.pi / 2);
+        painter.paint(canvas, Offset(-painter.width / 2, -painter.height / 2));
+        canvas.restore();
+      }
+    }
+  }
+
+  /// Angles across a slice, its middle first and then outwards either side.
+  static Iterable<double> _spotsNearMiddle(double start, double sweep) sync* {
+    const steps = 12;
+    final middle = start + sweep / 2;
+    yield middle;
+    for (var i = 1; i <= steps; i++) {
+      final offset = sweep / 2 * i / (steps + 1);
+      yield middle - offset;
+      yield middle + offset;
     }
   }
 
@@ -385,12 +425,12 @@ class _DonutPainter extends CustomPainter {
         if (side[i].y > limit) side[i].y = limit;
       }
       for (final label in side) {
-        _drawLabel(canvas, label);
+        _drawLabel(canvas, size, label);
       }
     }
   }
 
-  void _drawLabel(Canvas canvas, _Label label) {
+  void _drawLabel(Canvas canvas, Size size, _Label label) {
     final slice = outer[label.index];
     final (_, to) = geometry.outerRing;
     final center = geometry.center;
@@ -403,14 +443,18 @@ class _DonutPainter extends CustomPainter {
     canvas.drawLine(elbow, Offset(endX, label.y), line);
     canvas.drawCircle(Offset(endX, label.y), 2.5, Paint()..color = slice.color);
 
-    const maxWidth = DonutGeometry.labelRoom - 34;
+    // A name may run to the canvas edge on its side, less a small margin.
+    final maxWidth = math.max(
+      60.0,
+      label.right ? size.width - endX - 10 : endX - 10,
+    );
     final name = _text(
       slice.label,
       TextStyle(color: textColor, fontSize: 12, fontWeight: FontWeight.w600),
       maxWidth: maxWidth,
     );
     final share = _text(
-      '${(label.share * 100).toStringAsFixed(1)}%',
+      formatPercent(label.share * 100),
       TextStyle(color: mutedColor, fontSize: 11),
     );
     final x = label.right ? endX + 6 : endX - 6;

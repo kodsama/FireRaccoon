@@ -361,6 +361,8 @@ class _StatsBodyState extends State<_StatsBody> {
 
   void _open(String location) => context.goPreservingSearch(location);
 
+  String _percent(double value) => '${widget.format.formatPercent(value)}%';
+
   /// The shade of [type]'s hue for its [index]th largest group, the same in
   /// the chart and in the list.
   Color _shade(StatsTypeTotals totals, int index) {
@@ -395,7 +397,7 @@ class _StatsBodyState extends State<_StatsBody> {
       label: _typeLabel(totals.type),
       value: value,
       color: statsTypeColor(context.colors, totals.type),
-      inside: _money(value),
+      amount: _money(value),
       onTap: () => _open(_transactionsFor(widget.filters, type: totals.type)),
     );
   }
@@ -406,7 +408,7 @@ class _StatsBodyState extends State<_StatsBody> {
         label: _label(entry.key),
         value: entry.value,
         color: _shade(totals, index),
-        inside: _money(entry.value),
+        amount: _money(entry.value),
         onTap: () => _open(_transactionsForGroup(entry.key, totals.type)),
       ),
   ];
@@ -438,12 +440,14 @@ class _StatsBodyState extends State<_StatsBody> {
                 ),
             ])
           : StatsDonut(
+              formatPercent: _percent,
               outer: [for (final totals in breakdown.types) _typeSlice(totals)],
             );
     } else if (merged) {
       chart = asBars
           ? _groupedColumns(context, breakdown.types)
           : StatsDonut(
+              formatPercent: _percent,
               inner: breakdown.types.length > 1
                   ? [for (final totals in breakdown.types) _typeSlice(totals)]
                   : const [],
@@ -645,7 +649,11 @@ class _StatsBodyState extends State<_StatsBody> {
               ),
           ])
         else
-          StatsDonut(outer: _groupSlices(totals), height: 320),
+          StatsDonut(
+            formatPercent: _percent,
+            outer: _groupSlices(totals),
+            height: 320,
+          ),
       ],
     );
   }

@@ -12,7 +12,7 @@ DonutSlice _slice(String label, double value, [VoidCallback? onTap]) =>
       label: label,
       value: value,
       color: Colors.red,
-      inside: '$value',
+      amount: '$value',
       onTap: onTap,
     );
 
@@ -69,6 +69,7 @@ void main() {
         child: SizedBox(
           width: 800,
           child: StatsDonut(
+            formatPercent: (p) => '${p.toStringAsFixed(1)}%',
             outer: [
               _slice('Food', 1, () => tapped = 'Food'),
               _slice('Rent', 3, () => tapped = 'Rent'),
@@ -96,6 +97,7 @@ void main() {
         child: SizedBox(
           width: 800,
           child: StatsDonut(
+            formatPercent: (p) => '${p.toStringAsFixed(1)}%',
             outer: [
               _slice('Holiday > Souvenirs and small gifts', 1),
               _slice('Rent', 3),

@@ -34,9 +34,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and one for them all: merged by category is a donut with the types inside
   and their categories around them, or a column per type in each category,
   and merged over time is each month's bars side by side with the net drawn
-  as a curve across them. Donuts carry their amounts inside the slices and
-  name each part outside on a line, with its share. The Stacked chart gives
-  way to In detail, which stacks each type by the split it is set to
+  as a curve across them. Donuts name each type inside the inner ring and
+  each part outside on a line with its share, using the width beside the
+  ring rather than cutting names short; hovering a part shows its full name,
+  share and amount. Shares and amounts follow the number locale. The Stacked
+  chart gives way to In detail, which stacks each type by the split it is
+  set to
 
 - Stats breaks its totals down by tag, budget, account or payee as well as
   by category, as a donut or as upright bars ranked largest first, from one
