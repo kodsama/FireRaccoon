@@ -56,6 +56,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A change made right after launch, while the undo history was still being
+  read from disk, could lose its undo entry: the load swapped its own list
+  in for what had been recorded, and put back the history limit it read at
+  start even when the limit had been changed in the meantime. Changes made
+  during the load now go after the loaded ones, and the limit set last is
+  the one kept
+
 - Stats ignored the person picked in the header: switching to one person,
   or back to everyone, left every total as it was. It now counts only
   transactions touching that person's accounts, offers only their accounts
