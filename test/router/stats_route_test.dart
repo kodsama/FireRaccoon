@@ -234,11 +234,7 @@ void main() {
       expect(byTag.charts, [StatsChart.donut, StatsChart.bars]);
       expect(byTag.effectiveChart, StatsChart.donut);
       const overTime = StatsRouteFilters(grouping: StatsGrouping.time);
-      expect(overTime.charts, [
-        StatsChart.bars,
-        StatsChart.stacked,
-        StatsChart.line,
-      ]);
+      expect(overTime.charts, [StatsChart.bars, StatsChart.line]);
       expect(overTime.effectiveChart, StatsChart.bars);
     });
 
@@ -268,7 +264,6 @@ void main() {
     test('the split round-trips and is left out at its default', () {
       const stacked = StatsRouteFilters(
         grouping: StatsGrouping.time,
-        chart: StatsChart.stacked,
         split: StatsSplit.tag,
       );
       final uri = Uri.parse(stacked.location());

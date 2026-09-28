@@ -11,6 +11,7 @@ import '../l10n/l10n_extensions.dart';
 import '../providers/data_providers.dart';
 import '../providers/default_period_provider.dart';
 import '../providers/people_providers.dart';
+import '../providers/stats_layout_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/transaction_analytics_providers.dart';
 import '../router/route_navigation.dart';
@@ -22,11 +23,12 @@ import '../utils/create_flows.dart';
 import '../utils/display_labels.dart';
 import '../utils/locale_formatting.dart';
 import '../utils/stats_breakdown.dart';
+import '../utils/stats_colors.dart';
 import '../widgets/entity_screen_header.dart';
 import '../widgets/filter_pill.dart';
 import '../widgets/loading_body.dart';
 import '../widgets/name_filter_dialog.dart';
-import '../widgets/simple_charts.dart';
+import '../widgets/stats_donut.dart';
 import '../widgets/stats_over_time.dart';
 import '../widgets/words_filter_dialog.dart';
 
@@ -57,6 +59,7 @@ class StatsScreen extends ConsumerWidget {
       customTo: filters.to,
     );
     final overTime = filters.overTime;
+    final layout = ref.watch(statsLayoutProvider);
     final interval = filters.interval ?? autoStatsInterval(range);
     final breakdown = transactionsAsync.whenData(
       (transactions) => buildStatsBreakdown(
@@ -69,7 +72,7 @@ class StatsScreen extends ConsumerWidget {
         words: words,
         grouping: overTime ? StatsGrouping.category : filters.grouping,
         interval: overTime ? interval : null,
-        split: overTime && filters.effectiveChart == StatsChart.stacked
+        split: overTime && layout.level == StatsLevel.groups
             ? filters.split
             : null,
         range: range,
@@ -177,6 +180,7 @@ class StatsScreen extends ConsumerWidget {
                   ? _StatsOverTimeBody(
                       breakdown: breakdown,
                       filters: filters,
+                      layout: layout,
                       interval: interval,
                       currency:
                           ref.watch(primaryCurrencyProvider).value?.symbol ??
@@ -188,6 +192,7 @@ class StatsScreen extends ConsumerWidget {
                       key: ValueKey('${filters.scope.hashCode}|$uri'),
                       breakdown: breakdown,
                       filters: filters,
+                      layout: layout,
                       currency: ref
                           .watch(primaryCurrencyProvider)
                           .value
@@ -255,9 +260,20 @@ String _transactionsFor(
   );
 }
 
+/// One column of a column chart: a name, a figure and what a tap opens.
+class _Column {
+  final String label;
+  final double value;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _Column(this.label, this.value, this.color, this.onTap);
+}
+
 class _StatsBody extends StatefulWidget {
   final StatsBreakdown breakdown;
   final StatsRouteFilters filters;
+  final StatsLayout layout;
   final String? currency;
   final LocaleFormatting format;
   final AppLocalizations l10n;
@@ -267,6 +283,7 @@ class _StatsBody extends StatefulWidget {
     super.key,
     required this.breakdown,
     required this.filters,
+    required this.layout,
     required this.currency,
     required this.format,
     required this.l10n,
@@ -278,24 +295,16 @@ class _StatsBody extends StatefulWidget {
 }
 
 class _StatsBodyState extends State<_StatsBody> {
-  /// Categories unticked in the legend, keyed per type because the same
-  /// category can hold both spending and income.
+  /// Groups unticked in the list, keyed per type because the same category
+  /// can hold both spending and income.
   final Set<String> _hidden = {};
 
-  String _hiddenKey(TransactionTypeFilter type, String category) =>
-      '${type.name}|$category';
+  /// The most shades one type is spread over; parts past it share the
+  /// lightest, since shades any closer could not be told apart.
+  static const _maxShades = 10;
 
-  List<Color> _chartColors(BuildContext context) {
-    final colors = context.colors;
-    return [
-      colors.accent.acc,
-      colors.accent.deep,
-      colors.warning,
-      colors.danger,
-      colors.success,
-      colors.text3,
-    ];
-  }
+  String _hiddenKey(TransactionTypeFilter type, String group) =>
+      '${type.name}|$group';
 
   String _money(double amount) =>
       widget.format.formatMoney(amount, widget.currency ?? '€');
@@ -324,8 +333,8 @@ class _StatsBodyState extends State<_StatsBody> {
     StatsGrouping.payee || StatsGrouping.time => const {},
   };
 
-  /// The transactions behind one row. Legs with no tag or no budget have
-  /// no filter that finds them alone, so their row opens the whole list.
+  /// The transactions behind one group. Legs with no tag or no budget have
+  /// no filter that finds them alone, so their group opens the whole list.
   String _transactionsForGroup(String key, TransactionTypeFilter type) {
     final filters = widget.filters;
     return switch (_grouping) {
@@ -350,53 +359,165 @@ class _StatsBodyState extends State<_StatsBody> {
     };
   }
 
+  void _open(String location) => context.goPreservingSearch(location);
+
+  /// The shade of [type]'s hue for its [index]th largest group, the same in
+  /// the chart and in the list.
+  Color _shade(StatsTypeTotals totals, int index) {
+    final count = totals.groupSums.length.clamp(1, _maxShades);
+    return statsShade(
+      context.colors,
+      totals.type,
+      index.clamp(0, count - 1),
+      count,
+    );
+  }
+
+  /// [totals]' groups in size order with their rank, narrowed to the ones
+  /// picked and to the ones left ticked.
+  List<(int, MapEntry<String, double>)> _visible(StatsTypeTotals totals) {
+    final selected = _selectedKeys;
+    final legend = totals.sortedGroups;
+    return [
+      for (var i = 0; i < legend.length; i++)
+        if ((selected.isEmpty || selected.contains(legend[i].key)) &&
+            !_hidden.contains(_hiddenKey(totals.type, legend[i].key)))
+          (i, legend[i]),
+    ];
+  }
+
+  double _shownTotal(StatsTypeTotals totals) =>
+      _visible(totals).fold(0.0, (sum, row) => sum + row.$2.value);
+
+  DonutSlice _typeSlice(StatsTypeTotals totals) {
+    final value = _shownTotal(totals);
+    return DonutSlice(
+      label: _typeLabel(totals.type),
+      value: value,
+      color: statsTypeColor(context.colors, totals.type),
+      inside: _money(value),
+      onTap: () => _open(_transactionsFor(widget.filters, type: totals.type)),
+    );
+  }
+
+  List<DonutSlice> _groupSlices(StatsTypeTotals totals) => [
+    for (final (index, entry) in _visible(totals))
+      DonutSlice(
+        label: _label(entry.key),
+        value: entry.value,
+        color: _shade(totals, index),
+        inside: _money(entry.value),
+        onTap: () => _open(_transactionsForGroup(entry.key, totals.type)),
+      ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     final l10n = widget.l10n;
     final breakdown = widget.breakdown;
-    final chartColors = _chartColors(context);
-    final multiple = breakdown.types.length > 1;
+    final layout = widget.layout;
     final net = breakdown.net;
-    final selectedKeys = _selectedKeys;
     final asBars = widget.filters.effectiveChart == StatsChart.bars;
+    final typesOnly = layout.level == StatsLevel.types;
+    // One type has nothing to merge or separate; the types alone always
+    // share one chart.
+    final merged = typesOnly || layout.merged || breakdown.types.length == 1;
+
+    final Widget chart;
+    if (typesOnly) {
+      chart = asBars
+          ? _columns(context, [
+              for (final totals in breakdown.types)
+                _Column(
+                  _typeLabel(totals.type),
+                  _shownTotal(totals),
+                  statsTypeColor(context.colors, totals.type),
+                  () => _open(
+                    _transactionsFor(widget.filters, type: totals.type),
+                  ),
+                ),
+            ])
+          : StatsDonut(
+              outer: [for (final totals in breakdown.types) _typeSlice(totals)],
+            );
+    } else if (merged) {
+      chart = asBars
+          ? _groupedColumns(context, breakdown.types)
+          : StatsDonut(
+              inner: breakdown.types.length > 1
+                  ? [for (final totals in breakdown.types) _typeSlice(totals)]
+                  : const [],
+              outer: [
+                for (final totals in breakdown.types) ..._groupSlices(totals),
+              ],
+              height: 400,
+            );
+    } else {
+      chart = LayoutBuilder(
+        builder: (context, constraints) {
+          final width =
+              (constraints.maxWidth - 32) / breakdown.types.length.clamp(1, 2);
+          return Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 32,
+            runSpacing: 32,
+            children: [
+              for (final totals in breakdown.types)
+                SizedBox(
+                  width: width,
+                  child: _typePanel(context, totals, asBars: asBars),
+                ),
+            ],
+          );
+        },
+      );
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(24),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(l10n.overview, style: context.textTheme.titleMedium),
-                const SizedBox(height: 32),
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 48,
-                  runSpacing: 32,
-                  children: [
-                    for (final totals in breakdown.types)
-                      asBars
-                          ? _rankedBars(
-                              context,
-                              totals: totals,
-                              selectedKeys: selectedKeys,
-                              chartColors: chartColors,
-                              width: multiple ? 420 : 720,
-                            )
-                          : _typeOverview(
-                              context,
-                              totals,
-                              selectedKeys: selectedKeys,
-                              chartColors: chartColors,
-                              size: multiple ? 180 : 240,
-                            ),
-                  ],
+                Text(
+                  l10n.overview,
+                  textAlign: TextAlign.center,
+                  style: context.textTheme.titleMedium,
                 ),
+                if (merged && !typesOnly) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    breakdown.types
+                        .map(
+                          (t) =>
+                              '${_typeLabel(t.type)} ${_money(_shownTotal(t))}',
+                        )
+                        .join(' · '),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: context.colors.text3),
+                  ),
+                ],
+                const SizedBox(height: 24),
+                if (breakdown.types.every((t) => _visible(t).isEmpty))
+                  SizedBox(
+                    height: 200,
+                    child: Center(
+                      child: Text(
+                        l10n.noTransactionsMatchFilters,
+                        style: TextStyle(color: context.colors.text3),
+                      ),
+                    ),
+                  )
+                else
+                  chart,
                 if (net != null) ...[
                   const SizedBox(height: 24),
                   Text(
                     '${l10n.netFlow}: ${_money(net)}',
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontFamily: 'Roboto Slab',
                       fontSize: 20,
@@ -421,11 +542,17 @@ class _StatsBodyState extends State<_StatsBody> {
                 ),
                 const SizedBox(height: 16),
                 for (final totals in breakdown.types) ...[
-                  if (multiple)
+                  if (breakdown.types.length > 1)
                     Padding(
                       padding: const EdgeInsets.only(top: 8, bottom: 8),
                       child: Row(
                         children: [
+                          Container(
+                            width: 4,
+                            height: 18,
+                            margin: const EdgeInsets.only(right: 10),
+                            color: statsTypeColor(context.colors, totals.type),
+                          ),
                           Expanded(
                             child: Text(
                               _typeLabel(totals.type),
@@ -442,7 +569,7 @@ class _StatsBodyState extends State<_StatsBody> {
                         ],
                       ),
                     ),
-                  ..._legendRows(context, totals, chartColors),
+                  ..._legendRows(context, totals),
                 ],
               ],
             ),
@@ -462,8 +589,7 @@ class _StatsBodyState extends State<_StatsBody> {
               Tooltip(
                 message: l10n.tooltipOpenTransactions,
                 child: TextButton.icon(
-                  onPressed: () =>
-                      context.goPreservingSearch(_transactionsLocation()),
+                  onPressed: () => _open(_transactionsLocation()),
                   icon: const Icon(LucideIcons.arrowLeftRight),
                   label: Text(l10n.navTransactions),
                 ),
@@ -475,224 +601,267 @@ class _StatsBodyState extends State<_StatsBody> {
     );
   }
 
-  Widget _typeOverview(
+  /// One type's groups on their own: its total over a donut or columns.
+  Widget _typePanel(
     BuildContext context,
     StatsTypeTotals totals, {
-    required Set<String> selectedKeys,
-    required List<Color> chartColors,
-    required double size,
+    required bool asBars,
   }) {
     final colors = context.colors;
-    final values = <double>[];
-    final sliceColors = <Color>[];
-    final legend = totals.sortedGroups;
-    for (var i = 0; i < legend.length; i++) {
-      final entry = legend[i];
-      if (selectedKeys.isNotEmpty && !selectedKeys.contains(entry.key)) {
-        continue;
-      }
-      if (_hidden.contains(_hiddenKey(totals.type, entry.key))) continue;
-      values.add(entry.value);
-      sliceColors.add(chartColors[i % chartColors.length]);
-    }
-    final shownTotal = values.fold<double>(0, (sum, value) => sum + value);
-
+    final visible = _visible(totals);
     return Column(
-      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (values.isEmpty)
-          SizedBox(
-            height: size,
-            width: size,
-            child: Center(
-              child: Text(
-                widget.l10n.noTransactionsMatchFilters,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: colors.text3),
-              ),
-            ),
-          )
-        else
-          SimpleDonutChart(
-            values: values,
-            sliceColors: sliceColors,
-            size: size,
-          ),
-        const SizedBox(height: 24),
         Text(
-          _money(shownTotal),
-          style: const TextStyle(
+          _money(_shownTotal(totals)),
+          textAlign: TextAlign.center,
+          style: TextStyle(
             fontFamily: 'Roboto Slab',
-            fontSize: 32,
+            fontSize: 26,
             fontWeight: FontWeight.w700,
+            color: statsTypeColor(colors, totals.type),
           ),
         ),
-        Text(_typeLabel(totals.type), style: TextStyle(color: colors.text3)),
+        Text(
+          _typeLabel(totals.type),
+          textAlign: TextAlign.center,
+          style: TextStyle(color: colors.text3),
+        ),
+        const SizedBox(height: 12),
+        if (visible.isEmpty)
+          Text(
+            widget.l10n.noTransactionsMatchFilters,
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colors.text3),
+          )
+        else if (asBars)
+          _columns(context, [
+            for (final (index, entry) in visible.take(12))
+              _Column(
+                _label(entry.key),
+                entry.value,
+                _shade(totals, index),
+                () => _open(_transactionsForGroup(entry.key, totals.type)),
+              ),
+          ])
+        else
+          StatsDonut(outer: _groupSlices(totals), height: 320),
       ],
     );
   }
 
-  /// The largest groups of one type as columns, largest first, coloured as
-  /// in the list below, each opening its transactions.
-  Widget _rankedBars(
-    BuildContext context, {
-    required StatsTypeTotals totals,
-    required Set<String> selectedKeys,
-    required List<Color> chartColors,
-    required double width,
-  }) {
-    final colors = context.colors;
-    final legend = totals.sortedGroups;
-    final rows = <(int, MapEntry<String, double>)>[
-      for (var i = 0; i < legend.length; i++)
-        if ((selectedKeys.isEmpty || selectedKeys.contains(legend[i].key)) &&
-            !_hidden.contains(_hiddenKey(totals.type, legend[i].key)))
-          (i, legend[i]),
-    ].take(12).toList();
-    final shownTotal = rows.fold<double>(0, (sum, row) => sum + row.$2.value);
-    final labelStyle = TextStyle(color: colors.text3, fontSize: 11);
-    // Names turn to fit under a column once each has under ~90px of axis.
-    final slanted = rows.length * 90 > width - 56;
+  static const _leftReserved = 56.0;
 
-    return SizedBox(
-      width: width,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            _money(shownTotal),
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Roboto Slab',
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-            ),
+  FlTitlesData _titles(
+    BuildContext context,
+    List<String> names, {
+    required bool slanted,
+  }) {
+    final style = TextStyle(color: context.colors.text3, fontSize: 11);
+    return FlTitlesData(
+      topTitles: const AxisTitles(),
+      rightTitles: const AxisTitles(),
+      leftTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: _leftReserved,
+          minIncluded: false,
+          maxIncluded: false,
+          getTitlesWidget: (value, meta) => SideTitleWidget(
+            meta: meta,
+            child: Text(widget.format.formatCompactNumber(value), style: style),
           ),
-          Text(
-            _typeLabel(totals.type),
-            textAlign: TextAlign.center,
-            style: TextStyle(color: colors.text3),
-          ),
-          const SizedBox(height: 16),
-          if (rows.isEmpty)
-            Text(
-              widget.l10n.noTransactionsMatchFilters,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: colors.text3),
-            )
-          else
-            SizedBox(
-              height: slanted ? 320 : 280,
-              child: BarChart(
-                BarChartData(
-                  barGroups: [
-                    for (var i = 0; i < rows.length; i++)
-                      BarChartGroupData(
-                        x: i,
-                        barRods: [
-                          BarChartRodData(
-                            toY: rows[i].$2.value,
-                            color: chartColors[rows[i].$1 % chartColors.length],
-                            width: ((width - 56) / rows.length * 0.6).clamp(
-                              6.0,
-                              36.0,
-                            ),
-                            borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(4),
-                            ),
-                          ),
-                        ],
-                      ),
-                  ],
-                  gridData: FlGridData(
-                    drawVerticalLine: false,
-                    getDrawingHorizontalLine: (_) =>
-                        FlLine(color: colors.border, strokeWidth: 1),
-                  ),
-                  borderData: FlBorderData(show: false),
-                  titlesData: FlTitlesData(
-                    topTitles: const AxisTitles(),
-                    rightTitles: const AxisTitles(),
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 56,
-                        minIncluded: false,
-                        maxIncluded: false,
-                        getTitlesWidget: (value, meta) => SideTitleWidget(
-                          meta: meta,
-                          child: Text(
-                            widget.format.formatCompactNumber(value),
-                            style: labelStyle,
-                          ),
-                        ),
-                      ),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: slanted ? 72 : 28,
-                        getTitlesWidget: (value, meta) {
-                          final index = value.round();
-                          if (index < 0 || index >= rows.length) {
-                            return const SizedBox.shrink();
-                          }
-                          return SideTitleWidget(
-                            meta: meta,
-                            angle: slanted ? -0.6 : 0,
-                            child: SizedBox(
-                              width: slanted ? 80 : null,
-                              child: Text(
-                                _label(rows[index].$2.key),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                textAlign: TextAlign.center,
-                                style: labelStyle,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-                  barTouchData: BarTouchData(
-                    touchTooltipData: BarTouchTooltipData(
-                      getTooltipColor: (_) => colors.surface2,
-                      getTooltipItem: (group, groupIndex, rod, rodIndex) =>
-                          BarTooltipItem(
-                            '${_label(rows[groupIndex].$2.key)}\n'
-                            '${_money(rod.toY)}',
-                            TextStyle(
-                              color: rod.color,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                    ),
-                    touchCallback: (event, response) {
-                      final spot = response?.spot;
-                      if (event is FlTapUpEvent && spot != null) {
-                        context.goPreservingSearch(
-                          _transactionsForGroup(
-                            rows[spot.touchedBarGroupIndex].$2.key,
-                            totals.type,
-                          ),
-                        );
-                      }
-                    },
-                  ),
+        ),
+      ),
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: slanted ? 72 : 28,
+          getTitlesWidget: (value, meta) {
+            final index = value.round();
+            if (index < 0 || index >= names.length) {
+              return const SizedBox.shrink();
+            }
+            return SideTitleWidget(
+              meta: meta,
+              angle: slanted ? -0.6 : 0,
+              child: SizedBox(
+                width: slanted ? 80 : null,
+                child: Text(
+                  names[index],
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: style,
                 ),
               ),
-            ),
-        ],
+            );
+          },
+        ),
       ),
     );
   }
 
-  List<Widget> _legendRows(
-    BuildContext context,
-    StatsTypeTotals totals,
-    List<Color> chartColors,
-  ) {
+  /// A column per entry, in the order given.
+  Widget _columns(BuildContext context, List<_Column> columns) {
+    final colors = context.colors;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        // Names turn to fit under a column once each has under ~90px.
+        final slanted = columns.length * 90 > width - _leftReserved;
+        return SizedBox(
+          height: slanted ? 320 : 280,
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              barGroups: [
+                for (var i = 0; i < columns.length; i++)
+                  BarChartGroupData(
+                    x: i,
+                    barRods: [
+                      BarChartRodData(
+                        toY: columns[i].value,
+                        color: columns[i].color,
+                        width: ((width - _leftReserved) / columns.length * 0.6)
+                            .clamp(6.0, 48.0),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+              gridData: FlGridData(
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: colors.border, strokeWidth: 1),
+              ),
+              borderData: FlBorderData(show: false),
+              titlesData: _titles(context, [
+                for (final column in columns) column.label,
+              ], slanted: slanted),
+              barTouchData: BarTouchData(
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipColor: (_) => colors.surface2,
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) =>
+                      BarTooltipItem(
+                        '${columns[groupIndex].label}\n${_money(rod.toY)}',
+                        TextStyle(
+                          color: columns[groupIndex].color,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                ),
+                touchCallback: (event, response) {
+                  final spot = response?.spot;
+                  if (event is FlTapUpEvent && spot != null) {
+                    columns[spot.touchedBarGroupIndex].onTap();
+                  }
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  /// Every type's groups on one chart: a slot per group, the largest first
+  /// by what the types come to together, with a column per type in it.
+  Widget _groupedColumns(BuildContext context, List<StatsTypeTotals> types) {
+    final colors = context.colors;
+    final combined = <String, double>{};
+    final shown = {
+      for (final totals in types)
+        totals.type: {
+          for (final (_, entry) in _visible(totals)) entry.key: entry.value,
+        },
+    };
+    for (final sums in shown.values) {
+      for (final entry in sums.entries) {
+        combined[entry.key] = (combined[entry.key] ?? 0) + entry.value;
+      }
+    }
+    final keys = sortedCategorySumEntries(combined)
+        .take(12)
+        .map((entry) => entry.key)
+        .toList();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final slanted = keys.length * 90 > width - _leftReserved;
+        return SizedBox(
+          height: slanted ? 340 : 300,
+          child: BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              barGroups: [
+                for (var i = 0; i < keys.length; i++)
+                  BarChartGroupData(
+                    x: i,
+                    barsSpace: 2,
+                    barRods: [
+                      for (final totals in types)
+                        BarChartRodData(
+                          toY: shown[totals.type]![keys[i]] ?? 0,
+                          color: statsTypeColor(colors, totals.type),
+                          width:
+                              ((width - _leftReserved) /
+                                      keys.length *
+                                      0.7 /
+                                      types.length)
+                                  .clamp(4.0, 30.0),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(3),
+                          ),
+                        ),
+                    ],
+                  ),
+              ],
+              gridData: FlGridData(
+                drawVerticalLine: false,
+                getDrawingHorizontalLine: (_) =>
+                    FlLine(color: colors.border, strokeWidth: 1),
+              ),
+              borderData: FlBorderData(show: false),
+              titlesData: _titles(context, [
+                for (final key in keys) _label(key),
+              ], slanted: slanted),
+              barTouchData: BarTouchData(
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipColor: (_) => colors.surface2,
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) =>
+                      BarTooltipItem(
+                        '${_label(keys[groupIndex])} · '
+                        '${_typeLabel(types[rodIndex].type)}\n'
+                        '${_money(rod.toY)}',
+                        TextStyle(
+                          color: statsTypeColor(colors, types[rodIndex].type),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                ),
+                touchCallback: (event, response) {
+                  final spot = response?.spot;
+                  if (event is FlTapUpEvent && spot != null) {
+                    _open(
+                      _transactionsForGroup(
+                        keys[spot.touchedBarGroupIndex],
+                        types[spot.touchedRodDataIndex].type,
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  List<Widget> _legendRows(BuildContext context, StatsTypeTotals totals) {
     final colors = context.colors;
     final legend = totals.sortedGroups;
     if (legend.isEmpty) {
@@ -734,9 +903,8 @@ class _StatsBodyState extends State<_StatsBody> {
             ),
             Expanded(
               child: InkWell(
-                onTap: () => context.goPreservingSearch(
-                  _transactionsForGroup(entry.key, totals.type),
-                ),
+                onTap: () =>
+                    _open(_transactionsForGroup(entry.key, totals.type)),
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
                   padding: const EdgeInsets.all(4),
@@ -748,7 +916,7 @@ class _StatsBodyState extends State<_StatsBody> {
                           width: 12,
                           height: 12,
                           decoration: BoxDecoration(
-                            color: chartColors[index % chartColors.length],
+                            color: _shade(totals, index),
                             shape: BoxShape.circle,
                             border: isSelected
                                 ? Border.all(color: colors.text, width: 2)
@@ -791,10 +959,10 @@ class _StatsBodyState extends State<_StatsBody> {
   }
 }
 
-/// How the page lays out what it counts: broken down by one dimension as a
-/// donut or ranked bars, or over time with an interval, bars, stacked bars
-/// or lines, and an optional net series.
-class _ViewControls extends StatelessWidget {
+/// How the page lays out what it counts: broken down by one dimension or
+/// over time, as which chart, at which level, and with the types merged
+/// into one chart or separated into one each.
+class _ViewControls extends ConsumerWidget {
   static const _automatic = 'automatic';
 
   final StatsRouteFilters filters;
@@ -843,22 +1011,25 @@ class _ViewControls extends StatelessWidget {
       switch (chart) {
         StatsChart.donut => (LucideIcons.chartPie, l10n.statsChartDonut),
         StatsChart.bars => (LucideIcons.chartColumn, l10n.statsChartBars),
-        StatsChart.stacked => (
-          LucideIcons.chartColumnStacked,
-          l10n.statsChartStacked,
-        ),
         StatsChart.line => (LucideIcons.chartLine, l10n.statsChartLine),
       };
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
+    final layout = ref.watch(statsLayoutProvider);
+    final notifier = ref.read(statsLayoutProvider.notifier);
     final overTime = filters.overTime;
     final chart = filters.effectiveChart;
+    final severalTypes = filters.types.length > 1;
     final canNet =
         filters.types.contains(TransactionTypeFilter.expense) &&
         filters.types.contains(TransactionTypeFilter.income);
     final chosen = filters.interval;
+    // By category the types alone always share one chart, so separating
+    // them only means something once their parts are shown.
+    final canSeparate =
+        severalTypes && (overTime || layout.level == StatsLevel.groups);
 
     return Wrap(
       spacing: 12,
@@ -902,6 +1073,43 @@ class _ViewControls extends StatelessWidget {
           onSelectionChanged: (value) =>
               context.goPreservingSearch(filters.location(chart: value.single)),
         ),
+        SegmentedButton<StatsLevel>(
+          showSelectedIcon: false,
+          segments: [
+            ButtonSegment(
+              value: StatsLevel.types,
+              icon: const Icon(LucideIcons.layers2, size: 16),
+              label: Text(l10n.statsLevelTypes),
+              tooltip: l10n.statsLevelTypesHint,
+            ),
+            ButtonSegment(
+              value: StatsLevel.groups,
+              icon: const Icon(LucideIcons.layers3, size: 16),
+              label: Text(l10n.statsLevelGroups),
+              tooltip: l10n.statsLevelGroupsHint,
+            ),
+          ],
+          selected: {layout.level},
+          onSelectionChanged: (value) => notifier.setLevel(value.single),
+        ),
+        if (canSeparate)
+          SegmentedButton<bool>(
+            showSelectedIcon: false,
+            segments: [
+              ButtonSegment(
+                value: false,
+                icon: const Icon(LucideIcons.columns2, size: 16),
+                label: Text(l10n.statsSeparated),
+              ),
+              ButtonSegment(
+                value: true,
+                icon: const Icon(LucideIcons.merge, size: 16),
+                label: Text(l10n.statsMerged),
+              ),
+            ],
+            selected: {layout.merged},
+            onSelectionChanged: (value) => notifier.setMerged(value.single),
+          ),
         if (overTime) ...[
           // A menu treats a null pick as dismissed, so automatic has a value
           // of its own.
@@ -931,7 +1139,7 @@ class _ViewControls extends StatelessWidget {
               tooltip: chosen == null ? l10n.statsIntervalAuto : null,
             ),
           ),
-          if (chart == StatsChart.stacked)
+          if (layout.level == StatsLevel.groups)
             PopupMenuButton<StatsSplit>(
               onSelected: (split) =>
                   context.goPreservingSearch(filters.location(split: split)),
@@ -947,8 +1155,8 @@ class _ViewControls extends StatelessWidget {
                 label: splitLabel(l10n, filters.split),
               ),
             ),
-          // A net series is one figure a stretch; it has no parts to stack.
-          if (canNet && chart != StatsChart.stacked)
+          // The net needs both sides on one chart to be read against them.
+          if (canNet && (layout.merged || !severalTypes))
             FilterChip(
               label: Text(l10n.netFlow),
               selected: filters.showNet,
@@ -964,6 +1172,7 @@ class _ViewControls extends StatelessWidget {
 class _StatsOverTimeBody extends StatelessWidget {
   final StatsBreakdown breakdown;
   final StatsRouteFilters filters;
+  final StatsLayout layout;
   final StatsInterval interval;
   final String currency;
   final LocaleFormatting format;
@@ -972,6 +1181,7 @@ class _StatsOverTimeBody extends StatelessWidget {
   const _StatsOverTimeBody({
     required this.breakdown,
     required this.filters,
+    required this.layout,
     required this.interval,
     required this.currency,
     required this.format,
@@ -981,21 +1191,32 @@ class _StatsOverTimeBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final canNet =
+    final types = filters.orderedTypes;
+    final merged = layout.merged || types.length == 1;
+    final showNet =
+        filters.showNet &&
+        merged &&
         filters.types.contains(TransactionTypeFilter.expense) &&
         filters.types.contains(TransactionTypeFilter.income);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        StatsOverTime(
+    void openBucket(StatsBucket bucket) => context.goPreservingSearch(
+      _transactionsFor(
+        filters,
+        from: bucket.start,
+        to: DateTime(
+          bucket.bounds.end!.year,
+          bucket.bounds.end!.month,
+          bucket.bounds.end!.day - 1,
+        ),
+      ),
+    );
+    StatsSeriesChart chartFor(List<TransactionTypeFilter> shown) =>
+        StatsSeriesChart(
           series: breakdown.series,
-          types: filters.orderedTypes,
+          types: shown,
           interval: interval,
           chart: filters.effectiveChart,
-          showNet:
-              filters.showNet &&
-              canNet &&
-              filters.effectiveChart != StatsChart.stacked,
+          byParts: layout.level == StatsLevel.groups,
+          showNet: showNet,
           splitKeys: breakdown.splitKeys,
           splitLabel: (key) => key == kStatsOtherSplit
               ? l10n.statsOtherSplit
@@ -1007,17 +1228,29 @@ class _StatsOverTimeBody extends StatelessWidget {
           currency: currency,
           format: format,
           fun: fun,
-          onOpenBucket: (bucket) => context.goPreservingSearch(
-            _transactionsFor(
-              filters,
-              from: bucket.start,
-              to: DateTime(
-                bucket.bounds.end!.year,
-                bucket.bounds.end!.month,
-                bucket.bounds.end!.day - 1,
-              ),
-            ),
-          ),
+          onOpenBucket: openBucket,
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (merged)
+          chartFor(types)
+        else
+          for (final type in types) ...[
+            chartFor([type]),
+            const SizedBox(height: 24),
+          ],
+        if (merged) const SizedBox(height: 24),
+        StatsSeriesTable(
+          series: breakdown.series,
+          types: types,
+          interval: interval,
+          showNet: showNet,
+          currency: currency,
+          format: format,
+          fun: fun,
+          onOpenBucket: openBucket,
         ),
         if (breakdown.transactions.isNotEmpty) ...[
           const SizedBox(height: 32),

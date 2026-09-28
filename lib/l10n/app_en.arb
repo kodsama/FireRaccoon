@@ -2441,8 +2441,13 @@
   "statsStackedByTag": "Stacked by tag",
   "statsStackedByBudget": "Stacked by budget",
   "statsChartDonut": "Donut",
-  "statsChartStacked": "Stacked",
   "statsOtherSplit": "Other",
   "statsStackOrder": "Bars, left to right: {types}",
-  "@statsStackOrder": {"placeholders": {"types": {"type": "String"}}}
+  "@statsStackOrder": {"placeholders": {"types": {"type": "String"}}},
+  "statsLevelTypes": "Types",
+  "statsLevelTypesHint": "Expenses, income and transfers as a whole",
+  "statsLevelGroups": "In detail",
+  "statsLevelGroupsHint": "What each type is made of: categories, tags and so on",
+  "statsSeparated": "Separated",
+  "statsMerged": "Merged"
 }

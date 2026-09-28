@@ -2037,7 +2037,12 @@
   "statsStackedByTag": "Empilé par étiquette",
   "statsStackedByBudget": "Empilé par budget",
   "statsChartDonut": "Anneau",
-  "statsChartStacked": "Empilé",
   "statsOtherSplit": "Autres",
-  "statsStackOrder": "Barres, de gauche à droite : {types}"
+  "statsStackOrder": "Barres, de gauche à droite : {types}",
+  "statsLevelTypes": "Types",
+  "statsLevelTypesHint": "Dépenses, revenus et virements en bloc",
+  "statsLevelGroups": "En détail",
+  "statsLevelGroupsHint": "Ce dont chaque type est fait : catégories, étiquettes, etc.",
+  "statsSeparated": "Séparés",
+  "statsMerged": "Fusionnés"
 }

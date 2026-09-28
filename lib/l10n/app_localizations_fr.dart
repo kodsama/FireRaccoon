@@ -4148,13 +4148,29 @@ class AppLocalizationsFr extends AppLocalizations {
   String get statsChartDonut => 'Anneau';
 
   @override
-  String get statsChartStacked => 'Empilé';
-
-  @override
   String get statsOtherSplit => 'Autres';
 
   @override
   String statsStackOrder(String types) {
     return 'Barres, de gauche à droite : $types';
   }
+
+  @override
+  String get statsLevelTypes => 'Types';
+
+  @override
+  String get statsLevelTypesHint => 'Dépenses, revenus et virements en bloc';
+
+  @override
+  String get statsLevelGroups => 'En détail';
+
+  @override
+  String get statsLevelGroupsHint =>
+      'Ce dont chaque type est fait : catégories, étiquettes, etc.';
+
+  @override
+  String get statsSeparated => 'Séparés';
+
+  @override
+  String get statsMerged => 'Fusionnés';
 }

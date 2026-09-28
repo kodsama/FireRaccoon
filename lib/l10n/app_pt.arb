@@ -2037,7 +2037,12 @@
   "statsStackedByTag": "Empilhado por etiqueta",
   "statsStackedByBudget": "Empilhado por orçamento",
   "statsChartDonut": "Rosca",
-  "statsChartStacked": "Empilhado",
   "statsOtherSplit": "Outros",
-  "statsStackOrder": "Barras, da esquerda para a direita: {types}"
+  "statsStackOrder": "Barras, da esquerda para a direita: {types}",
+  "statsLevelTypes": "Tipos",
+  "statsLevelTypesHint": "Despesas, receitas e transferências no total",
+  "statsLevelGroups": "Em detalhe",
+  "statsLevelGroupsHint": "Do que cada tipo é feito: categorias, etiquetas, etc.",
+  "statsSeparated": "Separados",
+  "statsMerged": "Juntos"
 }

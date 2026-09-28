@@ -4011,13 +4011,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get statsChartDonut => '环形图';
 
   @override
-  String get statsChartStacked => '堆叠';
-
-  @override
   String get statsOtherSplit => '其他';
 
   @override
   String statsStackOrder(String types) {
     return '柱形从左到右：$types';
   }
+
+  @override
+  String get statsLevelTypes => '类型';
+
+  @override
+  String get statsLevelTypesHint => '支出、收入和转账的总额';
+
+  @override
+  String get statsLevelGroups => '明细';
+
+  @override
+  String get statsLevelGroupsHint => '每种类型的构成：类别、标签等';
+
+  @override
+  String get statsSeparated => '分开';
+
+  @override
+  String get statsMerged => '合并';
 }

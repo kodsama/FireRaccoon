@@ -2037,7 +2037,12 @@
   "statsStackedByTag": "按标签堆叠",
   "statsStackedByBudget": "按预算堆叠",
   "statsChartDonut": "环形图",
-  "statsChartStacked": "堆叠",
   "statsOtherSplit": "其他",
-  "statsStackOrder": "柱形从左到右：{types}"
+  "statsStackOrder": "柱形从左到右：{types}",
+  "statsLevelTypes": "类型",
+  "statsLevelTypesHint": "支出、收入和转账的总额",
+  "statsLevelGroups": "明细",
+  "statsLevelGroupsHint": "每种类型的构成：类别、标签等",
+  "statsSeparated": "分开",
+  "statsMerged": "合并"
 }

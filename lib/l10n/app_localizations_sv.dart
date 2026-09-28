@@ -4118,13 +4118,30 @@ class AppLocalizationsSv extends AppLocalizations {
   String get statsChartDonut => 'Ring';
 
   @override
-  String get statsChartStacked => 'Staplat';
-
-  @override
   String get statsOtherSplit => 'Övrigt';
 
   @override
   String statsStackOrder(String types) {
     return 'Staplar, från vänster till höger: $types';
   }
+
+  @override
+  String get statsLevelTypes => 'Typer';
+
+  @override
+  String get statsLevelTypesHint =>
+      'Utgifter, inkomster och överföringar som helhet';
+
+  @override
+  String get statsLevelGroups => 'I detalj';
+
+  @override
+  String get statsLevelGroupsHint =>
+      'Vad varje typ består av: kategorier, taggar och så vidare';
+
+  @override
+  String get statsSeparated => 'Separerade';
+
+  @override
+  String get statsMerged => 'Sammanslagna';
 }

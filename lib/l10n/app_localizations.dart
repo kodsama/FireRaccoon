@@ -7402,12 +7402,6 @@ abstract class AppLocalizations {
   /// **'Donut'**
   String get statsChartDonut;
 
-  /// No description provided for @statsChartStacked.
-  ///
-  /// In en, this message translates to:
-  /// **'Stacked'**
-  String get statsChartStacked;
-
   /// No description provided for @statsOtherSplit.
   ///
   /// In en, this message translates to:
@@ -7419,6 +7413,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Bars, left to right: {types}'**
   String statsStackOrder(String types);
+
+  /// No description provided for @statsLevelTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Types'**
+  String get statsLevelTypes;
+
+  /// No description provided for @statsLevelTypesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses, income and transfers as a whole'**
+  String get statsLevelTypesHint;
+
+  /// No description provided for @statsLevelGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'In detail'**
+  String get statsLevelGroups;
+
+  /// No description provided for @statsLevelGroupsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What each type is made of: categories, tags and so on'**
+  String get statsLevelGroupsHint;
+
+  /// No description provided for @statsSeparated.
+  ///
+  /// In en, this message translates to:
+  /// **'Separated'**
+  String get statsSeparated;
+
+  /// No description provided for @statsMerged.
+  ///
+  /// In en, this message translates to:
+  /// **'Merged'**
+  String get statsMerged;
 }
 
 class _AppLocalizationsDelegate

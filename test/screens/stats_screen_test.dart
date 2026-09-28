@@ -8,7 +8,9 @@ import 'package:fireraccoon/screens/stats_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:fireraccoon/widgets/filter_pill.dart';
-import 'package:fireraccoon/widgets/simple_charts.dart';
+import 'package:fireraccoon/widgets/stats_donut.dart';
+import 'package:fireraccoon/widgets/stats_over_time.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fireraccoon/widgets/loading_body.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
@@ -373,6 +375,11 @@ void main() {
       await buildScreenTestApp(
         child: const StatsScreen(),
         initialLocation: '/stats?period=year',
+        prefsValues: const {
+          'isRaccoonMode': false,
+          'statsMerged': true,
+          'statsLevel': 'types',
+        },
       ),
     );
     await tester.pumpAndSettle();
@@ -461,7 +468,7 @@ void main() {
     await tester.tap(find.text('Bars'));
     await tester.pumpAndSettle();
     expect(uri().queryParameters['chart'], 'bars');
-    expect(find.byType(SimpleDonutChart), findsNothing);
+    expect(find.byType(StatsDonut), findsNothing);
     // Upright columns, named along the bottom.
     expect(find.byType(BarChart), findsOneWidget);
     expect(
@@ -475,7 +482,7 @@ void main() {
     expect(uri().queryParametersAll['tag'], ['Work']);
   });
 
-  testWidgets('StatsScreen stacks each month by the split picked', (
+  testWidgets('StatsScreen separates or merges the types and remembers it', (
     tester,
   ) async {
     configureLargeScreen(tester);
@@ -490,20 +497,82 @@ void main() {
     await tester.pumpAndSettle();
     Uri uri() => GoRouterState.of(tester.element(find.byType(StatsScreen))).uri;
 
-    expect(find.widgetWithText(FilterChip, 'Net'), findsOneWidget);
-    await tester.tap(find.text('Stacked'));
-    await tester.pumpAndSettle();
-    expect(uri().queryParameters['chart'], 'stacked');
-    // No net to stack, and the legend names the parts.
+    // In detail and separated to start with: a stacked chart per type, and
+    // no net, which needs both on one chart.
+    expect(find.byType(StatsSeriesChart), findsNWidgets(2));
     expect(find.widgetWithText(FilterChip, 'Net'), findsNothing);
-    expect(find.text('Food'), findsWidgets);
+    expect(find.widgetWithText(FilterPill, 'Stacked by category'), findsOne);
+
+    await tester.tap(find.text('Merged'));
+    await tester.pumpAndSettle();
+    expect(find.byType(StatsSeriesChart), findsOneWidget);
     expect(find.textContaining('left to right'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilterChip, 'Net'));
+    await tester.pumpAndSettle();
+    expect(uri().queryParameters['net'], '1');
 
     await tester.tap(find.widgetWithText(FilterPill, 'Stacked by category'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Stacked by tag').last);
     await tester.pumpAndSettle();
     expect(uri().queryParameters['split'], 'tag');
-    expect(find.text('(none)'), findsWidgets);
+    expect(find.textContaining('(none)'), findsWidgets);
+
+    await tester.tap(find.text('Types'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(FilterPill, 'Stacked by tag'), findsNothing);
+    expect(
+      tester.widget<StatsSeriesChart>(find.byType(StatsSeriesChart)).byParts,
+      isFalse,
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('statsMerged'), isTrue);
+    expect(prefs.getString('statsLevel'), 'types');
+  });
+
+  testWidgets('StatsScreen draws the types alone as one donut', (tester) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation: '/stats',
+        prefsValues: const {'isRaccoonMode': false, 'statsLevel': 'types'},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final donut = tester.widget<StatsDonut>(find.byType(StatsDonut));
+    expect(donut.outer.map((slice) => slice.label), ['Expenses', 'Income']);
+    expect(donut.inner, isEmpty);
+    // Nothing to separate once the types stand alone.
+    expect(find.text('Merged'), findsNothing);
+  });
+
+  testWidgets('StatsScreen merges the types into a two-ring donut', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation: '/stats',
+        prefsValues: const {'isRaccoonMode': false, 'statsMerged': true},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final donut = tester.widget<StatsDonut>(find.byType(StatsDonut));
+    expect(donut.inner.map((slice) => slice.label), ['Expenses', 'Income']);
+    expect(donut.outer.map((slice) => slice.label), ['Food', 'Income']);
+    // Money out in red, money in in green, whatever else is on the page.
+    expect(
+      HSLColor.fromColor(donut.outer.first.color).hue,
+      closeTo(HSLColor.fromColor(donut.inner.first.color).hue, 1),
+    );
   });
 }

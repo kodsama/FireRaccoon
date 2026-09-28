@@ -26,6 +26,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stats draws each type in its own hue: expenses in shades of red, income in
+  shades of green, transfers in blue, the largest part darkest. Two new
+  switches, kept on the device from one visit to the next, set how the types
+  are laid out. Types or In detail picks between the types as a whole and
+  what each is made of. Separated or Merged picks between a chart per type
+  and one for them all: merged by category is a donut with the types inside
+  and their categories around them, or a column per type in each category,
+  and merged over time is each month's bars side by side with the net drawn
+  as a curve across them. Donuts carry their amounts inside the slices and
+  name each part outside on a line, with its share. The Stacked chart gives
+  way to In detail, which stacks each type by the split it is set to
+
 - Stats breaks its totals down by tag, budget, account or payee as well as
   by category, as a donut or as upright bars ranked largest first, from one
   Group by menu that also holds Over time. The filter on the dimension grouped by narrows the
