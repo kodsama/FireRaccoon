@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A filter in use on Stats or Transactions looked the same as one that was
+  not, so a page narrowed to a budget read like the whole ledger. A filter in
+  use is now filled with the accent and has its own clear button, and the
+  last type chip left on Stats keeps its selected look where it used to grey
+  out as if it were off
+
 - Searching for a tag found nothing. The search box says it reads tags and
   notes, but the local match never looked at either, and Firefly matches bare
   words against the description and group title only. The local match now

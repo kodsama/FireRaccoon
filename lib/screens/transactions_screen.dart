@@ -24,6 +24,7 @@ import '../router/transactions_route.dart';
 import '../utils/balance_check_selection.dart';
 import '../utils/transaction_list_grouping.dart';
 import '../widgets/account_balance_check_panel.dart';
+import '../widgets/filter_pill.dart';
 import '../widgets/name_filter_dialog.dart';
 import '../widgets/entity_screen_header.dart';
 import '../widgets/not_connected_view.dart';
@@ -1831,7 +1832,6 @@ class _EntityFilterButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.colors;
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () async {
@@ -1849,31 +1849,12 @@ class _EntityFilterButton extends StatelessWidget {
           onPicked(picked == allNamesSentinel ? null : picked),
         );
       },
-      child: Tooltip(
-        message: title,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          decoration: BoxDecoration(
-            color: current == null
-                ? colors.surface
-                : colors.accent.acc.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.border),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 16, color: colors.text),
-              const SizedBox(width: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: colors.text,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
+      child: FilterPill(
+        icon: icon,
+        label: label,
+        tooltip: title,
+        active: current != null,
+        onClear: () => context.goPreservingSearch(onPicked(null)),
       ),
     );
   }
