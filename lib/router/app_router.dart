@@ -22,6 +22,7 @@ import '../screens/stats_screen.dart';
 import '../screens/history_screen.dart';
 import '../screens/categories_tags_screen.dart';
 import '../screens/payees_screen.dart';
+import 'stats_route.dart';
 
 /// Decides whether a navigation to [matchedLocation] must be redirected
 /// because of the people login gate. Returns the target location, or
@@ -162,6 +163,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/prognosis',
             redirect: (context, state) => '/projection',
           ),
+          for (final retired in StatsRoute.retiredPaths.keys)
+            GoRoute(
+              path: retired,
+              redirect: (context, state) =>
+                  StatsRoute.fromRetiredLink(state.uri),
+            ),
           GoRoute(
             path: '/settings',
             builder: (context, state) => const SettingsScreen(),
