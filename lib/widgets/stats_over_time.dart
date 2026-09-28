@@ -121,16 +121,19 @@ class StatsSeriesChart extends StatelessWidget {
       ),
   ];
 
+  /// A series per part a type actually has; income never shows up in the
+  /// legend under an expense category it holds nothing in.
   List<_Series> _partSeries(BuildContext context, AppLocalizations l10n) => [
     for (final type in types)
       for (var i = 0; i < splitKeys.length; i++)
-        _Series(
-          types.length > 1
-              ? '${_typeLabel(l10n, type)} · ${splitLabel(splitKeys[i])}'
-              : splitLabel(splitKeys[i]),
-          _partColor(context, type, i),
-          (bucket) => bucket.partFor(type, splitKeys[i]),
-        ),
+        if (series.any((bucket) => bucket.partFor(type, splitKeys[i]) != 0))
+          _Series(
+            types.length > 1
+                ? '${_typeLabel(l10n, type)} · ${splitLabel(splitKeys[i])}'
+                : splitLabel(splitKeys[i]),
+            _partColor(context, type, i),
+            (bucket) => bucket.partFor(type, splitKeys[i]),
+          ),
   ];
 
   _Series _netSeries(AppLocalizations l10n) => _Series(

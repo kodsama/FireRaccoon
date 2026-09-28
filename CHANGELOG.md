@@ -31,10 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   switches, kept on the device from one visit to the next, set how the types
   are laid out. Types or In detail picks between the types as a whole and
   what each is made of. Separated or Merged picks between a chart per type
-  and one for them all: merged by category is a donut with the types inside
-  and their categories around them, or a column per type in each category,
-  and merged over time is each month's bars side by side with the net drawn
-  as a curve across them. Donuts name each type inside the inner ring and
+  and one for them all: merged is a donut with the types inside and their
+  categories around them, or each month's bars side by side with the net
+  drawn as a curve across them. Donuts name each type inside the inner ring and
   each part outside on a line with its share, using the width beside the
   ring rather than cutting names short; hovering a part shows its full name,
   share and amount. Shares and amounts follow the number locale. The Stacked
@@ -42,11 +41,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   set to
 
 - Stats breaks its totals down by tag, budget, account or payee as well as
-  by category, as a donut or as upright bars ranked largest first, from one
-  Group by menu that also holds Over time. The filter on the dimension grouped by narrows the
-  chart but leaves the rest listed, as the category filter always did. A leg
-  with several tags gives each an equal share, so the parts still add up to
-  what was spent. Over time adds stacked bars, each type's bar cut by
+  by category, from one Group by menu that also holds Over time. As a donut
+  the parts are slices; as bars the months stand side by side, one bar per
+  type, each cut by the parts in detail, so one month shows one group and a
+  longer period one per month. The filter on the dimension grouped by
+  narrows the chart but leaves the rest listed, as the category filter
+  always did. A leg with several tags gives each an equal share, so the
+  parts still add up to what was spent. Over time adds stacked bars, each type's bar cut by
   category, tag or budget, the six largest by name and the rest as Other
 
 - Stats can lay its totals out over time as well as by category. Over time

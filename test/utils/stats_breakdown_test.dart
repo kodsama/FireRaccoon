@@ -432,7 +432,7 @@ void main() {
         rows,
         types: _expense,
         interval: StatsInterval.month,
-        split: StatsSplit.category,
+        partsBy: StatsGrouping.category,
         range: july,
         today: DateTime(2026, 7, 31),
       );

@@ -430,7 +430,7 @@ void main() {
     );
   });
 
-  testWidgets('StatsScreen groups by tag as columns and opens a tag', (
+  testWidgets('StatsScreen bars go by month, stacked by the grouping', (
     tester,
   ) async {
     configureLargeScreen(tester);
@@ -449,37 +449,71 @@ void main() {
     await tester.pumpWidget(
       await buildScreenTestApp(
         child: const StatsScreen(),
-        initialLocation: '/stats?types=expense',
+        initialLocation: '/stats?types=expense&view=tag',
         fireflyService: service,
       ),
     );
     await tester.pumpAndSettle();
     Uri uri() => GoRouterState.of(tester.element(find.byType(StatsScreen))).uri;
 
-    await tester.tap(find.widgetWithText(FilterPill, 'By category'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('By tag').last);
-    await tester.pumpAndSettle();
-    expect(uri().queryParameters['view'], 'tag');
-    // The list under the chart is titled by the grouping.
-    expect(find.text('By tag'), findsWidgets);
-    expect(find.text('Work'), findsWidgets);
-
     await tester.tap(find.text('Bars'));
     await tester.pumpAndSettle();
     expect(uri().queryParameters['chart'], 'bars');
     expect(find.byType(StatsDonut), findsNothing);
-    // Upright columns, named along the bottom.
-    expect(find.byType(BarChart), findsOneWidget);
-    expect(
-      find.descendant(of: find.byType(BarChart), matching: find.text('Work')),
-      findsOneWidget,
-    );
 
-    await tester.tap(find.text('Work').last);
+    // This month only, so one group of bars, cut by tag.
+    final chart = tester.widget<StatsSeriesChart>(
+      find.byType(StatsSeriesChart),
+    );
+    expect(chart.interval, StatsInterval.month);
+    expect(chart.series, hasLength(1));
+    expect(chart.byParts, isTrue);
+    expect(chart.splitKeys, containsAll(['Work', 'Holiday']));
+
+    final now = DateTime.now();
+    await tester.tap(find.text(DateFormat.yMMMM('en').format(now)));
     await tester.pumpAndSettle();
     expect(uri().path, '/transactions');
-    expect(uri().queryParametersAll['tag'], ['Work']);
+    expect(
+      uri().queryParameters['from'],
+      StatsRouteFilters.formatDate(DateTime(now.year, now.month)),
+    );
+  });
+
+  testWidgets('StatsScreen bars show one group per month picked', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final now = DateTime.now();
+    final from = DateTime(now.year, now.month - 2);
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation:
+            '/stats?chart=bars&from=${StatsRouteFilters.formatDate(from)}'
+            '&to=${StatsRouteFilters.formatDate(DateTime(now.year, now.month + 1, 0))}',
+        prefsValues: const {
+          'isRaccoonMode': false,
+          'statsMerged': true,
+          'statsLevel': 'types',
+        },
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final chart = tester.widget<StatsSeriesChart>(
+      find.byType(StatsSeriesChart),
+    );
+    expect(chart.series, hasLength(3));
+    expect(chart.byParts, isFalse);
+    // Income against expenses, with the net drawn across them unasked.
+    expect(chart.types, [
+      TransactionTypeFilter.expense,
+      TransactionTypeFilter.income,
+    ]);
+    expect(chart.showNet, isTrue);
   });
 
   testWidgets('StatsScreen separates or merges the types and remembers it', (
@@ -601,4 +635,24 @@ void main() {
       expect(donut.outer.first.amount, contains(','));
     },
   );
+
+  testWidgets('StatsScreen names in its legend only the parts with money', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation: '/stats?chart=bars',
+        prefsValues: const {'isRaccoonMode': false, 'statsMerged': true},
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Expenses · Food'), findsOneWidget);
+    expect(find.text('Income · Income'), findsOneWidget);
+    expect(find.text('Income · Food'), findsNothing);
+  });
 }

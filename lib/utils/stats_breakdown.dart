@@ -137,7 +137,8 @@ List<MapEntry<String, double>> statsGroupShares(
   }
 }
 
-StatsGrouping _groupingOf(StatsSplit split) => switch (split) {
+/// The grouping a series over time is cut into for [split].
+StatsGrouping statsSplitGrouping(StatsSplit split) => switch (split) {
   StatsSplit.category => StatsGrouping.category,
   StatsSplit.tag => StatsGrouping.tag,
   StatsSplit.budget => StatsGrouping.budget,
@@ -160,7 +161,7 @@ StatsBreakdown buildStatsBreakdown(
   Set<String> accounts = const {},
   String? words,
   StatsInterval? interval,
-  StatsSplit? split,
+  StatsGrouping? partsBy,
   DateRangeBounds range = const DateRangeBounds(),
   DateTime? today,
 }) {
@@ -178,7 +179,7 @@ StatsBreakdown buildStatsBreakdown(
   final partsByBucket =
       <DateTime, Map<TransactionTypeFilter, Map<String, double>>>{};
   final splitTotals = <String, double>{};
-  final splitGrouping = split == null ? null : _groupingOf(split);
+  final splitGrouping = partsBy;
 
   for (final transaction in periodTransactions) {
     final type = _statsTypeOf(transaction.type);
