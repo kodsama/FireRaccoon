@@ -515,44 +515,32 @@ class _InclusionPanel extends StatelessWidget {
     required this.tags,
   });
 
-  Future<void> _leaveOutCategory(BuildContext context) async {
+  Future<void> _leaveOutCategories(BuildContext context) async {
     final l10n = context.l10n;
-    final picked = await showNameFilterDialog(
+    final picked = await showNamesFilterDialog(
       context: context,
       title: l10n.category,
-      allLabel: null,
       emptyLabel: l10n.noCategoriesFound,
-      names: categories
-          .where((name) => !inclusion.excludedCategories.contains(name))
-          .toList(),
-      currentFilter: null,
+      names: categories,
+      selected: inclusion.excludedCategories,
       icon: LucideIcons.folder,
     );
     if (picked == null) return;
-    onChanged(
-      inclusion.copyWith(
-        excludedCategories: {...inclusion.excludedCategories, picked},
-      ),
-    );
+    onChanged(inclusion.copyWith(excludedCategories: picked));
   }
 
-  Future<void> _leaveOutTag(BuildContext context) async {
+  Future<void> _leaveOutTags(BuildContext context) async {
     final l10n = context.l10n;
-    final picked = await showNameFilterDialog(
+    final picked = await showNamesFilterDialog(
       context: context,
       title: l10n.filterTag,
-      allLabel: null,
       emptyLabel: l10n.noTagsFound,
-      names: tags
-          .where((name) => !inclusion.excludedTags.contains(name))
-          .toList(),
-      currentFilter: null,
+      names: tags,
+      selected: inclusion.excludedTags,
       icon: LucideIcons.tag,
     );
     if (picked == null) return;
-    onChanged(
-      inclusion.copyWith(excludedTags: {...inclusion.excludedTags, picked}),
-    );
+    onChanged(inclusion.copyWith(excludedTags: picked));
   }
 
   Future<void> _leaveOutWords(BuildContext context) async {
@@ -679,12 +667,12 @@ class _InclusionPanel extends StatelessWidget {
                 ActionChip(
                   avatar: const Icon(LucideIcons.plus, size: 14),
                   label: Text(l10n.category),
-                  onPressed: () => _leaveOutCategory(context),
+                  onPressed: () => _leaveOutCategories(context),
                 ),
                 ActionChip(
                   avatar: const Icon(LucideIcons.plus, size: 14),
                   label: Text(l10n.filterTag),
-                  onPressed: () => _leaveOutTag(context),
+                  onPressed: () => _leaveOutTags(context),
                 ),
                 ActionChip(
                   avatar: const Icon(LucideIcons.plus, size: 14),

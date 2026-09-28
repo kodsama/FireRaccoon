@@ -12,36 +12,60 @@ typedef TransactionAnalyticsKey = ({
   String? account,
 });
 
-typedef TransactionListFilterKey = ({
-  ExpensePeriod period,
-  DateTime? from,
-  DateTime? to,
-  TransactionTypeFilter type,
-  String? account,
-  String? category,
-  String? tag,
-  String? budget,
-});
+bool _sameSet<T>(Set<T> a, Set<T> b) =>
+    a.length == b.length && a.containsAll(b);
 
-/// What Stats fetches: the period, account and types, and none of the
-/// filters that only narrow what was fetched.
+/// A fetch plus the category, tag and budget sets that narrow it. A class
+/// rather than a record because a record compares sets by identity, and a
+/// provider keyed on one would refetch on every rebuild.
+class TransactionListFilterKey {
+  final TransactionAnalyticsKey scope;
+  final Set<String> categories;
+  final Set<String> tags;
+  final Set<String> budgets;
+
+  const TransactionListFilterKey({
+    required this.scope,
+    this.categories = const {},
+    this.tags = const {},
+    this.budgets = const {},
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      other is TransactionListFilterKey &&
+      other.scope == scope &&
+      _sameSet(other.categories, categories) &&
+      _sameSet(other.tags, tags) &&
+      _sameSet(other.budgets, budgets);
+
+  @override
+  int get hashCode => Object.hash(
+    scope,
+    Object.hashAllUnordered(categories),
+    Object.hashAllUnordered(tags),
+    Object.hashAllUnordered(budgets),
+  );
+}
+
+/// What Stats fetches: the period and types, and none of the filters that
+/// only narrow what was fetched. Accounts are one of those, since the fetch
+/// narrows to an account on the device anyway.
 class StatsScope {
   final ExpensePeriod period;
   final DateTime? from;
   final DateTime? to;
   final Set<TransactionTypeFilter> types;
-  final String? account;
 
   const StatsScope({
     required this.period,
     required this.from,
     required this.to,
     required this.types,
-    required this.account,
   });
 
   TransactionAnalyticsKey keyFor(TransactionTypeFilter type) =>
-      (period: period, from: from, to: to, type: type, account: account);
+      (period: period, from: from, to: to, type: type, account: null);
 
   @override
   bool operator ==(Object other) =>
@@ -49,23 +73,16 @@ class StatsScope {
       other.period == period &&
       other.from == from &&
       other.to == to &&
-      other.account == account &&
-      other.types.length == types.length &&
-      other.types.containsAll(types);
+      _sameSet(other.types, types);
 
   @override
   int get hashCode =>
-      Object.hash(period, from, to, account, Object.hashAllUnordered(types));
+      Object.hash(period, from, to, Object.hashAllUnordered(types));
 }
 
 extension StatsRouteFiltersScope on StatsRouteFilters {
-  StatsScope get scope => StatsScope(
-    period: period,
-    from: from,
-    to: to,
-    types: types,
-    account: account,
-  );
+  StatsScope get scope =>
+      StatsScope(period: period, from: from, to: to, types: types);
 }
 
 DateRangeBounds _dateRangeForKey(TransactionAnalyticsKey key) =>
@@ -123,21 +140,14 @@ final filteredTransactionListProvider =
       ref,
       key,
     ) async {
-      final analyticsKey = (
-        period: key.period,
-        from: key.from,
-        to: key.to,
-        type: key.type,
-        account: key.account,
-      );
       final transactions = await ref.watch(
-        scopedTransactionsProvider(analyticsKey).future,
+        scopedTransactionsProvider(key.scope).future,
       );
       return filterTransactions(
         transactions,
         type: TransactionTypeFilter.all,
-        category: key.category,
-        tag: key.tag,
-        budget: key.budget,
+        categories: key.categories,
+        tags: key.tags,
+        budgets: key.budgets,
       );
     });

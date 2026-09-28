@@ -123,44 +123,46 @@ String? transactionTypeForFilter(TransactionTypeFilter filter) {
   };
 }
 
+/// Each set narrows to groups with a leg matching any of its values; an
+/// empty set does not narrow at all.
 List<Transaction> filterTransactions(
   List<Transaction> transactions, {
   TransactionTypeFilter type = TransactionTypeFilter.expense,
-  String? category,
-  String? tag,
-  String? budget,
+  Set<String> categories = const {},
+  Set<String> tags = const {},
+  Set<String> budgets = const {},
   String? account,
   DateRangeBounds? dateRange,
 }) {
   final typeValue = transactionTypeForFilter(type);
+  final categoryKeys = categories.map(categoryGroupKey).toSet();
 
   return transactions.where((transaction) {
     if (typeValue != null && transaction.type != typeValue) return false;
-    if (category != null) {
-      final matchesCategory = transaction.resolvedSplits().any(
-        (split) =>
-            categoryGroupKey(split.categoryName) == categoryGroupKey(category),
-      );
-      if (!matchesCategory) return false;
-    }
-    if (tag != null &&
-        !transaction.resolvedSplits().any(
-          (split) => split.tags.contains(tag),
+    final splits = transaction.resolvedSplits();
+    if (categoryKeys.isNotEmpty &&
+        !splits.any(
+          (split) =>
+              categoryKeys.contains(categoryGroupKey(split.categoryName)),
         )) {
       return false;
     }
-    if (budget != null &&
-        !transaction.resolvedSplits().any(
-          (split) => (split.budgetName ?? '').trim() == budget,
+    if (tags.isNotEmpty &&
+        !splits.any((split) => split.tags.any(tags.contains))) {
+      return false;
+    }
+    if (budgets.isNotEmpty &&
+        !splits.any(
+          (split) => budgets.contains((split.budgetName ?? '').trim()),
         )) {
       return false;
     }
-    if (account != null) {
-      final matchesAccount = transaction.resolvedSplits().any(
-        (split) =>
-            split.sourceName == account || split.destinationName == account,
-      );
-      if (!matchesAccount) return false;
+    if (account != null &&
+        !splits.any(
+          (split) =>
+              split.sourceName == account || split.destinationName == account,
+        )) {
+      return false;
     }
     if (dateRange != null && !dateRange.contains(transaction.date)) {
       return false;

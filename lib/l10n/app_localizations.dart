@@ -3238,12 +3238,6 @@ abstract class AppLocalizations {
   /// **'By Category'**
   String get byCategory;
 
-  /// No description provided for @allCategories.
-  ///
-  /// In en, this message translates to:
-  /// **'All Categories'**
-  String get allCategories;
-
   /// No description provided for @allTypes.
   ///
   /// In en, this message translates to:
@@ -7216,12 +7210,6 @@ abstract class AppLocalizations {
   /// **'Tag'**
   String get filterTag;
 
-  /// No description provided for @allTags.
-  ///
-  /// In en, this message translates to:
-  /// **'All tags'**
-  String get allTags;
-
   /// No description provided for @noTagsFound.
   ///
   /// In en, this message translates to:
@@ -7233,12 +7221,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Budget'**
   String get filterBudget;
-
-  /// No description provided for @allBudgets.
-  ///
-  /// In en, this message translates to:
-  /// **'All budgets'**
-  String get allBudgets;
 
   /// No description provided for @noBudgetsFound.
   ///
@@ -7287,6 +7269,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Flows in these categories or tags, or carrying every one of these words, stay out of the forecast.'**
   String get prognosisLeaveOutHelp;
+
+  /// No description provided for @filterSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String filterSelectedCount(int count);
 }
 
 class _AppLocalizationsDelegate

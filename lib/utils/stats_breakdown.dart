@@ -58,43 +58,55 @@ class StatsBreakdown {
 }
 
 /// Sums [periodTransactions] leg by leg, so a split that puts one leg on a
-/// tag or budget counts only that leg rather than the whole group.
+/// tag or budget counts only that leg rather than the whole group. Each set
+/// keeps what matches any one of its names, and an empty set keeps all.
 StatsBreakdown buildStatsBreakdown(
   List<Transaction> periodTransactions, {
   required List<TransactionTypeFilter> types,
-  String? category,
-  String? tag,
-  String? budget,
+  Set<String> categories = const {},
+  Set<String> tags = const {},
+  Set<String> budgets = const {},
+  Set<String> accounts = const {},
   String? words,
 }) {
   final wordList = (words ?? '')
       .split(RegExp(r'\s+'))
       .where((word) => word.isNotEmpty)
       .toList();
-  final categoryKey = category == null ? null : categoryGroupKey(category);
+  final categoryKeys = categories.map(categoryGroupKey).toSet();
   final sums = {for (final type in types) type: <String, double>{}};
-  final categories = <String>{};
-  final tags = <String>{};
-  final budgets = <String>{};
+  final categoryOptions = <String>{};
+  final tagOptions = <String>{};
+  final budgetOptions = <String>{};
   final counted = <Transaction>[];
 
   for (final transaction in periodTransactions) {
     final typeSums = sums[_statsTypeOf(transaction.type)];
     if (typeSums == null) continue;
+    if (accounts.isNotEmpty &&
+        !transaction.resolvedSplits().any(
+          (split) =>
+              accounts.contains(split.sourceName) ||
+              accounts.contains(split.destinationName),
+        )) {
+      continue;
+    }
     var countsTransaction = false;
     for (final split in transaction.resolvedSplits()) {
       final key = categoryGroupKey(split.categoryName);
       final budgetName = split.budgetName?.trim() ?? '';
-      categories.add(key);
-      tags.addAll(split.tags);
-      if (budgetName.isNotEmpty) budgets.add(budgetName);
+      categoryOptions.add(key);
+      tagOptions.addAll(split.tags);
+      if (budgetName.isNotEmpty) budgetOptions.add(budgetName);
 
-      if (tag != null && !split.tags.contains(tag)) continue;
-      if (budget != null && budgetName != budget) continue;
+      if (tags.isNotEmpty && !split.tags.any(tags.contains)) continue;
+      if (budgets.isNotEmpty && !budgets.contains(budgetName)) continue;
       if (!_matchesEveryWord(transaction, split, wordList)) continue;
 
       typeSums[key] = (typeSums[key] ?? 0) + split.amount;
-      if (categoryKey == null || key == categoryKey) countsTransaction = true;
+      if (categoryKeys.isEmpty || categoryKeys.contains(key)) {
+        countsTransaction = true;
+      }
     }
     if (countsTransaction) counted.add(transaction);
   }
@@ -105,9 +117,9 @@ StatsBreakdown buildStatsBreakdown(
         StatsTypeTotals(type: type, categorySums: sums[type]!),
     ],
     transactions: counted,
-    categories: categories.toList()..sort(),
-    tags: _sortedIgnoringCase(tags),
-    budgets: _sortedIgnoringCase(budgets),
+    categories: categoryOptions.toList()..sort(),
+    tags: _sortedIgnoringCase(tagOptions),
+    budgets: _sortedIgnoringCase(budgetOptions),
   );
 }
 

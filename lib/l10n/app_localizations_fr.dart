@@ -1760,9 +1760,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get byCategory => 'Par catégorie';
 
   @override
-  String get allCategories => 'Toutes les catégories';
-
-  @override
   String get allTypes => 'Tous les types';
 
   @override
@@ -4043,16 +4040,10 @@ class AppLocalizationsFr extends AppLocalizations {
   String get filterTag => 'Étiquette';
 
   @override
-  String get allTags => 'Toutes les étiquettes';
-
-  @override
   String get noTagsFound => 'Aucune étiquette trouvée.';
 
   @override
   String get filterBudget => 'Budget';
-
-  @override
-  String get allBudgets => 'Tous les budgets';
 
   @override
   String get noBudgetsFound => 'Aucun budget trouvé.';
@@ -4078,4 +4069,9 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String get prognosisLeaveOutHelp =>
       'Les flux de ces catégories ou étiquettes, ou portant chacun de ces mots, restent hors de la prévision.';
+
+  @override
+  String filterSelectedCount(int count) {
+    return '$count sélectionné(s)';
+  }
 }

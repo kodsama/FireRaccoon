@@ -12,11 +12,12 @@ void main() {
   test('the scope compares types as a set and ignores narrowing filters', () {
     const a = StatsRouteFilters(
       types: {TransactionTypeFilter.income, TransactionTypeFilter.expense},
-      tag: 'Holiday',
+      tags: {'Holiday'},
+      accounts: {'Checking'},
     );
     const b = StatsRouteFilters(
       types: {TransactionTypeFilter.expense, TransactionTypeFilter.income},
-      budget: 'Fun',
+      budgets: {'Fun'},
     );
     const other = StatsRouteFilters(types: {TransactionTypeFilter.expense});
 
@@ -65,7 +66,6 @@ void main() {
           from: DateTime(2026, 7, 1),
           to: DateTime(2026, 7, 31),
           types: {TransactionTypeFilter.expense, TransactionTypeFilter.income},
-          account: null,
         ),
       ).future,
     );
@@ -83,28 +83,31 @@ void main() {
     );
     addTearDown(container.dispose);
     final all = await container.read(
-      filteredTransactionListProvider((
-        period: ExpensePeriod.all,
-        from: null,
-        to: null,
-        type: TransactionTypeFilter.all,
-        account: null,
-        category: null,
-        tag: null,
-        budget: null,
-      )).future,
+      filteredTransactionListProvider(
+        TransactionListFilterKey(
+          scope: (
+            period: ExpensePeriod.all,
+            from: null,
+            to: null,
+            type: TransactionTypeFilter.all,
+            account: null,
+          ),
+        ),
+      ).future,
     );
     final food = await container.read(
-      filteredTransactionListProvider((
-        period: ExpensePeriod.all,
-        from: null,
-        to: null,
-        type: TransactionTypeFilter.all,
-        account: null,
-        category: 'Food',
-        tag: null,
-        budget: null,
-      )).future,
+      filteredTransactionListProvider(
+        TransactionListFilterKey(
+          scope: (
+            period: ExpensePeriod.all,
+            from: null,
+            to: null,
+            type: TransactionTypeFilter.all,
+            account: null,
+          ),
+          categories: {'Food'},
+        ),
+      ).future,
     );
 
     expect(all, isNotEmpty);
@@ -133,19 +136,45 @@ void main() {
 
     Future<List<String>> ids({String? tag, String? budget}) async =>
         (await container.read(
-          filteredTransactionListProvider((
-            period: ExpensePeriod.all,
-            from: null,
-            to: null,
-            type: TransactionTypeFilter.all,
-            account: null,
-            category: null,
-            tag: tag,
-            budget: budget,
-          )).future,
+          filteredTransactionListProvider(
+            TransactionListFilterKey(
+              scope: (
+                period: ExpensePeriod.all,
+                from: null,
+                to: null,
+                type: TransactionTypeFilter.all,
+                account: null,
+              ),
+              tags: {?tag},
+              budgets: {?budget},
+            ),
+          ).future,
         )).map((t) => t.id).toList();
 
     expect(await ids(tag: 'Holiday'), ['tagged']);
     expect(await ids(budget: 'Fun'), ['budgeted']);
+    // Sets compare by what they hold, so an equal key reuses the entry.
+    expect(
+      TransactionListFilterKey(
+        scope: (
+          period: ExpensePeriod.all,
+          from: null,
+          to: null,
+          type: TransactionTypeFilter.all,
+          account: null,
+        ),
+        tags: {'a', 'b'},
+      ),
+      TransactionListFilterKey(
+        scope: (
+          period: ExpensePeriod.all,
+          from: null,
+          to: null,
+          type: TransactionTypeFilter.all,
+          account: null,
+        ),
+        tags: {'b', 'a'},
+      ),
+    );
   });
 }

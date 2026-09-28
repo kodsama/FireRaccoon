@@ -1719,9 +1719,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get byCategory => '按类别';
 
   @override
-  String get allCategories => '所有类别';
-
-  @override
   String get allTypes => '所有类型';
 
   @override
@@ -3907,16 +3904,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get filterTag => '标签';
 
   @override
-  String get allTags => '所有标签';
-
-  @override
   String get noTagsFound => '未找到标签。';
 
   @override
   String get filterBudget => '预算';
-
-  @override
-  String get allBudgets => '所有预算';
 
   @override
   String get noBudgetsFound => '未找到预算。';
@@ -3941,4 +3932,9 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get prognosisLeaveOutHelp => '属于这些类别或标签、或包含所有这些词的资金流不计入预测。';
+
+  @override
+  String filterSelectedCount(int count) {
+    return '已选 $count 项';
+  }
 }

@@ -75,7 +75,7 @@ void main() {
     final breakdown = buildStatsBreakdown(
       [receipt, _row('lunch', amount: 12)],
       types: _expense,
-      tag: '5-stan trip 2026',
+      tags: {'5-stan trip 2026'},
     );
 
     final totals = breakdown.totalsFor(TransactionTypeFilter.expense)!;
@@ -91,7 +91,7 @@ void main() {
         _row('unbudgeted', amount: 7),
       ],
       types: _expense,
-      budget: 'Fun',
+      budgets: {'Fun'},
     );
 
     expect(breakdown.totalsFor(TransactionTypeFilter.expense)!.categorySums, {
@@ -136,7 +136,7 @@ void main() {
     final breakdown = buildStatsBreakdown(
       [_row('bread', amount: 4), _row('bus', amount: 3, category: 'Transport')],
       types: _expense,
-      category: 'Transport',
+      categories: {'Transport'},
     );
 
     expect(breakdown.totalsFor(TransactionTypeFilter.expense)!.categorySums, {
@@ -154,7 +154,7 @@ void main() {
         _row('c', type: 'deposit', tags: ['bonus'], category: 'Salary'),
       ],
       types: _expense,
-      tag: 'work',
+      tags: {'work'},
     );
 
     expect(breakdown.categories, ['Food', 'Transport']);
@@ -168,5 +168,33 @@ void main() {
       categorySums: {'Food': 20, 'Rent': 900},
     );
     expect(totals.sortedCategories.first.key, 'Rent');
+  });
+
+  test('several names in one filter keep legs matching any of them', () {
+    final breakdown = buildStatsBreakdown(
+      [
+        _row('hotel', amount: 80, tags: ['Holiday']),
+        _row('laptop', amount: 900, tags: ['Work']),
+        _row('bread', amount: 4),
+      ],
+      types: _expense,
+      tags: {'Holiday', 'Work'},
+    );
+    expect(breakdown.totalsFor(TransactionTypeFilter.expense)!.total, 980);
+    expect(breakdown.transactions.map((t) => t.id), ['hotel', 'laptop']);
+  });
+
+  test('accounts keep groups that touch any of them', () {
+    final breakdown = buildStatsBreakdown(
+      [
+        _row('card', amount: 10),
+        _row('cash', amount: 5).copyWith(sourceName: 'Wallet'),
+        _row('savings', amount: 7).copyWith(sourceName: 'Savings'),
+      ],
+      types: _expense,
+      accounts: {'Checking', 'Wallet'},
+    );
+    expect(breakdown.transactions.map((t) => t.id), ['card', 'cash']);
+    expect(breakdown.totalsFor(TransactionTypeFilter.expense)!.total, 15);
   });
 }

@@ -1754,9 +1754,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get byCategory => 'By Category';
 
   @override
-  String get allCategories => 'All Categories';
-
-  @override
   String get allTypes => 'All Types';
 
   @override
@@ -4011,16 +4008,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get filterTag => 'Tag';
 
   @override
-  String get allTags => 'All tags';
-
-  @override
   String get noTagsFound => 'No tags found.';
 
   @override
   String get filterBudget => 'Budget';
-
-  @override
-  String get allBudgets => 'All budgets';
 
   @override
   String get noBudgetsFound => 'No budgets found.';
@@ -4046,4 +4037,9 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get prognosisLeaveOutHelp =>
       'Flows in these categories or tags, or carrying every one of these words, stay out of the forecast.';
+
+  @override
+  String filterSelectedCount(int count) {
+    return '$count selected';
+  }
 }

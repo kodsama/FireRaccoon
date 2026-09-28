@@ -23,6 +23,21 @@ class FilterPill extends StatelessWidget {
     this.tooltip,
   });
 
+  /// [idle] with nothing picked, the one name picked, or the first name
+  /// and how many more, so a pill stays one short line however many.
+  static String selectionLabel(
+    Set<String> names,
+    String idle, {
+    String Function(String name)? labelOf,
+  }) {
+    if (names.isEmpty) return idle;
+    final labels = names.map(labelOf ?? (name) => name).toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return labels.length == 1
+        ? labels.single
+        : '${labels.first} +${labels.length - 1}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;

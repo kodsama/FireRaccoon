@@ -1024,7 +1024,6 @@
   "clearFilters": "Rensa filter",
   "overview": "Översikt",
   "byCategory": "Per kategori",
-  "allCategories": "Alla kategorier",
   "allTypes": "Alla typer",
   "expensesFilter": "Utgifter",
   "transfers": "Överföringar",
@@ -2006,10 +2005,8 @@
   "statsTitle": "Statistik",
   "statsTitleRaccoon": "Bytesrapport",
   "filterTag": "Tagg",
-  "allTags": "Alla taggar",
   "noTagsFound": "Inga taggar hittades.",
   "filterBudget": "Budget",
-  "allBudgets": "Alla budgetar",
   "noBudgetsFound": "Inga budgetar hittades.",
   "noCategoriesFound": "Inga kategorier hittades.",
   "filterWords": "Ord",
@@ -2017,5 +2014,6 @@
   "applyFilter": "Använd",
   "netFlow": "Netto",
   "prognosisLeaveOut": "Utelämna",
-  "prognosisLeaveOutHelp": "Flöden i dessa kategorier eller taggar, eller som innehåller vart och ett av dessa ord, hålls utanför prognosen."
+  "prognosisLeaveOutHelp": "Flöden i dessa kategorier eller taggar, eller som innehåller vart och ett av dessa ord, hålls utanför prognosen.",
+  "filterSelectedCount": "{count} valda"
 }

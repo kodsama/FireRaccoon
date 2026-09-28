@@ -67,4 +67,54 @@ void main() {
     await tester.pumpAndSettle();
     expect(picked, allNamesSentinel);
   });
+
+  testWidgets('picking several ticks names and answers them on Apply', (
+    tester,
+  ) async {
+    Set<String>? picked;
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        child: buildLocalizedTestApp(
+          child: Builder(
+            builder: (context) => ElevatedButton(
+              onPressed: () async {
+                picked = await showNamesFilterDialog(
+                  context: context,
+                  title: 'Tag',
+                  emptyLabel: 'No tags found.',
+                  names: const ['Holiday', 'Work'],
+                  selected: const {'Retired tag'},
+                  icon: LucideIcons.tag,
+                );
+              },
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    // A name in use is offered even when the list no longer holds it.
+    expect(find.text('Retired tag'), findsOneWidget);
+    expect(find.text('1 selected'), findsOneWidget);
+
+    await tester.tap(find.text('Retired tag'));
+    await tester.tap(find.text('Holiday'));
+    await tester.tap(find.text('Work'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    expect(picked, {'Holiday', 'Work'});
+
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Clear'));
+    await tester.pumpAndSettle();
+    expect(picked, isEmpty);
+  });
 }

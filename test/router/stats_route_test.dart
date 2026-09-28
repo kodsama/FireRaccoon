@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:fireraccoon/l10n/app_localizations_en.dart';
+import 'package:fireraccoon/router/route_query.dart';
 import 'package:fireraccoon/router/stats_route.dart';
 import 'package:fireraccoon/utils/locale_formatting.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
@@ -47,19 +48,22 @@ void main() {
       final uri = Uri.parse(
         StatsRoute.location(
           types: {TransactionTypeFilter.income},
-          category: 'Salary',
-          tag: '5-stan trip 2026',
-          budget: 'Travel',
-          account: 'Checking',
+          categories: ['Salary'],
+          tags: ['5-stan trip 2026', 'Samarkand, Bukhara'],
+          budgets: ['Travel'],
+          accounts: ['Checking'],
           from: '2026-01-01',
           to: '2026-06-30',
         ),
       );
       expect(uri.path, '/stats');
-      expect(uri.queryParameters, {
+      expect(RouteQuery.values(uri, 'tag'), {
+        '5-stan trip 2026',
+        'Samarkand, Bukhara',
+      });
+      expect({...uri.queryParameters}..remove('tag'), {
         'types': 'income',
         'category': 'Salary',
-        'tag': '5-stan trip 2026',
         'budget': 'Travel',
         'account': 'Checking',
         'from': '2026-01-01',
@@ -81,7 +85,7 @@ void main() {
       final filters = StatsRoute.filtersFromUri(
         Uri.parse(
           '/stats?types=income,transfer&period=quarter&category=Travel'
-          '&tag=Holiday&budget=Fun&account=Savings'
+          '&tag=Holiday&tag=Work&budget=Fun&account=Savings'
           '&from=2026-01-15&to=2026-02-20',
         ),
       );
@@ -90,10 +94,10 @@ void main() {
         TransactionTypeFilter.transfer,
       });
       expect(filters.period, ExpensePeriod.quarter);
-      expect(filters.category, 'Travel');
-      expect(filters.tag, 'Holiday');
-      expect(filters.budget, 'Fun');
-      expect(filters.account, 'Savings');
+      expect(filters.categories, {'Travel'});
+      expect(filters.tags, {'Holiday', 'Work'});
+      expect(filters.budgets, {'Fun'});
+      expect(filters.accounts, {'Savings'});
       expect(filters.from, DateTime(2026, 1, 15));
       expect(filters.to, DateTime(2026, 2, 20));
       expect(filters.hasActiveFilters, isTrue);
@@ -127,7 +131,7 @@ void main() {
       final filters = StatsRoute.filtersFrom(
         _RouteStateStub(Uri.parse('/stats?account=Checking&period=year')),
       );
-      expect(filters.account, 'Checking');
+      expect(filters.accounts, {'Checking'});
       expect(filters.period, ExpensePeriod.year);
     });
   });
@@ -188,8 +192,14 @@ void main() {
     });
 
     test('a tag or budget alone counts as a filter', () {
-      expect(const StatsRouteFilters(tag: 'Holiday').hasActiveFilters, isTrue);
-      expect(const StatsRouteFilters(budget: 'Fun').hasActiveFilters, isTrue);
+      expect(
+        const StatsRouteFilters(tags: {'Holiday'}).hasActiveFilters,
+        isTrue,
+      );
+      expect(
+        const StatsRouteFilters(budgets: {'Fun'}).hasActiveFilters,
+        isTrue,
+      );
     });
 
     test('location keeps what it is not told to change', () {
@@ -199,22 +209,25 @@ void main() {
         ),
       );
       final next = StatsRoute.filtersFromUri(
-        Uri.parse(filters.location(budget: 'Fun')),
+        Uri.parse(filters.location(budgets: {'Fun'})),
       );
       expect(next.types, {TransactionTypeFilter.income});
-      expect(next.tag, 'Holiday');
-      expect(next.budget, 'Fun');
+      expect(next.tags, {'Holiday'});
+      expect(next.budgets, {'Fun'});
       expect(next.from, DateTime(2026, 1, 1));
       expect(next.to, DateTime(2026, 1, 31));
     });
 
-    test('location clears a filter passed as null', () {
-      const filters = StatsRouteFilters(tag: 'Holiday', category: 'Food');
-      final next = StatsRoute.filtersFromUri(
-        Uri.parse(filters.location(tag: null)),
+    test('location clears a filter passed as an empty set', () {
+      const filters = StatsRouteFilters(
+        tags: {'Holiday'},
+        categories: {'Food'},
       );
-      expect(next.tag, isNull);
-      expect(next.category, 'Food');
+      final next = StatsRoute.filtersFromUri(
+        Uri.parse(filters.location(tags: const {})),
+      );
+      expect(next.tags, isEmpty);
+      expect(next.categories, {'Food'});
     });
 
     test('a new period drops custom dates and new dates drop the period', () {
