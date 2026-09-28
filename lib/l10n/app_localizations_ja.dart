@@ -4021,13 +4021,28 @@ class AppLocalizationsJa extends AppLocalizations {
   String get statsChartDonut => 'ドーナツ';
 
   @override
-  String get statsChartStacked => '積み上げ';
-
-  @override
   String get statsOtherSplit => 'その他';
 
   @override
   String statsStackOrder(String types) {
     return '棒は左から順に：$types';
   }
+
+  @override
+  String get statsLevelTypes => '種類';
+
+  @override
+  String get statsLevelTypesHint => '支出・収入・振替の合計';
+
+  @override
+  String get statsLevelGroups => '詳細';
+
+  @override
+  String get statsLevelGroupsHint => '各種類の内訳：カテゴリやタグなど';
+
+  @override
+  String get statsSeparated => '分けて表示';
+
+  @override
+  String get statsMerged => 'まとめて表示';
 }

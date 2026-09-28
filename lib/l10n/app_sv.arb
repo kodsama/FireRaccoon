@@ -2037,7 +2037,12 @@
   "statsStackedByTag": "Staplat per tagg",
   "statsStackedByBudget": "Staplat per budget",
   "statsChartDonut": "Ring",
-  "statsChartStacked": "Staplat",
   "statsOtherSplit": "Övrigt",
-  "statsStackOrder": "Staplar, från vänster till höger: {types}"
+  "statsStackOrder": "Staplar, från vänster till höger: {types}",
+  "statsLevelTypes": "Typer",
+  "statsLevelTypesHint": "Utgifter, inkomster och överföringar som helhet",
+  "statsLevelGroups": "I detalj",
+  "statsLevelGroupsHint": "Vad varje typ består av: kategorier, taggar och så vidare",
+  "statsSeparated": "Separerade",
+  "statsMerged": "Sammanslagna"
 }

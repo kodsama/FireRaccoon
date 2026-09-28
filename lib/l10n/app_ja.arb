@@ -2112,7 +2112,12 @@
   "statsStackedByTag": "タグで積み上げ",
   "statsStackedByBudget": "予算で積み上げ",
   "statsChartDonut": "ドーナツ",
-  "statsChartStacked": "積み上げ",
   "statsOtherSplit": "その他",
-  "statsStackOrder": "棒は左から順に：{types}"
+  "statsStackOrder": "棒は左から順に：{types}",
+  "statsLevelTypes": "種類",
+  "statsLevelTypesHint": "支出・収入・振替の合計",
+  "statsLevelGroups": "詳細",
+  "statsLevelGroupsHint": "各種類の内訳：カテゴリやタグなど",
+  "statsSeparated": "分けて表示",
+  "statsMerged": "まとめて表示"
 }

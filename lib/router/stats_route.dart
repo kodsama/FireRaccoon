@@ -42,14 +42,14 @@ const statsTypes = [
 enum StatsGrouping { category, tag, budget, account, payee, time }
 
 /// How the totals are drawn. A breakdown takes a donut or ranked bars, a
-/// series over time takes bars, stacked bars or lines.
-enum StatsChart { donut, bars, stacked, line }
+/// series over time bars or lines.
+enum StatsChart { donut, bars, line }
 
-/// What stacked bars over time are cut into.
+/// What a series over time is cut into when shown below the types.
 enum StatsSplit { category, tag, budget }
 
 const _breakdownCharts = [StatsChart.donut, StatsChart.bars];
-const _timeCharts = [StatsChart.bars, StatsChart.stacked, StatsChart.line];
+const _timeCharts = [StatsChart.bars, StatsChart.line];
 
 class StatsRouteFilters {
   static const defaultTypes = {
