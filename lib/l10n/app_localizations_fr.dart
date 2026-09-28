@@ -1757,9 +1757,6 @@ class AppLocalizationsFr extends AppLocalizations {
   String get overview => 'Aperçu';
 
   @override
-  String get byCategory => 'Par catégorie';
-
-  @override
   String get allTypes => 'Tous les types';
 
   @override
@@ -4124,5 +4121,40 @@ class AppLocalizationsFr extends AppLocalizations {
   @override
   String statsWeekOf(String date) {
     return 'Semaine du $date';
+  }
+
+  @override
+  String get statsByTag => 'Par étiquette';
+
+  @override
+  String get statsByBudget => 'Par budget';
+
+  @override
+  String get statsByAccount => 'Par compte';
+
+  @override
+  String get statsByPayee => 'Par bénéficiaire';
+
+  @override
+  String get statsStackedByCategory => 'Empilé par catégorie';
+
+  @override
+  String get statsStackedByTag => 'Empilé par étiquette';
+
+  @override
+  String get statsStackedByBudget => 'Empilé par budget';
+
+  @override
+  String get statsChartDonut => 'Anneau';
+
+  @override
+  String get statsChartStacked => 'Empilé';
+
+  @override
+  String get statsOtherSplit => 'Autres';
+
+  @override
+  String statsStackOrder(String types) {
+    return 'Barres, de gauche à droite : $types';
   }
 }

@@ -8,6 +8,7 @@ import 'package:fireraccoon/screens/stats_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:fireraccoon/widgets/filter_pill.dart';
+import 'package:fireraccoon/widgets/simple_charts.dart';
 import 'package:fireraccoon/widgets/loading_body.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
@@ -377,7 +378,9 @@ void main() {
     await tester.pumpAndSettle();
     Uri uri() => GoRouterState.of(tester.element(find.byType(StatsScreen))).uri;
 
-    await tester.tap(find.text('Over time'));
+    await tester.tap(find.widgetWithText(FilterPill, 'By category'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Over time').last);
     await tester.pumpAndSettle();
     expect(uri().queryParameters['view'], 'time');
     expect(find.byType(BarChart), findsOneWidget);
@@ -418,5 +421,83 @@ void main() {
       uri().queryParameters['to'],
       StatsRouteFilters.formatDate(DateTime(now.year, now.month + 1, 0)),
     );
+  });
+
+  testWidgets('StatsScreen groups by tag as ranked bars and opens a tag', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final base = sampleTransactions.last;
+    final service = FakeFireflyService(
+      accounts: sampleAccounts,
+      transactions: [
+        base.copyWith(tags: ['Holiday']),
+        base.copyWith(id: 'work', amount: 300, tags: ['Work']),
+      ],
+      primaryCurrency: sampleCurrency,
+      currentUser: sampleUser,
+    );
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation: '/stats?types=expense',
+        fireflyService: service,
+      ),
+    );
+    await tester.pumpAndSettle();
+    Uri uri() => GoRouterState.of(tester.element(find.byType(StatsScreen))).uri;
+
+    await tester.tap(find.widgetWithText(FilterPill, 'By category'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('By tag').last);
+    await tester.pumpAndSettle();
+    expect(uri().queryParameters['view'], 'tag');
+    // The list under the chart is titled by the grouping.
+    expect(find.text('By tag'), findsWidgets);
+    expect(find.text('Work'), findsWidgets);
+
+    await tester.tap(find.text('Bars'));
+    await tester.pumpAndSettle();
+    expect(uri().queryParameters['chart'], 'bars');
+    expect(find.byType(SimpleDonutChart), findsNothing);
+
+    await tester.tap(find.text('Work').first);
+    await tester.pumpAndSettle();
+    expect(uri().path, '/transactions');
+    expect(uri().queryParametersAll['tag'], ['Work']);
+  });
+
+  testWidgets('StatsScreen stacks each month by the split picked', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation: '/stats?view=time&period=year',
+      ),
+    );
+    await tester.pumpAndSettle();
+    Uri uri() => GoRouterState.of(tester.element(find.byType(StatsScreen))).uri;
+
+    expect(find.widgetWithText(FilterChip, 'Net'), findsOneWidget);
+    await tester.tap(find.text('Stacked'));
+    await tester.pumpAndSettle();
+    expect(uri().queryParameters['chart'], 'stacked');
+    // No net to stack, and the legend names the parts.
+    expect(find.widgetWithText(FilterChip, 'Net'), findsNothing);
+    expect(find.text('Food'), findsWidgets);
+    expect(find.textContaining('left to right'), findsOneWidget);
+
+    await tester.tap(find.widgetWithText(FilterPill, 'Stacked by category'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Stacked by tag').last);
+    await tester.pumpAndSettle();
+    expect(uri().queryParameters['split'], 'tag');
+    expect(find.text('(none)'), findsWidgets);
   });
 }

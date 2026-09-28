@@ -112,7 +112,8 @@ void main() {
       expect(filters.singleType, isNull);
       expect(filters.grouping, StatsGrouping.category);
       expect(filters.interval, isNull);
-      expect(filters.chart, StatsChart.bars);
+      expect(filters.chart, isNull);
+      expect(filters.effectiveChart, StatsChart.donut);
       expect(filters.showNet, isFalse);
       expect(filters.period, ExpensePeriod.month);
       expect(filters.hasActiveFilters, isFalse);
@@ -224,6 +225,60 @@ void main() {
       expect(cleared.types, StatsRouteFilters.defaultTypes);
       expect(cleared.grouping, StatsGrouping.time);
       expect(cleared.chart, StatsChart.line);
+    });
+  });
+
+  group('StatsRoute charts', () {
+    test('each grouping offers its own charts, the default first', () {
+      const byTag = StatsRouteFilters(grouping: StatsGrouping.tag);
+      expect(byTag.charts, [StatsChart.donut, StatsChart.bars]);
+      expect(byTag.effectiveChart, StatsChart.donut);
+      const overTime = StatsRouteFilters(grouping: StatsGrouping.time);
+      expect(overTime.charts, [
+        StatsChart.bars,
+        StatsChart.stacked,
+        StatsChart.line,
+      ]);
+      expect(overTime.effectiveChart, StatsChart.bars);
+    });
+
+    test(
+      'a chart that does not suit the grouping falls back to its default',
+      () {
+        final filters = StatsRoute.filtersFromUri(
+          Uri.parse('/stats?view=budget&chart=line'),
+        );
+        expect(filters.grouping, StatsGrouping.budget);
+        expect(filters.effectiveChart, StatsChart.donut);
+      },
+    );
+
+    test('crossing to or from time drops the chart, staying keeps it', () {
+      const bars = StatsRouteFilters(chart: StatsChart.bars);
+      final toTag = StatsRoute.filtersFromUri(
+        Uri.parse(bars.location(grouping: StatsGrouping.tag)),
+      );
+      expect(toTag.chart, StatsChart.bars);
+      final toTime = StatsRoute.filtersFromUri(
+        Uri.parse(bars.location(grouping: StatsGrouping.time)),
+      );
+      expect(toTime.chart, isNull);
+    });
+
+    test('the split round-trips and is left out at its default', () {
+      const stacked = StatsRouteFilters(
+        grouping: StatsGrouping.time,
+        chart: StatsChart.stacked,
+        split: StatsSplit.tag,
+      );
+      final uri = Uri.parse(stacked.location());
+      expect(uri.queryParameters['split'], 'tag');
+      expect(StatsRoute.filtersFromUri(uri).split, StatsSplit.tag);
+      expect(
+        Uri.parse(stacked.location(split: StatsSplit.category)).queryParameters
+            .containsKey('split'),
+        isFalse,
+      );
     });
   });
 

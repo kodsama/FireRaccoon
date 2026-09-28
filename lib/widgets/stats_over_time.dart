@@ -18,7 +18,10 @@ class _Series {
   final Color color;
   final double Function(StatsBucket bucket) valueOf;
 
-  const _Series(this.label, this.color, this.valueOf);
+  /// The type the series sums, `null` for the net.
+  final TransactionTypeFilter? type;
+
+  const _Series(this.label, this.color, this.valueOf, {this.type});
 }
 
 /// The selected types as a series over time, as bars or lines, with a table
@@ -35,6 +38,10 @@ class StatsOverTime extends StatelessWidget {
   final FunL10n fun;
   final ValueChanged<StatsBucket> onOpenBucket;
 
+  /// The parts a stacked bar is cut into, in stacking order, and their names.
+  final List<String> splitKeys;
+  final String Function(String key) splitLabel;
+
   const StatsOverTime({
     super.key,
     required this.series,
@@ -46,7 +53,29 @@ class StatsOverTime extends StatelessWidget {
     required this.format,
     required this.fun,
     required this.onOpenBucket,
+    this.splitKeys = const [],
+    this.splitLabel = _sameName,
   });
+
+  static String _sameName(String key) => key;
+
+  bool get _stacked => chart == StatsChart.stacked;
+
+  /// Parts take the palette in order, and what was folded into the rest
+  /// takes a quiet grey so the named parts stand out.
+  Color _partColor(BuildContext context, int index) {
+    final colors = context.colors;
+    if (splitKeys[index] == kStatsOtherSplit) return colors.text3;
+    final palette = [
+      colors.accent.acc,
+      colors.warning,
+      colors.danger,
+      colors.success,
+      colors.accent.deep,
+      colors.accent.hi,
+    ];
+    return palette[index % palette.length];
+  }
 
   List<_Series> _seriesFor(BuildContext context, AppLocalizations l10n) {
     final colors = context.colors;
@@ -60,6 +89,7 @@ class StatsOverTime extends StatelessWidget {
             _ => colors.accent.acc,
           },
           (bucket) => bucket.totalFor(type),
+          type: type,
         ),
       if (showNet) _Series(l10n.netFlow, colors.text2, (bucket) => bucket.net),
     ];
@@ -122,9 +152,9 @@ class StatsOverTime extends StatelessWidget {
                             style: TextStyle(color: colors.text3),
                           ),
                         )
-                      : chart == StatsChart.bars
-                      ? _bars(context, lines, l10n)
-                      : _lines(context, lines, l10n),
+                      : chart == StatsChart.line
+                      ? _lines(context, lines, l10n)
+                      : _bars(context, lines, l10n),
                 ),
                 const SizedBox(height: 16),
                 Wrap(
@@ -132,24 +162,29 @@ class StatsOverTime extends StatelessWidget {
                   spacing: 20,
                   runSpacing: 8,
                   children: [
-                    for (final line in lines)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 12,
-                            height: 12,
-                            decoration: BoxDecoration(
-                              color: line.color,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(line.label),
-                        ],
-                      ),
+                    if (_stacked)
+                      for (var i = 0; i < splitKeys.length; i++)
+                        _legendItem(
+                          _partColor(context, i),
+                          splitLabel(splitKeys[i]),
+                        ),
+                    if (!_stacked)
+                      for (final line in lines)
+                        _legendItem(line.color, line.label),
                   ],
                 ),
+                // Stacked bars take their colour from the parts, so which bar
+                // in a group is which type has to be said in words.
+                if (_stacked && lines.length > 1) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.statsStackOrder(
+                      lines.map((line) => line.label).join(' · '),
+                    ),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: colors.text3, fontSize: 12),
+                  ),
+                ],
               ],
             ),
           ),
@@ -159,6 +194,19 @@ class StatsOverTime extends StatelessWidget {
       ],
     );
   }
+
+  Widget _legendItem(Color color, String label) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      Container(
+        width: 12,
+        height: 12,
+        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      ),
+      const SizedBox(width: 8),
+      Text(label),
+    ],
+  );
 
   /// Every label when they fit, else every few, so they never overlap.
   double get _labelStep => math.max(1, (series.length / 12).ceilToDouble());
@@ -235,7 +283,10 @@ class StatsOverTime extends StatelessWidget {
                 for (final line in lines)
                   BarChartRodData(
                     toY: line.valueOf(series[i]),
-                    color: line.color,
+                    color: _stacked ? Colors.transparent : line.color,
+                    rodStackItems: _stacked
+                        ? _stackItems(context, series[i], line.type!)
+                        : const [],
                     width: rodWidth,
                     borderRadius: BorderRadius.circular(3),
                   ),
@@ -256,9 +307,16 @@ class StatsOverTime extends StatelessWidget {
                 BarTooltipItem(
                   '${lines[rodIndex].label}\n${_money(rod.toY)}',
                   TextStyle(
-                    color: lines[rodIndex].color,
+                    color: _stacked ? colors.text : lines[rodIndex].color,
                     fontWeight: FontWeight.w600,
                   ),
+                  children: _stacked
+                      ? _partLines(
+                          context,
+                          series[groupIndex],
+                          lines[rodIndex].type!,
+                        )
+                      : null,
                 ),
           ),
           touchCallback: (event, response) {
@@ -271,6 +329,41 @@ class StatsOverTime extends StatelessWidget {
       ),
     );
   }
+
+  List<BarChartRodStackItem> _stackItems(
+    BuildContext context,
+    StatsBucket bucket,
+    TransactionTypeFilter type,
+  ) {
+    final items = <BarChartRodStackItem>[];
+    var from = 0.0;
+    for (var i = 0; i < splitKeys.length; i++) {
+      final value = bucket.partFor(type, splitKeys[i]);
+      if (value == 0) continue;
+      items.add(
+        BarChartRodStackItem(from, from + value, _partColor(context, i)),
+      );
+      from += value;
+    }
+    return items;
+  }
+
+  List<TextSpan> _partLines(
+    BuildContext context,
+    StatsBucket bucket,
+    TransactionTypeFilter type,
+  ) => [
+    for (var i = 0; i < splitKeys.length; i++)
+      if (bucket.partFor(type, splitKeys[i]) != 0)
+        TextSpan(
+          text:
+              '\n${splitLabel(splitKeys[i])}: ${_money(bucket.partFor(type, splitKeys[i]))}',
+          style: TextStyle(
+            color: _partColor(context, i),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+  ];
 
   Widget _lines(
     BuildContext context,

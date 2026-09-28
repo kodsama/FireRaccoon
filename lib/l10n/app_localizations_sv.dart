@@ -1749,9 +1749,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get overview => 'Översikt';
 
   @override
-  String get byCategory => 'Per kategori';
-
-  @override
   String get allTypes => 'Alla typer';
 
   @override
@@ -4094,5 +4091,40 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String statsWeekOf(String date) {
     return 'Veckan från $date';
+  }
+
+  @override
+  String get statsByTag => 'Per tagg';
+
+  @override
+  String get statsByBudget => 'Per budget';
+
+  @override
+  String get statsByAccount => 'Per konto';
+
+  @override
+  String get statsByPayee => 'Per mottagare';
+
+  @override
+  String get statsStackedByCategory => 'Staplat per kategori';
+
+  @override
+  String get statsStackedByTag => 'Staplat per tagg';
+
+  @override
+  String get statsStackedByBudget => 'Staplat per budget';
+
+  @override
+  String get statsChartDonut => 'Ring';
+
+  @override
+  String get statsChartStacked => 'Staplat';
+
+  @override
+  String get statsOtherSplit => 'Övrigt';
+
+  @override
+  String statsStackOrder(String types) {
+    return 'Staplar, från vänster till höger: $types';
   }
 }

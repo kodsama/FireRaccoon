@@ -1023,7 +1023,6 @@
   "tooltipBudgetCurrency": "预算金额的货币",
   "clearFilters": "清除筛选",
   "overview": "概览",
-  "byCategory": "按类别",
   "allTypes": "所有类型",
   "expensesFilter": "支出",
   "transfers": "转账",
@@ -2029,5 +2028,16 @@
   "statsTableTotal": "合计",
   "statsTablePeriod": "期间",
   "statsQuarterLabel": "{year} 年第 {quarter} 季度",
-  "statsWeekOf": "{date} 当周"
+  "statsWeekOf": "{date} 当周",
+  "statsByTag": "按标签",
+  "statsByBudget": "按预算",
+  "statsByAccount": "按账户",
+  "statsByPayee": "按收款方",
+  "statsStackedByCategory": "按类别堆叠",
+  "statsStackedByTag": "按标签堆叠",
+  "statsStackedByBudget": "按预算堆叠",
+  "statsChartDonut": "环形图",
+  "statsChartStacked": "堆叠",
+  "statsOtherSplit": "其他",
+  "statsStackOrder": "柱形从左到右：{types}"
 }

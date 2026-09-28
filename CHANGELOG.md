@@ -26,6 +26,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Stats breaks its totals down by tag, budget, account or payee as well as
+  by category, as a donut or as ranked bars, from one Group by menu that
+  also holds Over time. The filter on the dimension grouped by narrows the
+  chart but leaves the rest listed, as the category filter always did. A leg
+  with several tags gives each an equal share, so the parts still add up to
+  what was spent. Over time adds stacked bars, each type's bar cut by
+  category, tag or budget, the six largest by name and the rest as Other
+
 - Stats can lay its totals out over time as well as by category. Over time
   draws each type shown as its own bars or line, day by day, week by week,
   month by month, quarter by quarter or year by year, with the interval

@@ -1023,7 +1023,6 @@
   "tooltipBudgetCurrency": "Devise du montant du budget",
   "clearFilters": "Effacer les filtres",
   "overview": "Aperçu",
-  "byCategory": "Par catégorie",
   "allTypes": "Tous les types",
   "expensesFilter": "Dépenses",
   "transfers": "Virements",
@@ -2029,5 +2028,16 @@
   "statsTableTotal": "Total",
   "statsTablePeriod": "Période",
   "statsQuarterLabel": "T{quarter} {year}",
-  "statsWeekOf": "Semaine du {date}"
+  "statsWeekOf": "Semaine du {date}",
+  "statsByTag": "Par étiquette",
+  "statsByBudget": "Par budget",
+  "statsByAccount": "Par compte",
+  "statsByPayee": "Par bénéficiaire",
+  "statsStackedByCategory": "Empilé par catégorie",
+  "statsStackedByTag": "Empilé par étiquette",
+  "statsStackedByBudget": "Empilé par budget",
+  "statsChartDonut": "Anneau",
+  "statsChartStacked": "Empilé",
+  "statsOtherSplit": "Autres",
+  "statsStackOrder": "Barres, de gauche à droite : {types}"
 }

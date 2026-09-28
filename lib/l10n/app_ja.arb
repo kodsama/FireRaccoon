@@ -1023,7 +1023,6 @@
   "tooltipBudgetCurrency": "予算額の通貨",
   "clearFilters": "フィルターをクリア",
   "overview": "概要",
-  "byCategory": "カテゴリ別",
   "allTypes": "すべての種類",
   "expensesFilter": "支出",
   "transfers": "振替",
@@ -2104,5 +2103,16 @@
   "statsTableTotal": "合計",
   "statsTablePeriod": "期間",
   "statsQuarterLabel": "{year}年 第{quarter}四半期",
-  "statsWeekOf": "{date} の週"
+  "statsWeekOf": "{date} の週",
+  "statsByTag": "タグ別",
+  "statsByBudget": "予算別",
+  "statsByAccount": "口座別",
+  "statsByPayee": "取引先別",
+  "statsStackedByCategory": "カテゴリで積み上げ",
+  "statsStackedByTag": "タグで積み上げ",
+  "statsStackedByBudget": "予算で積み上げ",
+  "statsChartDonut": "ドーナツ",
+  "statsChartStacked": "積み上げ",
+  "statsOtherSplit": "その他",
+  "statsStackOrder": "棒は左から順に：{types}"
 }
