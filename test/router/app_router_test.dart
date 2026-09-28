@@ -143,6 +143,14 @@ void main() {
       '/projection',
     );
 
+    final income = shell.routes.whereType<GoRoute>().firstWhere(
+      (r) => r.path == '/income',
+    );
+    expect(
+      income.redirect!(context, _state(router, '/income')),
+      '/stats?types=income',
+    );
+
     // Touch server redirect listener by updating session.
     container.read(serverSessionProvider.notifier);
     await tester.pump();

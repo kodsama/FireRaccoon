@@ -132,6 +132,44 @@ void main() {
     });
   });
 
+  group('StatsRoute.fromRetiredLink', () {
+    test('each old page opens Stats on its own type', () {
+      expect(StatsRoute.fromRetiredLink(Uri.parse('/expenses')), '/stats');
+      expect(
+        StatsRoute.fromRetiredLink(Uri.parse('/income')),
+        '/stats?types=income',
+      );
+      expect(
+        StatsRoute.fromRetiredLink(Uri.parse('/transfers')),
+        '/stats?types=transfer',
+      );
+    });
+
+    test('keeps the filters and turns the old type into types', () {
+      final uri = Uri.parse(
+        StatsRoute.fromRetiredLink(
+          Uri.parse('/expenses?type=income&category=Food&period=year&q=rent'),
+        ),
+      );
+      expect(uri.path, '/stats');
+      expect(uri.queryParameters, {
+        'category': 'Food',
+        'period': 'year',
+        'q': 'rent',
+        'types': 'income',
+      });
+      final filters = StatsRoute.filtersFromUri(uri);
+      expect(filters.types, {TransactionTypeFilter.income});
+    });
+
+    test('an old type of all shows all three', () {
+      final filters = StatsRoute.filtersFromUri(
+        Uri.parse(StatsRoute.fromRetiredLink(Uri.parse('/transfers?type=all'))),
+      );
+      expect(filters.types, statsTypes.toSet());
+    });
+  });
+
   group('StatsRouteFilters', () {
     test('orderedTypes follows the page, singleType only for one', () {
       const filters = StatsRouteFilters(

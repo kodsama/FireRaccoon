@@ -198,6 +198,37 @@ class StatsRoute {
     });
   }
 
+  /// The paths Stats replaced, each with the type it showed by default.
+  static const retiredPaths = {
+    '/expenses': TransactionTypeFilter.expense,
+    '/income': TransactionTypeFilter.income,
+    '/transfers': TransactionTypeFilter.transfer,
+  };
+
+  /// Where a link to one of [retiredPaths] lands now. Its filters come along,
+  /// and its single `type` becomes `types`, with `all` meaning all three.
+  static String fromRetiredLink(Uri uri) {
+    final named = RouteQuery.enumFrom(
+      uri,
+      'type',
+      TransactionTypeFilter.values,
+      retiredPaths[uri.path] ?? TransactionTypeFilter.expense,
+    );
+    final types = named == TransactionTypeFilter.all
+        ? statsTypes.toSet()
+        : {named};
+    final params = Map<String, String>.from(uri.queryParameters)
+      ..remove('type');
+    params['types'] = statsTypes
+        .where(types.contains)
+        .map((type) => type.name)
+        .join(',');
+    if (_sameTypes(types, StatsRouteFilters.defaultTypes)) {
+      params.remove('types');
+    }
+    return RouteQuery.build(path, params);
+  }
+
   static StatsRouteFilters filtersFrom(
     GoRouterState state, {
     DashboardPeriod defaultDashboardPeriod = kDefaultDashboardPeriod,

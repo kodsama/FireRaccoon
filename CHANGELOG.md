@@ -17,7 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   header search used to narrow only the list under them. A tag or budget on
   one leg of a split counts that leg, not the whole group. The side menu's
   Stats group gives way to a single Stats item, and a saved or imported menu
-  layout that still names the three old pages is moved over on load
+  layout that still names the three old pages is moved over on load. A link
+  or bookmark to one of them opens Stats on the type that page showed, with
+  its other filters kept
 
 ### Added
 
