@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:fireraccoon/router/stats_route.dart';
 import 'package:fireraccoon/utils/stats_breakdown.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
@@ -79,7 +80,7 @@ void main() {
     );
 
     final totals = breakdown.totalsFor(TransactionTypeFilter.expense)!;
-    expect(totals.categorySums, {'Food': 30});
+    expect(totals.groupSums, {'Food': 30});
     expect(breakdown.transactions.map((t) => t.id), ['receipt']);
   });
 
@@ -94,7 +95,7 @@ void main() {
       budgets: {'Fun'},
     );
 
-    expect(breakdown.totalsFor(TransactionTypeFilter.expense)!.categorySums, {
+    expect(breakdown.totalsFor(TransactionTypeFilter.expense)!.groupSums, {
       'Leisure': 15,
     });
     expect(breakdown.transactions.single.id, 'cinema');
@@ -139,7 +140,7 @@ void main() {
       categories: {'Transport'},
     );
 
-    expect(breakdown.totalsFor(TransactionTypeFilter.expense)!.categorySums, {
+    expect(breakdown.totalsFor(TransactionTypeFilter.expense)!.groupSums, {
       'Food': 4,
       'Transport': 3,
     });
@@ -162,12 +163,12 @@ void main() {
     expect(breakdown.budgets, ['Travel']);
   });
 
-  test('sortedCategories puts the largest first', () {
+  test('sortedGroups puts the largest first', () {
     const totals = StatsTypeTotals(
       type: TransactionTypeFilter.expense,
-      categorySums: {'Food': 20, 'Rent': 900},
+      groupSums: {'Food': 20, 'Rent': 900},
     );
-    expect(totals.sortedCategories.first.key, 'Rent');
+    expect(totals.sortedGroups.first.key, 'Rent');
   });
 
   test('several names in one filter keep legs matching any of them', () {
@@ -302,6 +303,167 @@ void main() {
         ).series,
         isEmpty,
       );
+    });
+  });
+
+  group('groupings', () {
+    test(
+      'by tag, a leg with two tags gives each half, untagged its own row',
+      () {
+        final breakdown = buildStatsBreakdown(
+          [
+            _row('trip', amount: 100, tags: ['Holiday', 'Work']),
+            _row('lunch', amount: 20),
+          ],
+          types: _expense,
+          grouping: StatsGrouping.tag,
+        );
+        final totals = breakdown.totalsFor(TransactionTypeFilter.expense)!;
+        expect(totals.groupSums, {'Holiday': 50, 'Work': 50, '': 20});
+        expect(totals.total, 120);
+      },
+    );
+
+    test('the filter on the grouping keeps the other rows listed', () {
+      final rows = [
+        _row('trip', amount: 100, tags: ['Holiday']),
+        _row('laptop', amount: 900, tags: ['Work'], category: 'Tech'),
+      ];
+      final byTag = buildStatsBreakdown(
+        rows,
+        types: _expense,
+        grouping: StatsGrouping.tag,
+        tags: {'Holiday'},
+      );
+      expect(
+        byTag.totalsFor(TransactionTypeFilter.expense)!.groupSums.keys,
+        unorderedEquals(['Holiday', 'Work']),
+      );
+      expect(byTag.transactions.single.id, 'trip');
+
+      // Any other filter narrows the rows as well.
+      final narrowed = buildStatsBreakdown(
+        rows,
+        types: _expense,
+        grouping: StatsGrouping.tag,
+        categories: {'Tech'},
+      );
+      expect(narrowed.totalsFor(TransactionTypeFilter.expense)!.groupSums, {
+        'Work': 900,
+      });
+    });
+
+    test('by budget, account and payee key each leg by its side', () {
+      final rows = [
+        _row('rent', amount: 900, budget: 'Home'),
+        _row(
+          'salary',
+          type: 'deposit',
+          amount: 3000,
+        ).copyWith(sourceName: 'Employer', destinationName: 'Checking'),
+      ];
+      final types = [
+        TransactionTypeFilter.expense,
+        TransactionTypeFilter.income,
+      ];
+      Map<String, double> sums(
+        StatsGrouping grouping,
+        TransactionTypeFilter t,
+      ) => buildStatsBreakdown(
+        rows,
+        types: types,
+        grouping: grouping,
+      ).totalsFor(t)!.groupSums;
+
+      expect(sums(StatsGrouping.budget, TransactionTypeFilter.expense), {
+        'Home': 900,
+      });
+      expect(sums(StatsGrouping.budget, TransactionTypeFilter.income), {
+        '': 3000,
+      });
+      expect(sums(StatsGrouping.account, TransactionTypeFilter.expense), {
+        'Checking': 900,
+      });
+      expect(sums(StatsGrouping.account, TransactionTypeFilter.income), {
+        'Checking': 3000,
+      });
+      expect(sums(StatsGrouping.payee, TransactionTypeFilter.expense), {
+        'Shop': 900,
+      });
+      expect(sums(StatsGrouping.payee, TransactionTypeFilter.income), {
+        'Employer': 3000,
+      });
+    });
+
+    test('by account, the account filter leaves every account listed', () {
+      final breakdown = buildStatsBreakdown(
+        [
+          _row('card', amount: 10),
+          _row('cash', amount: 5).copyWith(sourceName: 'Wallet'),
+        ],
+        types: _expense,
+        grouping: StatsGrouping.account,
+        accounts: {'Wallet'},
+      );
+      expect(breakdown.totalsFor(TransactionTypeFilter.expense)!.groupSums, {
+        'Checking': 10,
+        'Wallet': 5,
+      });
+      expect(breakdown.transactions.single.id, 'cash');
+    });
+  });
+
+  group('stacked parts', () {
+    final july = DateRangeBounds(
+      start: DateTime(2026, 7, 1),
+      end: DateTime(2026, 8, 1),
+    );
+
+    test('each bucket is cut by the split, the smallest folded into Other', () {
+      final rows = [
+        for (var i = 0; i < 8; i++)
+          _row(
+            'c$i',
+            amount: 100.0 - i,
+            category: 'Cat $i',
+          ).copyWith(date: DateTime(2026, 7, 2)),
+      ];
+      final breakdown = buildStatsBreakdown(
+        rows,
+        types: _expense,
+        interval: StatsInterval.month,
+        split: StatsSplit.category,
+        range: july,
+        today: DateTime(2026, 7, 31),
+      );
+
+      expect(breakdown.splitKeys, [
+        for (var i = 0; i < 6; i++) 'Cat $i',
+        kStatsOtherSplit,
+      ]);
+      final bucket = breakdown.series.single;
+      expect(bucket.partFor(TransactionTypeFilter.expense, 'Cat 0'), 100);
+      expect(
+        bucket.partFor(TransactionTypeFilter.expense, kStatsOtherSplit),
+        93 + 94,
+      );
+      final parts = breakdown.splitKeys.fold<double>(
+        0,
+        (sum, key) => sum + bucket.partFor(TransactionTypeFilter.expense, key),
+      );
+      expect(parts, bucket.totalFor(TransactionTypeFilter.expense));
+    });
+
+    test('no split asked for, no parts and no keys', () {
+      final breakdown = buildStatsBreakdown(
+        [_row('x').copyWith(date: DateTime(2026, 7, 2))],
+        types: _expense,
+        interval: StatsInterval.month,
+        range: july,
+        today: DateTime(2026, 7, 31),
+      );
+      expect(breakdown.splitKeys, isEmpty);
+      expect(breakdown.series.single.parts, isEmpty);
     });
   });
 }

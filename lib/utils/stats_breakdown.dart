@@ -3,18 +3,27 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import '../router/stats_route.dart';
 import 'search_filter.dart';
 
-/// One kind of movement on the Stats page, summed by category.
+/// The key stacked bars put what is left after the top [kStatsTopSplits].
+const kStatsOtherSplit = '\u0000other';
+
+/// How many parts a stacked bar shows by name before the rest goes to
+/// [kStatsOtherSplit].
+const kStatsTopSplits = 6;
+
+/// One kind of movement on the Stats page, summed by the page's grouping.
 class StatsTypeTotals {
   final TransactionTypeFilter type;
-  final Map<String, double> categorySums;
 
-  const StatsTypeTotals({required this.type, required this.categorySums});
+  /// Keyed by category, tag, budget, account or payee name, whichever the
+  /// page groups by; the empty key holds legs with none.
+  final Map<String, double> groupSums;
 
-  double get total =>
-      categorySums.values.fold(0.0, (sum, amount) => sum + amount);
+  const StatsTypeTotals({required this.type, required this.groupSums});
 
-  List<MapEntry<String, double>> get sortedCategories =>
-      sortedCategorySumEntries(categorySums);
+  double get total => groupSums.values.fold(0.0, (sum, amount) => sum + amount);
+
+  List<MapEntry<String, double>> get sortedGroups =>
+      sortedCategorySumEntries(groupSums);
 }
 
 /// One stretch of a series over time and what each type came to in it.
@@ -22,11 +31,22 @@ class StatsBucket {
   final DateRangeBounds bounds;
   final Map<TransactionTypeFilter, double> totals;
 
-  const StatsBucket({required this.bounds, required this.totals});
+  /// Each type's total cut by the split, keyed by the names in
+  /// [StatsBreakdown.splitKeys]; empty unless a split was asked for.
+  final Map<TransactionTypeFilter, Map<String, double>> parts;
+
+  const StatsBucket({
+    required this.bounds,
+    required this.totals,
+    this.parts = const {},
+  });
 
   DateTime get start => bounds.start!;
 
   double totalFor(TransactionTypeFilter type) => totals[type] ?? 0;
+
+  double partFor(TransactionTypeFilter type, String key) =>
+      parts[type]?[key] ?? 0;
 
   double get net =>
       totalFor(TransactionTypeFilter.income) -
@@ -34,12 +54,12 @@ class StatsBucket {
 }
 
 class StatsBreakdown {
-  /// One entry per selected type, in page order, each summed with the tag,
-  /// budget and word filters applied but not the category one, so the
-  /// category list keeps showing what the others could be switched to.
+  /// One entry per selected type, in page order, each summed with every
+  /// filter but the one on the grouping's own dimension, so the list keeps
+  /// showing what that filter could be switched to.
   final List<StatsTypeTotals> types;
 
-  /// Groups with at least one leg that passes every filter, category too.
+  /// Groups with at least one leg that passes every filter.
   final List<Transaction> transactions;
 
   /// What the category, tag and budget pickers offer: everything the
@@ -49,9 +69,12 @@ class StatsBreakdown {
   final List<String> budgets;
 
   /// Every bucket of the period in order, empty ones included, summed with
-  /// every filter applied, categories too, since a series has no category
-  /// list beside it to switch between. Empty when no interval was asked for.
+  /// every filter applied. Empty when no interval was asked for.
   final List<StatsBucket> series;
+
+  /// The parts stacked bars show, largest first, with [kStatsOtherSplit]
+  /// last when anything was folded into it.
+  final List<String> splitKeys;
 
   const StatsBreakdown({
     required this.types,
@@ -60,6 +83,7 @@ class StatsBreakdown {
     required this.tags,
     required this.budgets,
     this.series = const [],
+    this.splitKeys = const [],
   });
 
   StatsTypeTotals? totalsFor(TransactionTypeFilter type) {
@@ -79,18 +103,64 @@ class StatsBreakdown {
   }
 }
 
+/// The names [leg] counts under when grouped by [grouping], each with the
+/// share of its amount it takes. A leg with two tags gives each half, so a
+/// donut or a stack of tags still adds up to what was actually spent.
+List<MapEntry<String, double>> statsGroupShares(
+  TransactionTypeFilter type,
+  Transaction leg,
+  StatsGrouping grouping,
+) {
+  switch (grouping) {
+    case StatsGrouping.tag:
+      final tags = leg.tags.toSet();
+      if (tags.isEmpty) return [MapEntry('', leg.amount)];
+      return [for (final tag in tags) MapEntry(tag, leg.amount / tags.length)];
+    case StatsGrouping.budget:
+      return [MapEntry(leg.budgetName?.trim() ?? '', leg.amount)];
+    // The account is the side the money is the ledger's own, the payee the
+    // other; a transfer runs between two of the ledger's accounts, and is
+    // counted from the one it leaves.
+    case StatsGrouping.account:
+      final own = type == TransactionTypeFilter.income
+          ? leg.destinationName
+          : leg.sourceName;
+      return [MapEntry(own.trim(), leg.amount)];
+    case StatsGrouping.payee:
+      final other = type == TransactionTypeFilter.income
+          ? leg.sourceName
+          : leg.destinationName;
+      return [MapEntry(other.trim(), leg.amount)];
+    case StatsGrouping.category:
+    case StatsGrouping.time:
+      return [MapEntry(categoryGroupKey(leg.categoryName), leg.amount)];
+  }
+}
+
+StatsGrouping _groupingOf(StatsSplit split) => switch (split) {
+  StatsSplit.category => StatsGrouping.category,
+  StatsSplit.tag => StatsGrouping.tag,
+  StatsSplit.budget => StatsGrouping.budget,
+};
+
 /// Sums [periodTransactions] leg by leg, so a split that puts one leg on a
 /// tag or budget counts only that leg rather than the whole group. Each set
 /// keeps what matches any one of its names, and an empty set keeps all.
+///
+/// [grouping] picks what the totals are keyed by. The filter on that same
+/// dimension narrows [StatsBreakdown.transactions] and the series but not
+/// the totals, the way picking a category leaves the others listed.
 StatsBreakdown buildStatsBreakdown(
   List<Transaction> periodTransactions, {
   required List<TransactionTypeFilter> types,
+  StatsGrouping grouping = StatsGrouping.category,
   Set<String> categories = const {},
   Set<String> tags = const {},
   Set<String> budgets = const {},
   Set<String> accounts = const {},
   String? words,
   StatsInterval? interval,
+  StatsSplit? split,
   DateRangeBounds range = const DateRangeBounds(),
   DateTime? today,
 }) {
@@ -105,50 +175,78 @@ StatsBreakdown buildStatsBreakdown(
   final budgetOptions = <String>{};
   final counted = <Transaction>[];
   final byBucket = <DateTime, Map<TransactionTypeFilter, double>>{};
+  final partsByBucket =
+      <DateTime, Map<TransactionTypeFilter, Map<String, double>>>{};
+  final splitTotals = <String, double>{};
+  final splitGrouping = split == null ? null : _groupingOf(split);
 
   for (final transaction in periodTransactions) {
     final type = _statsTypeOf(transaction.type);
     final typeSums = sums[type];
     if (type == null || typeSums == null) continue;
-    if (accounts.isNotEmpty &&
-        !transaction.resolvedSplits().any(
-          (split) =>
-              accounts.contains(split.sourceName) ||
-              accounts.contains(split.destinationName),
-        )) {
-      continue;
-    }
+    final accountOk =
+        accounts.isEmpty ||
+        transaction.resolvedSplits().any(
+          (leg) =>
+              accounts.contains(leg.sourceName) ||
+              accounts.contains(leg.destinationName),
+        );
+    if (!accountOk && grouping != StatsGrouping.account) continue;
     var countsTransaction = false;
-    for (final split in transaction.resolvedSplits()) {
-      final key = categoryGroupKey(split.categoryName);
-      final budgetName = split.budgetName?.trim() ?? '';
+    for (final leg in transaction.resolvedSplits()) {
+      final key = categoryGroupKey(leg.categoryName);
+      final budgetName = leg.budgetName?.trim() ?? '';
       categoryOptions.add(key);
-      tagOptions.addAll(split.tags);
+      tagOptions.addAll(leg.tags);
       if (budgetName.isNotEmpty) budgetOptions.add(budgetName);
 
-      if (tags.isNotEmpty && !split.tags.any(tags.contains)) continue;
-      if (budgets.isNotEmpty && !budgets.contains(budgetName)) continue;
-      if (!_matchesEveryWord(transaction, split, wordList)) continue;
+      if (!_matchesEveryWord(transaction, leg, wordList)) continue;
+      final passes = {
+        StatsGrouping.category:
+            categoryKeys.isEmpty || categoryKeys.contains(key),
+        StatsGrouping.tag: tags.isEmpty || leg.tags.any(tags.contains),
+        StatsGrouping.budget: budgets.isEmpty || budgets.contains(budgetName),
+        StatsGrouping.account: accountOk,
+      };
+      final passesAll = passes.values.every((ok) => ok);
+      final passesOthers = passes.entries
+          .where((entry) => entry.key != grouping)
+          .every((entry) => entry.value);
 
-      typeSums[key] = (typeSums[key] ?? 0) + split.amount;
-      if (categoryKeys.isEmpty || categoryKeys.contains(key)) {
-        countsTransaction = true;
-        if (interval != null) {
-          final bucket = byBucket.putIfAbsent(
-            statsBucketStart(transaction.date, interval),
-            () => {},
-          );
-          bucket[type] = (bucket[type] ?? 0) + split.amount;
+      if (passesOthers) {
+        for (final share in statsGroupShares(type, leg, grouping)) {
+          typeSums[share.key] = (typeSums[share.key] ?? 0) + share.value;
+        }
+      }
+      if (!passesAll) continue;
+      countsTransaction = true;
+      if (interval != null) {
+        final start = statsBucketStart(transaction.date, interval);
+        final bucket = byBucket.putIfAbsent(start, () => {});
+        bucket[type] = (bucket[type] ?? 0) + leg.amount;
+        if (splitGrouping != null) {
+          final parts = partsByBucket
+              .putIfAbsent(start, () => {})
+              .putIfAbsent(type, () => {});
+          for (final share in statsGroupShares(type, leg, splitGrouping)) {
+            parts[share.key] = (parts[share.key] ?? 0) + share.value;
+            splitTotals[share.key] =
+                (splitTotals[share.key] ?? 0) + share.value;
+          }
         }
       }
     }
     if (countsTransaction) counted.add(transaction);
   }
 
+  final ranked = sortedCategorySumEntries(splitTotals).map((e) => e.key);
+  final top = ranked.take(kStatsTopSplits).toSet();
+  final folded = ranked.length > top.length;
+
   return StatsBreakdown(
     types: [
       for (final type in types)
-        StatsTypeTotals(type: type, categorySums: sums[type]!),
+        StatsTypeTotals(type: type, groupSums: sums[type]!),
     ],
     transactions: counted,
     categories: categoryOptions.toList()..sort(),
@@ -156,12 +254,37 @@ StatsBreakdown buildStatsBreakdown(
     budgets: _sortedIgnoringCase(budgetOptions),
     series: interval == null
         ? const []
-        : _series(byBucket, interval, range, counted, today ?? DateTime.now()),
+        : _series(
+            byBucket,
+            {
+              for (final entry in partsByBucket.entries)
+                entry.key: _fold(entry.value, top),
+            },
+            interval,
+            range,
+            counted,
+            today ?? DateTime.now(),
+          ),
+    splitKeys: [...top, if (folded) kStatsOtherSplit],
   );
 }
 
+/// [parts] with every name outside [top] summed into [kStatsOtherSplit].
+Map<TransactionTypeFilter, Map<String, double>> _fold(
+  Map<TransactionTypeFilter, Map<String, double>> parts,
+  Set<String> top,
+) => {
+  for (final entry in parts.entries)
+    entry.key: entry.value.entries.fold<Map<String, double>>({}, (kept, part) {
+      final key = top.contains(part.key) ? part.key : kStatsOtherSplit;
+      kept[key] = (kept[key] ?? 0) + part.value;
+      return kept;
+    }),
+};
+
 List<StatsBucket> _series(
   Map<DateTime, Map<TransactionTypeFilter, double>> byBucket,
+  Map<DateTime, Map<TransactionTypeFilter, Map<String, double>>> parts,
   StatsInterval interval,
   DateRangeBounds range,
   List<Transaction> counted,
@@ -186,7 +309,11 @@ List<StatsBucket> _series(
   if (first == null || last == null || last.isBefore(first)) return const [];
   return [
     for (final bounds in statsBuckets(first, last, interval))
-      StatsBucket(bounds: bounds, totals: byBucket[bounds.start] ?? const {}),
+      StatsBucket(
+        bounds: bounds,
+        totals: byBucket[bounds.start] ?? const {},
+        parts: parts[bounds.start] ?? const {},
+      ),
   ];
 }
 

@@ -1716,9 +1716,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get overview => '概览';
 
   @override
-  String get byCategory => '按类别';
-
-  @override
   String get allTypes => '所有类型';
 
   @override
@@ -3987,5 +3984,40 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String statsWeekOf(String date) {
     return '$date 当周';
+  }
+
+  @override
+  String get statsByTag => '按标签';
+
+  @override
+  String get statsByBudget => '按预算';
+
+  @override
+  String get statsByAccount => '按账户';
+
+  @override
+  String get statsByPayee => '按收款方';
+
+  @override
+  String get statsStackedByCategory => '按类别堆叠';
+
+  @override
+  String get statsStackedByTag => '按标签堆叠';
+
+  @override
+  String get statsStackedByBudget => '按预算堆叠';
+
+  @override
+  String get statsChartDonut => '环形图';
+
+  @override
+  String get statsChartStacked => '堆叠';
+
+  @override
+  String get statsOtherSplit => '其他';
+
+  @override
+  String statsStackOrder(String types) {
+    return '柱形从左到右：$types';
   }
 }

@@ -55,7 +55,7 @@ class StatsScreen extends ConsumerWidget {
       customFrom: filters.from,
       customTo: filters.to,
     );
-    final overTime = filters.grouping == StatsGrouping.time;
+    final overTime = filters.overTime;
     final interval = filters.interval ?? autoStatsInterval(range);
     final breakdown = transactionsAsync.whenData(
       (transactions) => buildStatsBreakdown(
@@ -66,7 +66,11 @@ class StatsScreen extends ConsumerWidget {
         budgets: filters.budgets,
         accounts: filters.accounts,
         words: words,
+        grouping: overTime ? StatsGrouping.category : filters.grouping,
         interval: overTime ? interval : null,
+        split: overTime && filters.effectiveChart == StatsChart.stacked
+            ? filters.split
+            : null,
         range: range,
       ),
     );
@@ -221,11 +225,15 @@ class StatsScreen extends ConsumerWidget {
   }
 }
 
-/// The transaction list holding what Stats counted, narrowed further to
-/// [category], [type] or the days from [from] to [to] when given.
+/// The transaction list holding what Stats counted, narrowed further to a
+/// category, tag, budget or account, a [type], or the days from [from] to
+/// [to] when given.
 String _transactionsFor(
   StatsRouteFilters filters, {
   String? category,
+  String? tag,
+  String? budget,
+  String? account,
   TransactionTypeFilter? type,
   DateTime? from,
   DateTime? to,
@@ -235,11 +243,11 @@ String _transactionsFor(
   final dated = from != null || to != null;
   return TransactionsRoute.location(
     categories: category != null ? [category] : filters.categories,
-    tags: filters.tags,
-    budgets: filters.budgets,
+    tags: tag != null ? [tag] : filters.tags,
+    budgets: budget != null ? [budget] : filters.budgets,
     period: filters.period,
     type: type ?? filters.singleType ?? TransactionTypeFilter.all,
-    accounts: filters.accounts.toList(),
+    accounts: account != null ? [account] : filters.accounts.toList(),
     from: date(dated ? from : filters.from),
     to: date(dated ? to : filters.to),
     defaultDashboardPeriod: filters.defaultDashboardPeriod,
@@ -294,10 +302,52 @@ class _StatsBodyState extends State<_StatsBody> {
   String _typeLabel(TransactionTypeFilter type) =>
       type.localizedLabel(widget.l10n, isRaccoon: widget.fun.isRaccoon);
 
-  String _transactionsLocation({
-    String? category,
-    TransactionTypeFilter? type,
-  }) => _transactionsFor(widget.filters, category: category, type: type);
+  String _transactionsLocation() => _transactionsFor(widget.filters);
+
+  StatsGrouping get _grouping => widget.filters.grouping;
+
+  String _label(String key) => switch (_grouping) {
+    StatsGrouping.tag ||
+    StatsGrouping.budget => key.isEmpty ? widget.l10n.none : key,
+    _ => displayLabelOrUnknown(key, widget.l10n),
+  };
+
+  /// The names the filter on the grouping's own dimension holds, which the
+  /// chart narrows to while the list keeps showing the rest.
+  Set<String> get _selectedKeys => switch (_grouping) {
+    StatsGrouping.category =>
+      widget.filters.categories.map(categoryGroupKey).toSet(),
+    StatsGrouping.tag => widget.filters.tags,
+    StatsGrouping.budget => widget.filters.budgets,
+    StatsGrouping.account => widget.filters.accounts,
+    StatsGrouping.payee || StatsGrouping.time => const {},
+  };
+
+  /// The transactions behind one row. Legs with no tag or no budget have
+  /// no filter that finds them alone, so their row opens the whole list.
+  String _transactionsForGroup(String key, TransactionTypeFilter type) {
+    final filters = widget.filters;
+    return switch (_grouping) {
+      StatsGrouping.tag when key.isNotEmpty => _transactionsFor(
+        filters,
+        tag: key,
+        type: type,
+      ),
+      StatsGrouping.budget when key.isNotEmpty => _transactionsFor(
+        filters,
+        budget: key,
+        type: type,
+      ),
+      StatsGrouping.account || StatsGrouping.payee when key.isNotEmpty =>
+        _transactionsFor(filters, account: key, type: type),
+      StatsGrouping.category => _transactionsFor(
+        filters,
+        category: key,
+        type: type,
+      ),
+      _ => _transactionsFor(filters, type: type),
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -306,9 +356,8 @@ class _StatsBodyState extends State<_StatsBody> {
     final chartColors = _chartColors(context);
     final multiple = breakdown.types.length > 1;
     final net = breakdown.net;
-    final categoryKeys = widget.filters.categories
-        .map(categoryGroupKey)
-        .toSet();
+    final selectedKeys = _selectedKeys;
+    final asBars = widget.filters.effectiveChart == StatsChart.bars;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -326,13 +375,21 @@ class _StatsBodyState extends State<_StatsBody> {
                   runSpacing: 32,
                   children: [
                     for (final totals in breakdown.types)
-                      _typeOverview(
-                        context,
-                        totals,
-                        categoryKeys: categoryKeys,
-                        chartColors: chartColors,
-                        size: multiple ? 180 : 240,
-                      ),
+                      asBars
+                          ? _rankedBars(
+                              context,
+                              totals,
+                              selectedKeys: selectedKeys,
+                              chartColors: chartColors,
+                              width: multiple ? 420 : 720,
+                            )
+                          : _typeOverview(
+                              context,
+                              totals,
+                              selectedKeys: selectedKeys,
+                              chartColors: chartColors,
+                              size: multiple ? 180 : 240,
+                            ),
                   ],
                 ),
                 if (net != null) ...[
@@ -357,7 +414,10 @@ class _StatsBodyState extends State<_StatsBody> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(l10n.byCategory, style: context.textTheme.titleMedium),
+                Text(
+                  _ViewControls.groupingLabel(l10n, _grouping),
+                  style: context.textTheme.titleMedium,
+                ),
                 const SizedBox(height: 16),
                 for (final totals in breakdown.types) ...[
                   if (multiple)
@@ -417,17 +477,17 @@ class _StatsBodyState extends State<_StatsBody> {
   Widget _typeOverview(
     BuildContext context,
     StatsTypeTotals totals, {
-    required Set<String> categoryKeys,
+    required Set<String> selectedKeys,
     required List<Color> chartColors,
     required double size,
   }) {
     final colors = context.colors;
     final values = <double>[];
     final sliceColors = <Color>[];
-    final legend = totals.sortedCategories;
+    final legend = totals.sortedGroups;
     for (var i = 0; i < legend.length; i++) {
       final entry = legend[i];
-      if (categoryKeys.isNotEmpty && !categoryKeys.contains(entry.key)) {
+      if (selectedKeys.isNotEmpty && !selectedKeys.contains(entry.key)) {
         continue;
       }
       if (_hidden.contains(_hiddenKey(totals.type, entry.key))) continue;
@@ -471,13 +531,116 @@ class _StatsBodyState extends State<_StatsBody> {
     );
   }
 
+  /// The largest groups of one type as bars against the largest of them,
+  /// coloured as in the list below, each opening its transactions.
+  Widget _rankedBars(
+    BuildContext context,
+    StatsTypeTotals totals, {
+    required Set<String> selectedKeys,
+    required List<Color> chartColors,
+    required double width,
+  }) {
+    final colors = context.colors;
+    final legend = totals.sortedGroups;
+    final rows = <(int, MapEntry<String, double>)>[
+      for (var i = 0; i < legend.length; i++)
+        if ((selectedKeys.isEmpty || selectedKeys.contains(legend[i].key)) &&
+            !_hidden.contains(_hiddenKey(totals.type, legend[i].key)))
+          (i, legend[i]),
+    ].take(12).toList();
+    final largest = rows.isEmpty ? 0.0 : rows.first.$2.value;
+    final shownTotal = rows.fold<double>(0, (sum, row) => sum + row.$2.value);
+
+    return SizedBox(
+      width: width,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            _money(shownTotal),
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontFamily: 'Roboto Slab',
+              fontSize: 28,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          Text(
+            _typeLabel(totals.type),
+            textAlign: TextAlign.center,
+            style: TextStyle(color: colors.text3),
+          ),
+          const SizedBox(height: 16),
+          if (rows.isEmpty)
+            Text(
+              widget.l10n.noTransactionsMatchFilters,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: colors.text3),
+            ),
+          for (final (index, entry) in rows)
+            InkWell(
+              onTap: () => context.goPreservingSearch(
+                _transactionsForGroup(entry.key, totals.type),
+              ),
+              borderRadius: BorderRadius.circular(6),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: width * 0.26,
+                      child: Text(
+                        _label(entry.key),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: largest > 0
+                              ? (entry.value / largest).clamp(0.01, 1.0)
+                              : 0,
+                          child: Container(
+                            height: 14,
+                            decoration: BoxDecoration(
+                              color: chartColors[index % chartColors.length],
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    SizedBox(
+                      width: width * 0.3,
+                      child: Text(
+                        _money(entry.value),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(
+                          fontFamily: 'Roboto Slab',
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   List<Widget> _legendRows(
     BuildContext context,
     StatsTypeTotals totals,
     List<Color> chartColors,
   ) {
     final colors = context.colors;
-    final legend = totals.sortedCategories;
+    final legend = totals.sortedGroups;
     if (legend.isEmpty) {
       return [
         Text(
@@ -486,9 +649,7 @@ class _StatsBodyState extends State<_StatsBody> {
         ),
       ];
     }
-    final selectedKeys = widget.filters.categories
-        .map(categoryGroupKey)
-        .toSet();
+    final selectedKeys = _selectedKeys;
     final grandTotal = totals.total;
 
     return List.generate(legend.length, (index) {
@@ -520,7 +681,7 @@ class _StatsBodyState extends State<_StatsBody> {
             Expanded(
               child: InkWell(
                 onTap: () => context.goPreservingSearch(
-                  _transactionsLocation(category: entry.key, type: totals.type),
+                  _transactionsForGroup(entry.key, totals.type),
                 ),
                 borderRadius: BorderRadius.circular(8),
                 child: Padding(
@@ -543,7 +704,7 @@ class _StatsBodyState extends State<_StatsBody> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            displayLabelOrUnknown(entry.key, widget.l10n),
+                            _label(entry.key),
                             style: TextStyle(
                               fontWeight: isSelected
                                   ? FontWeight.w700
@@ -576,8 +737,9 @@ class _StatsBodyState extends State<_StatsBody> {
   }
 }
 
-/// How the page lays out what it counts: by category, or over time with
-/// an interval, bars or lines, and an optional net series.
+/// How the page lays out what it counts: broken down by one dimension as a
+/// donut or ranked bars, or over time with an interval, bars, stacked bars
+/// or lines, and an optional net series.
 class _ViewControls extends StatelessWidget {
   static const _automatic = 'automatic';
 
@@ -597,10 +759,48 @@ class _ViewControls extends StatelessWidget {
         StatsInterval.year => l10n.statsIntervalYear,
       };
 
+  static String groupingLabel(AppLocalizations l10n, StatsGrouping grouping) =>
+      switch (grouping) {
+        StatsGrouping.category => l10n.statsByCategory,
+        StatsGrouping.tag => l10n.statsByTag,
+        StatsGrouping.budget => l10n.statsByBudget,
+        StatsGrouping.account => l10n.statsByAccount,
+        StatsGrouping.payee => l10n.statsByPayee,
+        StatsGrouping.time => l10n.statsOverTime,
+      };
+
+  static String splitLabel(AppLocalizations l10n, StatsSplit split) =>
+      switch (split) {
+        StatsSplit.category => l10n.statsStackedByCategory,
+        StatsSplit.tag => l10n.statsStackedByTag,
+        StatsSplit.budget => l10n.statsStackedByBudget,
+      };
+
+  static IconData _groupingIcon(StatsGrouping grouping) => switch (grouping) {
+    StatsGrouping.category => LucideIcons.folder,
+    StatsGrouping.tag => LucideIcons.tag,
+    StatsGrouping.budget => LucideIcons.target,
+    StatsGrouping.account => LucideIcons.wallet,
+    StatsGrouping.payee => LucideIcons.store,
+    StatsGrouping.time => LucideIcons.chartColumn,
+  };
+
+  static (IconData, String) _chart(AppLocalizations l10n, StatsChart chart) =>
+      switch (chart) {
+        StatsChart.donut => (LucideIcons.chartPie, l10n.statsChartDonut),
+        StatsChart.bars => (LucideIcons.chartColumn, l10n.statsChartBars),
+        StatsChart.stacked => (
+          LucideIcons.chartColumnStacked,
+          l10n.statsChartStacked,
+        ),
+        StatsChart.line => (LucideIcons.chartLine, l10n.statsChartLine),
+      };
+
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final overTime = filters.grouping == StatsGrouping.time;
+    final overTime = filters.overTime;
+    final chart = filters.effectiveChart;
     final canNet =
         filters.types.contains(TransactionTypeFilter.expense) &&
         filters.types.contains(TransactionTypeFilter.income);
@@ -611,24 +811,42 @@ class _ViewControls extends StatelessWidget {
       runSpacing: 12,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        SegmentedButton<StatsGrouping>(
+        PopupMenuButton<StatsGrouping>(
+          onSelected: (grouping) =>
+              context.goPreservingSearch(filters.location(grouping: grouping)),
+          itemBuilder: (context) => [
+            for (final grouping in StatsGrouping.values) ...[
+              if (grouping == StatsGrouping.time) const PopupMenuDivider(),
+              PopupMenuItem(
+                value: grouping,
+                child: Row(
+                  children: [
+                    Icon(_groupingIcon(grouping), size: 16),
+                    const SizedBox(width: 12),
+                    Text(groupingLabel(l10n, grouping)),
+                  ],
+                ),
+              ),
+            ],
+          ],
+          child: FilterPill(
+            icon: _groupingIcon(filters.grouping),
+            label: groupingLabel(l10n, filters.grouping),
+          ),
+        ),
+        SegmentedButton<StatsChart>(
           showSelectedIcon: false,
           segments: [
-            ButtonSegment(
-              value: StatsGrouping.category,
-              icon: const Icon(LucideIcons.chartPie, size: 16),
-              label: Text(l10n.statsByCategory),
-            ),
-            ButtonSegment(
-              value: StatsGrouping.time,
-              icon: const Icon(LucideIcons.chartColumn, size: 16),
-              label: Text(l10n.statsOverTime),
-            ),
+            for (final option in filters.charts)
+              ButtonSegment(
+                value: option,
+                icon: Icon(_chart(l10n, option).$1, size: 16),
+                label: Text(_chart(l10n, option).$2),
+              ),
           ],
-          selected: {filters.grouping},
-          onSelectionChanged: (value) => context.goPreservingSearch(
-            filters.location(grouping: value.single),
-          ),
+          selected: {chart},
+          onSelectionChanged: (value) =>
+              context.goPreservingSearch(filters.location(chart: value.single)),
         ),
         if (overTime) ...[
           // A menu treats a null pick as dismissed, so automatic has a value
@@ -659,26 +877,24 @@ class _ViewControls extends StatelessWidget {
               tooltip: chosen == null ? l10n.statsIntervalAuto : null,
             ),
           ),
-          SegmentedButton<StatsChart>(
-            showSelectedIcon: false,
-            segments: [
-              ButtonSegment(
-                value: StatsChart.bars,
-                icon: const Icon(LucideIcons.chartColumn, size: 16),
-                label: Text(l10n.statsChartBars),
+          if (chart == StatsChart.stacked)
+            PopupMenuButton<StatsSplit>(
+              onSelected: (split) =>
+                  context.goPreservingSearch(filters.location(split: split)),
+              itemBuilder: (context) => [
+                for (final split in StatsSplit.values)
+                  PopupMenuItem(
+                    value: split,
+                    child: Text(splitLabel(l10n, split)),
+                  ),
+              ],
+              child: FilterPill(
+                icon: LucideIcons.layers,
+                label: splitLabel(l10n, filters.split),
               ),
-              ButtonSegment(
-                value: StatsChart.line,
-                icon: const Icon(LucideIcons.chartLine, size: 16),
-                label: Text(l10n.statsChartLine),
-              ),
-            ],
-            selected: {filters.chart},
-            onSelectionChanged: (value) => context.goPreservingSearch(
-              filters.location(chart: value.single),
             ),
-          ),
-          if (canNet)
+          // A net series is one figure a stretch; it has no parts to stack.
+          if (canNet && chart != StatsChart.stacked)
             FilterChip(
               label: Text(l10n.netFlow),
               selected: filters.showNet,
@@ -721,8 +937,19 @@ class _StatsOverTimeBody extends StatelessWidget {
           series: breakdown.series,
           types: filters.orderedTypes,
           interval: interval,
-          chart: filters.chart,
-          showNet: filters.showNet && canNet,
+          chart: filters.effectiveChart,
+          showNet:
+              filters.showNet &&
+              canNet &&
+              filters.effectiveChart != StatsChart.stacked,
+          splitKeys: breakdown.splitKeys,
+          splitLabel: (key) => key == kStatsOtherSplit
+              ? l10n.statsOtherSplit
+              : key.isEmpty
+              ? (filters.split == StatsSplit.category
+                    ? l10n.unknown
+                    : l10n.none)
+              : key,
           currency: currency,
           format: format,
           fun: fun,

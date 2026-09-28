@@ -3232,12 +3232,6 @@ abstract class AppLocalizations {
   /// **'Overview'**
   String get overview;
 
-  /// No description provided for @byCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'By Category'**
-  String get byCategory;
-
   /// No description provided for @allTypes.
   ///
   /// In en, this message translates to:
@@ -7359,6 +7353,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Week of {date}'**
   String statsWeekOf(String date);
+
+  /// No description provided for @statsByTag.
+  ///
+  /// In en, this message translates to:
+  /// **'By tag'**
+  String get statsByTag;
+
+  /// No description provided for @statsByBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'By budget'**
+  String get statsByBudget;
+
+  /// No description provided for @statsByAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'By account'**
+  String get statsByAccount;
+
+  /// No description provided for @statsByPayee.
+  ///
+  /// In en, this message translates to:
+  /// **'By payee'**
+  String get statsByPayee;
+
+  /// No description provided for @statsStackedByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Stacked by category'**
+  String get statsStackedByCategory;
+
+  /// No description provided for @statsStackedByTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Stacked by tag'**
+  String get statsStackedByTag;
+
+  /// No description provided for @statsStackedByBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Stacked by budget'**
+  String get statsStackedByBudget;
+
+  /// No description provided for @statsChartDonut.
+  ///
+  /// In en, this message translates to:
+  /// **'Donut'**
+  String get statsChartDonut;
+
+  /// No description provided for @statsChartStacked.
+  ///
+  /// In en, this message translates to:
+  /// **'Stacked'**
+  String get statsChartStacked;
+
+  /// No description provided for @statsOtherSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get statsOtherSplit;
+
+  /// No description provided for @statsStackOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Bars, left to right: {types}'**
+  String statsStackOrder(String types);
 }
 
 class _AppLocalizationsDelegate

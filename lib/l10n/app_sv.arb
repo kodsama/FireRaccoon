@@ -1023,7 +1023,6 @@
   "tooltipBudgetCurrency": "Valuta för budgetbeloppet",
   "clearFilters": "Rensa filter",
   "overview": "Översikt",
-  "byCategory": "Per kategori",
   "allTypes": "Alla typer",
   "expensesFilter": "Utgifter",
   "transfers": "Överföringar",
@@ -2029,5 +2028,16 @@
   "statsTableTotal": "Totalt",
   "statsTablePeriod": "Period",
   "statsQuarterLabel": "K{quarter} {year}",
-  "statsWeekOf": "Veckan från {date}"
+  "statsWeekOf": "Veckan från {date}",
+  "statsByTag": "Per tagg",
+  "statsByBudget": "Per budget",
+  "statsByAccount": "Per konto",
+  "statsByPayee": "Per mottagare",
+  "statsStackedByCategory": "Staplat per kategori",
+  "statsStackedByTag": "Staplat per tagg",
+  "statsStackedByBudget": "Staplat per budget",
+  "statsChartDonut": "Ring",
+  "statsChartStacked": "Staplat",
+  "statsOtherSplit": "Övrigt",
+  "statsStackOrder": "Staplar, från vänster till höger: {types}"
 }

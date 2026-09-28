@@ -1037,7 +1037,6 @@
   "tooltipBudgetCurrency": "Currency for the budget amount",
   "clearFilters": "Clear filters",
   "overview": "Overview",
-  "byCategory": "By Category",
   "allTypes": "All Types",
   "expensesFilter": "Expenses",
   "transfers": "Transfers",
@@ -2433,5 +2432,17 @@
   "statsQuarterLabel": "Q{quarter} {year}",
   "@statsQuarterLabel": {"placeholders": {"quarter": {"type": "int"}, "year": {"type": "int", "format": "decimalPattern"}}},
   "statsWeekOf": "Week of {date}",
-  "@statsWeekOf": {"placeholders": {"date": {"type": "String"}}}
+  "@statsWeekOf": {"placeholders": {"date": {"type": "String"}}},
+  "statsByTag": "By tag",
+  "statsByBudget": "By budget",
+  "statsByAccount": "By account",
+  "statsByPayee": "By payee",
+  "statsStackedByCategory": "Stacked by category",
+  "statsStackedByTag": "Stacked by tag",
+  "statsStackedByBudget": "Stacked by budget",
+  "statsChartDonut": "Donut",
+  "statsChartStacked": "Stacked",
+  "statsOtherSplit": "Other",
+  "statsStackOrder": "Bars, left to right: {types}",
+  "@statsStackOrder": {"placeholders": {"types": {"type": "String"}}}
 }

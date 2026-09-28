@@ -37,11 +37,19 @@ const statsTypes = [
   TransactionTypeFilter.transfer,
 ];
 
-/// What the page lays its totals out along.
-enum StatsGrouping { category, time }
+/// What the page lays its totals out along: one of the ways to break a
+/// total down, or time.
+enum StatsGrouping { category, tag, budget, account, payee, time }
 
-/// How a series over time is drawn.
-enum StatsChart { bars, line }
+/// How the totals are drawn. A breakdown takes a donut or ranked bars, a
+/// series over time takes bars, stacked bars or lines.
+enum StatsChart { donut, bars, stacked, line }
+
+/// What stacked bars over time are cut into.
+enum StatsSplit { category, tag, budget }
+
+const _breakdownCharts = [StatsChart.donut, StatsChart.bars];
+const _timeCharts = [StatsChart.bars, StatsChart.stacked, StatsChart.line];
 
 class StatsRouteFilters {
   static const defaultTypes = {
@@ -67,7 +75,10 @@ class StatsRouteFilters {
   /// filters leaves these alone. A `null` [interval] follows the period.
   final StatsGrouping grouping;
   final StatsInterval? interval;
-  final StatsChart chart;
+
+  /// As the link named it; [effectiveChart] is what is drawn.
+  final StatsChart? chart;
+  final StatsSplit split;
   final bool showNet;
 
   const StatsRouteFilters({
@@ -82,9 +93,19 @@ class StatsRouteFilters {
     this.defaultDashboardPeriod = kDefaultDashboardPeriod,
     this.grouping = StatsGrouping.category,
     this.interval,
-    this.chart = StatsChart.bars,
+    this.chart,
+    this.split = StatsSplit.category,
     this.showNet = false,
   });
+
+  bool get overTime => grouping == StatsGrouping.time;
+
+  /// The charts [grouping] can be drawn as, the default first.
+  List<StatsChart> get charts => overTime ? _timeCharts : _breakdownCharts;
+
+  /// [chart] when it suits [grouping], else that grouping's default.
+  StatsChart get effectiveChart =>
+      chart != null && charts.contains(chart) ? chart! : charts.first;
 
   /// [types] in page order, whatever order the link named them in.
   List<TransactionTypeFilter> get orderedTypes =>
@@ -148,8 +169,15 @@ class StatsRouteFilters {
     StatsInterval? interval,
     bool autoInterval = false,
     StatsChart? chart,
+    StatsSplit? split,
     bool? showNet,
   }) {
+    // Crossing between a breakdown and time leaves the chart behind, since
+    // no chart suits both.
+    final nextGrouping = grouping ?? this.grouping;
+    final crossed =
+        (nextGrouping == StatsGrouping.time) !=
+        (this.grouping == StatsGrouping.time);
     final hasNewDates = from != null || to != null;
     final keepDates = period == null && !hasNewDates;
     final datedFrom = keepDates ? this.from : from;
@@ -166,7 +194,8 @@ class StatsRouteFilters {
       defaultDashboardPeriod: defaultDashboardPeriod,
       grouping: grouping ?? this.grouping,
       interval: autoInterval ? null : (interval ?? this.interval),
-      chart: chart ?? this.chart,
+      chart: chart ?? (crossed ? null : this.chart),
+      split: split ?? this.split,
       showNet: showNet ?? this.showNet,
     );
   }
@@ -177,6 +206,7 @@ class StatsRouteFilters {
     grouping: grouping,
     interval: interval,
     chart: chart,
+    split: split,
     showNet: showNet,
   );
 
@@ -202,7 +232,8 @@ class StatsRoute {
     DashboardPeriod defaultDashboardPeriod = kDefaultDashboardPeriod,
     StatsGrouping grouping = StatsGrouping.category,
     StatsInterval? interval,
-    StatsChart chart = StatsChart.bars,
+    StatsChart? chart,
+    StatsSplit split = StatsSplit.category,
     bool showNet = false,
   }) {
     final defaultParams = expenseParamsFromDashboardPeriod(
@@ -240,7 +271,8 @@ class StatsRoute {
       'to': resolvedTo,
       'view': grouping == StatsGrouping.category ? null : grouping.name,
       'interval': interval?.name,
-      'chart': chart == StatsChart.bars ? null : chart.name,
+      'chart': chart?.name,
+      'split': split == StatsSplit.category ? null : split.name,
       'net': showNet ? '1' : null,
     });
   }
@@ -321,20 +353,24 @@ class StatsRoute {
         StatsGrouping.category,
       ),
       interval: _intervalFrom(uri),
-      chart: RouteQuery.enumFrom(
+      chart: _enumOrNull(uri, 'chart', StatsChart.values),
+      split: RouteQuery.enumFrom(
         uri,
-        'chart',
-        StatsChart.values,
-        StatsChart.bars,
+        'split',
+        StatsSplit.values,
+        StatsSplit.category,
       ),
       showNet: RouteQuery.param(uri, 'net') == '1',
     );
   }
 
-  static StatsInterval? _intervalFrom(Uri uri) {
-    final raw = RouteQuery.param(uri, 'interval');
-    for (final interval in StatsInterval.values) {
-      if (interval.name == raw) return interval;
+  static StatsInterval? _intervalFrom(Uri uri) =>
+      _enumOrNull(uri, 'interval', StatsInterval.values);
+
+  static T? _enumOrNull<T extends Enum>(Uri uri, String key, List<T> values) {
+    final raw = RouteQuery.param(uri, key);
+    for (final value in values) {
+      if (value.name == raw) return value;
     }
     return null;
   }

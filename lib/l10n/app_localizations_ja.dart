@@ -1717,9 +1717,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get overview => '概要';
 
   @override
-  String get byCategory => 'カテゴリ別';
-
-  @override
   String get allTypes => 'すべての種類';
 
   @override
@@ -3997,5 +3994,40 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String statsWeekOf(String date) {
     return '$date の週';
+  }
+
+  @override
+  String get statsByTag => 'タグ別';
+
+  @override
+  String get statsByBudget => '予算別';
+
+  @override
+  String get statsByAccount => '口座別';
+
+  @override
+  String get statsByPayee => '取引先別';
+
+  @override
+  String get statsStackedByCategory => 'カテゴリで積み上げ';
+
+  @override
+  String get statsStackedByTag => 'タグで積み上げ';
+
+  @override
+  String get statsStackedByBudget => '予算で積み上げ';
+
+  @override
+  String get statsChartDonut => 'ドーナツ';
+
+  @override
+  String get statsChartStacked => '積み上げ';
+
+  @override
+  String get statsOtherSplit => 'その他';
+
+  @override
+  String statsStackOrder(String types) {
+    return '棒は左から順に：$types';
   }
 }
