@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../theme/app_theme.dart';
+import 'stats_hover_card.dart';
 
 /// One slice of a [StatsDonut] ring.
 class DonutSlice {
@@ -114,48 +115,17 @@ extension on _StatsDonutState {
   /// the ring is cut short and slivers have none: its name, its share of
   /// its ring and its amount.
   Widget _hoverCard(BuildContext context, Size size, (bool, int) hovered) {
-    final colors = context.colors;
     final slices = hovered.$1 ? widget.inner : widget.outer;
     final slice = slices[hovered.$2];
     final total = slices.fold<double>(0, (sum, s) => sum + s.value);
     final share = total > 0 ? slice.value / total * 100 : 0.0;
-    const width = 220.0;
-    // Beside the pointer, flipped to the other side near an edge.
-    final left = _pointer.dx + 16 + width > size.width
-        ? _pointer.dx - 16 - width
-        : _pointer.dx + 16;
-    final top = (_pointer.dy - 30).clamp(0.0, size.height - 64);
-    return Positioned(
-      left: left,
-      top: top,
-      width: width,
-      child: IgnorePointer(
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: colors.surface2,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: slice.color, width: 1.5),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                slice.label,
-                style: TextStyle(
-                  color: colors.text,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '${widget.formatPercent(share)} · ${slice.amount}',
-                style: TextStyle(color: colors.text2),
-              ),
-            ],
-          ),
-        ),
+    return StatsHoverCard(
+      area: size,
+      hover: StatsHover(
+        at: _pointer,
+        color: slice.color,
+        title: slice.label,
+        lines: ['${widget.formatPercent(share)} · ${slice.amount}'],
       ),
     );
   }

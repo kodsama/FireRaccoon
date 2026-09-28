@@ -36,7 +36,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   drawn as a curve across them. Donuts name each type inside the inner ring and
   each part outside on a line with its share, using the width beside the
   ring rather than cutting names short; hovering a part shows its full name,
-  share and amount. Shares and amounts follow the number locale. The Stacked
+  share and amount. Bars and lines answer a hover the same way, for the one
+  thing under the pointer: the part of a stacked bar with its share of that
+  bar, the bar, the net's curve, or the nearest line. Shares and amounts follow the number locale. The Stacked
   chart gives way to In detail, which stacks each type by the split it is
   set to
 

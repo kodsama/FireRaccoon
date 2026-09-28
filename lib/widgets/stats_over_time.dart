@@ -12,6 +12,7 @@ import '../theme/app_theme.dart';
 import '../utils/locale_formatting.dart';
 import '../utils/stats_breakdown.dart';
 import '../utils/stats_colors.dart';
+import 'stats_hover_card.dart';
 
 /// Labels for the buckets of one series, short for an axis, long for a row.
 class StatsBucketLabels {
@@ -285,11 +286,19 @@ class StatsSeriesChart extends StatelessWidget {
         FlLine(color: context.colors.border, strokeWidth: 1),
   );
 
-  /// The value range both the bars and a curve over them are drawn on.
-  (double, double) _range() {
+  /// The value range both the bars and a curve over them are drawn on, or
+  /// with [lines] the range those lines run through.
+  (double, double) _range([List<_Series>? lines]) {
     var low = 0.0;
     var high = 0.0;
     for (final bucket in series) {
+      if (lines != null) {
+        for (final line in lines) {
+          high = math.max(high, line.valueOf(bucket));
+          low = math.min(low, line.valueOf(bucket));
+        }
+        continue;
+      }
       for (final type in types) {
         high = math.max(high, bucket.totalFor(type));
       }
@@ -310,120 +319,180 @@ class StatsSeriesChart extends StatelessWidget {
   ) {
     final colors = context.colors;
     final (minY, maxY) = _range();
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        // Rods take most of each group's share of the width, up to a cap
-        // that keeps a short series from turning into slabs.
-        final perGroup = (constraints.maxWidth - _leftReserved) / series.length;
-        final rodWidth = (perGroup * 0.7 / types.length).clamp(2.0, 26.0);
-        final bars = BarChart(
-          BarChartData(
-            alignment: BarChartAlignment.spaceAround,
-            minY: minY,
-            maxY: maxY,
-            barGroups: [
-              for (var i = 0; i < series.length; i++)
-                BarChartGroupData(
-                  x: i,
-                  barsSpace: 2,
-                  barRods: [
-                    for (final type in types)
-                      BarChartRodData(
-                        toY: series[i].totalFor(type),
-                        color: byParts
-                            ? Colors.transparent
-                            : statsTypeColor(colors, type),
-                        rodStackItems: byParts
-                            ? _stackItems(context, series[i], type)
-                            : const [],
-                        width: rodWidth,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(3),
-                        ),
-                      ),
-                  ],
-                ),
-            ],
-            titlesData: _titles(context, labels),
-            gridData: _grid(context),
-            borderData: FlBorderData(show: false),
-            barTouchData: BarTouchData(
-              touchTooltipData: BarTouchTooltipData(
-                getTooltipColor: (_) => colors.surface2,
-                getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                  final type = types[rodIndex];
-                  final bucket = series[groupIndex];
-                  return BarTooltipItem(
-                    '${_typeLabel(l10n, type)}\n${_money(rod.toY)}',
-                    TextStyle(
-                      color: statsTypeColor(colors, type),
-                      fontWeight: FontWeight.w600,
-                    ),
-                    children: [
-                      if (byParts) ..._partLines(context, bucket, type),
-                      if (showNet && rodIndex == types.length - 1)
-                        TextSpan(
-                          text: '\n${l10n.netFlow}: ${_money(bucket.net)}',
-                          style: const TextStyle(
-                            color: kStatsNetColor,
-                            fontWeight: FontWeight.w600,
+    return StatsHoverHost(
+      builder: (context, onHover) => LayoutBuilder(
+        builder: (context, constraints) {
+          // Rods take most of each group's share of the width, up to a cap
+          // that keeps a short series from turning into slabs.
+          final perGroup =
+              (constraints.maxWidth - _leftReserved) / series.length;
+          final rodWidth = (perGroup * 0.7 / types.length).clamp(2.0, 26.0);
+          final bars = BarChart(
+            BarChartData(
+              alignment: BarChartAlignment.spaceAround,
+              minY: minY,
+              maxY: maxY,
+              barGroups: [
+                for (var i = 0; i < series.length; i++)
+                  BarChartGroupData(
+                    x: i,
+                    barsSpace: 2,
+                    barRods: [
+                      for (final type in types)
+                        BarChartRodData(
+                          toY: series[i].totalFor(type),
+                          color: byParts
+                              ? Colors.transparent
+                              : statsTypeColor(colors, type),
+                          rodStackItems: byParts
+                              ? _stackItems(context, series[i], type)
+                              : const [],
+                          width: rodWidth,
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(3),
                           ),
                         ),
                     ],
+                  ),
+              ],
+              titlesData: _titles(context, labels),
+              gridData: _grid(context),
+              borderData: FlBorderData(show: false),
+              barTouchData: BarTouchData(
+                handleBuiltInTouches: false,
+                touchCallback: (event, response) {
+                  final spot = response?.spot;
+                  if (event is FlTapUpEvent && spot != null) {
+                    onOpenBucket(series[spot.touchedBarGroupIndex]);
+                    return;
+                  }
+                  if (event is FlPointerExitEvent || response == null) {
+                    onHover(null);
+                    return;
+                  }
+                  onHover(
+                    _barHover(
+                      context,
+                      l10n,
+                      labels,
+                      response,
+                      width: constraints.maxWidth,
+                      range: maxY - minY,
+                    ),
                   );
                 },
               ),
-              touchCallback: (event, response) {
-                final spot = response?.spot;
-                if (event is FlTapUpEvent && spot != null) {
-                  onOpenBucket(series[spot.touchedBarGroupIndex]);
-                }
-              },
             ),
-          ),
-        );
-        if (!showNet) return bars;
-        // The net rides over the bars as a curve, on a line chart laid on
-        // top with the same range and the same axes reserved: bars spaced
-        // around their slots centre each on (i + 0.5) / n of the width,
-        // which is where x = i lands between -0.5 and n - 0.5.
-        return Stack(
-          children: [
-            Positioned.fill(child: bars),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: LineChart(
-                  LineChartData(
-                    minX: -0.5,
-                    maxX: series.length - 0.5,
-                    minY: minY,
-                    maxY: maxY,
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: [
-                          for (var i = 0; i < series.length; i++)
-                            FlSpot(i.toDouble(), series[i].net),
-                        ],
-                        color: kStatsNetColor,
-                        barWidth: 3,
-                        isCurved: true,
-                        preventCurveOverShooting: true,
-                        dotData: FlDotData(show: series.length <= 40),
-                      ),
-                    ],
-                    titlesData: _titles(context, labels, drawn: false),
-                    gridData: const FlGridData(show: false),
-                    borderData: FlBorderData(show: false),
-                    lineTouchData: const LineTouchData(enabled: false),
+          );
+          if (!showNet) return bars;
+          // The net rides over the bars as a curve, on a line chart laid on
+          // top with the same range and the same axes reserved: bars spaced
+          // around their slots centre each on (i + 0.5) / n of the width,
+          // which is where x = i lands between -0.5 and n - 0.5.
+          return Stack(
+            children: [
+              Positioned.fill(child: bars),
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: LineChart(
+                    LineChartData(
+                      minX: -0.5,
+                      maxX: series.length - 0.5,
+                      minY: minY,
+                      maxY: maxY,
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: [
+                            for (var i = 0; i < series.length; i++)
+                              FlSpot(i.toDouble(), series[i].net),
+                          ],
+                          color: kStatsNetColor,
+                          barWidth: 3,
+                          isCurved: true,
+                          preventCurveOverShooting: true,
+                          dotData: FlDotData(show: series.length <= 40),
+                        ),
+                      ],
+                      titlesData: _titles(context, labels, drawn: false),
+                      gridData: const FlGridData(show: false),
+                      borderData: FlBorderData(show: false),
+                      lineTouchData: const LineTouchData(enabled: false),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
-        );
-      },
+            ],
+          );
+        },
+      ),
     );
   }
+
+  /// What the pointer is over among the bars: the net's curve when it is
+  /// close to it, else the part of the bar under it, or the whole bar
+  /// when the bar is not cut into parts.
+  StatsHover? _barHover(
+    BuildContext context,
+    AppLocalizations l10n,
+    StatsBucketLabels labels,
+    BarTouchResponse response, {
+    required double width,
+    required double range,
+  }) {
+    final colors = context.colors;
+    final at = response.touchLocation;
+    final value = response.touchChartCoordinate.dy;
+    if (showNet && series.isNotEmpty) {
+      final slot =
+          ((at.dx - _leftReserved) / (width - _leftReserved) * series.length)
+              .floor()
+              .clamp(0, series.length - 1);
+      final bucket = series[slot];
+      if ((value - bucket.net).abs() < range * 0.05) {
+        return StatsHover(
+          at: at,
+          color: kStatsNetColor,
+          title: l10n.netFlow,
+          lines: [labels.long(bucket.start), _money(bucket.net)],
+        );
+      }
+    }
+    final spot = response.spot;
+    if (spot == null) return null;
+    final bucket = series[spot.touchedBarGroupIndex];
+    final type = types[spot.touchedRodDataIndex];
+    final total = bucket.totalFor(type);
+    final month = labels.long(bucket.start);
+    if (byParts && spot.touchedStackItemIndex >= 0) {
+      // Stack items skip the parts with nothing in them, so the index is
+      // counted over the parts this bar holds.
+      final held = [
+        for (var i = 0; i < splitKeys.length; i++)
+          if (bucket.partFor(type, splitKeys[i]) != 0) i,
+      ];
+      if (spot.touchedStackItemIndex < held.length) {
+        final index = held[spot.touchedStackItemIndex];
+        final part = bucket.partFor(type, splitKeys[index]);
+        return StatsHover(
+          at: at,
+          color: _partColor(context, type, index),
+          title: splitLabel(splitKeys[index]),
+          lines: [
+            '${_typeLabel(l10n, type)} · $month',
+            '${_percent(total > 0 ? part / total * 100 : 0)} · ${_money(part)}',
+          ],
+        );
+      }
+    }
+    return StatsHover(
+      at: at,
+      color: statsTypeColor(colors, type),
+      title: _typeLabel(l10n, type),
+      lines: [month, _money(total)],
+    );
+  }
+
+  String _percent(double value) => '${format.formatPercent(value)}%';
 
   List<BarChartRodStackItem> _stackItems(
     BuildContext context,
@@ -443,72 +512,76 @@ class StatsSeriesChart extends StatelessWidget {
     return items;
   }
 
-  List<TextSpan> _partLines(
-    BuildContext context,
-    StatsBucket bucket,
-    TransactionTypeFilter type,
-  ) => [
-    for (var i = 0; i < splitKeys.length; i++)
-      if (bucket.partFor(type, splitKeys[i]) != 0)
-        TextSpan(
-          text:
-              '\n${splitLabel(splitKeys[i])}: ${_money(bucket.partFor(type, splitKeys[i]))}',
-          style: TextStyle(
-            color: _partColor(context, type, i),
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-  ];
-
   Widget _lines(
     BuildContext context,
     AppLocalizations l10n,
     StatsBucketLabels labels,
   ) {
-    final colors = context.colors;
     final lines = [
       ...(byParts ? _partSeries(context, l10n) : _typeSeries(context, l10n)),
       if (showNet) _netSeries(l10n),
     ];
-    return LineChart(
-      LineChartData(
-        lineBarsData: [
-          for (final line in lines)
-            LineChartBarData(
-              spots: [
-                for (var i = 0; i < series.length; i++)
-                  FlSpot(i.toDouble(), line.valueOf(series[i])),
-              ],
-              color: line.color,
-              barWidth: line.isNet ? 3 : 2.5,
-              isCurved: line.isNet,
-              preventCurveOverShooting: true,
-              dotData: FlDotData(show: series.length <= 40),
-            ),
-        ],
-        titlesData: _titles(context, labels),
-        gridData: _grid(context),
-        borderData: FlBorderData(show: false),
-        lineTouchData: LineTouchData(
-          touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (_) => colors.surface2,
-            getTooltipItems: (spots) => [
-              for (final spot in spots)
-                LineTooltipItem(
-                  '${lines[spot.barIndex].label}: ${_money(spot.y)}',
-                  TextStyle(
-                    color: lines[spot.barIndex].color,
-                    fontWeight: FontWeight.w600,
-                  ),
+    // The same range and slots as the bars, so a month's point sits where
+    // its bar would, and a single month is a point rather than no axis.
+    final (minY, maxY) = _range(lines);
+    return StatsHoverHost(
+      builder: (context, onHover) => LineChart(
+        LineChartData(
+          minX: -0.5,
+          maxX: series.length - 0.5,
+          minY: minY,
+          maxY: maxY,
+          lineBarsData: [
+            for (final line in lines)
+              LineChartBarData(
+                spots: [
+                  for (var i = 0; i < series.length; i++)
+                    FlSpot(i.toDouble(), line.valueOf(series[i])),
+                ],
+                color: line.color,
+                barWidth: line.isNet ? 3 : 2.5,
+                isCurved: line.isNet,
+                preventCurveOverShooting: true,
+                dotData: FlDotData(show: series.length <= 40),
+              ),
+          ],
+          titlesData: _titles(context, labels),
+          gridData: _grid(context),
+          borderData: FlBorderData(show: false),
+          lineTouchData: LineTouchData(
+            handleBuiltInTouches: false,
+            touchCallback: (event, response) {
+              final spots = response?.lineBarSpots;
+              if (event is FlTapUpEvent && spots != null && spots.isNotEmpty) {
+                onOpenBucket(series[spots.first.x.round()]);
+                return;
+              }
+              if (event is FlPointerExitEvent ||
+                  response == null ||
+                  spots == null ||
+                  spots.isEmpty) {
+                onHover(null);
+                return;
+              }
+              // Of the lines at the pointer's month, the one nearest it.
+              final value = response.touchChartCoordinate.dy;
+              final nearest = spots.reduce(
+                (a, b) => (a.y - value).abs() <= (b.y - value).abs() ? a : b,
+              );
+              final line = lines[nearest.barIndex];
+              onHover(
+                StatsHover(
+                  at: response.touchLocation,
+                  color: line.color,
+                  title: line.label,
+                  lines: [
+                    labels.long(series[nearest.x.round()].start),
+                    _money(nearest.y),
+                  ],
                 ),
-            ],
+              );
+            },
           ),
-          touchCallback: (event, response) {
-            final spots = response?.lineBarSpots;
-            if (event is FlTapUpEvent && spots != null && spots.isNotEmpty) {
-              onOpenBucket(series[spots.first.x.round()]);
-            }
-          },
         ),
       ),
     );
