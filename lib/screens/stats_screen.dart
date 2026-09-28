@@ -51,9 +51,10 @@ class StatsScreen extends ConsumerWidget {
       (transactions) => buildStatsBreakdown(
         transactions,
         types: filters.orderedTypes,
-        category: filters.category,
-        tag: filters.tag,
-        budget: filters.budget,
+        categories: filters.categories,
+        tags: filters.tags,
+        budgets: filters.budgets,
+        accounts: filters.accounts,
         words: words,
       ),
     );
@@ -109,46 +110,45 @@ class StatsScreen extends ConsumerWidget {
               runSpacing: 12,
               children: [
                 _PeriodFilterButton(filters: filters),
-                _NameFilterButton(
+                _NamesFilterButton(
                   icon: LucideIcons.folder,
-                  label: filters.category != null
-                      ? displayLabelOrUnknown(filters.category, l10n)
-                      : l10n.category,
-                  title: l10n.category,
-                  allLabel: l10n.allCategories,
+                  idleLabel: l10n.category,
                   emptyLabel: l10n.noCategoriesFound,
-                  names:
-                      options?.categories ??
-                      [if (filters.category != null) filters.category!],
-                  current: filters.category,
+                  names: options?.categories ?? const [],
+                  selected: filters.categories,
                   labelOf: (name) => displayLabelOrUnknown(name, l10n),
-                  onPicked: (name) => filters.location(category: name),
+                  onPicked: (names) => filters.location(categories: names),
                 ),
-                _NameFilterButton(
+                _NamesFilterButton(
                   icon: LucideIcons.tag,
-                  label: filters.tag ?? l10n.filterTag,
-                  title: l10n.filterTag,
-                  allLabel: l10n.allTags,
+                  idleLabel: l10n.filterTag,
                   emptyLabel: l10n.noTagsFound,
-                  names:
-                      options?.tags ?? [if (filters.tag != null) filters.tag!],
-                  current: filters.tag,
-                  onPicked: (name) => filters.location(tag: name),
+                  names: options?.tags ?? const [],
+                  selected: filters.tags,
+                  onPicked: (names) => filters.location(tags: names),
                 ),
-                _NameFilterButton(
+                _NamesFilterButton(
                   icon: LucideIcons.target,
-                  label: filters.budget ?? l10n.filterBudget,
-                  title: l10n.filterBudget,
-                  allLabel: l10n.allBudgets,
+                  idleLabel: l10n.filterBudget,
                   emptyLabel: l10n.noBudgetsFound,
-                  names:
-                      options?.budgets ??
-                      [if (filters.budget != null) filters.budget!],
-                  current: filters.budget,
-                  onPicked: (name) => filters.location(budget: name),
+                  names: options?.budgets ?? const [],
+                  selected: filters.budgets,
+                  onPicked: (names) => filters.location(budgets: names),
                 ),
                 _WordsFilterButton(words: words),
-                _AccountFilterButton(filters: filters),
+                _NamesFilterButton(
+                  icon: LucideIcons.wallet,
+                  idleLabel: l10n.accountFilterLabel,
+                  emptyLabel: l10n.noAccountsFound,
+                  names: [
+                    for (final account
+                        in ref.watch(accountsProvider).value ??
+                            const <Account>[])
+                      account.name,
+                  ],
+                  selected: filters.accounts,
+                  onPicked: (names) => filters.location(accounts: names),
+                ),
                 _DateRangeFilterButton(filters: filters),
               ],
             ),
@@ -191,11 +191,11 @@ class StatsScreen extends ConsumerWidget {
       filters.orderedTypes
           .map((type) => type.localizedLabel(l10n, isRaccoon: fun.isRaccoon))
           .join(' + '),
-      if (filters.category != null)
-        displayLabelOrUnknown(filters.category, l10n),
-      ?filters.tag,
-      ?filters.budget,
-      ?filters.account,
+      for (final category in filters.categories)
+        displayLabelOrUnknown(category, l10n),
+      ...filters.tags,
+      ...filters.budgets,
+      ...filters.accounts,
       if (words != null) '"$words"',
     ];
     return parts.join(' · ');
@@ -259,12 +259,12 @@ class _StatsBodyState extends State<_StatsBody> {
   }) {
     final filters = widget.filters;
     return TransactionsRoute.location(
-      category: category ?? filters.category,
-      tag: filters.tag,
-      budget: filters.budget,
+      categories: category != null ? [category] : filters.categories,
+      tags: filters.tags,
+      budgets: filters.budgets,
       period: filters.period,
       type: type ?? filters.singleType ?? TransactionTypeFilter.all,
-      account: filters.account,
+      accounts: filters.accounts.toList(),
       from: _date(filters.from),
       to: _date(filters.to),
       defaultDashboardPeriod: filters.defaultDashboardPeriod,
@@ -278,9 +278,9 @@ class _StatsBodyState extends State<_StatsBody> {
     final chartColors = _chartColors(context);
     final multiple = breakdown.types.length > 1;
     final net = breakdown.net;
-    final categoryKey = widget.filters.category == null
-        ? null
-        : categoryGroupKey(widget.filters.category);
+    final categoryKeys = widget.filters.categories
+        .map(categoryGroupKey)
+        .toSet();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -301,7 +301,7 @@ class _StatsBodyState extends State<_StatsBody> {
                       _typeOverview(
                         context,
                         totals,
-                        categoryKey: categoryKey,
+                        categoryKeys: categoryKeys,
                         chartColors: chartColors,
                         size: multiple ? 180 : 240,
                       ),
@@ -389,7 +389,7 @@ class _StatsBodyState extends State<_StatsBody> {
   Widget _typeOverview(
     BuildContext context,
     StatsTypeTotals totals, {
-    required String? categoryKey,
+    required Set<String> categoryKeys,
     required List<Color> chartColors,
     required double size,
   }) {
@@ -399,7 +399,9 @@ class _StatsBodyState extends State<_StatsBody> {
     final legend = totals.sortedCategories;
     for (var i = 0; i < legend.length; i++) {
       final entry = legend[i];
-      if (categoryKey != null && entry.key != categoryKey) continue;
+      if (categoryKeys.isNotEmpty && !categoryKeys.contains(entry.key)) {
+        continue;
+      }
       if (_hidden.contains(_hiddenKey(totals.type, entry.key))) continue;
       values.add(entry.value);
       sliceColors.add(chartColors[i % chartColors.length]);
@@ -456,16 +458,16 @@ class _StatsBodyState extends State<_StatsBody> {
         ),
       ];
     }
-    final selectedKey = widget.filters.category == null
-        ? null
-        : categoryGroupKey(widget.filters.category);
+    final selectedKeys = widget.filters.categories
+        .map(categoryGroupKey)
+        .toSet();
     final grandTotal = totals.total;
 
     return List.generate(legend.length, (index) {
       final entry = legend[index];
       final hiddenKey = _hiddenKey(totals.type, entry.key);
       final isVisible = !_hidden.contains(hiddenKey);
-      final isSelected = selectedKey == entry.key;
+      final isSelected = selectedKeys.contains(entry.key);
       final percentage = grandTotal > 0 ? entry.value / grandTotal * 100 : 0.0;
 
       return Padding(
@@ -632,26 +634,23 @@ class _PeriodFilterButton extends StatelessWidget {
   }
 }
 
-/// A category, tag or budget picker; [onPicked] gets `null` for "all".
-class _NameFilterButton extends StatelessWidget {
+/// A picker over several names, such as categories or tags. [onPicked]
+/// gets the names ticked, empty to clear the filter.
+class _NamesFilterButton extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final String title;
-  final String allLabel;
+  final String idleLabel;
   final String emptyLabel;
   final List<String> names;
-  final String? current;
+  final Set<String> selected;
   final String Function(String name)? labelOf;
-  final String Function(String? name) onPicked;
+  final String Function(Set<String> names) onPicked;
 
-  const _NameFilterButton({
+  const _NamesFilterButton({
     required this.icon,
-    required this.label,
-    required this.title,
-    required this.allLabel,
+    required this.idleLabel,
     required this.emptyLabel,
     required this.names,
-    required this.current,
+    required this.selected,
     required this.onPicked,
     this.labelOf,
   });
@@ -661,27 +660,26 @@ class _NameFilterButton extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () async {
-        final picked = await showNameFilterDialog(
+        final picked = await showNamesFilterDialog(
           context: context,
-          title: title,
-          allLabel: allLabel,
+          title: idleLabel,
           emptyLabel: emptyLabel,
           names: names,
-          currentFilter: current,
+          selected: selected,
           icon: icon,
           labelOf: labelOf,
         );
         if (picked == null || !context.mounted) return;
-        context.goPreservingSearch(
-          onPicked(picked == allNamesSentinel ? null : picked),
-        );
+        context.goPreservingSearch(onPicked(picked));
       },
       child: FilterPill(
         icon: icon,
-        label: label,
-        tooltip: title,
-        active: current != null,
-        onClear: () => context.goPreservingSearch(onPicked(null)),
+        label: FilterPill.selectionLabel(selected, idleLabel, labelOf: labelOf),
+        tooltip: selected.isEmpty
+            ? idleLabel
+            : selected.map(labelOf ?? (name) => name).join(', '),
+        active: selected.isNotEmpty,
+        onClear: () => context.goPreservingSearch(onPicked(const {})),
       ),
     );
   }
@@ -714,42 +712,6 @@ class _WordsFilterButton extends StatelessWidget {
         onClear: () => context.go(
           RouteQuery.withSearch(GoRouterState.of(context).uri, null),
         ),
-      ),
-    );
-  }
-}
-
-class _AccountFilterButton extends ConsumerWidget {
-  final StatsRouteFilters filters;
-
-  const _AccountFilterButton({required this.filters});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final l10n = context.l10n;
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () async {
-        final selected = await showAccountFilterDialog(
-          context: context,
-          ref: ref,
-          accounts: ref.read(accountsProvider).value ?? [],
-          currentFilter: filters.account,
-        );
-        if (selected == null || !context.mounted) return;
-        context.goPreservingSearch(
-          filters.location(
-            account: selected == allNamesSentinel ? null : selected,
-          ),
-        );
-      },
-      child: FilterPill(
-        icon: LucideIcons.wallet,
-        label: filters.account ?? l10n.accountFilterLabel,
-        tooltip: l10n.accountFilterLabel,
-        active: filters.account != null,
-        onClear: () =>
-            context.goPreservingSearch(filters.location(account: null)),
       ),
     );
   }

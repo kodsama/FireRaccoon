@@ -10,9 +10,10 @@ import 'route_query.dart';
 import 'stats_route.dart';
 
 class TransactionsRouteFilters {
-  final String? category;
-  final String? tag;
-  final String? budget;
+  /// Each keeps groups with a leg matching any one of its names.
+  final Set<String> categories;
+  final Set<String> tags;
+  final Set<String> budgets;
   final ExpensePeriod period;
   final TransactionTypeFilter type;
   final String? account;
@@ -28,9 +29,9 @@ class TransactionsRouteFilters {
   final Set<TransactionField> missingFields;
 
   const TransactionsRouteFilters({
-    this.category,
-    this.tag,
-    this.budget,
+    this.categories = const {},
+    this.tags = const {},
+    this.budgets = const {},
     this.period = ExpensePeriod.month,
     this.type = TransactionTypeFilter.all,
     this.account,
@@ -50,9 +51,9 @@ class TransactionsRouteFilters {
       expenseParamsFromDashboardPeriod(defaultDashboardPeriod);
 
   bool get hasScopedFilters {
-    if (category != null ||
-        tag != null ||
-        budget != null ||
+    if (categories.isNotEmpty ||
+        tags.isNotEmpty ||
+        budgets.isNotEmpty ||
         type != TransactionTypeFilter.all) {
       return true;
     }
@@ -66,9 +67,9 @@ class TransactionsRouteFilters {
     bool isRaccoon = false,
   }) {
     final parts = <String>[
-      if (category != null && category!.isNotEmpty) category!,
-      ?tag,
-      ?budget,
+      ...categories,
+      ...tags,
+      ...budgets,
       if (hasCustomDateRange)
         format.formatDateRange(
           from,
@@ -99,9 +100,9 @@ class TransactionsRoute {
     String? account,
     List<String>? accounts,
     TransactionGroupType group = TransactionGroupType.date,
-    String? category,
-    String? tag,
-    String? budget,
+    Iterable<String> categories = const [],
+    Iterable<String> tags = const [],
+    Iterable<String> budgets = const [],
     ExpensePeriod? period,
     TransactionTypeFilter type = TransactionTypeFilter.all,
     String? from,
@@ -117,9 +118,9 @@ class TransactionsRoute {
     final hasSpecificEntityFilter =
         account != null ||
         (accounts != null && accounts.isNotEmpty) ||
-        category != null ||
-        tag != null ||
-        budget != null;
+        categories.isNotEmpty ||
+        tags.isNotEmpty ||
+        budgets.isNotEmpty;
     final resolvedPeriod =
         period ??
         (hasSpecificEntityFilter ? ExpensePeriod.all : defaultParams.period);
@@ -149,9 +150,9 @@ class TransactionsRoute {
           ? null
           : normalizedAccounts.join(_accountsSeparator),
       'group': group != TransactionGroupType.date ? group.name : null,
-      'category': category,
-      'tag': tag,
-      'budget': budget,
+      'category': categories,
+      'tag': tags,
+      'budget': budgets,
       'period': encodeExpensePeriodParam(
         resolvedPeriod: resolvedPeriod,
         defaultParams: defaultParams,
@@ -207,9 +208,9 @@ class TransactionsRoute {
 
     if (!hasPeriodParam && !hasCustomDates) {
       return TransactionsRouteFilters(
-        category: RouteQuery.param(uri, 'category'),
-        tag: RouteQuery.param(uri, 'tag'),
-        budget: RouteQuery.param(uri, 'budget'),
+        categories: RouteQuery.values(uri, 'category'),
+        tags: RouteQuery.values(uri, 'tag'),
+        budgets: RouteQuery.values(uri, 'budget'),
         period: defaultParams.period,
         type: RouteQuery.enumFrom(
           uri,
@@ -230,9 +231,9 @@ class TransactionsRoute {
     }
 
     return TransactionsRouteFilters(
-      category: RouteQuery.param(uri, 'category'),
-      tag: RouteQuery.param(uri, 'tag'),
-      budget: RouteQuery.param(uri, 'budget'),
+      categories: RouteQuery.values(uri, 'category'),
+      tags: RouteQuery.values(uri, 'tag'),
+      budgets: RouteQuery.values(uri, 'budget'),
       period: RouteQuery.enumFrom(
         uri,
         'period',
@@ -322,9 +323,9 @@ class TransactionsRoute {
       account: account ?? base.account,
       accounts: accounts ?? base.accounts,
       group: group ?? base.group,
-      category: base.category,
-      tag: base.tag,
-      budget: base.budget,
+      categories: base.categories,
+      tags: base.tags,
+      budgets: base.budgets,
       period: base.period,
       type: base.type,
       from: base.from != null ? StatsRouteFilters.formatDate(base.from!) : null,
@@ -332,25 +333,21 @@ class TransactionsRoute {
     );
   }
 
-  static const _keep = Object();
-
-  /// [base] with its category, tag or budget changed and every other filter
-  /// kept; a filter passed as `null` is cleared.
+  /// [base] with its categories, tags or budgets replaced and every other
+  /// filter kept; an empty set clears that filter.
   static String locationWithEntities(
     TransactionsRouteFilters base, {
-    Object? category = _keep,
-    Object? tag = _keep,
-    Object? budget = _keep,
+    Set<String>? categories,
+    Set<String>? tags,
+    Set<String>? budgets,
   }) {
-    String? pick(Object? change, String? current) =>
-        identical(change, _keep) ? current : change as String?;
     return location(
       account: base.account,
       accounts: base.accounts,
       group: base.group,
-      category: pick(category, base.category),
-      tag: pick(tag, base.tag),
-      budget: pick(budget, base.budget),
+      categories: categories ?? base.categories,
+      tags: tags ?? base.tags,
+      budgets: budgets ?? base.budgets,
       period: base.period,
       type: base.type,
       from: base.from != null ? StatsRouteFilters.formatDate(base.from!) : null,

@@ -1024,7 +1024,6 @@
   "clearFilters": "清除筛选",
   "overview": "概览",
   "byCategory": "按类别",
-  "allCategories": "所有类别",
   "allTypes": "所有类型",
   "expensesFilter": "支出",
   "transfers": "转账",
@@ -2006,10 +2005,8 @@
   "statsTitle": "统计",
   "statsTitleRaccoon": "战利品报告",
   "filterTag": "标签",
-  "allTags": "所有标签",
   "noTagsFound": "未找到标签。",
   "filterBudget": "预算",
-  "allBudgets": "所有预算",
   "noBudgetsFound": "未找到预算。",
   "noCategoriesFound": "未找到类别。",
   "filterWords": "关键词",
@@ -2017,5 +2014,6 @@
   "applyFilter": "应用",
   "netFlow": "净额",
   "prognosisLeaveOut": "排除",
-  "prognosisLeaveOutHelp": "属于这些类别或标签、或包含所有这些词的资金流不计入预测。"
+  "prognosisLeaveOutHelp": "属于这些类别或标签、或包含所有这些词的资金流不计入预测。",
+  "filterSelectedCount": "已选 {count} 项"
 }

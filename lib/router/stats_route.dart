@@ -42,22 +42,25 @@ class StatsRouteFilters {
 
   /// Which of [statsTypes] are shown; never empty and never holds `all`.
   final Set<TransactionTypeFilter> types;
-  final String? category;
-  final String? tag;
-  final String? budget;
+
+  /// Each narrows to legs matching any one of its names; empty narrows
+  /// nothing.
+  final Set<String> categories;
+  final Set<String> tags;
+  final Set<String> budgets;
+  final Set<String> accounts;
   final ExpensePeriod period;
-  final String? account;
   final DateTime? from;
   final DateTime? to;
   final DashboardPeriod defaultDashboardPeriod;
 
   const StatsRouteFilters({
     this.types = defaultTypes,
-    this.category,
-    this.tag,
-    this.budget,
+    this.categories = const {},
+    this.tags = const {},
+    this.budgets = const {},
+    this.accounts = const {},
     this.period = ExpensePeriod.month,
-    this.account,
     this.from,
     this.to,
     this.defaultDashboardPeriod = kDefaultDashboardPeriod,
@@ -77,7 +80,10 @@ class StatsRouteFilters {
       expenseParamsFromDashboardPeriod(defaultDashboardPeriod);
 
   bool get hasActiveFilters {
-    if (category != null || tag != null || budget != null || account != null) {
+    if (categories.isNotEmpty ||
+        tags.isNotEmpty ||
+        budgets.isNotEmpty ||
+        accounts.isNotEmpty) {
       return true;
     }
     if (!_sameTypes(types, defaultTypes)) return true;
@@ -107,14 +113,14 @@ class StatsRouteFilters {
 
   /// This view with the named filters changed and the rest kept.
   ///
-  /// A filter passed as `null` is cleared. Choosing a [period] drops custom
-  /// dates, and passing [from] and [to] replaces the period with them.
+  /// A filter passed as an empty set is cleared. Choosing a [period] drops
+  /// custom dates, and passing [from] and [to] replaces the period with them.
   String location({
     Set<TransactionTypeFilter>? types,
-    Object? category = _keep,
-    Object? tag = _keep,
-    Object? budget = _keep,
-    Object? account = _keep,
+    Set<String>? categories,
+    Set<String>? tags,
+    Set<String>? budgets,
+    Set<String>? accounts,
     ExpensePeriod? period,
     DateTime? from,
     DateTime? to,
@@ -125,21 +131,16 @@ class StatsRouteFilters {
     final datedTo = keepDates ? this.to : to;
     return StatsRoute.location(
       types: types ?? this.types,
-      category: _pick(category, this.category),
-      tag: _pick(tag, this.tag),
-      budget: _pick(budget, this.budget),
-      account: _pick(account, this.account),
+      categories: categories ?? this.categories,
+      tags: tags ?? this.tags,
+      budgets: budgets ?? this.budgets,
+      accounts: accounts ?? this.accounts,
       period: hasNewDates ? null : (period ?? this.period),
       from: datedFrom != null ? formatDate(datedFrom) : null,
       to: datedTo != null ? formatDate(datedTo) : null,
       defaultDashboardPeriod: defaultDashboardPeriod,
     );
   }
-
-  static const _keep = Object();
-
-  static String? _pick(Object? change, String? current) =>
-      identical(change, _keep) ? current : change as String?;
 
   static String formatDate(DateTime date) =>
       '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
@@ -153,11 +154,11 @@ class StatsRoute {
 
   static String location({
     Set<TransactionTypeFilter> types = StatsRouteFilters.defaultTypes,
-    String? category,
-    String? tag,
-    String? budget,
+    Iterable<String> categories = const [],
+    Iterable<String> tags = const [],
+    Iterable<String> budgets = const [],
     ExpensePeriod? period,
-    String? account,
+    Iterable<String> accounts = const [],
     String? from,
     String? to,
     DashboardPeriod defaultDashboardPeriod = kDefaultDashboardPeriod,
@@ -182,9 +183,9 @@ class StatsRoute {
           _sameTypes(types, StatsRouteFilters.defaultTypes) || shown.isEmpty
           ? null
           : shown.map((type) => type.name).join(','),
-      'category': category,
-      'tag': tag,
-      'budget': budget,
+      'category': categories,
+      'tag': tags,
+      'budget': budgets,
       'period': encodeExpensePeriodParam(
         resolvedPeriod: resolvedPeriod,
         defaultParams: defaultParams,
@@ -192,7 +193,7 @@ class StatsRoute {
         to: resolvedTo,
         periodWasExplicit: period != null,
       ),
-      'account': account,
+      'account': accounts,
       'from': resolvedFrom,
       'to': resolvedTo,
     });
@@ -217,7 +218,7 @@ class StatsRoute {
     final types = named == TransactionTypeFilter.all
         ? statsTypes.toSet()
         : {named};
-    final params = Map<String, String>.from(uri.queryParameters)
+    final params = Map<String, Object?>.from(uri.queryParametersAll)
       ..remove('type');
     params['types'] = statsTypes
         .where(types.contains)
@@ -250,9 +251,9 @@ class StatsRoute {
 
     return StatsRouteFilters(
       types: typesFromUri(uri),
-      category: RouteQuery.param(uri, 'category'),
-      tag: RouteQuery.param(uri, 'tag'),
-      budget: RouteQuery.param(uri, 'budget'),
+      categories: RouteQuery.values(uri, 'category'),
+      tags: RouteQuery.values(uri, 'tag'),
+      budgets: RouteQuery.values(uri, 'budget'),
       period: useDefaultPeriod
           ? defaultParams.period
           : RouteQuery.enumFrom(
@@ -261,7 +262,7 @@ class StatsRoute {
               ExpensePeriod.values,
               defaultParams.period,
             ),
-      account: RouteQuery.param(uri, 'account'),
+      accounts: RouteQuery.values(uri, 'account'),
       from: useDefaultPeriod
           ? defaultParams.from
           : _parseDate(RouteQuery.param(uri, 'from')),

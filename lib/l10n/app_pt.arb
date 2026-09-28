@@ -1024,7 +1024,6 @@
   "clearFilters": "Limpar filtros",
   "overview": "Resumo",
   "byCategory": "Por categoria",
-  "allCategories": "Todas as categorias",
   "allTypes": "Todos os tipos",
   "expensesFilter": "Despesas",
   "transfers": "Transferências",
@@ -2006,10 +2005,8 @@
   "statsTitle": "Estatísticas",
   "statsTitleRaccoon": "Relatório do saque",
   "filterTag": "Etiqueta",
-  "allTags": "Todas as etiquetas",
   "noTagsFound": "Nenhuma etiqueta encontrada.",
   "filterBudget": "Orçamento",
-  "allBudgets": "Todos os orçamentos",
   "noBudgetsFound": "Nenhum orçamento encontrado.",
   "noCategoriesFound": "Nenhuma categoria encontrada.",
   "filterWords": "Palavras",
@@ -2017,5 +2014,6 @@
   "applyFilter": "Aplicar",
   "netFlow": "Líquido",
   "prognosisLeaveOut": "Deixar de fora",
-  "prognosisLeaveOutHelp": "Os fluxos destas categorias ou etiquetas, ou que tenham todas estas palavras, ficam fora da previsão."
+  "prognosisLeaveOutHelp": "Os fluxos destas categorias ou etiquetas, ou que tenham todas estas palavras, ficam fora da previsão.",
+  "filterSelectedCount": "{count} selecionado(s)"
 }

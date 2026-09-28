@@ -560,15 +560,17 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
     _scrollDrivesPagination = !routeFilters.hasScopedFilters;
 
     if (routeFilters.hasScopedFilters) {
-      final listKey = (
-        period: routeFilters.period,
-        from: routeFilters.from,
-        to: routeFilters.to,
-        type: routeFilters.type,
-        account: routeFilters.account,
-        category: routeFilters.category,
-        tag: routeFilters.tag,
-        budget: routeFilters.budget,
+      final listKey = TransactionListFilterKey(
+        scope: (
+          period: routeFilters.period,
+          from: routeFilters.from,
+          to: routeFilters.to,
+          type: routeFilters.type,
+          account: routeFilters.account,
+        ),
+        categories: routeFilters.categories,
+        tags: routeFilters.tags,
+        budgets: routeFilters.budgets,
       );
       final scopedAsync = ref.watch(filteredTransactionListProvider(listKey));
       return scopedAsync.when(
@@ -913,9 +915,9 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
     final hasAnyActiveFilter =
         filterAccount != null ||
         filterAccounts.isNotEmpty ||
-        (routeFilters.category != null && routeFilters.category!.isNotEmpty) ||
-        routeFilters.tag != null ||
-        routeFilters.budget != null ||
+        routeFilters.categories.isNotEmpty ||
+        routeFilters.tags.isNotEmpty ||
+        routeFilters.budgets.isNotEmpty ||
         searchQuery.isNotEmpty ||
         routeFilters.type != TransactionTypeFilter.all ||
         routeFilters.hasCustomDateRange ||
@@ -980,9 +982,7 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                   ),
                   _EntityFilterButton(
                     icon: LucideIcons.folder,
-                    label: routeFilters.category ?? l10n.category,
-                    title: l10n.category,
-                    allLabel: l10n.allCategories,
+                    idleLabel: l10n.category,
                     emptyLabel: l10n.noCategoriesFound,
                     names: [
                       for (final category
@@ -990,34 +990,30 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                               const <Category>[])
                         category.name,
                     ],
-                    current: routeFilters.category,
-                    onPicked: (name) => TransactionsRoute.locationWithEntities(
+                    selected: routeFilters.categories,
+                    onPicked: (names) => TransactionsRoute.locationWithEntities(
                       routeFilters,
-                      category: name,
+                      categories: names,
                     ),
                   ),
                   _EntityFilterButton(
                     icon: LucideIcons.tag,
-                    label: routeFilters.tag ?? l10n.filterTag,
-                    title: l10n.filterTag,
-                    allLabel: l10n.allTags,
+                    idleLabel: l10n.filterTag,
                     emptyLabel: l10n.noTagsFound,
                     names: [
                       for (final tag
                           in ref.watch(tagsProvider).value ?? const <Tag>[])
                         tag.name,
                     ],
-                    current: routeFilters.tag,
-                    onPicked: (name) => TransactionsRoute.locationWithEntities(
+                    selected: routeFilters.tags,
+                    onPicked: (names) => TransactionsRoute.locationWithEntities(
                       routeFilters,
-                      tag: name,
+                      tags: names,
                     ),
                   ),
                   _EntityFilterButton(
                     icon: LucideIcons.target,
-                    label: routeFilters.budget ?? l10n.filterBudget,
-                    title: l10n.filterBudget,
-                    allLabel: l10n.allBudgets,
+                    idleLabel: l10n.filterBudget,
                     emptyLabel: l10n.noBudgetsFound,
                     names: [
                       for (final budget
@@ -1025,10 +1021,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                               const <Budget>[])
                         budget.name,
                     ],
-                    current: routeFilters.budget,
-                    onPicked: (name) => TransactionsRoute.locationWithEntities(
+                    selected: routeFilters.budgets,
+                    onPicked: (names) => TransactionsRoute.locationWithEntities(
                       routeFilters,
-                      budget: name,
+                      budgets: names,
                     ),
                   ),
                   _GroupingButton(
@@ -1043,12 +1039,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                     onChanged: (fields) {
                       context.goPreservingSearch(
                         TransactionsRoute.location(
-                          tag: routeFilters.tag,
-                          budget: routeFilters.budget,
+                          tags: routeFilters.tags,
+                          budgets: routeFilters.budgets,
                           account: routeFilters.account,
                           accounts: routeFilters.accounts,
                           group: routeFilters.group,
-                          category: routeFilters.category,
+                          categories: routeFilters.categories,
                           period: routeFilters.period,
                           type: routeFilters.type,
                           from: routeFilters.from != null
@@ -1070,12 +1066,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                     onSelected: (value) {
                       context.goPreservingSearch(
                         TransactionsRoute.location(
-                          tag: routeFilters.tag,
-                          budget: routeFilters.budget,
+                          tags: routeFilters.tags,
+                          budgets: routeFilters.budgets,
                           account: routeFilters.account,
                           accounts: routeFilters.accounts,
                           group: routeFilters.group,
-                          category: routeFilters.category,
+                          categories: routeFilters.categories,
                           period: routeFilters.period,
                           type: routeFilters.type,
                           from: routeFilters.from != null
@@ -1118,10 +1114,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                         label: 'Account/Payee: $filterAccount',
                         onRemove: () => context.goPreservingSearch(
                           TransactionsRoute.location(
-                            tag: routeFilters.tag,
-                            budget: routeFilters.budget,
+                            tags: routeFilters.tags,
+                            budgets: routeFilters.budgets,
                             group: groupType,
-                            category: routeFilters.category,
+                            categories: routeFilters.categories,
                             period: routeFilters.period,
                             type: routeFilters.type,
                             from: routeFilters.from != null
@@ -1136,51 +1132,37 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                           ),
                         ),
                       ),
-                    if (routeFilters.category != null &&
-                        routeFilters.category!.isNotEmpty)
+                    for (final category in routeFilters.categories)
                       _ActiveFilterBubble(
                         icon: LucideIcons.folder,
-                        label: 'Category: ${routeFilters.category}',
+                        label: '${l10n.category}: $category',
                         onRemove: () => context.goPreservingSearch(
-                          TransactionsRoute.location(
-                            tag: routeFilters.tag,
-                            budget: routeFilters.budget,
-                            account: filterAccount,
-                            accounts: filterAccounts,
-                            group: groupType,
-                            period: routeFilters.period,
-                            type: routeFilters.type,
-                            from: routeFilters.from != null
-                                ? StatsRouteFilters.formatDate(
-                                    routeFilters.from!,
-                                  )
-                                : null,
-                            to: routeFilters.to != null
-                                ? StatsRouteFilters.formatDate(routeFilters.to!)
-                                : null,
-                            reconcile: routeFilters.reconcile,
+                          TransactionsRoute.locationWithEntities(
+                            routeFilters,
+                            categories: {...routeFilters.categories}
+                              ..remove(category),
                           ),
                         ),
                       ),
-                    if (routeFilters.tag != null)
+                    for (final tag in routeFilters.tags)
                       _ActiveFilterBubble(
                         icon: LucideIcons.tag,
-                        label: '${l10n.filterTag}: ${routeFilters.tag}',
+                        label: '${l10n.filterTag}: $tag',
                         onRemove: () => context.goPreservingSearch(
                           TransactionsRoute.locationWithEntities(
                             routeFilters,
-                            tag: null,
+                            tags: {...routeFilters.tags}..remove(tag),
                           ),
                         ),
                       ),
-                    if (routeFilters.budget != null)
+                    for (final budget in routeFilters.budgets)
                       _ActiveFilterBubble(
                         icon: LucideIcons.target,
-                        label: '${l10n.filterBudget}: ${routeFilters.budget}',
+                        label: '${l10n.filterBudget}: $budget',
                         onRemove: () => context.goPreservingSearch(
                           TransactionsRoute.locationWithEntities(
                             routeFilters,
-                            budget: null,
+                            budgets: {...routeFilters.budgets}..remove(budget),
                           ),
                         ),
                       ),
@@ -1201,12 +1183,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                         label: 'Type: ${routeFilters.type.name}',
                         onRemove: () => context.goPreservingSearch(
                           TransactionsRoute.location(
-                            tag: routeFilters.tag,
-                            budget: routeFilters.budget,
+                            tags: routeFilters.tags,
+                            budgets: routeFilters.budgets,
                             account: filterAccount,
                             accounts: filterAccounts,
                             group: groupType,
-                            category: routeFilters.category,
+                            categories: routeFilters.categories,
                             period: routeFilters.period,
                             type: TransactionTypeFilter.all,
                             from: routeFilters.from != null
@@ -1228,12 +1210,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                             'Date: ${format.formatDateRange(routeFilters.from, routeFilters.to, ellipsis: l10n.dateEllipsis, separator: l10n.dateRangeSeparator)}',
                         onRemove: () => context.goPreservingSearch(
                           TransactionsRoute.location(
-                            tag: routeFilters.tag,
-                            budget: routeFilters.budget,
+                            tags: routeFilters.tags,
+                            budgets: routeFilters.budgets,
                             account: filterAccount,
                             accounts: filterAccounts,
                             group: groupType,
-                            category: routeFilters.category,
+                            categories: routeFilters.categories,
                             period: ExpensePeriod.all,
                             type: routeFilters.type,
                             reconcile: routeFilters.reconcile,
@@ -1248,12 +1230,12 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
                             'Reconciled: ${routeFilters.reconciledFilter.name}',
                         onRemove: () => context.goPreservingSearch(
                           TransactionsRoute.location(
-                            tag: routeFilters.tag,
-                            budget: routeFilters.budget,
+                            tags: routeFilters.tags,
+                            budgets: routeFilters.budgets,
                             account: filterAccount,
                             accounts: filterAccounts,
                             group: groupType,
-                            category: routeFilters.category,
+                            categories: routeFilters.categories,
                             period: routeFilters.period,
                             type: routeFilters.type,
                             from: routeFilters.from != null
@@ -1808,25 +1790,22 @@ class _AccountFilterButton extends ConsumerWidget {
   }
 }
 
-/// A category, tag or budget picker; [onPicked] gets `null` for "all".
+/// A category, tag or budget picker over several names; [onPicked] gets
+/// the names ticked, empty to clear the filter.
 class _EntityFilterButton extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final String title;
-  final String allLabel;
+  final String idleLabel;
   final String emptyLabel;
   final List<String> names;
-  final String? current;
-  final String Function(String? name) onPicked;
+  final Set<String> selected;
+  final String Function(Set<String> names) onPicked;
 
   const _EntityFilterButton({
     required this.icon,
-    required this.label,
-    required this.title,
-    required this.allLabel,
+    required this.idleLabel,
     required this.emptyLabel,
     required this.names,
-    required this.current,
+    required this.selected,
     required this.onPicked,
   });
 
@@ -1835,26 +1814,23 @@ class _EntityFilterButton extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () async {
-        final picked = await showNameFilterDialog(
+        final picked = await showNamesFilterDialog(
           context: context,
-          title: title,
-          allLabel: allLabel,
+          title: idleLabel,
           emptyLabel: emptyLabel,
           names: names,
-          currentFilter: current,
+          selected: selected,
           icon: icon,
         );
         if (picked == null || !context.mounted) return;
-        context.goPreservingSearch(
-          onPicked(picked == allNamesSentinel ? null : picked),
-        );
+        context.goPreservingSearch(onPicked(picked));
       },
       child: FilterPill(
         icon: icon,
-        label: label,
-        tooltip: title,
-        active: current != null,
-        onClear: () => context.goPreservingSearch(onPicked(null)),
+        label: FilterPill.selectionLabel(selected, idleLabel),
+        tooltip: selected.isEmpty ? idleLabel : selected.join(', '),
+        active: selected.isNotEmpty,
+        onClear: () => context.goPreservingSearch(onPicked(const {})),
       ),
     );
   }
@@ -1892,12 +1868,12 @@ class _PeriodFilterButton extends StatelessWidget {
       onSelected: (period) {
         context.goPreservingSearch(
           TransactionsRoute.location(
-            tag: routeFilters.tag,
-            budget: routeFilters.budget,
+            tags: routeFilters.tags,
+            budgets: routeFilters.budgets,
             account: routeFilters.account,
             accounts: routeFilters.accounts,
             group: routeFilters.group,
-            category: routeFilters.category,
+            categories: routeFilters.categories,
             period: period,
             type: routeFilters.type,
             reconcile: routeFilters.reconcile,

@@ -1720,9 +1720,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get byCategory => 'カテゴリ別';
 
   @override
-  String get allCategories => 'すべてのカテゴリ';
-
-  @override
   String get allTypes => 'すべての種類';
 
   @override
@@ -3916,16 +3913,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get filterTag => 'タグ';
 
   @override
-  String get allTags => 'すべてのタグ';
-
-  @override
   String get noTagsFound => 'タグが見つかりません。';
 
   @override
   String get filterBudget => '予算';
-
-  @override
-  String get allBudgets => 'すべての予算';
 
   @override
   String get noBudgetsFound => '予算が見つかりません。';
@@ -3951,4 +3942,9 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String get prognosisLeaveOutHelp =>
       'これらのカテゴリやタグの流れ、またはこれらの単語をすべて含む流れは予測に含めません。';
+
+  @override
+  String filterSelectedCount(int count) {
+    return '$count 件を選択';
+  }
 }

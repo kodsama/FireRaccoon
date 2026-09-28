@@ -272,7 +272,7 @@ void main() {
         filterTransactions(
           all,
           type: TransactionTypeFilter.all,
-          tag: 'Holiday',
+          tags: {'Holiday'},
         ).map((t) => t.id),
         ['group'],
       );
@@ -280,13 +280,28 @@ void main() {
         filterTransactions(
           all,
           type: TransactionTypeFilter.all,
-          budget: 'Fun',
+          budgets: {'Fun'},
         ).map((t) => t.id),
         ['group'],
       );
       expect(
-        filterTransactions(all, type: TransactionTypeFilter.all, tag: 'Work'),
+        filterTransactions(
+          all,
+          type: TransactionTypeFilter.all,
+          tags: {'Work'},
+        ),
         isEmpty,
+      );
+    });
+
+    test('several values in one filter match any of them', () {
+      expect(
+        filterTransactions(
+          transactions,
+          type: TransactionTypeFilter.all,
+          categories: {'Food', 'Salary'},
+        ).map((t) => t.type),
+        ['withdrawal', 'deposit'],
       );
     });
 
@@ -302,7 +317,7 @@ void main() {
         filterTransactions(
           transactions,
           type: TransactionTypeFilter.all,
-          category: 'Food',
+          categories: {'Food'},
           account: 'Checking',
         ),
         hasLength(1),

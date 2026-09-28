@@ -231,6 +231,8 @@ void main() {
     expect(find.text('All tags'), findsNothing);
     await tester.tap(find.text('Holiday'));
     await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
 
     final chip = find.widgetWithText(InputChip, 'Holiday');
     expect(chip, findsOneWidget);

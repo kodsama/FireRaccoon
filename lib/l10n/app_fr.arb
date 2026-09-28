@@ -1024,7 +1024,6 @@
   "clearFilters": "Effacer les filtres",
   "overview": "Aperçu",
   "byCategory": "Par catégorie",
-  "allCategories": "Toutes les catégories",
   "allTypes": "Tous les types",
   "expensesFilter": "Dépenses",
   "transfers": "Virements",
@@ -2006,10 +2005,8 @@
   "statsTitle": "Statistiques",
   "statsTitleRaccoon": "Rapport de butin",
   "filterTag": "Étiquette",
-  "allTags": "Toutes les étiquettes",
   "noTagsFound": "Aucune étiquette trouvée.",
   "filterBudget": "Budget",
-  "allBudgets": "Tous les budgets",
   "noBudgetsFound": "Aucun budget trouvé.",
   "noCategoriesFound": "Aucune catégorie trouvée.",
   "filterWords": "Mots",
@@ -2017,5 +2014,6 @@
   "applyFilter": "Appliquer",
   "netFlow": "Solde net",
   "prognosisLeaveOut": "Exclure",
-  "prognosisLeaveOutHelp": "Les flux de ces catégories ou étiquettes, ou portant chacun de ces mots, restent hors de la prévision."
+  "prognosisLeaveOutHelp": "Les flux de ces catégories ou étiquettes, ou portant chacun de ces mots, restent hors de la prévision.",
+  "filterSelectedCount": "{count} sélectionné(s)"
 }

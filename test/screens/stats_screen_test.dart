@@ -210,7 +210,9 @@ void main() {
     expect(pill('Budget').active, isFalse);
   });
 
-  testWidgets('StatsScreen narrows the totals to a picked tag', (tester) async {
+  testWidgets('StatsScreen narrows the totals to the tags picked', (
+    tester,
+  ) async {
     configureLargeScreen(tester);
     addTearDown(tester.view.resetPhysicalSize);
 
@@ -220,6 +222,12 @@ void main() {
       transactions: [
         base.copyWith(tags: ['Holiday']),
         base.copyWith(id: 'bus', categoryName: 'Transport', amount: 3),
+        base.copyWith(
+          id: 'train',
+          categoryName: 'Travel',
+          amount: 30,
+          tags: ['Work'],
+        ),
       ],
       primaryCurrency: sampleCurrency,
       currentUser: sampleUser,
@@ -237,12 +245,21 @@ void main() {
     await tester.tap(find.text('Tag'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Holiday'));
+    await tester.tap(find.text('Work'));
+    await tester.pumpAndSettle();
+    expect(find.text('2 selected'), findsOneWidget);
+    await tester.tap(find.text('Apply'));
     await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(StatsScreen));
-    expect(GoRouterState.of(context).uri.queryParameters['tag'], 'Holiday');
+    expect(
+      GoRouterState.of(context).uri.queryParametersAll['tag'],
+      unorderedEquals(['Holiday', 'Work']),
+    );
     expect(find.text('Transport'), findsNothing);
     expect(find.text('Food'), findsOneWidget);
+    expect(find.text('Travel'), findsOneWidget);
+    expect(find.widgetWithText(FilterPill, 'Holiday +1'), findsOneWidget);
     expect(find.text('Clear filters'), findsOneWidget);
   });
 

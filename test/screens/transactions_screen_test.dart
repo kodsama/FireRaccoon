@@ -147,6 +147,8 @@ void main() {
     await tester.tap(find.text('Tag'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('5-stan trip 2026'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
     await pumpScreen(tester);
 
     final context = tester.element(find.byType(TransactionsScreen));

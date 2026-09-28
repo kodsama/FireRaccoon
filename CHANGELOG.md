@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Category, tag and budget filters take several names at once on Stats, on
+  the transaction list and on the projection's Leave out, and so does the
+  account filter on Stats. The
+  picker has a box per name with Clear and Apply, and a filter in use reads
+  as the first name and how many more. Within one filter a leg matching any
+  of the names counts; different filters still narrow each other. Links carry
+  each name as its own query value, so a name with a comma in it survives
+
 - The transaction list filters by category, tag and budget from pickers in
   its filter row, each with a chip to take it off again. A group is kept when
   any of its legs matches. Stats hands its tag and budget on when it opens the

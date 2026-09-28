@@ -1752,9 +1752,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get byCategory => 'Per kategori';
 
   @override
-  String get allCategories => 'Alla kategorier';
-
-  @override
   String get allTypes => 'Alla typer';
 
   @override
@@ -4013,16 +4010,10 @@ class AppLocalizationsSv extends AppLocalizations {
   String get filterTag => 'Tagg';
 
   @override
-  String get allTags => 'Alla taggar';
-
-  @override
   String get noTagsFound => 'Inga taggar hittades.';
 
   @override
   String get filterBudget => 'Budget';
-
-  @override
-  String get allBudgets => 'Alla budgetar';
 
   @override
   String get noBudgetsFound => 'Inga budgetar hittades.';
@@ -4048,4 +4039,9 @@ class AppLocalizationsSv extends AppLocalizations {
   @override
   String get prognosisLeaveOutHelp =>
       'Flöden i dessa kategorier eller taggar, eller som innehåller vart och ett av dessa ord, hålls utanför prognosen.';
+
+  @override
+  String filterSelectedCount(int count) {
+    return '$count valda';
+  }
 }

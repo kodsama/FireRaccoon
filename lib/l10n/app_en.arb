@@ -1038,7 +1038,6 @@
   "clearFilters": "Clear filters",
   "overview": "Overview",
   "byCategory": "By Category",
-  "allCategories": "All Categories",
   "allTypes": "All Types",
   "expensesFilter": "Expenses",
   "transfers": "Transfers",
@@ -2401,10 +2400,8 @@
   "statsTitle": "Stats",
   "statsTitleRaccoon": "Heist Report",
   "filterTag": "Tag",
-  "allTags": "All tags",
   "noTagsFound": "No tags found.",
   "filterBudget": "Budget",
-  "allBudgets": "All budgets",
   "noBudgetsFound": "No budgets found.",
   "noCategoriesFound": "No categories found.",
   "filterWords": "Words",
@@ -2412,5 +2409,13 @@
   "applyFilter": "Apply",
   "netFlow": "Net",
   "prognosisLeaveOut": "Leave out",
-  "prognosisLeaveOutHelp": "Flows in these categories or tags, or carrying every one of these words, stay out of the forecast."
+  "prognosisLeaveOutHelp": "Flows in these categories or tags, or carrying every one of these words, stay out of the forecast.",
+  "filterSelectedCount": "{count} selected",
+  "@filterSelectedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

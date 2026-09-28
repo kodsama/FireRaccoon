@@ -14,12 +14,10 @@ const allNamesSentinel = '__all__';
 
 /// Searchable single-choice picker over [names], for filters whose options
 /// can run to hundreds (accounts, tags) where a popup menu would not fit.
-/// Without an [allLabel] there is no row for "all", for pickers that add
-/// one name to a set rather than narrow to it.
 Future<String?> showNameFilterDialog({
   required BuildContext context,
   required String title,
-  required String? allLabel,
+  required String allLabel,
   required String emptyLabel,
   required List<String> names,
   required String? currentFilter,
@@ -38,6 +36,35 @@ Future<String?> showNameFilterDialog({
       labelOf: labelOf ?? (name) => name,
     ),
   );
+}
+
+/// The same picker with a box per name, answering the names ticked when
+/// Apply is pressed, an empty set for Clear, or `null` when dismissed.
+Future<Set<String>?> showNamesFilterDialog({
+  required BuildContext context,
+  required String title,
+  required String emptyLabel,
+  required List<String> names,
+  required Set<String> selected,
+  required IconData icon,
+  String Function(String name)? labelOf,
+}) async {
+  final picked = await showDialog<Object>(
+    context: context,
+    builder: (ctx) => _NameFilterDialog(
+      title: title,
+      allLabel: null,
+      emptyLabel: emptyLabel,
+      // A name in use stays offered even when the period no longer holds it,
+      // or it could never be unticked.
+      names: {...names, ...selected}.toList(),
+      currentFilter: null,
+      selection: selected,
+      icon: icon,
+      labelOf: labelOf ?? (name) => name,
+    ),
+  );
+  return picked as Set<String>?;
 }
 
 Future<String?> showAccountFilterDialog({
@@ -67,6 +94,9 @@ class _NameFilterDialog extends ConsumerStatefulWidget {
   final IconData icon;
   final String Function(String name) labelOf;
 
+  /// Ticked names when picking several, `null` when picking one.
+  final Set<String>? selection;
+
   const _NameFilterDialog({
     required this.title,
     required this.allLabel,
@@ -75,6 +105,7 @@ class _NameFilterDialog extends ConsumerStatefulWidget {
     required this.currentFilter,
     required this.icon,
     required this.labelOf,
+    this.selection,
   });
 
   @override
@@ -84,6 +115,9 @@ class _NameFilterDialog extends ConsumerStatefulWidget {
 class _NameFilterDialogState extends ConsumerState<_NameFilterDialog> {
   late final TextEditingController _searchController;
   String _query = '';
+  late final Set<String> _ticked = {...?widget.selection};
+
+  bool get _picksSeveral => widget.selection != null;
 
   @override
   void initState() {
@@ -249,15 +283,47 @@ class _NameFilterDialogState extends ConsumerState<_NameFilterDialog> {
                           final name = labels[label]!;
                           return _NameOptionTile(
                             title: label,
-                            isSelected: widget.currentFilter == name,
+                            isSelected: _picksSeveral
+                                ? _ticked.contains(name)
+                                : widget.currentFilter == name,
                             icon: widget.icon,
-                            onTap: () => Navigator.of(context).pop(name),
+                            onTap: _picksSeveral
+                                ? () => setState(() {
+                                    if (!_ticked.remove(name)) {
+                                      _ticked.add(name);
+                                    }
+                                  })
+                                : () => Navigator.of(context).pop(name),
                           );
                         }),
                     ],
                   ),
                 ),
               ),
+              if (_picksSeveral) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.l10n.filterSelectedCount(_ticked.length),
+                        style: TextStyle(color: colors.text3),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(const <String>{}),
+                      child: Text(context.l10n.clear),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(Set<String>.of(_ticked)),
+                      child: Text(context.l10n.applyFilter),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
