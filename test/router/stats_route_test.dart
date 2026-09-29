@@ -1,0 +1,395 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:fireraccoon/l10n/app_localizations_en.dart';
+import 'package:fireraccoon/router/route_query.dart';
+import 'package:fireraccoon/router/stats_route.dart';
+import 'package:fireraccoon/utils/locale_formatting.dart';
+import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:go_router/go_router.dart';
+
+void main() {
+  group('Label extensions', () {
+    test('expense period labels map to expected strings', () {
+      expect(ExpensePeriod.week.label, 'This Week');
+      expect(ExpensePeriod.month.label, 'This Month');
+      expect(ExpensePeriod.lastMonth.label, 'Last Month');
+      expect(ExpensePeriod.quarter.label, 'This Quarter');
+      expect(ExpensePeriod.semester.label, 'This Semester');
+      expect(ExpensePeriod.year.label, 'This Year');
+      expect(ExpensePeriod.all.label, 'All Time');
+    });
+
+    test('transaction type labels map to expected strings', () {
+      expect(TransactionTypeFilter.all.label, 'All Types');
+      expect(TransactionTypeFilter.expense.label, 'Expenses');
+      expect(TransactionTypeFilter.income.label, 'Income');
+      expect(TransactionTypeFilter.transfer.label, 'Transfers');
+    });
+  });
+
+  group('StatsRoute.location', () {
+    test('leaves out everything at its default', () {
+      expect(StatsRoute.location(), '/stats');
+    });
+
+    test('names the types in page order, whatever order they came in', () {
+      final uri = Uri.parse(
+        StatsRoute.location(
+          types: {
+            TransactionTypeFilter.transfer,
+            TransactionTypeFilter.expense,
+          },
+        ),
+      );
+      expect(uri.queryParameters['types'], 'expense,transfer');
+    });
+
+    test('encodes every filter it is given', () {
+      final uri = Uri.parse(
+        StatsRoute.location(
+          types: {TransactionTypeFilter.income},
+          categories: ['Salary'],
+          tags: ['5-stan trip 2026', 'Samarkand, Bukhara'],
+          budgets: ['Travel'],
+          accounts: ['Checking'],
+          from: '2026-01-01',
+          to: '2026-06-30',
+        ),
+      );
+      expect(uri.path, '/stats');
+      expect(RouteQuery.values(uri, 'tag'), {
+        '5-stan trip 2026',
+        'Samarkand, Bukhara',
+      });
+      expect({...uri.queryParameters}..remove('tag'), {
+        'types': 'income',
+        'category': 'Salary',
+        'budget': 'Travel',
+        'account': 'Checking',
+        'from': '2026-01-01',
+        'to': '2026-06-30',
+      });
+    });
+
+    test('writes a month out, since Stats opens on a year', () {
+      expect(StatsRoute.location(), '/stats');
+      expect(
+        StatsRoute.location(period: ExpensePeriod.month),
+        '/stats?period=month',
+      );
+    });
+  });
+
+  group('StatsRoute.filtersFromUri', () {
+    test('reads every filter back', () {
+      final filters = StatsRoute.filtersFromUri(
+        Uri.parse(
+          '/stats?types=income,transfer&period=quarter&category=Travel'
+          '&tag=Holiday&tag=Work&budget=Fun&account=Savings'
+          '&from=2026-01-15&to=2026-02-20',
+        ),
+      );
+      expect(filters.types, {
+        TransactionTypeFilter.income,
+        TransactionTypeFilter.transfer,
+      });
+      expect(filters.period, ExpensePeriod.quarter);
+      expect(filters.categories, {'Travel'});
+      expect(filters.tags, {'Holiday', 'Work'});
+      expect(filters.budgets, {'Fun'});
+      expect(filters.accounts, {'Savings'});
+      expect(filters.from, DateTime(2026, 1, 15));
+      expect(filters.to, DateTime(2026, 2, 20));
+      expect(filters.hasActiveFilters, isTrue);
+    });
+
+    test('defaults to this year of expenses and income, by category', () {
+      // The Dashboard's period setting is for Transactions links, not this.
+      final filters = StatsRoute.filtersFromUri(
+        Uri.parse('/stats'),
+        defaultDashboardPeriod: DashboardPeriod.thisMonth,
+      );
+      expect(filters.types, {
+        TransactionTypeFilter.expense,
+        TransactionTypeFilter.income,
+      });
+      expect(filters.singleType, isNull);
+      expect(filters.grouping, StatsGrouping.category);
+      expect(filters.interval, isNull);
+      expect(filters.chart, isNull);
+      expect(filters.effectiveChart, StatsChart.donut);
+      expect(filters.showNet, isFalse);
+      expect(filters.period, ExpensePeriod.year);
+      expect(filters.hasActiveFilters, isFalse);
+    });
+
+    test('falls back to the default types when none it names is real', () {
+      final filters = StatsRoute.filtersFromUri(
+        Uri.parse('/stats?types=all,nonsense'),
+      );
+      expect(filters.types, StatsRouteFilters.defaultTypes);
+    });
+
+    test('tolerates malformed dates', () {
+      final filters = StatsRoute.filtersFromUri(
+        Uri.parse('/stats?from=invalid&to=2026-13-99&period=week'),
+      );
+      expect(filters.period, ExpensePeriod.week);
+      expect(filters.from, isNull);
+      expect(filters.to, DateTime(2027, 4, 9));
+    });
+
+    test('filtersFrom reads router state', () {
+      final filters = StatsRoute.filtersFrom(
+        _RouteStateStub(Uri.parse('/stats?account=Checking&period=year')),
+      );
+      expect(filters.accounts, {'Checking'});
+      expect(filters.period, ExpensePeriod.year);
+    });
+  });
+
+  group('StatsRoute.fromRetiredLink', () {
+    test('each old page opens Stats on its own type', () {
+      expect(
+        StatsRoute.fromRetiredLink(Uri.parse('/expenses')),
+        '/stats?types=expense',
+      );
+      expect(
+        StatsRoute.fromRetiredLink(Uri.parse('/income')),
+        '/stats?types=income',
+      );
+      expect(
+        StatsRoute.fromRetiredLink(Uri.parse('/transfers')),
+        '/stats?types=transfer',
+      );
+    });
+
+    test('keeps the filters and turns the old type into types', () {
+      final uri = Uri.parse(
+        StatsRoute.fromRetiredLink(
+          Uri.parse('/expenses?type=income&category=Food&period=year&q=rent'),
+        ),
+      );
+      expect(uri.path, '/stats');
+      expect(uri.queryParameters, {
+        'category': 'Food',
+        'period': 'year',
+        'q': 'rent',
+        'types': 'income',
+      });
+      final filters = StatsRoute.filtersFromUri(uri);
+      expect(filters.types, {TransactionTypeFilter.income});
+    });
+
+    test('an old type of all shows all three', () {
+      final filters = StatsRoute.filtersFromUri(
+        Uri.parse(StatsRoute.fromRetiredLink(Uri.parse('/transfers?type=all'))),
+      );
+      expect(filters.types, statsTypes.toSet());
+    });
+  });
+
+  group('StatsRoute view', () {
+    test('round-trips the layout and leaves defaults out of the link', () {
+      const view = StatsRouteFilters(
+        grouping: StatsGrouping.time,
+        interval: StatsInterval.week,
+        chart: StatsChart.line,
+        showNet: true,
+      );
+      final uri = Uri.parse(view.location());
+      expect(uri.queryParameters, {
+        'view': 'time',
+        'interval': 'week',
+        'chart': 'line',
+        'net': '1',
+      });
+      final back = StatsRoute.filtersFromUri(uri);
+      expect(back.grouping, StatsGrouping.time);
+      expect(back.interval, StatsInterval.week);
+      expect(back.chart, StatsChart.line);
+      expect(back.showNet, isTrue);
+      expect(back.hasActiveFilters, isFalse);
+
+      expect(
+        StatsRoute.filtersFromUri(Uri.parse(view.location(autoInterval: true)))
+            .interval,
+        isNull,
+      );
+    });
+
+    test('clearing the filters keeps the layout', () {
+      final filters = StatsRoute.filtersFromUri(
+        Uri.parse('/stats?view=time&chart=line&tag=Holiday&types=transfer'),
+      );
+      final cleared = StatsRoute.filtersFromUri(
+        Uri.parse(filters.clearedLocation),
+      );
+      expect(cleared.tags, isEmpty);
+      expect(cleared.types, StatsRouteFilters.defaultTypes);
+      expect(cleared.grouping, StatsGrouping.time);
+      expect(cleared.chart, StatsChart.line);
+    });
+  });
+
+  group('StatsRoute charts', () {
+    test('each grouping offers its own charts, the default first', () {
+      const byTag = StatsRouteFilters(grouping: StatsGrouping.tag);
+      expect(byTag.charts, [StatsChart.donut, StatsChart.bars]);
+      expect(byTag.effectiveChart, StatsChart.donut);
+      const overTime = StatsRouteFilters(grouping: StatsGrouping.time);
+      expect(overTime.charts, [StatsChart.bars, StatsChart.line]);
+      expect(overTime.effectiveChart, StatsChart.bars);
+    });
+
+    test(
+      'a chart that does not suit the grouping falls back to its default',
+      () {
+        final filters = StatsRoute.filtersFromUri(
+          Uri.parse('/stats?view=budget&chart=line'),
+        );
+        expect(filters.grouping, StatsGrouping.budget);
+        expect(filters.effectiveChart, StatsChart.donut);
+      },
+    );
+
+    test('crossing to or from time drops the chart, staying keeps it', () {
+      const bars = StatsRouteFilters(chart: StatsChart.bars);
+      final toTag = StatsRoute.filtersFromUri(
+        Uri.parse(bars.location(grouping: StatsGrouping.tag)),
+      );
+      expect(toTag.chart, StatsChart.bars);
+      final toTime = StatsRoute.filtersFromUri(
+        Uri.parse(bars.location(grouping: StatsGrouping.time)),
+      );
+      expect(toTime.chart, isNull);
+    });
+
+    test('the split round-trips and is left out at its default', () {
+      const stacked = StatsRouteFilters(
+        grouping: StatsGrouping.time,
+        split: StatsSplit.tag,
+      );
+      final uri = Uri.parse(stacked.location());
+      expect(uri.queryParameters['split'], 'tag');
+      expect(StatsRoute.filtersFromUri(uri).split, StatsSplit.tag);
+      expect(
+        Uri.parse(stacked.location(split: StatsSplit.category)).queryParameters
+            .containsKey('split'),
+        isFalse,
+      );
+    });
+  });
+
+  group('StatsRouteFilters', () {
+    test('orderedTypes follows the page, singleType only for one', () {
+      const filters = StatsRouteFilters(
+        types: {TransactionTypeFilter.transfer, TransactionTypeFilter.income},
+      );
+      expect(filters.orderedTypes, [
+        TransactionTypeFilter.income,
+        TransactionTypeFilter.transfer,
+      ]);
+      expect(filters.singleType, isNull);
+    });
+
+    test('a type other than expenses counts as a filter', () {
+      const filters = StatsRouteFilters(types: {TransactionTypeFilter.income});
+      expect(filters.hasActiveFilters, isTrue);
+    });
+
+    test('a tag or budget alone counts as a filter', () {
+      expect(
+        const StatsRouteFilters(tags: {'Holiday'}).hasActiveFilters,
+        isTrue,
+      );
+      expect(
+        const StatsRouteFilters(budgets: {'Fun'}).hasActiveFilters,
+        isTrue,
+      );
+    });
+
+    test('location keeps what it is not told to change', () {
+      final filters = StatsRoute.filtersFromUri(
+        Uri.parse(
+          '/stats?types=income&tag=Holiday&from=2026-01-01&to=2026-01-31',
+        ),
+      );
+      final next = StatsRoute.filtersFromUri(
+        Uri.parse(filters.location(budgets: {'Fun'})),
+      );
+      expect(next.types, {TransactionTypeFilter.income});
+      expect(next.tags, {'Holiday'});
+      expect(next.budgets, {'Fun'});
+      expect(next.from, DateTime(2026, 1, 1));
+      expect(next.to, DateTime(2026, 1, 31));
+    });
+
+    test('location clears a filter passed as an empty set', () {
+      const filters = StatsRouteFilters(
+        tags: {'Holiday'},
+        categories: {'Food'},
+      );
+      final next = StatsRoute.filtersFromUri(
+        Uri.parse(filters.location(tags: const {})),
+      );
+      expect(next.tags, isEmpty);
+      expect(next.categories, {'Food'});
+    });
+
+    test('a new period drops custom dates and new dates drop the period', () {
+      final dated = StatsRouteFilters(
+        from: DateTime(2026, 1, 1),
+        to: DateTime(2026, 1, 31),
+      );
+      final byPeriod = StatsRoute.filtersFromUri(
+        Uri.parse(dated.location(period: ExpensePeriod.year)),
+      );
+      expect(byPeriod.period, ExpensePeriod.year);
+      expect(byPeriod.hasCustomDateRange, isFalse);
+
+      const yearly = StatsRouteFilters(period: ExpensePeriod.year);
+      final uri = Uri.parse(
+        yearly.location(from: DateTime(2026, 3, 1), to: DateTime(2026, 3, 31)),
+      );
+      expect(uri.queryParameters.containsKey('period'), isFalse);
+      expect(uri.queryParameters['from'], '2026-03-01');
+    });
+
+    test('periodLabel shows custom dates, else the preset', () {
+      final dated = StatsRouteFilters(
+        from: DateTime(2026, 1, 1),
+        to: DateTime(2026, 1, 31),
+      );
+      expect(dated.periodLabel, '2026-01-01 – 2026-01-31');
+      expect(
+        const StatsRouteFilters(period: ExpensePeriod.week).periodLabel,
+        'This Week',
+      );
+    });
+
+    test('localizedPeriodLabel formats custom range with l10n', () {
+      final filters = StatsRouteFilters(
+        from: DateTime(2026, 1, 1),
+        to: DateTime(2026, 1, 31),
+      );
+      final label = filters.localizedPeriodLabel(
+        AppLocalizationsEn(),
+        LocaleFormatting(const Locale('en')),
+      );
+      expect(label, '2026-01-01 – 2026-01-31');
+    });
+
+    test('formatDate returns ISO date string', () {
+      expect(StatsRouteFilters.formatDate(DateTime(2026, 7, 6)), '2026-07-06');
+    });
+  });
+}
+
+class _RouteStateStub extends Fake implements GoRouterState {
+  _RouteStateStub(this._uri);
+  final Uri _uri;
+
+  @override
+  Uri get uri => _uri;
+}

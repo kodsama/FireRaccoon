@@ -7,6 +7,8 @@ import '../models/side_menu_config.dart';
 
 const String _kSideMenuConfigPrefKey = 'fireraccoon_side_menu_config';
 
+const _retiredStatsItemIds = {'expenses', 'income', 'transfers'};
+
 enum FlatNodeType { groupHeader, groupChild, standaloneItem }
 
 class FlatNode {
@@ -90,13 +92,50 @@ class SideMenuConfigNotifier extends Notifier<SideMenuConfig> {
       try {
         final Map<String, dynamic> decoded = jsonDecode(rawJson);
         final loadedConfig = SideMenuConfig.fromJson(decoded);
-        state = _ensureAllDefaultItemsExist(loadedConfig);
+        state = _ensureAllDefaultItemsExist(_retireStatsPages(loadedConfig));
       } catch (e) {
         state = SideMenuConfig.defaultConfig;
       }
     } else {
       state = SideMenuConfig.defaultConfig;
     }
+  }
+
+  /// Expenses, Income and Transfers became the one Stats page, but a layout
+  /// saved before that still names all three. The first of them turns into
+  /// Stats where it stood, the other two go, and a group that held nothing
+  /// else gives way to the Stats item, hidden if the group was.
+  SideMenuConfig _retireStatsPages(SideMenuConfig config) {
+    final stats = SideMenuConfig.defaultItems['stats']!;
+    var placed = getFlatNodes(config).any((node) => node.item?.id == stats.id);
+
+    SideMenuItem? replace(SideMenuItem item, {bool? hidden}) {
+      if (!_retiredStatsItemIds.contains(item.id)) return item;
+      if (placed) return null;
+      placed = true;
+      return stats.copyWith(isHidden: hidden ?? item.isHidden);
+    }
+
+    final nodes = <SideMenuNode>[];
+    for (final node in config.nodes) {
+      if (node.type == SideMenuNodeType.item) {
+        final item = replace(node.item!);
+        if (item != null) nodes.add(SideMenuNode.item(item));
+        continue;
+      }
+      final group = node.group!;
+      final onlyRetired =
+          group.items.isNotEmpty &&
+          group.items.every((item) => _retiredStatsItemIds.contains(item.id));
+      if (onlyRetired) {
+        final item = replace(group.items.first, hidden: group.isHidden);
+        if (item != null) nodes.add(SideMenuNode.item(item));
+        continue;
+      }
+      final items = [for (final item in group.items) ?replace(item)];
+      nodes.add(SideMenuNode.group(group.copyWith(items: items)));
+    }
+    return SideMenuConfig(nodes: nodes);
   }
 
   /// Ensures that all standard system items exist in the configuration.
@@ -415,7 +454,7 @@ class SideMenuConfigNotifier extends Notifier<SideMenuConfig> {
 
   /// Overwrites the side menu layout (settings import).
   void replaceConfig(SideMenuConfig config) {
-    _save(_ensureAllDefaultItemsExist(config));
+    _save(_ensureAllDefaultItemsExist(_retireStatsPages(config)));
   }
 }
 

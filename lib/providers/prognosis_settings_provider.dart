@@ -80,6 +80,11 @@ class PrognosisSettingsNotifier extends Notifier<PrognosisSettings> {
         includeLiabilities:
             _prefs.getBool('prognosisIncludeLiabilities') ??
             _defaults.includeLiabilities,
+        excludedCategories: {
+          ...?_prefs.getStringList('prognosisExcludedCategories'),
+        },
+        excludedTags: {...?_prefs.getStringList('prognosisExcludedTags')},
+        excludedWords: _prefs.getString('prognosisExcludedWords') ?? '',
       ),
       marginPercent: _prefs.getDouble('prognosisMarginPercent') ?? 15,
     );
@@ -129,6 +134,15 @@ class PrognosisSettingsNotifier extends Notifier<PrognosisSettings> {
       inclusion.includeCreditCards,
     );
     _prefs.setBool('prognosisIncludeLiabilities', inclusion.includeLiabilities);
+    _prefs.setStringList(
+      'prognosisExcludedCategories',
+      inclusion.excludedCategories.toList(),
+    );
+    _prefs.setStringList(
+      'prognosisExcludedTags',
+      inclusion.excludedTags.toList(),
+    );
+    _prefs.setString('prognosisExcludedWords', inclusion.excludedWords);
   }
 
   void setMarginPercent(double value) {

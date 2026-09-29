@@ -7,7 +7,6 @@ import 'package:fireraccoon/router/categories_tags_route.dart';
 import 'package:fireraccoon/router/dashboard_route.dart';
 import 'package:fireraccoon/router/history_route.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
-import 'package:fireraccoon/router/expenses_route.dart';
 import 'package:fireraccoon/router/projection_route.dart';
 import 'package:fireraccoon/router/transactions_route.dart';
 import 'package:go_router/go_router.dart';
@@ -70,25 +69,6 @@ void main() {
       expect(
         BudgetsRoute.location(budget: 'Groceries'),
         '/budgets?budget=Groceries',
-      );
-    });
-  });
-
-  group('ExpensesRoute', () {
-    test('encodes category filter', () {
-      expect(
-        ExpensesRoute.location(category: 'Food'),
-        '/expenses?category=Food',
-      );
-    });
-
-    test('encodes period and type filters', () {
-      expect(
-        ExpensesRoute.location(
-          period: ExpensePeriod.semester,
-          type: TransactionTypeFilter.all,
-        ),
-        '/expenses?period=semester&type=all',
       );
     });
   });

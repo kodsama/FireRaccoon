@@ -21,9 +21,7 @@ class FunL10n {
       _pick(l10n.navSubscriptions, l10n.navSubscriptionsRaccoon);
   String get navPiggyBanks =>
       _pick(l10n.navPiggyBanks, l10n.navPiggyBanksRaccoon);
-  String get navExpenses => _pick(l10n.navExpenses, l10n.navExpensesRaccoon);
-  String get navIncome => _pick(l10n.navIncome, l10n.navIncomeRaccoon);
-  String get navTransfers => _pick(l10n.navTransfers, l10n.navTransfersRaccoon);
+  String get navStats => _pick(l10n.navStats, l10n.navStatsRaccoon);
   String get navLiabilities =>
       _pick(l10n.navLiabilities, l10n.navLiabilitiesRaccoon);
   String get navProjection =>
@@ -42,11 +40,7 @@ class FunL10n {
       _pick(l10n.subscriptionsTitle, l10n.subscriptionsTitleRaccoon);
   String get piggyBanksTitle =>
       _pick(l10n.piggyBanksTitle, l10n.piggyBanksTitleRaccoon);
-  String get expensesTitle =>
-      _pick(l10n.expensesTitle, l10n.expensesTitleRaccoon);
-  String get incomeTitle => _pick(l10n.incomeTitle, l10n.incomeTitleRaccoon);
-  String get transfersTitle =>
-      _pick(l10n.transfersTitle, l10n.transfersTitleRaccoon);
+  String get statsTitle => _pick(l10n.statsTitle, l10n.statsTitleRaccoon);
   String get liabilitiesTitle =>
       _pick(l10n.liabilitiesTitle, l10n.liabilitiesTitleRaccoon);
   String get projectionTitle =>

@@ -264,6 +264,12 @@ class PrognosisInclusionOptions {
   final bool includeCreditCards;
   final bool includeLiabilities;
 
+  /// Flows in these categories or carrying these tags are left out, as are
+  /// flows on which every word of [excludedWords] turns up somewhere.
+  final Set<String> excludedCategories;
+  final Set<String> excludedTags;
+  final String excludedWords;
+
   const PrognosisInclusionOptions({
     this.includeScheduledTransactions = true,
     this.includeRecurringTransactions = true,
@@ -273,6 +279,9 @@ class PrognosisInclusionOptions {
     this.includeTransfers = true,
     this.includeCreditCards = true,
     this.includeLiabilities = true,
+    this.excludedCategories = const {},
+    this.excludedTags = const {},
+    this.excludedWords = '',
   });
 
   PrognosisInclusionOptions copyWith({
@@ -284,6 +293,9 @@ class PrognosisInclusionOptions {
     bool? includeTransfers,
     bool? includeCreditCards,
     bool? includeLiabilities,
+    Set<String>? excludedCategories,
+    Set<String>? excludedTags,
+    String? excludedWords,
   }) {
     return PrognosisInclusionOptions(
       includeScheduledTransactions:
@@ -296,8 +308,46 @@ class PrognosisInclusionOptions {
       includeTransfers: includeTransfers ?? this.includeTransfers,
       includeCreditCards: includeCreditCards ?? this.includeCreditCards,
       includeLiabilities: includeLiabilities ?? this.includeLiabilities,
+      excludedCategories: excludedCategories ?? this.excludedCategories,
+      excludedTags: excludedTags ?? this.excludedTags,
+      excludedWords: excludedWords ?? this.excludedWords,
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'includeScheduledTransactions': includeScheduledTransactions,
+    'includeRecurringTransactions': includeRecurringTransactions,
+    'includeBills': includeBills,
+    'includeIncome': includeIncome,
+    'includeExpenses': includeExpenses,
+    'includeTransfers': includeTransfers,
+    'includeCreditCards': includeCreditCards,
+    'includeLiabilities': includeLiabilities,
+    'excludedCategories': excludedCategories.toList(),
+    'excludedTags': excludedTags.toList(),
+    'excludedWords': excludedWords,
+  };
+
+  /// Anything [json] leaves out is included, the default for every source.
+  factory PrognosisInclusionOptions.fromJson(Map<String, dynamic> json) =>
+      PrognosisInclusionOptions(
+        includeScheduledTransactions:
+            json['includeScheduledTransactions'] as bool? ?? true,
+        includeRecurringTransactions:
+            json['includeRecurringTransactions'] as bool? ?? true,
+        includeBills: json['includeBills'] as bool? ?? true,
+        includeIncome: json['includeIncome'] as bool? ?? true,
+        includeExpenses: json['includeExpenses'] as bool? ?? true,
+        includeTransfers: json['includeTransfers'] as bool? ?? true,
+        includeCreditCards: json['includeCreditCards'] as bool? ?? true,
+        includeLiabilities: json['includeLiabilities'] as bool? ?? true,
+        excludedCategories: _stringSet(json['excludedCategories']),
+        excludedTags: _stringSet(json['excludedTags']),
+        excludedWords: json['excludedWords'] as String? ?? '',
+      );
+
+  static Set<String> _stringSet(Object? raw) =>
+      raw is List ? {for (final value in raw) ?(value as String?)} : const {};
 }
 
 class PrognosisOptions {

@@ -140,7 +140,7 @@ void main() {
       final filtered = filterTransactions(
         transactions,
         type: TransactionTypeFilter.all,
-        category: 'Food',
+        categories: {'Food'},
         account: 'Checking',
       );
       expect(filtered, hasLength(1));

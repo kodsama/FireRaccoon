@@ -10,7 +10,7 @@ import '../providers/data_providers.dart';
 import '../router/accounts_route.dart';
 import '../router/budgets_route.dart';
 import '../router/dashboard_route.dart';
-import '../router/expenses_route.dart';
+import '../router/stats_route.dart';
 import '../router/projection_route.dart';
 import '../router/route_navigation.dart';
 import '../router/route_query.dart';
@@ -72,7 +72,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void _openIncome(DashboardRouteFilters filters) {
     final params = analyticsRouteParamsFromDashboard(filters);
     context.goPreservingSearch(
-      IncomeRoute.location(
+      StatsRoute.location(
+        types: const {TransactionTypeFilter.income},
         period: params.period,
         from: params.from,
         to: params.to,
@@ -83,7 +84,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void _openExpenses(DashboardRouteFilters filters) {
     final params = analyticsRouteParamsFromDashboard(filters);
     context.goPreservingSearch(
-      ExpensesRoute.location(
+      StatsRoute.location(
+        types: const {TransactionTypeFilter.expense},
         period: params.period,
         from: params.from,
         to: params.to,

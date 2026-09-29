@@ -4,7 +4,6 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:fireraccoon/providers/dashboard_stats_providers.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
-import 'package:fireraccoon/providers/transaction_analytics_providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../helpers/mock_firefly_service.dart';
@@ -328,56 +327,6 @@ void main() {
 
       expect(histories.keys, containsAll(sampleAccounts.map((a) => a.name)));
       expect(histories.values.every((points) => points.isNotEmpty), isTrue);
-    });
-  });
-
-  group('transactionAnalyticsSummaryProvider', () {
-    test('filters transactions and aggregates categories once', () async {
-      final container = ProviderContainer(
-        overrides: [
-          apiServiceProvider.overrideWithValue(
-            FakeFireflyService(
-              transactions: [
-                _withdrawal(
-                  id: '1',
-                  date: DateTime(2026, 7, 2),
-                  amount: 80,
-                  category: 'Food',
-                ),
-                _withdrawal(
-                  id: '2',
-                  date: DateTime(2026, 7, 3),
-                  amount: 20,
-                  category: 'Travel',
-                ),
-                _withdrawal(
-                  id: '3',
-                  date: DateTime(2026, 6, 3),
-                  amount: 999,
-                  category: 'Old',
-                ),
-              ],
-            ),
-          ),
-        ],
-      );
-      addTearDown(container.dispose);
-
-      final summary = await container.read(
-        transactionAnalyticsSummaryProvider((
-          period: ExpensePeriod.month,
-          from: DateTime(2026, 7, 1),
-          to: DateTime(2026, 7, 31),
-          type: TransactionTypeFilter.expense,
-          account: null,
-        )).future,
-      );
-
-      expect(summary.periodTransactions, hasLength(2));
-      expect(summary.categorySums['Food'], 80);
-      expect(summary.categorySums['Travel'], 20);
-      expect(summary.sortedCategoryEntries.first.key, 'Food');
-      expect(summary.periodTotal, 100);
     });
   });
 }

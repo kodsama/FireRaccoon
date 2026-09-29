@@ -7,10 +7,13 @@ import '../providers/data_providers.dart';
 import '../utils/locale_formatting.dart';
 import '../utils/period_defaults.dart';
 import 'route_query.dart';
-import 'transaction_analytics_route.dart';
+import 'stats_route.dart';
 
 class TransactionsRouteFilters {
-  final String? category;
+  /// Each keeps groups with a leg matching any one of its names.
+  final Set<String> categories;
+  final Set<String> tags;
+  final Set<String> budgets;
   final ExpensePeriod period;
   final TransactionTypeFilter type;
   final String? account;
@@ -26,7 +29,9 @@ class TransactionsRouteFilters {
   final Set<TransactionField> missingFields;
 
   const TransactionsRouteFilters({
-    this.category,
+    this.categories = const {},
+    this.tags = const {},
+    this.budgets = const {},
     this.period = ExpensePeriod.month,
     this.type = TransactionTypeFilter.all,
     this.account,
@@ -46,7 +51,12 @@ class TransactionsRouteFilters {
       expenseParamsFromDashboardPeriod(defaultDashboardPeriod);
 
   bool get hasScopedFilters {
-    if (category != null || type != TransactionTypeFilter.all) return true;
+    if (categories.isNotEmpty ||
+        tags.isNotEmpty ||
+        budgets.isNotEmpty ||
+        type != TransactionTypeFilter.all) {
+      return true;
+    }
     if (period == ExpensePeriod.all && !hasCustomDateRange) return false;
     return !expenseFiltersMatchParams(period, from, to, _defaultPeriodParams);
   }
@@ -57,7 +67,9 @@ class TransactionsRouteFilters {
     bool isRaccoon = false,
   }) {
     final parts = <String>[
-      if (category != null && category!.isNotEmpty) category!,
+      ...categories,
+      ...tags,
+      ...budgets,
       if (hasCustomDateRange)
         format.formatDateRange(
           from,
@@ -88,7 +100,9 @@ class TransactionsRoute {
     String? account,
     List<String>? accounts,
     TransactionGroupType group = TransactionGroupType.date,
-    String? category,
+    Iterable<String> categories = const [],
+    Iterable<String> tags = const [],
+    Iterable<String> budgets = const [],
     ExpensePeriod? period,
     TransactionTypeFilter type = TransactionTypeFilter.all,
     String? from,
@@ -104,7 +118,9 @@ class TransactionsRoute {
     final hasSpecificEntityFilter =
         account != null ||
         (accounts != null && accounts.isNotEmpty) ||
-        category != null;
+        categories.isNotEmpty ||
+        tags.isNotEmpty ||
+        budgets.isNotEmpty;
     final resolvedPeriod =
         period ??
         (hasSpecificEntityFilter ? ExpensePeriod.all : defaultParams.period);
@@ -114,14 +130,14 @@ class TransactionsRoute {
         (period == null && isAllPeriod
             ? null
             : (period == null && defaultParams.from != null
-                  ? ExpenseRouteFilters.formatDate(defaultParams.from!)
+                  ? StatsRouteFilters.formatDate(defaultParams.from!)
                   : null));
     final resolvedTo =
         to ??
         (period == null && isAllPeriod
             ? null
             : (period == null && defaultParams.to != null
-                  ? ExpenseRouteFilters.formatDate(defaultParams.to!)
+                  ? StatsRouteFilters.formatDate(defaultParams.to!)
                   : null));
     final normalizedAccounts = (accounts ?? const <String>[])
         .map((name) => name.trim())
@@ -134,7 +150,9 @@ class TransactionsRoute {
           ? null
           : normalizedAccounts.join(_accountsSeparator),
       'group': group != TransactionGroupType.date ? group.name : null,
-      'category': category,
+      'category': categories,
+      'tag': tags,
+      'budget': budgets,
       'period': encodeExpensePeriodParam(
         resolvedPeriod: resolvedPeriod,
         defaultParams: defaultParams,
@@ -190,7 +208,9 @@ class TransactionsRoute {
 
     if (!hasPeriodParam && !hasCustomDates) {
       return TransactionsRouteFilters(
-        category: RouteQuery.param(uri, 'category'),
+        categories: RouteQuery.values(uri, 'category'),
+        tags: RouteQuery.values(uri, 'tag'),
+        budgets: RouteQuery.values(uri, 'budget'),
         period: defaultParams.period,
         type: RouteQuery.enumFrom(
           uri,
@@ -211,7 +231,9 @@ class TransactionsRoute {
     }
 
     return TransactionsRouteFilters(
-      category: RouteQuery.param(uri, 'category'),
+      categories: RouteQuery.values(uri, 'category'),
+      tags: RouteQuery.values(uri, 'tag'),
+      budgets: RouteQuery.values(uri, 'budget'),
       period: RouteQuery.enumFrom(
         uri,
         'period',
@@ -301,13 +323,39 @@ class TransactionsRoute {
       account: account ?? base.account,
       accounts: accounts ?? base.accounts,
       group: group ?? base.group,
-      category: base.category,
+      categories: base.categories,
+      tags: base.tags,
+      budgets: base.budgets,
       period: base.period,
       type: base.type,
-      from: base.from != null
-          ? ExpenseRouteFilters.formatDate(base.from!)
-          : null,
-      to: base.to != null ? ExpenseRouteFilters.formatDate(base.to!) : null,
+      from: base.from != null ? StatsRouteFilters.formatDate(base.from!) : null,
+      to: base.to != null ? StatsRouteFilters.formatDate(base.to!) : null,
+    );
+  }
+
+  /// [base] with its categories, tags or budgets replaced and every other
+  /// filter kept; an empty set clears that filter.
+  static String locationWithEntities(
+    TransactionsRouteFilters base, {
+    Set<String>? categories,
+    Set<String>? tags,
+    Set<String>? budgets,
+  }) {
+    return location(
+      account: base.account,
+      accounts: base.accounts,
+      group: base.group,
+      categories: categories ?? base.categories,
+      tags: tags ?? base.tags,
+      budgets: budgets ?? base.budgets,
+      period: base.period,
+      type: base.type,
+      from: base.from != null ? StatsRouteFilters.formatDate(base.from!) : null,
+      to: base.to != null ? StatsRouteFilters.formatDate(base.to!) : null,
+      reconcile: base.reconcile,
+      reconciledFilter: base.reconciledFilter,
+      missingFields: base.missingFields,
+      defaultDashboardPeriod: base.defaultDashboardPeriod,
     );
   }
 }

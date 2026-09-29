@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
+import 'package:fireraccoon/models/people_models.dart';
+import 'package:fireraccoon/providers/people_providers.dart';
 import 'package:fireraccoon/providers/view_mode_provider.dart';
 import 'package:fireraccoon/screens/transactions_screen.dart';
 import 'package:fireraccoon/widgets/selection_check_control.dart';
@@ -111,6 +114,124 @@ void main() {
     await pumpScreen(tester);
 
     expect(find.textContaining('network down'), findsOneWidget);
+  });
+
+  testWidgets('TransactionsScreen narrows to a tag picked from its list', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final groceries = sampleTransactions.last;
+    final fake = FakeFireflyService(
+      accounts: sampleAccounts,
+      transactions: [
+        sampleTransactions.first,
+        groceries.copyWith(tags: ['5-stan trip 2026']),
+      ],
+      tags: const [
+        Tag(id: '1', name: '5-stan trip 2026'),
+        Tag(id: '2', name: 'Work'),
+      ],
+    );
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const TransactionsScreen(),
+        initialLocation: '/transactions',
+        fireflyService: fake,
+        viewMode: ViewMode.compact,
+      ),
+    );
+    await pumpScreen(tester);
+    expect(find.text('Salary'), findsWidgets);
+
+    await tester.tap(find.text('Tag'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('5-stan trip 2026'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Apply'));
+    await pumpScreen(tester);
+
+    final context = tester.element(find.byType(TransactionsScreen));
+    expect(
+      GoRouterState.of(context).uri.queryParameters['tag'],
+      '5-stan trip 2026',
+    );
+    expect(find.text('Salary'), findsNothing);
+    expect(find.text('Groceries'), findsWidgets);
+    expect(find.text('Tag: 5-stan trip 2026'), findsOneWidget);
+
+    await tester.tap(
+      find
+          .descendant(
+            of: find.ancestor(
+              of: find.text('Tag: 5-stan trip 2026'),
+              matching: find.byType(Row),
+            ),
+            matching: find.byType(InkWell),
+          )
+          .last,
+    );
+    await pumpScreen(tester);
+    expect(GoRouterState.of(context).uri.queryParameters['tag'], isNull);
+    expect(find.text('Salary'), findsWidgets);
+  });
+
+  testWidgets('a tag-filtered list still narrows to the selected person', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final groceries = sampleTransactions.last;
+    final fake = FakeFireflyService(
+      accounts: sampleAccounts,
+      transactions: [
+        groceries.copyWith(
+          id: 'hers',
+          description: 'Her groceries',
+          sourceId: 'olivier-card',
+          tags: ['Holiday'],
+        ),
+        groceries.copyWith(
+          id: 'his',
+          description: 'His groceries',
+          sourceId: 'alex-card',
+          tags: ['Holiday'],
+        ),
+      ],
+    );
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const TransactionsScreen(),
+        initialLocation: '/transactions?tag=Holiday',
+        fireflyService: fake,
+        viewMode: ViewMode.compact,
+        extraOverrides: [
+          peopleSettingsProvider.overrideWithValue(
+            const AccountOwnershipConfig(
+              accountOwnerships: {
+                'olivier-card': AccountOwnership(
+                  accountId: 'olivier-card',
+                  personShares: {'olivier': 1},
+                ),
+                'alex-card': AccountOwnership(
+                  accountId: 'alex-card',
+                  personShares: {'alex': 1},
+                ),
+              },
+            ),
+          ),
+          activePersonFilterProvider.overrideWith(_OlivierSelected.new),
+        ],
+      ),
+    );
+    await pumpScreen(tester);
+
+    expect(find.text('Her groceries'), findsWidgets);
+    expect(find.text('His groceries'), findsNothing);
   });
 
   testWidgets('TransactionsScreen filters by account from route', (
@@ -681,4 +802,9 @@ void main() {
     // View mode lives in the app shell header too, not on this filter bar.
     expect(find.text('Rows'), findsNothing);
   });
+}
+
+class _OlivierSelected extends ActivePersonFilterNotifier {
+  @override
+  String? build() => 'olivier';
 }

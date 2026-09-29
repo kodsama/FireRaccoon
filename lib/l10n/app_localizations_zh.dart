@@ -43,15 +43,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navPiggyBanks => '存钱罐';
 
   @override
-  String get navExpenses => '支出';
-
-  @override
-  String get navIncome => '收入';
-
-  @override
-  String get navTransfers => '转账';
-
-  @override
   String get navLiabilities => '负债';
 
   @override
@@ -383,9 +374,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navPiggyBanksRaccoon => '迷你藏匿处';
 
   @override
-  String get navExpensesRaccoon => '燃烧报告';
-
-  @override
   String get navProjectionRaccoon => '水晶宝藏';
 
   @override
@@ -408,9 +396,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get budgetsTitleRaccoon => '囤积计划';
-
-  @override
-  String get expensesTitleRaccoon => '燃烧报告';
 
   @override
   String get projectionTitleRaccoon => '水晶宝藏';
@@ -1725,19 +1710,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tooltipBudgetCurrency => '预算金额的货币';
 
   @override
-  String get expensesTitle => '支出';
-
-  @override
   String get clearFilters => '清除筛选';
 
   @override
   String get overview => '概览';
-
-  @override
-  String get byCategory => '按类别';
-
-  @override
-  String get allCategories => '所有类别';
 
   @override
   String get allTypes => '所有类型';
@@ -2464,12 +2440,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noSubscriptionsHint => '您还没有订阅。请在订阅页面创建以关联定期支出。';
 
   @override
-  String get incomeTitle => '收入';
-
-  @override
-  String get transfersTitle => '转账';
-
-  @override
   String get newTransferAction => '新建转账';
 
   @override
@@ -2566,19 +2536,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRaccoon => '截获';
-
-  @override
-  String get navTransfersRaccoon => '藏匿转移';
-
-  @override
   String get navLiabilitiesRaccoon => '欠债';
-
-  @override
-  String get incomeTitleRaccoon => '截获资金';
-
-  @override
-  String get transfersTitleRaccoon => '藏匿转移';
 
   @override
   String get newTransferActionRaccoon => '新建藏匿转移';
@@ -3926,4 +3884,155 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get scheduleRuleNoDates => '此规则不会产生任何日期。';
+
+  @override
+  String get navStats => '统计';
+
+  @override
+  String get navStatsRaccoon => '战利品报告';
+
+  @override
+  String get statsTitle => '统计';
+
+  @override
+  String get statsTitleRaccoon => '战利品报告';
+
+  @override
+  String get filterTag => '标签';
+
+  @override
+  String get noTagsFound => '未找到标签。';
+
+  @override
+  String get filterBudget => '预算';
+
+  @override
+  String get noBudgetsFound => '未找到预算。';
+
+  @override
+  String get noCategoriesFound => '未找到类别。';
+
+  @override
+  String get filterWords => '关键词';
+
+  @override
+  String get filterWordsHint => '必须包含每个词';
+
+  @override
+  String get applyFilter => '应用';
+
+  @override
+  String get netFlow => '净额';
+
+  @override
+  String get prognosisLeaveOut => '排除';
+
+  @override
+  String get prognosisLeaveOutHelp => '属于这些类别或标签、或包含所有这些词的资金流不计入预测。';
+
+  @override
+  String filterSelectedCount(int count) {
+    return '已选 $count 项';
+  }
+
+  @override
+  String get statsByCategory => '按类别';
+
+  @override
+  String get statsOverTime => '随时间';
+
+  @override
+  String get statsIntervalAuto => '自动';
+
+  @override
+  String get statsIntervalDay => '按天';
+
+  @override
+  String get statsIntervalWeek => '按周';
+
+  @override
+  String get statsIntervalMonth => '按月';
+
+  @override
+  String get statsIntervalQuarter => '按季度';
+
+  @override
+  String get statsIntervalYear => '按年';
+
+  @override
+  String get statsChartBars => '柱状图';
+
+  @override
+  String get statsChartLine => '折线图';
+
+  @override
+  String get statsTableTotal => '合计';
+
+  @override
+  String get statsTablePeriod => '期间';
+
+  @override
+  String statsQuarterLabel(int quarter, int year) {
+    final intl.NumberFormat yearNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String yearString = yearNumberFormat.format(year);
+
+    return '$yearString 年第 $quarter 季度';
+  }
+
+  @override
+  String statsWeekOf(String date) {
+    return '$date 当周';
+  }
+
+  @override
+  String get statsByTag => '按标签';
+
+  @override
+  String get statsByBudget => '按预算';
+
+  @override
+  String get statsByAccount => '按账户';
+
+  @override
+  String get statsByPayee => '按收款方';
+
+  @override
+  String get statsStackedByCategory => '按类别堆叠';
+
+  @override
+  String get statsStackedByTag => '按标签堆叠';
+
+  @override
+  String get statsStackedByBudget => '按预算堆叠';
+
+  @override
+  String get statsChartDonut => '环形图';
+
+  @override
+  String get statsOtherSplit => '其他';
+
+  @override
+  String statsStackOrder(String types) {
+    return '柱形从左到右：$types';
+  }
+
+  @override
+  String get statsLevelTypes => '类型';
+
+  @override
+  String get statsLevelTypesHint => '支出、收入和转账的总额';
+
+  @override
+  String get statsLevelGroups => '明细';
+
+  @override
+  String get statsLevelGroupsHint => '每种类型的构成：类别、标签等';
+
+  @override
+  String get statsSeparated => '分开';
+
+  @override
+  String get statsMerged => '合并';
 }

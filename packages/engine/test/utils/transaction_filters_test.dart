@@ -257,6 +257,54 @@ void main() {
       _tx(type: 'transfer', date: DateTime(2026, 6, 1), category: 'Savings'),
     ];
 
+    test('keeps a group when any leg carries the tag or budget', () {
+      final base = transactions.first;
+      final group = base.copyWith(
+        id: 'group',
+        splits: [
+          base.copyWith(id: 'a'),
+          base.copyWith(id: 'b', tags: ['Holiday'], budgetName: 'Fun'),
+        ],
+      );
+      final all = [...transactions, group];
+
+      expect(
+        filterTransactions(
+          all,
+          type: TransactionTypeFilter.all,
+          tags: {'Holiday'},
+        ).map((t) => t.id),
+        ['group'],
+      );
+      expect(
+        filterTransactions(
+          all,
+          type: TransactionTypeFilter.all,
+          budgets: {'Fun'},
+        ).map((t) => t.id),
+        ['group'],
+      );
+      expect(
+        filterTransactions(
+          all,
+          type: TransactionTypeFilter.all,
+          tags: {'Work'},
+        ),
+        isEmpty,
+      );
+    });
+
+    test('several values in one filter match any of them', () {
+      expect(
+        filterTransactions(
+          transactions,
+          type: TransactionTypeFilter.all,
+          categories: {'Food', 'Salary'},
+        ).map((t) => t.type),
+        ['withdrawal', 'deposit'],
+      );
+    });
+
     test('filters by type, category, account, and date', () {
       expect(
         filterTransactions(
@@ -269,7 +317,7 @@ void main() {
         filterTransactions(
           transactions,
           type: TransactionTypeFilter.all,
-          category: 'Food',
+          categories: {'Food'},
           account: 'Checking',
         ),
         hasLength(1),

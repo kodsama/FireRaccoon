@@ -43,15 +43,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navPiggyBanks => '貯金箱';
 
   @override
-  String get navExpenses => '支出';
-
-  @override
-  String get navIncome => '収入';
-
-  @override
-  String get navTransfers => '振替';
-
-  @override
   String get navLiabilities => '負債';
 
   @override
@@ -383,9 +374,6 @@ class AppLocalizationsJa extends AppLocalizations {
   String get navPiggyBanksRaccoon => 'ミニ隠し場所';
 
   @override
-  String get navExpensesRaccoon => '消費レポート';
-
-  @override
   String get navProjectionRaccoon => '水晶の宝物庫';
 
   @override
@@ -408,9 +396,6 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get budgetsTitleRaccoon => '宝物計画';
-
-  @override
-  String get expensesTitleRaccoon => '消費レポート';
 
   @override
   String get projectionTitleRaccoon => '水晶の宝物庫';
@@ -1726,19 +1711,10 @@ class AppLocalizationsJa extends AppLocalizations {
   String get tooltipBudgetCurrency => '予算額の通貨';
 
   @override
-  String get expensesTitle => '支出';
-
-  @override
   String get clearFilters => 'フィルターをクリア';
 
   @override
   String get overview => '概要';
-
-  @override
-  String get byCategory => 'カテゴリ別';
-
-  @override
-  String get allCategories => 'すべてのカテゴリ';
 
   @override
   String get allTypes => 'すべての種類';
@@ -2466,12 +2442,6 @@ class AppLocalizationsJa extends AppLocalizations {
       'サブスクリプションはまだありません。サブスクリプションページで作成して、定期支出をリンクしてください。';
 
   @override
-  String get incomeTitle => '収入';
-
-  @override
-  String get transfersTitle => '振替';
-
-  @override
   String get newTransferAction => '新しい振替';
 
   @override
@@ -2568,19 +2538,7 @@ class AppLocalizationsJa extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRaccoon => 'ゲット';
-
-  @override
-  String get navTransfersRaccoon => '隠し場所の移動';
-
-  @override
   String get navLiabilitiesRaccoon => '借金';
-
-  @override
-  String get incomeTitleRaccoon => 'ゲットした資金';
-
-  @override
-  String get transfersTitleRaccoon => '隠し場所の移動';
 
   @override
   String get newTransferActionRaccoon => '新しい隠し場所の移動';
@@ -3935,4 +3893,156 @@ class AppLocalizationsJa extends AppLocalizations {
 
   @override
   String get scheduleRuleNoDates => 'このルールでは日付が生成されません。';
+
+  @override
+  String get navStats => '統計';
+
+  @override
+  String get navStatsRaccoon => '戦利品レポート';
+
+  @override
+  String get statsTitle => '統計';
+
+  @override
+  String get statsTitleRaccoon => '戦利品レポート';
+
+  @override
+  String get filterTag => 'タグ';
+
+  @override
+  String get noTagsFound => 'タグが見つかりません。';
+
+  @override
+  String get filterBudget => '予算';
+
+  @override
+  String get noBudgetsFound => '予算が見つかりません。';
+
+  @override
+  String get noCategoriesFound => 'カテゴリが見つかりません。';
+
+  @override
+  String get filterWords => '単語';
+
+  @override
+  String get filterWordsHint => 'すべての単語を含むもの';
+
+  @override
+  String get applyFilter => '適用';
+
+  @override
+  String get netFlow => '差引';
+
+  @override
+  String get prognosisLeaveOut => '除外';
+
+  @override
+  String get prognosisLeaveOutHelp =>
+      'これらのカテゴリやタグの流れ、またはこれらの単語をすべて含む流れは予測に含めません。';
+
+  @override
+  String filterSelectedCount(int count) {
+    return '$count 件を選択';
+  }
+
+  @override
+  String get statsByCategory => 'カテゴリ別';
+
+  @override
+  String get statsOverTime => '推移';
+
+  @override
+  String get statsIntervalAuto => '自動';
+
+  @override
+  String get statsIntervalDay => '日別';
+
+  @override
+  String get statsIntervalWeek => '週別';
+
+  @override
+  String get statsIntervalMonth => '月別';
+
+  @override
+  String get statsIntervalQuarter => '四半期別';
+
+  @override
+  String get statsIntervalYear => '年別';
+
+  @override
+  String get statsChartBars => '棒グラフ';
+
+  @override
+  String get statsChartLine => '折れ線';
+
+  @override
+  String get statsTableTotal => '合計';
+
+  @override
+  String get statsTablePeriod => '期間';
+
+  @override
+  String statsQuarterLabel(int quarter, int year) {
+    final intl.NumberFormat yearNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String yearString = yearNumberFormat.format(year);
+
+    return '$yearString年 第$quarter四半期';
+  }
+
+  @override
+  String statsWeekOf(String date) {
+    return '$date の週';
+  }
+
+  @override
+  String get statsByTag => 'タグ別';
+
+  @override
+  String get statsByBudget => '予算別';
+
+  @override
+  String get statsByAccount => '口座別';
+
+  @override
+  String get statsByPayee => '取引先別';
+
+  @override
+  String get statsStackedByCategory => 'カテゴリで積み上げ';
+
+  @override
+  String get statsStackedByTag => 'タグで積み上げ';
+
+  @override
+  String get statsStackedByBudget => '予算で積み上げ';
+
+  @override
+  String get statsChartDonut => 'ドーナツ';
+
+  @override
+  String get statsOtherSplit => 'その他';
+
+  @override
+  String statsStackOrder(String types) {
+    return '棒は左から順に：$types';
+  }
+
+  @override
+  String get statsLevelTypes => '種類';
+
+  @override
+  String get statsLevelTypesHint => '支出・収入・振替の合計';
+
+  @override
+  String get statsLevelGroups => '詳細';
+
+  @override
+  String get statsLevelGroupsHint => '各種類の内訳：カテゴリやタグなど';
+
+  @override
+  String get statsSeparated => '分けて表示';
+
+  @override
+  String get statsMerged => 'まとめて表示';
 }

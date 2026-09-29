@@ -5,6 +5,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../models/account.dart';
 import '../models/account_prognosis.dart';
+import '../models/category.dart';
+import '../models/tag.dart';
 import '../providers/data_providers.dart';
 import '../providers/prognosis_settings_provider.dart';
 import '../providers/dashboard_stats_providers.dart';
@@ -15,8 +17,10 @@ import '../l10n/app_localizations.dart';
 import '../l10n/l10n_extensions.dart';
 import '../widgets/entity_list_layout.dart';
 import '../widgets/loading_body.dart';
+import '../widgets/name_filter_dialog.dart';
 import '../widgets/not_connected_view.dart';
 import '../widgets/prognosis_band_chart.dart';
+import '../widgets/words_filter_dialog.dart';
 
 /// Deep-link alias — use [ProjectionScreen] / `/projection` in the app shell.
 class PrognosisScreen extends StatelessWidget {
@@ -101,6 +105,17 @@ class _PrognosisViewState extends ConsumerState<PrognosisView> {
               const SizedBox(height: 14),
               _InclusionPanel(
                 inclusion: settings.inclusion,
+                categories: [
+                  for (final category
+                      in ref.watch(categoriesProvider).value ??
+                          const <Category>[])
+                    category.name,
+                ],
+                tags: [
+                  for (final tag
+                      in ref.watch(tagsProvider).value ?? const <Tag>[])
+                    tag.name,
+                ],
                 onChanged: (inclusion) {
                   final previous = settings.inclusion;
                   ref
@@ -112,30 +127,8 @@ class _PrognosisViewState extends ConsumerState<PrognosisView> {
                         title: 'Projection inclusion changed',
                         details: 'Projection inclusion options updated',
                         type: UndoActionType.prognosisInclusion,
-                        undoPayload: {
-                          'includeScheduledTransactions':
-                              previous.includeScheduledTransactions,
-                          'includeRecurringTransactions':
-                              previous.includeRecurringTransactions,
-                          'includeBills': previous.includeBills,
-                          'includeIncome': previous.includeIncome,
-                          'includeExpenses': previous.includeExpenses,
-                          'includeTransfers': previous.includeTransfers,
-                          'includeCreditCards': previous.includeCreditCards,
-                          'includeLiabilities': previous.includeLiabilities,
-                        },
-                        redoPayload: {
-                          'includeScheduledTransactions':
-                              inclusion.includeScheduledTransactions,
-                          'includeRecurringTransactions':
-                              inclusion.includeRecurringTransactions,
-                          'includeBills': inclusion.includeBills,
-                          'includeIncome': inclusion.includeIncome,
-                          'includeExpenses': inclusion.includeExpenses,
-                          'includeTransfers': inclusion.includeTransfers,
-                          'includeCreditCards': inclusion.includeCreditCards,
-                          'includeLiabilities': inclusion.includeLiabilities,
-                        },
+                        undoPayload: previous.toJson(),
+                        redoPayload: inclusion.toJson(),
                       );
                 },
               ),
@@ -512,7 +505,52 @@ class _InclusionPanel extends StatelessWidget {
   final PrognosisInclusionOptions inclusion;
   final ValueChanged<PrognosisInclusionOptions> onChanged;
 
-  const _InclusionPanel({required this.inclusion, required this.onChanged});
+  final List<String> categories;
+  final List<String> tags;
+
+  const _InclusionPanel({
+    required this.inclusion,
+    required this.onChanged,
+    required this.categories,
+    required this.tags,
+  });
+
+  Future<void> _leaveOutCategories(BuildContext context) async {
+    final l10n = context.l10n;
+    final picked = await showNamesFilterDialog(
+      context: context,
+      title: l10n.category,
+      emptyLabel: l10n.noCategoriesFound,
+      names: categories,
+      selected: inclusion.excludedCategories,
+      icon: LucideIcons.folder,
+    );
+    if (picked == null) return;
+    onChanged(inclusion.copyWith(excludedCategories: picked));
+  }
+
+  Future<void> _leaveOutTags(BuildContext context) async {
+    final l10n = context.l10n;
+    final picked = await showNamesFilterDialog(
+      context: context,
+      title: l10n.filterTag,
+      emptyLabel: l10n.noTagsFound,
+      names: tags,
+      selected: inclusion.excludedTags,
+      icon: LucideIcons.tag,
+    );
+    if (picked == null) return;
+    onChanged(inclusion.copyWith(excludedTags: picked));
+  }
+
+  Future<void> _leaveOutWords(BuildContext context) async {
+    final words = await showWordsFilterDialog(
+      context,
+      words: inclusion.excludedWords.isEmpty ? null : inclusion.excludedWords,
+    );
+    if (words == null) return;
+    onChanged(inclusion.copyWith(excludedWords: words.trim()));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -585,9 +623,93 @@ class _InclusionPanel extends StatelessWidget {
                 ),
               ],
             ),
+            const SizedBox(height: 12),
+            Tooltip(
+              message: l10n.prognosisLeaveOutHelp,
+              child: Text(
+                l10n.prognosisLeaveOut,
+                style: context.textTheme.titleSmall,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final category in inclusion.excludedCategories)
+                  _LeftOutChip(
+                    icon: LucideIcons.folder,
+                    label: category,
+                    onDeleted: () => onChanged(
+                      inclusion.copyWith(
+                        excludedCategories: {...inclusion.excludedCategories}
+                          ..remove(category),
+                      ),
+                    ),
+                  ),
+                for (final tag in inclusion.excludedTags)
+                  _LeftOutChip(
+                    icon: LucideIcons.tag,
+                    label: tag,
+                    onDeleted: () => onChanged(
+                      inclusion.copyWith(
+                        excludedTags: {...inclusion.excludedTags}..remove(tag),
+                      ),
+                    ),
+                  ),
+                if (inclusion.excludedWords.isNotEmpty)
+                  _LeftOutChip(
+                    icon: LucideIcons.textSearch,
+                    label: '"${inclusion.excludedWords}"',
+                    onDeleted: () =>
+                        onChanged(inclusion.copyWith(excludedWords: '')),
+                  ),
+                ActionChip(
+                  avatar: const Icon(LucideIcons.plus, size: 14),
+                  label: Text(l10n.category),
+                  onPressed: () => _leaveOutCategories(context),
+                ),
+                ActionChip(
+                  avatar: const Icon(LucideIcons.plus, size: 14),
+                  label: Text(l10n.filterTag),
+                  onPressed: () => _leaveOutTags(context),
+                ),
+                ActionChip(
+                  avatar: const Icon(LucideIcons.plus, size: 14),
+                  label: Text(l10n.filterWords),
+                  onPressed: () => _leaveOutWords(context),
+                ),
+              ],
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class _LeftOutChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onDeleted;
+
+  const _LeftOutChip({
+    required this.icon,
+    required this.label,
+    required this.onDeleted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.colors;
+    return InputChip(
+      avatar: Icon(icon, size: 14, color: colors.danger),
+      label: Text(label, style: TextStyle(fontSize: 12, color: colors.text)),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      side: BorderSide(color: colors.danger.withValues(alpha: 0.5)),
+      backgroundColor: colors.surface2,
+      onDeleted: onDeleted,
     );
   }
 }

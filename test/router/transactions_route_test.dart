@@ -8,6 +8,92 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
+  group('TransactionsRoute tag and budget', () {
+    test('round-trip and open on all time like a category link', () {
+      final uri = Uri.parse(
+        TransactionsRoute.location(
+          tags: ['5-stan trip 2026'],
+          budgets: ['Travel'],
+        ),
+      );
+      expect(uri.queryParameters['tag'], '5-stan trip 2026');
+      expect(uri.queryParameters['budget'], 'Travel');
+      expect(uri.queryParameters['period'], 'all');
+
+      final filters = TransactionsRoute.filtersFromUri(uri);
+      expect(filters.tags, {'5-stan trip 2026'});
+      expect(filters.budgets, {'Travel'});
+      expect(filters.hasScopedFilters, isTrue);
+      expect(
+        filters.localizedSummary(
+          AppLocalizationsEn(),
+          LocaleFormatting(const Locale('en')),
+        ),
+        contains('5-stan trip 2026 · Travel'),
+      );
+    });
+
+    test('are read on the default-period branch too', () {
+      final filters = TransactionsRoute.filtersFromUri(
+        Uri.parse('/transactions?tag=Holiday'),
+      );
+      expect(filters.tags, {'Holiday'});
+      expect(filters.hasScopedFilters, isTrue);
+    });
+
+    test('locationWithEntities changes one and keeps the rest', () {
+      final base = TransactionsRoute.filtersFromUri(
+        Uri.parse(
+          '/transactions?category=Food&tag=Holiday&period=year'
+          '&type=expense&reconciled_filter=reconciled&group=category',
+        ),
+      );
+      final next = TransactionsRoute.filtersFromUri(
+        Uri.parse(
+          TransactionsRoute.locationWithEntities(
+            base,
+            tags: const {},
+            budgets: {'Fun'},
+          ),
+        ),
+      );
+      expect(next.tags, isEmpty);
+      expect(next.budgets, {'Fun'});
+      expect(next.categories, {'Food'});
+      expect(next.period, ExpensePeriod.year);
+      expect(next.type, TransactionTypeFilter.expense);
+      expect(next.reconciledFilter, ReconciledFilter.reconciled);
+      expect(next.group, TransactionGroupType.category);
+    });
+
+    test('locationWithEntities keeps the sets it is not handed', () {
+      const base = TransactionsRouteFilters(
+        tags: {'Holiday'},
+        budgets: {'Fun'},
+      );
+      final next = TransactionsRoute.filtersFromUri(
+        Uri.parse(
+          TransactionsRoute.locationWithEntities(base, categories: {'Food'}),
+        ),
+      );
+      expect(next.categories, {'Food'});
+      expect(next.tags, {'Holiday'});
+      expect(next.budgets, {'Fun'});
+    });
+
+    test('locationPreservingScope carries them', () {
+      const base = TransactionsRouteFilters(
+        tags: {'Holiday', 'Work'},
+        budgets: {'Fun'},
+      );
+      final uri = Uri.parse(
+        TransactionsRoute.locationPreservingScope(base, account: 'Checking'),
+      );
+      expect(uri.queryParametersAll['tag'], ['Holiday', 'Work']);
+      expect(uri.queryParameters['budget'], 'Fun');
+    });
+  });
+
   group('TransactionsRoute', () {
     test('location without filters returns base path', () {
       expect(TransactionsRoute.location(), '/transactions');
@@ -50,7 +136,7 @@ void main() {
     test('location with analytics filters encodes scoped query parameters', () {
       final uri = Uri.parse(
         TransactionsRoute.location(
-          category: 'Housing',
+          categories: ['Housing'],
           period: ExpensePeriod.year,
           type: TransactionTypeFilter.expense,
           from: '2026-01-01',
@@ -87,7 +173,7 @@ void main() {
           '/transactions?category=Housing&period=year&type=expense&from=2026-01-01&to=2026-12-31',
         ),
       );
-      expect(filters.category, 'Housing');
+      expect(filters.categories, {'Housing'});
       expect(filters.period, ExpensePeriod.year);
       expect(filters.type, TransactionTypeFilter.expense);
       expect(filters.from, DateTime(2026, 1, 1));
@@ -117,7 +203,7 @@ void main() {
     test('localizedSummary describes category, period, type, and account', () {
       final summary =
           TransactionsRouteFilters(
-            category: 'Housing',
+            categories: {'Housing'},
             period: ExpensePeriod.year,
             type: TransactionTypeFilter.expense,
             account: 'Checking',

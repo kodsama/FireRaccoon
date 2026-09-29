@@ -43,15 +43,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navPiggyBanks => 'Piggy banks';
 
   @override
-  String get navExpenses => 'Expenses';
-
-  @override
-  String get navIncome => 'Income';
-
-  @override
-  String get navTransfers => 'Transfers';
-
-  @override
   String get navLiabilities => 'Liabilities';
 
   @override
@@ -386,9 +377,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navPiggyBanksRaccoon => 'Mini Stashes';
 
   @override
-  String get navExpensesRaccoon => 'Burn Report';
-
-  @override
   String get navProjectionRaccoon => 'Crystal Stash';
 
   @override
@@ -411,9 +399,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get budgetsTitleRaccoon => 'Hoard Plans';
-
-  @override
-  String get expensesTitleRaccoon => 'Burn Report';
 
   @override
   String get projectionTitleRaccoon => 'Crystal Stash';
@@ -1760,19 +1745,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tooltipBudgetCurrency => 'Currency for the budget amount';
 
   @override
-  String get expensesTitle => 'Expenses';
-
-  @override
   String get clearFilters => 'Clear filters';
 
   @override
   String get overview => 'Overview';
-
-  @override
-  String get byCategory => 'By Category';
-
-  @override
-  String get allCategories => 'All Categories';
 
   @override
   String get allTypes => 'All Types';
@@ -2515,12 +2491,6 @@ class AppLocalizationsEn extends AppLocalizations {
       'You have no subscriptions yet. Create some on the Subscriptions page to link recurring expenses.';
 
   @override
-  String get incomeTitle => 'Income';
-
-  @override
-  String get transfersTitle => 'Transfers';
-
-  @override
   String get newTransferAction => 'New Transfer';
 
   @override
@@ -2619,19 +2589,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRaccoon => 'Snatched';
-
-  @override
-  String get navTransfersRaccoon => 'Stash Shuffles';
-
-  @override
   String get navLiabilitiesRaccoon => 'Debts';
-
-  @override
-  String get incomeTitleRaccoon => 'Snatched Funds';
-
-  @override
-  String get transfersTitleRaccoon => 'Stash Shuffles';
 
   @override
   String get newTransferActionRaccoon => 'New Stash Shuffle';
@@ -4030,4 +3988,157 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get scheduleRuleNoDates => 'This rule produces no dates.';
+
+  @override
+  String get navStats => 'Stats';
+
+  @override
+  String get navStatsRaccoon => 'Heist Report';
+
+  @override
+  String get statsTitle => 'Stats';
+
+  @override
+  String get statsTitleRaccoon => 'Heist Report';
+
+  @override
+  String get filterTag => 'Tag';
+
+  @override
+  String get noTagsFound => 'No tags found.';
+
+  @override
+  String get filterBudget => 'Budget';
+
+  @override
+  String get noBudgetsFound => 'No budgets found.';
+
+  @override
+  String get noCategoriesFound => 'No categories found.';
+
+  @override
+  String get filterWords => 'Words';
+
+  @override
+  String get filterWordsHint => 'Every word has to appear';
+
+  @override
+  String get applyFilter => 'Apply';
+
+  @override
+  String get netFlow => 'Net';
+
+  @override
+  String get prognosisLeaveOut => 'Leave out';
+
+  @override
+  String get prognosisLeaveOutHelp =>
+      'Flows in these categories or tags, or carrying every one of these words, stay out of the forecast.';
+
+  @override
+  String filterSelectedCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get statsByCategory => 'By category';
+
+  @override
+  String get statsOverTime => 'Over time';
+
+  @override
+  String get statsIntervalAuto => 'Automatic';
+
+  @override
+  String get statsIntervalDay => 'Day by day';
+
+  @override
+  String get statsIntervalWeek => 'Week by week';
+
+  @override
+  String get statsIntervalMonth => 'Month by month';
+
+  @override
+  String get statsIntervalQuarter => 'Quarter by quarter';
+
+  @override
+  String get statsIntervalYear => 'Year by year';
+
+  @override
+  String get statsChartBars => 'Bars';
+
+  @override
+  String get statsChartLine => 'Lines';
+
+  @override
+  String get statsTableTotal => 'Total';
+
+  @override
+  String get statsTablePeriod => 'Period';
+
+  @override
+  String statsQuarterLabel(int quarter, int year) {
+    final intl.NumberFormat yearNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String yearString = yearNumberFormat.format(year);
+
+    return 'Q$quarter $yearString';
+  }
+
+  @override
+  String statsWeekOf(String date) {
+    return 'Week of $date';
+  }
+
+  @override
+  String get statsByTag => 'By tag';
+
+  @override
+  String get statsByBudget => 'By budget';
+
+  @override
+  String get statsByAccount => 'By account';
+
+  @override
+  String get statsByPayee => 'By payee';
+
+  @override
+  String get statsStackedByCategory => 'Stacked by category';
+
+  @override
+  String get statsStackedByTag => 'Stacked by tag';
+
+  @override
+  String get statsStackedByBudget => 'Stacked by budget';
+
+  @override
+  String get statsChartDonut => 'Donut';
+
+  @override
+  String get statsOtherSplit => 'Other';
+
+  @override
+  String statsStackOrder(String types) {
+    return 'Bars, left to right: $types';
+  }
+
+  @override
+  String get statsLevelTypes => 'Types';
+
+  @override
+  String get statsLevelTypesHint => 'Expenses, income and transfers as a whole';
+
+  @override
+  String get statsLevelGroups => 'In detail';
+
+  @override
+  String get statsLevelGroupsHint =>
+      'What each type is made of: categories, tags and so on';
+
+  @override
+  String get statsSeparated => 'Separated';
+
+  @override
+  String get statsMerged => 'Merged';
 }

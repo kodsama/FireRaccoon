@@ -658,6 +658,111 @@ void main() {
       expect(result.forAccount('1')!.endOfMonth.expected, 1000);
     });
 
+    test('leaves out flows by category, tag and every word', () {
+      final rent = _monthlyRecurrence(id: 'r1', day: 15, amount: 500);
+      final housingRent = Recurrence(
+        id: rent.id,
+        type: rent.type,
+        title: rent.title,
+        firstDate: rent.firstDate,
+        active: true,
+        repetitions: rent.repetitions,
+        transactions: [
+          RecurrenceTransactionLine(
+            description: 'Rent',
+            amount: 500,
+            currencyCode: 'EUR',
+            sourceId: '1',
+            sourceName: 'Checking',
+            destinationId: '99',
+            destinationName: 'Rent',
+            categoryName: 'Housing',
+          ),
+        ],
+      );
+      final hotel = _tx(
+        id: 't1',
+        type: 'withdrawal',
+        date: DateTime(2026, 7, 20),
+        amount: 200,
+        sourceId: '1',
+        sourceName: 'Checking',
+      ).copyWith(tags: ['Holiday'], notes: 'Samarkand hotel');
+
+      double endOfMonth(PrognosisInclusionOptions inclusion) =>
+          AccountPrognosisService.compute(
+            accounts: [_account(id: '1', name: 'Checking', balance: 1000)],
+            transactions: [hotel],
+            bills: const [],
+            recurrences: [housingRent],
+            options: PrognosisOptions(
+              reference: reference,
+              inclusion: inclusion,
+            ),
+          ).forAccount('1')!.endOfMonth.expected;
+
+      expect(endOfMonth(const PrognosisInclusionOptions()), 300);
+      expect(
+        endOfMonth(const PrognosisInclusionOptions(excludedTags: {'Holiday'})),
+        500,
+      );
+      expect(
+        endOfMonth(
+          const PrognosisInclusionOptions(excludedCategories: {'Housing'}),
+        ),
+        800,
+      );
+      expect(
+        endOfMonth(
+          const PrognosisInclusionOptions(excludedWords: 'samarkand HOLIDAY'),
+        ),
+        500,
+      );
+      expect(
+        endOfMonth(
+          const PrognosisInclusionOptions(excludedWords: 'rent hotel'),
+        ),
+        300,
+      );
+    });
+
+    test('a bill carries the category and tags of the row it is read from', () {
+      double endOfMonth(
+        PrognosisInclusionOptions inclusion,
+      ) => AccountPrognosisService.compute(
+        accounts: [_account(id: '1', name: 'Checking', balance: 500)],
+        transactions: [
+          _tx(
+            id: 'past',
+            type: 'withdrawal',
+            date: DateTime(2026, 6, 10),
+            amount: 40,
+            sourceId: '1',
+            sourceName: 'Checking',
+            destinationName: 'Netflix',
+            billId: 'b1',
+          ).copyWith(tags: ['Streaming']),
+        ],
+        bills: [_monthlyBill(id: 'b1', name: 'Netflix', day: 10, amount: 40)],
+        recurrences: const [],
+        options: PrognosisOptions(reference: reference, inclusion: inclusion),
+      ).forAccount('1')!.endOfMonth.expected;
+
+      expect(endOfMonth(const PrognosisInclusionOptions()), 460);
+      expect(
+        endOfMonth(
+          const PrognosisInclusionOptions(excludedTags: {'Streaming'}),
+        ),
+        500,
+      );
+      expect(
+        endOfMonth(
+          const PrognosisInclusionOptions(excludedCategories: {'Food'}),
+        ),
+        500,
+      );
+    });
+
     test('infers deposit bill template from historical salary bill', () {
       final result = AccountPrognosisService.compute(
         accounts: [_account(id: '1', name: 'Checking', balance: 500)],

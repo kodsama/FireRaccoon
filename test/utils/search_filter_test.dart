@@ -52,5 +52,25 @@ void main() {
       expect(transaction.matchesSearch('groceries'), isTrue);
       expect(transaction.matchesSearch('flight'), isFalse);
     });
+
+    test('transaction matches its tags and notes', () {
+      final tagged = transaction.copyWith(
+        tags: ['5-stan trip 2026'],
+        notes: 'Paid in som',
+      );
+      expect(tagged.matchesSearch('5-stan trip 2026'), isTrue);
+      expect(tagged.matchesSearch('som'), isTrue);
+      expect(transaction.matchesSearch('5-stan'), isFalse);
+    });
+
+    test('split group matches a tag carried by one leg only', () {
+      final group = transaction.copyWith(
+        splits: [
+          transaction,
+          transaction.copyWith(id: '2', tags: ['Dushanbe']),
+        ],
+      );
+      expect(group.matchesSearch('dushanbe'), isTrue);
+    });
   });
 }

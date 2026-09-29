@@ -1,17 +1,28 @@
 class RouteQuery {
   static const searchKey = 'q';
 
-  static String build(String path, Map<String, String?> params) {
-    final filtered = <String, String>{};
+  /// [params] values are a string, or an iterable of strings for a key
+  /// that repeats (`tag=a&tag=b`); empty ones are left out.
+  static String build(String path, Map<String, Object?> params) {
+    final filtered = <String, Object>{};
     for (final entry in params.entries) {
       final value = entry.value;
-      if (value != null && value.isNotEmpty) {
+      if (value is String && value.isNotEmpty) {
         filtered[entry.key] = value;
+      } else if (value is Iterable<String>) {
+        final values = value.where((v) => v.isNotEmpty).toList();
+        if (values.isNotEmpty) filtered[entry.key] = values;
       }
     }
     if (filtered.isEmpty) return path;
     return Uri(path: path, queryParameters: filtered).toString();
   }
+
+  /// Every non-empty value of a key that may repeat, in link order.
+  static Set<String> values(Uri uri, String key) => {
+    for (final value in uri.queryParametersAll[key] ?? const <String>[])
+      if (value.isNotEmpty) value,
+  };
 
   static String? param(Uri uri, String key) {
     final value = uri.queryParameters[key];
@@ -36,7 +47,7 @@ class RouteQuery {
   static String? searchFrom(Uri uri) => param(uri, searchKey);
 
   static String withSearch(Uri uri, String? query) {
-    final params = Map<String, String>.from(uri.queryParameters);
+    final params = Map<String, Object?>.from(uri.queryParametersAll);
     final trimmed = query?.trim();
     if (trimmed == null || trimmed.isEmpty) {
       params.remove(searchKey);
@@ -51,7 +62,7 @@ class RouteQuery {
     if (q == null) return destination;
     final dest = Uri.parse(destination);
     if (dest.queryParameters.containsKey(searchKey)) return destination;
-    final params = Map<String, String>.from(dest.queryParameters);
+    final params = Map<String, Object?>.from(dest.queryParametersAll);
     params[searchKey] = q;
     return build(dest.path, params);
   }

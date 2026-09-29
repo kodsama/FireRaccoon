@@ -1,7 +1,7 @@
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 
 import '../router/dashboard_route.dart';
-import '../router/expenses_route.dart';
+import '../router/stats_route.dart';
 import '../utils/period_defaults.dart';
 
 typedef DashboardAnalyticsRouteParams = ({
@@ -27,8 +27,8 @@ DashboardAnalyticsRouteParams analyticsRouteParamsFromDashboard(
   return (
     period: params.period,
     from: params.from != null
-        ? ExpenseRouteFilters.formatDate(params.from!)
+        ? StatsRouteFilters.formatDate(params.from!)
         : null,
-    to: params.to != null ? ExpenseRouteFilters.formatDate(params.to!) : null,
+    to: params.to != null ? StatsRouteFilters.formatDate(params.to!) : null,
   );
 }

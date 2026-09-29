@@ -7,6 +7,130 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-29
+
+### Changed
+
+- Donut slices end round, each lying over the start of the next, as the
+  first Stats donut did. A slice too narrow for a round end keeps flat
+  ones, and so does the one before it, so a run of small parts still shows
+  as thin wedges instead of disappearing under a neighbour
+
+- Parts of a donut under half a degree each are summed into one Other slice
+  per type, since they were too thin to see or point at. The list beside
+  the chart still names every one
+
+- Stats opens on this year rather than on the Dashboard's default period,
+  which is usually a month and too short for the charts over time. The
+  Dashboard's links to Stats still carry the period they were showing
+
+- The side menu opens Stats the way it was last left, with the same period,
+  types, filters, chart and split, and the app remembers it across restarts.
+  Links from the Dashboard and elsewhere still open on what they name
+
+- A screen waiting on its data shows the raccoon, hopping inside a spinning
+  ring and dressed for the fun mode on, where it showed a bare spinner
+
+- Expenses, Income and Transfers are one Stats page. Chips at the top pick
+  which of the three it shows, any mix of them, and with income and expenses
+  both on it the page gives the net of the two. It filters by tag and budget
+  as it did by category, and by words: every word has to turn up on a leg for
+  that leg to count, and the words narrow the totals and the donut, where the
+  header search used to narrow only the list under them. A tag or budget on
+  one leg of a split counts that leg, not the whole group. The side menu's
+  Stats group gives way to a single Stats item, and a saved or imported menu
+  layout that still names the three old pages is moved over on load. A link
+  or bookmark to one of them opens Stats on the type that page showed, with
+  its other filters kept
+
+### Added
+
+- Stats draws each type in its own hue: expenses in shades of red, income in
+  shades of green, transfers in blue, the largest part darkest. Two new
+  switches, kept on the device from one visit to the next, set how the types
+  are laid out. Types or In detail picks between the types as a whole and
+  what each is made of. Separated or Merged picks between a chart per type
+  and one for them all: merged is a donut with the types inside and their
+  categories around them, or each month's bars side by side with the net
+  drawn as a curve across them. Donuts name each type inside the inner ring and
+  each part outside on a line with its share, using the width beside the
+  ring rather than cutting names short; hovering a part shows its full name,
+  share and amount. Bars and lines answer a hover the same way, for the one
+  thing under the pointer: the part of a stacked bar with its share of that
+  bar, the bar, the net's curve, or the nearest line, in a card beside the month's bars that leaves them
+  in view. Clicking an entry in the chart's legend switches that part, type
+  or the net off and dims it there, and clicking it again brings it back.
+  Shares and amounts follow the number locale. The Stacked
+  chart gives way to In detail, which stacks each type by the split it is
+  set to
+
+- Stats breaks its totals down by tag, budget, account or payee as well as
+  by category, from one Group by menu that also holds Over time. As a donut
+  the parts are slices; as bars the months stand side by side, one bar per
+  type, each cut by the parts in detail, so one month shows one group and a
+  longer period one per month. The filter on the dimension grouped by
+  narrows the chart but leaves the rest listed, as the category filter
+  always did. A leg with several tags gives each an equal share, so the
+  parts still add up to what was spent. Over time adds stacked bars, each type's bar cut by
+  category, tag or budget, the six largest by name and the rest as Other
+
+- Stats can lay its totals out over time as well as by category. Over time
+  draws each type shown as its own bars or line, day by day, week by week,
+  month by month, quarter by quarter or year by year, with the interval
+  picked from the period unless chosen, an optional net series when income
+  and expenses are both on, and a table of the same figures under the chart.
+  Hovering shows the amounts, and a bar, point or row opens the transactions
+  of that stretch. The layout lives in the link, and clearing the filters
+  keeps it. Stats now opens on expenses and income together
+
+- Category, tag and budget filters take several names at once on Stats, on
+  the transaction list and on the projection's Leave out, and so does the
+  account filter on Stats. The
+  picker has a box per name with Clear and Apply, and a filter in use reads
+  as the first name and how many more. Within one filter a leg matching any
+  of the names counts; different filters still narrow each other. Links carry
+  each name as its own query value, so a name with a comma in it survives
+
+- The transaction list filters by category, tag and budget from pickers in
+  its filter row, each with a chip to take it off again. A group is kept when
+  any of its legs matches. Stats hands its tag and budget on when it opens the
+  list, and a tag on the Categories & Tags page opens the list filtered to it
+  rather than searched for its name
+- The projection can leave flows out by category, tag or words, under Leave
+  out below the sources it includes. Scheduled rows, recurrences and bills
+  each carry the category and tags of what they were made from; a bill takes
+  them from the past payment its accounts are read from. What is left out is kept
+  with the other projection settings and travels in a settings export
+
+### Fixed
+
+- A change made right after launch, while the undo history was still being
+  read from disk, could lose its undo entry: the load swapped its own list
+  in for what had been recorded, and put back the history limit it read at
+  start even when the limit had been changed in the meantime. Changes made
+  during the load now go after the loaded ones, and the limit set last is
+  the one kept
+
+- Stats ignored the person picked in the header: switching to one person,
+  or back to everyone, left every total as it was. It now counts only
+  transactions touching that person's accounts, offers only their accounts
+  in its account filter, and redraws at once, since the ledger is already
+  on the device and nothing has to be fetched again. The transaction list
+  had the same gap whenever a category, tag or budget filter was on (#224)
+
+- A filter in use on Stats or Transactions looked the same as one that was
+  not, so a page narrowed to a budget read like the whole ledger. A filter in
+  use is now filled with the accent and has its own clear button, and the
+  last type chip left on Stats keeps its selected look where it used to grey
+  out as if it were off
+
+- Searching for a tag found nothing. The search box says it reads tags and
+  notes, but the local match never looked at either, and Firefly matches bare
+  words against the description and group title only. The local match now
+  reads every leg's tags and notes, and the server search also asks Firefly
+  for `tag_contains:` and `notes_contains:` matches, so a tagged row turns up
+  whether or not it has been scrolled into view (#215)
+
 ## [0.14.0] - 2026-09-21
 
 ### Added

@@ -74,6 +74,99 @@ void main() {
     expect(ids.contains('history'), isTrue);
   });
 
+  SideMenuItem retired(String id, {bool hidden = false}) => SideMenuItem(
+    id: id,
+    routePath: '/$id',
+    defaultTitleKey: id,
+    defaultTitle: id,
+    iconName: 'pieChart',
+    isHidden: hidden,
+  );
+
+  Future<List<FlatNode>> loadSaved(SideMenuConfig saved) async {
+    SharedPreferences.setMockInitialValues({
+      'fireraccoon_side_menu_config': jsonEncode(saved.toJson()),
+    });
+    final container = await readyContainer();
+    return getFlatNodes(container.read(sideMenuConfigProvider));
+  }
+
+  test('a saved Stats group of the three old pages becomes one item', () async {
+    final flat = await loadSaved(
+      SideMenuConfig(
+        nodes: [
+          SideMenuNode.item(SideMenuConfig.defaultItems['dashboard']!),
+          SideMenuNode.group(
+            SideMenuGroup(
+              id: 'group_stats',
+              title: 'Stats',
+              iconName: 'pieChart',
+              isHidden: true,
+              items: [
+                retired('expenses'),
+                retired('income'),
+                retired('transfers'),
+              ],
+            ),
+          ),
+          SideMenuNode.item(SideMenuConfig.defaultItems['history']!),
+        ],
+      ),
+    );
+
+    expect(flat.any((n) => n.group?.id == 'group_stats'), isFalse);
+    final stats = flat.singleWhere((n) => n.item?.id == 'stats');
+    expect(stats.type, FlatNodeType.standaloneItem);
+    expect(stats.topLevelNodeIndex, 1);
+    expect(stats.item!.routePath, '/stats');
+    expect(stats.item!.isHidden, isTrue);
+  });
+
+  test('an old page moved into another group turns into Stats there', () async {
+    final flat = await loadSaved(
+      SideMenuConfig(
+        nodes: [
+          SideMenuNode.group(
+            SideMenuGroup(
+              id: 'mine',
+              title: 'Mine',
+              iconName: 'folder',
+              items: [
+                SideMenuConfig.defaultItems['budgets']!,
+                retired('income', hidden: true),
+              ],
+            ),
+          ),
+          SideMenuNode.item(retired('expenses')),
+          SideMenuNode.item(retired('transfers')),
+        ],
+      ),
+    );
+
+    final ids = flat.map((n) => n.item?.id).whereType<String>().toList();
+    expect(ids.where((id) => id == 'stats'), hasLength(1));
+    expect(ids, isNot(contains('expenses')));
+    expect(ids, isNot(contains('income')));
+    expect(ids, isNot(contains('transfers')));
+    final stats = flat.singleWhere((n) => n.item?.id == 'stats');
+    expect(stats.parentGroupId, 'mine');
+    expect(stats.item!.isHidden, isTrue);
+  });
+
+  test('importing an old layout retires the three pages too', () async {
+    SharedPreferences.setMockInitialValues({});
+    final container = await readyContainer();
+    container
+        .read(sideMenuConfigProvider.notifier)
+        .replaceConfig(
+          SideMenuConfig(nodes: [SideMenuNode.item(retired('transfers'))]),
+        );
+    final ids = getFlatNodes(container.read(sideMenuConfigProvider))
+        .map((n) => n.item?.id);
+    expect(ids.first, 'stats');
+    expect(ids, isNot(contains('transfers')));
+  });
+
   test('invalid saved JSON falls back to default', () async {
     SharedPreferences.setMockInitialValues({
       'fireraccoon_side_menu_config': '{not-json',
@@ -203,7 +296,6 @@ void main() {
       for (final groupId in [
         'group_accounts',
         'group_budgets',
-        'group_stats',
         'group_details',
       ]) {
         notifier.deleteGroup(groupId);

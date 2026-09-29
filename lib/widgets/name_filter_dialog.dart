@@ -8,7 +8,64 @@ import '../providers/theme_provider.dart';
 import '../theme/app_theme.dart';
 import '../utils/autocomplete_suggestions.dart';
 
-const allAccountsSentinel = '__all__';
+/// What [showNameFilterDialog] returns when the "all" row is picked, as
+/// opposed to `null` for a dismissed dialog.
+const allNamesSentinel = '__all__';
+
+/// Searchable single-choice picker over [names], for filters whose options
+/// can run to hundreds (accounts, tags) where a popup menu would not fit.
+Future<String?> showNameFilterDialog({
+  required BuildContext context,
+  required String title,
+  required String allLabel,
+  required String emptyLabel,
+  required List<String> names,
+  required String? currentFilter,
+  required IconData icon,
+  String Function(String name)? labelOf,
+}) {
+  return showDialog<String>(
+    context: context,
+    builder: (ctx) => _NameFilterDialog(
+      title: title,
+      allLabel: allLabel,
+      emptyLabel: emptyLabel,
+      names: names,
+      currentFilter: currentFilter,
+      icon: icon,
+      labelOf: labelOf ?? (name) => name,
+    ),
+  );
+}
+
+/// The same picker with a box per name, answering the names ticked when
+/// Apply is pressed, an empty set for Clear, or `null` when dismissed.
+Future<Set<String>?> showNamesFilterDialog({
+  required BuildContext context,
+  required String title,
+  required String emptyLabel,
+  required List<String> names,
+  required Set<String> selected,
+  required IconData icon,
+  String Function(String name)? labelOf,
+}) async {
+  final picked = await showDialog<Object>(
+    context: context,
+    builder: (ctx) => _NameFilterDialog(
+      title: title,
+      allLabel: null,
+      emptyLabel: emptyLabel,
+      // A name in use stays offered even when the period no longer holds it,
+      // or it could never be unticked.
+      names: {...names, ...selected}.toList(),
+      currentFilter: null,
+      selection: selected,
+      icon: icon,
+      labelOf: labelOf ?? (name) => name,
+    ),
+  );
+  return picked as Set<String>?;
+}
 
 Future<String?> showAccountFilterDialog({
   required BuildContext context,
@@ -16,30 +73,51 @@ Future<String?> showAccountFilterDialog({
   required List<Account> accounts,
   required String? currentFilter,
 }) {
-  return showDialog<String>(
+  final fun = context.funL10n(ref.read(themeProvider).isRaccoonMode);
+  return showNameFilterDialog(
     context: context,
-    builder: (ctx) =>
-        _AccountFilterDialog(accounts: accounts, currentFilter: currentFilter),
+    title: fun.filterAccount,
+    allLabel: fun.allAccounts,
+    emptyLabel: context.l10n.noAccountsFound,
+    names: accounts.map((a) => a.name).toList(),
+    currentFilter: currentFilter,
+    icon: LucideIcons.wallet,
   );
 }
 
-class _AccountFilterDialog extends ConsumerStatefulWidget {
-  final List<Account> accounts;
+class _NameFilterDialog extends ConsumerStatefulWidget {
+  final String title;
+  final String? allLabel;
+  final String emptyLabel;
+  final List<String> names;
   final String? currentFilter;
+  final IconData icon;
+  final String Function(String name) labelOf;
 
-  const _AccountFilterDialog({
-    required this.accounts,
+  /// Ticked names when picking several, `null` when picking one.
+  final Set<String>? selection;
+
+  const _NameFilterDialog({
+    required this.title,
+    required this.allLabel,
+    required this.emptyLabel,
+    required this.names,
     required this.currentFilter,
+    required this.icon,
+    required this.labelOf,
+    this.selection,
   });
 
   @override
-  ConsumerState<_AccountFilterDialog> createState() =>
-      _AccountFilterDialogState();
+  ConsumerState<_NameFilterDialog> createState() => _NameFilterDialogState();
 }
 
-class _AccountFilterDialogState extends ConsumerState<_AccountFilterDialog> {
+class _NameFilterDialogState extends ConsumerState<_NameFilterDialog> {
   late final TextEditingController _searchController;
   String _query = '';
+  late final Set<String> _ticked = {...?widget.selection};
+
+  bool get _picksSeveral => widget.selection != null;
 
   @override
   void initState() {
@@ -61,20 +139,23 @@ class _AccountFilterDialogState extends ConsumerState<_AccountFilterDialog> {
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
-    final l10n = context.l10n;
     final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
 
-    final sortedAccounts = List<Account>.from(widget.accounts)
-      ..sort((a, b) => a.name.toLowerCase().compareTo(b.name.toLowerCase()));
-
-    final filteredNames = AutocompleteSuggestions.filterContains(
+    final labels = {
+      for (final name in widget.names) widget.labelOf(name): name,
+    };
+    final sortedLabels = labels.keys.toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    final filteredLabels = AutocompleteSuggestions.filterContains(
       _query,
-      sortedAccounts.map((a) => a.name),
+      sortedLabels,
     );
 
-    final showAllAccounts =
-        _query.isEmpty ||
-        fun.allAccounts.toLowerCase().contains(_query.toLowerCase());
+    final allLabel = widget.allLabel;
+    final showAll =
+        allLabel != null &&
+        (_query.isEmpty ||
+            allLabel.toLowerCase().contains(_query.toLowerCase()));
 
     return Dialog(
       backgroundColor: colors.surface,
@@ -102,7 +183,7 @@ class _AccountFilterDialogState extends ConsumerState<_AccountFilterDialog> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        fun.filterAccount,
+                        widget.title,
                         style: context.textTheme.titleMedium?.copyWith(
                           color: colors.text,
                           fontWeight: FontWeight.w600,
@@ -173,22 +254,23 @@ class _AccountFilterDialogState extends ConsumerState<_AccountFilterDialog> {
                   child: ListView(
                     shrinkWrap: true,
                     children: [
-                      if (showAllAccounts) ...[
-                        _AccountOptionTile(
-                          title: fun.allAccounts,
+                      if (showAll) ...[
+                        _NameOptionTile(
+                          title: allLabel,
                           isSelected: widget.currentFilter == null,
                           icon: LucideIcons.layers,
                           onTap: () =>
-                              Navigator.of(context).pop(allAccountsSentinel),
+                              Navigator.of(context).pop(allNamesSentinel),
                         ),
-                        if (filteredNames.isNotEmpty) const Divider(height: 16),
+                        if (filteredLabels.isNotEmpty)
+                          const Divider(height: 16),
                       ],
-                      if (filteredNames.isEmpty && !showAllAccounts)
+                      if (filteredLabels.isEmpty && !showAll)
                         Padding(
                           padding: const EdgeInsets.symmetric(vertical: 24),
                           child: Center(
                             child: Text(
-                              l10n.noAccountsFound,
+                              widget.emptyLabel,
                               style: TextStyle(
                                 color: colors.text3,
                                 fontSize: 14,
@@ -197,20 +279,51 @@ class _AccountFilterDialogState extends ConsumerState<_AccountFilterDialog> {
                           ),
                         )
                       else
-                        ...filteredNames.map((accountName) {
-                          final isSelected =
-                              widget.currentFilter == accountName;
-                          return _AccountOptionTile(
-                            title: accountName,
-                            isSelected: isSelected,
-                            icon: LucideIcons.wallet,
-                            onTap: () => Navigator.of(context).pop(accountName),
+                        ...filteredLabels.map((label) {
+                          final name = labels[label]!;
+                          return _NameOptionTile(
+                            title: label,
+                            isSelected: _picksSeveral
+                                ? _ticked.contains(name)
+                                : widget.currentFilter == name,
+                            icon: widget.icon,
+                            onTap: _picksSeveral
+                                ? () => setState(() {
+                                    if (!_ticked.remove(name)) {
+                                      _ticked.add(name);
+                                    }
+                                  })
+                                : () => Navigator.of(context).pop(name),
                           );
                         }),
                     ],
                   ),
                 ),
               ),
+              if (_picksSeveral) ...[
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        context.l10n.filterSelectedCount(_ticked.length),
+                        style: TextStyle(color: colors.text3),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(const <String>{}),
+                      child: Text(context.l10n.clear),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: () =>
+                          Navigator.of(context).pop(Set<String>.of(_ticked)),
+                      child: Text(context.l10n.applyFilter),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -219,13 +332,13 @@ class _AccountFilterDialogState extends ConsumerState<_AccountFilterDialog> {
   }
 }
 
-class _AccountOptionTile extends StatelessWidget {
+class _NameOptionTile extends StatelessWidget {
   final String title;
   final bool isSelected;
   final IconData icon;
   final VoidCallback onTap;
 
-  const _AccountOptionTile({
+  const _NameOptionTile({
     required this.title,
     required this.isSelected,
     required this.icon,

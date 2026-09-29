@@ -172,24 +172,6 @@ abstract class AppLocalizations {
   /// **'Piggy banks'**
   String get navPiggyBanks;
 
-  /// No description provided for @navExpenses.
-  ///
-  /// In en, this message translates to:
-  /// **'Expenses'**
-  String get navExpenses;
-
-  /// No description provided for @navIncome.
-  ///
-  /// In en, this message translates to:
-  /// **'Income'**
-  String get navIncome;
-
-  /// No description provided for @navTransfers.
-  ///
-  /// In en, this message translates to:
-  /// **'Transfers'**
-  String get navTransfers;
-
   /// No description provided for @navLiabilities.
   ///
   /// In en, this message translates to:
@@ -814,12 +796,6 @@ abstract class AppLocalizations {
   /// **'Mini Stashes'**
   String get navPiggyBanksRaccoon;
 
-  /// No description provided for @navExpensesRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Burn Report'**
-  String get navExpensesRaccoon;
-
   /// No description provided for @navProjectionRaccoon.
   ///
   /// In en, this message translates to:
@@ -867,12 +843,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Hoard Plans'**
   String get budgetsTitleRaccoon;
-
-  /// No description provided for @expensesTitleRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Burn Report'**
-  String get expensesTitleRaccoon;
 
   /// No description provided for @projectionTitleRaccoon.
   ///
@@ -3250,12 +3220,6 @@ abstract class AppLocalizations {
   /// **'Currency for the budget amount'**
   String get tooltipBudgetCurrency;
 
-  /// No description provided for @expensesTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Expenses'**
-  String get expensesTitle;
-
   /// No description provided for @clearFilters.
   ///
   /// In en, this message translates to:
@@ -3267,18 +3231,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Overview'**
   String get overview;
-
-  /// No description provided for @byCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'By Category'**
-  String get byCategory;
-
-  /// No description provided for @allCategories.
-  ///
-  /// In en, this message translates to:
-  /// **'All Categories'**
-  String get allCategories;
 
   /// No description provided for @allTypes.
   ///
@@ -4570,18 +4522,6 @@ abstract class AppLocalizations {
   /// **'You have no subscriptions yet. Create some on the Subscriptions page to link recurring expenses.'**
   String get noSubscriptionsHint;
 
-  /// No description provided for @incomeTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Income'**
-  String get incomeTitle;
-
-  /// No description provided for @transfersTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Transfers'**
-  String get transfersTitle;
-
   /// No description provided for @newTransferAction.
   ///
   /// In en, this message translates to:
@@ -4762,35 +4702,11 @@ abstract class AppLocalizations {
   /// **'Failed to create liability: {error}'**
   String failedToCreateLiability(String error);
 
-  /// No description provided for @navIncomeRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Snatched'**
-  String get navIncomeRaccoon;
-
-  /// No description provided for @navTransfersRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Stash Shuffles'**
-  String get navTransfersRaccoon;
-
   /// No description provided for @navLiabilitiesRaccoon.
   ///
   /// In en, this message translates to:
   /// **'Debts'**
   String get navLiabilitiesRaccoon;
-
-  /// No description provided for @incomeTitleRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Snatched Funds'**
-  String get incomeTitleRaccoon;
-
-  /// No description provided for @transfersTitleRaccoon.
-  ///
-  /// In en, this message translates to:
-  /// **'Stash Shuffles'**
-  String get transfersTitleRaccoon;
 
   /// No description provided for @newTransferActionRaccoon.
   ///
@@ -7257,6 +7173,282 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This rule produces no dates.'**
   String get scheduleRuleNoDates;
+
+  /// No description provided for @navStats.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get navStats;
+
+  /// No description provided for @navStatsRaccoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Heist Report'**
+  String get navStatsRaccoon;
+
+  /// No description provided for @statsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stats'**
+  String get statsTitle;
+
+  /// No description provided for @statsTitleRaccoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Heist Report'**
+  String get statsTitleRaccoon;
+
+  /// No description provided for @filterTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Tag'**
+  String get filterTag;
+
+  /// No description provided for @noTagsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No tags found.'**
+  String get noTagsFound;
+
+  /// No description provided for @filterBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Budget'**
+  String get filterBudget;
+
+  /// No description provided for @noBudgetsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No budgets found.'**
+  String get noBudgetsFound;
+
+  /// No description provided for @noCategoriesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No categories found.'**
+  String get noCategoriesFound;
+
+  /// No description provided for @filterWords.
+  ///
+  /// In en, this message translates to:
+  /// **'Words'**
+  String get filterWords;
+
+  /// No description provided for @filterWordsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Every word has to appear'**
+  String get filterWordsHint;
+
+  /// No description provided for @applyFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get applyFilter;
+
+  /// No description provided for @netFlow.
+  ///
+  /// In en, this message translates to:
+  /// **'Net'**
+  String get netFlow;
+
+  /// No description provided for @prognosisLeaveOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave out'**
+  String get prognosisLeaveOut;
+
+  /// No description provided for @prognosisLeaveOutHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'Flows in these categories or tags, or carrying every one of these words, stay out of the forecast.'**
+  String get prognosisLeaveOutHelp;
+
+  /// No description provided for @filterSelectedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String filterSelectedCount(int count);
+
+  /// No description provided for @statsByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'By category'**
+  String get statsByCategory;
+
+  /// No description provided for @statsOverTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Over time'**
+  String get statsOverTime;
+
+  /// No description provided for @statsIntervalAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get statsIntervalAuto;
+
+  /// No description provided for @statsIntervalDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Day by day'**
+  String get statsIntervalDay;
+
+  /// No description provided for @statsIntervalWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Week by week'**
+  String get statsIntervalWeek;
+
+  /// No description provided for @statsIntervalMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'Month by month'**
+  String get statsIntervalMonth;
+
+  /// No description provided for @statsIntervalQuarter.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarter by quarter'**
+  String get statsIntervalQuarter;
+
+  /// No description provided for @statsIntervalYear.
+  ///
+  /// In en, this message translates to:
+  /// **'Year by year'**
+  String get statsIntervalYear;
+
+  /// No description provided for @statsChartBars.
+  ///
+  /// In en, this message translates to:
+  /// **'Bars'**
+  String get statsChartBars;
+
+  /// No description provided for @statsChartLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Lines'**
+  String get statsChartLine;
+
+  /// No description provided for @statsTableTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get statsTableTotal;
+
+  /// No description provided for @statsTablePeriod.
+  ///
+  /// In en, this message translates to:
+  /// **'Period'**
+  String get statsTablePeriod;
+
+  /// No description provided for @statsQuarterLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Q{quarter} {year}'**
+  String statsQuarterLabel(int quarter, int year);
+
+  /// No description provided for @statsWeekOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Week of {date}'**
+  String statsWeekOf(String date);
+
+  /// No description provided for @statsByTag.
+  ///
+  /// In en, this message translates to:
+  /// **'By tag'**
+  String get statsByTag;
+
+  /// No description provided for @statsByBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'By budget'**
+  String get statsByBudget;
+
+  /// No description provided for @statsByAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'By account'**
+  String get statsByAccount;
+
+  /// No description provided for @statsByPayee.
+  ///
+  /// In en, this message translates to:
+  /// **'By payee'**
+  String get statsByPayee;
+
+  /// No description provided for @statsStackedByCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Stacked by category'**
+  String get statsStackedByCategory;
+
+  /// No description provided for @statsStackedByTag.
+  ///
+  /// In en, this message translates to:
+  /// **'Stacked by tag'**
+  String get statsStackedByTag;
+
+  /// No description provided for @statsStackedByBudget.
+  ///
+  /// In en, this message translates to:
+  /// **'Stacked by budget'**
+  String get statsStackedByBudget;
+
+  /// No description provided for @statsChartDonut.
+  ///
+  /// In en, this message translates to:
+  /// **'Donut'**
+  String get statsChartDonut;
+
+  /// No description provided for @statsOtherSplit.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get statsOtherSplit;
+
+  /// No description provided for @statsStackOrder.
+  ///
+  /// In en, this message translates to:
+  /// **'Bars, left to right: {types}'**
+  String statsStackOrder(String types);
+
+  /// No description provided for @statsLevelTypes.
+  ///
+  /// In en, this message translates to:
+  /// **'Types'**
+  String get statsLevelTypes;
+
+  /// No description provided for @statsLevelTypesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Expenses, income and transfers as a whole'**
+  String get statsLevelTypesHint;
+
+  /// No description provided for @statsLevelGroups.
+  ///
+  /// In en, this message translates to:
+  /// **'In detail'**
+  String get statsLevelGroups;
+
+  /// No description provided for @statsLevelGroupsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'What each type is made of: categories, tags and so on'**
+  String get statsLevelGroupsHint;
+
+  /// No description provided for @statsSeparated.
+  ///
+  /// In en, this message translates to:
+  /// **'Separated'**
+  String get statsSeparated;
+
+  /// No description provided for @statsMerged.
+  ///
+  /// In en, this message translates to:
+  /// **'Merged'**
+  String get statsMerged;
 }
 
 class _AppLocalizationsDelegate

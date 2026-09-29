@@ -43,15 +43,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get navPiggyBanks => 'Piggy banks';
 
   @override
-  String get navExpenses => 'Utgifter';
-
-  @override
-  String get navIncome => 'Income';
-
-  @override
-  String get navTransfers => 'Transfers';
-
-  @override
   String get navLiabilities => 'Liabilities';
 
   @override
@@ -386,9 +377,6 @@ class AppLocalizationsSv extends AppLocalizations {
   String get navPiggyBanksRaccoon => 'Mini Stashes';
 
   @override
-  String get navExpensesRaccoon => 'Brännrapport';
-
-  @override
   String get navProjectionRaccoon => 'Kristallbyte';
 
   @override
@@ -411,9 +399,6 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get budgetsTitleRaccoon => 'Bytplans';
-
-  @override
-  String get expensesTitleRaccoon => 'Brännrapport';
 
   @override
   String get projectionTitleRaccoon => 'Kristallbyte';
@@ -1758,19 +1743,10 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tooltipBudgetCurrency => 'Valuta för budgetbeloppet';
 
   @override
-  String get expensesTitle => 'Utgifter';
-
-  @override
   String get clearFilters => 'Rensa filter';
 
   @override
   String get overview => 'Översikt';
-
-  @override
-  String get byCategory => 'Per kategori';
-
-  @override
-  String get allCategories => 'Alla kategorier';
 
   @override
   String get allTypes => 'Alla typer';
@@ -2513,12 +2489,6 @@ class AppLocalizationsSv extends AppLocalizations {
       'You have no subscriptions yet. Create some on the Subscriptions page to link recurring expenses.';
 
   @override
-  String get incomeTitle => 'Income';
-
-  @override
-  String get transfersTitle => 'Transfers';
-
-  @override
   String get newTransferAction => 'New Transfer';
 
   @override
@@ -2617,19 +2587,7 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
-  String get navIncomeRaccoon => 'Snatched';
-
-  @override
-  String get navTransfersRaccoon => 'Stash Shuffles';
-
-  @override
   String get navLiabilitiesRaccoon => 'Debts';
-
-  @override
-  String get incomeTitleRaccoon => 'Snatched Funds';
-
-  @override
-  String get transfersTitleRaccoon => 'Stash Shuffles';
 
   @override
   String get newTransferActionRaccoon => 'New Stash Shuffle';
@@ -4032,4 +3990,158 @@ class AppLocalizationsSv extends AppLocalizations {
 
   @override
   String get scheduleRuleNoDates => 'Regeln ger inga datum.';
+
+  @override
+  String get navStats => 'Statistik';
+
+  @override
+  String get navStatsRaccoon => 'Bytesrapport';
+
+  @override
+  String get statsTitle => 'Statistik';
+
+  @override
+  String get statsTitleRaccoon => 'Bytesrapport';
+
+  @override
+  String get filterTag => 'Tagg';
+
+  @override
+  String get noTagsFound => 'Inga taggar hittades.';
+
+  @override
+  String get filterBudget => 'Budget';
+
+  @override
+  String get noBudgetsFound => 'Inga budgetar hittades.';
+
+  @override
+  String get noCategoriesFound => 'Inga kategorier hittades.';
+
+  @override
+  String get filterWords => 'Ord';
+
+  @override
+  String get filterWordsHint => 'Varje ord måste finnas med';
+
+  @override
+  String get applyFilter => 'Använd';
+
+  @override
+  String get netFlow => 'Netto';
+
+  @override
+  String get prognosisLeaveOut => 'Utelämna';
+
+  @override
+  String get prognosisLeaveOutHelp =>
+      'Flöden i dessa kategorier eller taggar, eller som innehåller vart och ett av dessa ord, hålls utanför prognosen.';
+
+  @override
+  String filterSelectedCount(int count) {
+    return '$count valda';
+  }
+
+  @override
+  String get statsByCategory => 'Per kategori';
+
+  @override
+  String get statsOverTime => 'Över tid';
+
+  @override
+  String get statsIntervalAuto => 'Automatiskt';
+
+  @override
+  String get statsIntervalDay => 'Dag för dag';
+
+  @override
+  String get statsIntervalWeek => 'Vecka för vecka';
+
+  @override
+  String get statsIntervalMonth => 'Månad för månad';
+
+  @override
+  String get statsIntervalQuarter => 'Kvartal för kvartal';
+
+  @override
+  String get statsIntervalYear => 'År för år';
+
+  @override
+  String get statsChartBars => 'Staplar';
+
+  @override
+  String get statsChartLine => 'Linjer';
+
+  @override
+  String get statsTableTotal => 'Totalt';
+
+  @override
+  String get statsTablePeriod => 'Period';
+
+  @override
+  String statsQuarterLabel(int quarter, int year) {
+    final intl.NumberFormat yearNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String yearString = yearNumberFormat.format(year);
+
+    return 'K$quarter $yearString';
+  }
+
+  @override
+  String statsWeekOf(String date) {
+    return 'Veckan från $date';
+  }
+
+  @override
+  String get statsByTag => 'Per tagg';
+
+  @override
+  String get statsByBudget => 'Per budget';
+
+  @override
+  String get statsByAccount => 'Per konto';
+
+  @override
+  String get statsByPayee => 'Per mottagare';
+
+  @override
+  String get statsStackedByCategory => 'Staplat per kategori';
+
+  @override
+  String get statsStackedByTag => 'Staplat per tagg';
+
+  @override
+  String get statsStackedByBudget => 'Staplat per budget';
+
+  @override
+  String get statsChartDonut => 'Ring';
+
+  @override
+  String get statsOtherSplit => 'Övrigt';
+
+  @override
+  String statsStackOrder(String types) {
+    return 'Staplar, från vänster till höger: $types';
+  }
+
+  @override
+  String get statsLevelTypes => 'Typer';
+
+  @override
+  String get statsLevelTypesHint =>
+      'Utgifter, inkomster och överföringar som helhet';
+
+  @override
+  String get statsLevelGroups => 'I detalj';
+
+  @override
+  String get statsLevelGroupsHint =>
+      'Vad varje typ består av: kategorier, taggar och så vidare';
+
+  @override
+  String get statsSeparated => 'Separerade';
+
+  @override
+  String get statsMerged => 'Sammanslagna';
 }

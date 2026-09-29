@@ -162,12 +162,8 @@ class SideMenuSettingsSection extends ConsumerWidget {
           return fun.navPiggyBanks;
         case 'navSubscriptions':
           return fun.navSubscriptions;
-        case 'navExpenses':
-          return fun.navExpenses;
-        case 'navIncome':
-          return fun.navIncome;
-        case 'navTransfers':
-          return fun.navTransfers;
+        case 'navStats':
+          return fun.navStats;
         case 'payees':
           return 'Payees';
         case 'categoriesTags':
