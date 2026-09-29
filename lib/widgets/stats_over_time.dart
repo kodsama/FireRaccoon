@@ -59,7 +59,16 @@ class _Series {
   final double Function(StatsBucket bucket) valueOf;
   final bool isNet;
 
-  const _Series(this.label, this.color, this.valueOf, {this.isNet = false});
+  /// What the legend switches it off by.
+  final String id;
+
+  const _Series(
+    this.label,
+    this.color,
+    this.valueOf, {
+    required this.id,
+    this.isNet = false,
+  });
 }
 
 /// [types] as a series over time in one chart: grouped bars or lines, one
@@ -67,7 +76,7 @@ class _Series {
 /// bars or one line per part, in shades of the type's own hue. [showNet]
 /// draws income less expenses as a curve over the bars or a line among
 /// the others. A tap on a bar or point hands its bucket to [onOpenBucket].
-class StatsSeriesChart extends StatelessWidget {
+class StatsSeriesChart extends StatefulWidget {
   final List<StatsBucket> series;
   final List<TransactionTypeFilter> types;
   final StatsInterval interval;
@@ -99,6 +108,61 @@ class StatsSeriesChart extends StatelessWidget {
 
   static String _sameName(String key) => key;
 
+  @override
+  State<StatsSeriesChart> createState() => _StatsSeriesChartState();
+}
+
+/// Holds which series the legend has switched off, as a click on an entry
+/// does in Plotly: the chart then draws and scales to the rest.
+class _StatsSeriesChartState extends State<StatsSeriesChart> {
+  final Set<String> _hidden = {};
+
+  static String _typeId(TransactionTypeFilter type) => 'type:${type.name}';
+  static String _partId(TransactionTypeFilter type, String key) =>
+      'part:${type.name}|$key';
+  static const _netId = 'net';
+
+  void _toggle(String id) => setState(() {
+    if (!_hidden.remove(id)) _hidden.add(id);
+  });
+
+  List<StatsBucket> get series => widget.series;
+  StatsInterval get interval => widget.interval;
+  StatsChart get chart => widget.chart;
+  bool get byParts => widget.byParts;
+  List<String> get splitKeys => widget.splitKeys;
+  String Function(String key) get splitLabel => widget.splitLabel;
+  String get currency => widget.currency;
+  LocaleFormatting get format => widget.format;
+  FunL10n get fun => widget.fun;
+  ValueChanged<StatsBucket> get onOpenBucket => widget.onOpenBucket;
+
+  /// The types still drawn: switched off whole, or every part switched off.
+  List<TransactionTypeFilter> get types => [
+    for (final type in widget.types)
+      if (byParts
+          ? splitKeys.any((key) => !_hidden.contains(_partId(type, key)))
+          : !_hidden.contains(_typeId(type)))
+        type,
+  ];
+
+  bool get showNet => widget.showNet && !_hidden.contains(_netId);
+
+  /// What [type]'s bar comes to with the parts switched off left out.
+  double _valueOf(StatsBucket bucket, TransactionTypeFilter type) {
+    if (!byParts) return bucket.totalFor(type);
+    var total = 0.0;
+    for (final key in splitKeys) {
+      if (!_hidden.contains(_partId(type, key))) {
+        total += bucket.partFor(type, key);
+      }
+    }
+    return total;
+  }
+
+  bool _partShown(TransactionTypeFilter type, String key) =>
+      !_hidden.contains(_partId(type, key));
+
   String _money(double amount) => format.formatMoney(amount, currency);
 
   String _typeLabel(AppLocalizations l10n, TransactionTypeFilter type) =>
@@ -114,26 +178,28 @@ class StatsSeriesChart extends StatelessWidget {
   }
 
   List<_Series> _typeSeries(BuildContext context, AppLocalizations l10n) => [
-    for (final type in types)
+    for (final type in widget.types)
       _Series(
         _typeLabel(l10n, type),
         statsTypeColor(context.colors, type),
         (bucket) => bucket.totalFor(type),
+        id: _typeId(type),
       ),
   ];
 
   /// A series per part a type actually has; income never shows up in the
   /// legend under an expense category it holds nothing in.
   List<_Series> _partSeries(BuildContext context, AppLocalizations l10n) => [
-    for (final type in types)
+    for (final type in widget.types)
       for (var i = 0; i < splitKeys.length; i++)
         if (series.any((bucket) => bucket.partFor(type, splitKeys[i]) != 0))
           _Series(
-            types.length > 1
+            widget.types.length > 1
                 ? '${_typeLabel(l10n, type)} · ${splitLabel(splitKeys[i])}'
                 : splitLabel(splitKeys[i]),
             _partColor(context, type, i),
             (bucket) => bucket.partFor(type, splitKeys[i]),
+            id: _partId(type, splitKeys[i]),
           ),
   ];
 
@@ -141,6 +207,7 @@ class StatsSeriesChart extends StatelessWidget {
     l10n.netFlow,
     kStatsNetColor,
     (bucket) => bucket.net,
+    id: _netId,
     isNet: true,
   );
 
@@ -164,8 +231,8 @@ class StatsSeriesChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              types.length == 1
-                  ? _typeLabel(l10n, types.single)
+              widget.types.length == 1
+                  ? _typeLabel(l10n, widget.types.single)
                   : l10n.statsOverTime,
               textAlign: TextAlign.center,
               style: context.textTheme.titleMedium,
@@ -190,8 +257,11 @@ class StatsSeriesChart extends StatelessWidget {
               spacing: 20,
               runSpacing: 8,
               children: [
-                for (final line in legend) _legendItem(line.color, line.label),
-                if (showNet) _legendItem(kStatsNetColor, l10n.netFlow),
+                for (final line in [
+                  ...legend,
+                  if (widget.showNet) _netSeries(l10n),
+                ])
+                  _legendItem(context, line),
               ],
             ),
             // Stacked bars take their colour from the parts, so which bar in
@@ -212,18 +282,41 @@ class StatsSeriesChart extends StatelessWidget {
     );
   }
 
-  Widget _legendItem(Color color, String label) => Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      Container(
-        width: 12,
-        height: 12,
-        decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+  /// One legend entry, which switches its series off and on again when
+  /// clicked; one switched off is dimmed and struck through.
+  Widget _legendItem(BuildContext context, _Series line) {
+    final off = _hidden.contains(line.id);
+    return InkWell(
+      onTap: () => _toggle(line.id),
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Opacity(
+          opacity: off ? 0.4 : 1,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: line.color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                line.label,
+                style: TextStyle(
+                  decoration: off ? TextDecoration.lineThrough : null,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
-      const SizedBox(width: 8),
-      Text(label),
-    ],
-  );
+    );
+  }
 
   static const _leftReserved = 56.0;
   static const _bottomReserved = 28.0;
@@ -300,7 +393,7 @@ class StatsSeriesChart extends StatelessWidget {
         continue;
       }
       for (final type in types) {
-        high = math.max(high, bucket.totalFor(type));
+        high = math.max(high, _valueOf(bucket, type));
       }
       if (showNet) {
         high = math.max(high, bucket.net);
@@ -340,7 +433,7 @@ class StatsSeriesChart extends StatelessWidget {
                     barRods: [
                       for (final type in types)
                         BarChartRodData(
-                          toY: series[i].totalFor(type),
+                          toY: _valueOf(series[i], type),
                           color: byParts
                               ? Colors.transparent
                               : statsTypeColor(colors, type),
@@ -377,7 +470,9 @@ class StatsSeriesChart extends StatelessWidget {
                       labels,
                       response,
                       width: constraints.maxWidth,
+                      height: constraints.maxHeight,
                       range: maxY - minY,
+                      rodWidth: rodWidth,
                     ),
                   );
                 },
@@ -437,20 +532,32 @@ class StatsSeriesChart extends StatelessWidget {
     StatsBucketLabels labels,
     BarTouchResponse response, {
     required double width,
+    required double height,
     required double range,
+    required double rodWidth,
   }) {
     final colors = context.colors;
     final at = response.touchLocation;
     final value = response.touchChartCoordinate.dy;
+    final plot = width - _leftReserved;
+    int slotAt(double dx) => ((dx - _leftReserved) / plot * series.length)
+        .floor()
+        .clamp(0, series.length - 1);
+    // The month's bars, spaced around their slot, are centred on it; the
+    // card goes clear of all of them rather than over the next one along.
+    Rect barsOf(int slot) {
+      final middle = _leftReserved + (slot + 0.5) * plot / series.length;
+      final half = (rodWidth * types.length + 2 * (types.length - 1)) / 2 + 6;
+      return Rect.fromLTRB(middle - half, 0, middle + half, height);
+    }
+
     if (showNet && series.isNotEmpty) {
-      final slot =
-          ((at.dx - _leftReserved) / (width - _leftReserved) * series.length)
-              .floor()
-              .clamp(0, series.length - 1);
+      final slot = slotAt(at.dx);
       final bucket = series[slot];
       if ((value - bucket.net).abs() < range * 0.05) {
         return StatsHover(
           at: at,
+          beside: barsOf(slot),
           color: kStatsNetColor,
           title: l10n.netFlow,
           lines: [labels.long(bucket.start), _money(bucket.net)],
@@ -461,20 +568,23 @@ class StatsSeriesChart extends StatelessWidget {
     if (spot == null) return null;
     final bucket = series[spot.touchedBarGroupIndex];
     final type = types[spot.touchedRodDataIndex];
-    final total = bucket.totalFor(type);
+    final total = _valueOf(bucket, type);
     final month = labels.long(bucket.start);
     if (byParts && spot.touchedStackItemIndex >= 0) {
       // Stack items skip the parts with nothing in them, so the index is
       // counted over the parts this bar holds.
       final held = [
         for (var i = 0; i < splitKeys.length; i++)
-          if (bucket.partFor(type, splitKeys[i]) != 0) i,
+          if (bucket.partFor(type, splitKeys[i]) != 0 &&
+              _partShown(type, splitKeys[i]))
+            i,
       ];
       if (spot.touchedStackItemIndex < held.length) {
         final index = held[spot.touchedStackItemIndex];
         final part = bucket.partFor(type, splitKeys[index]);
         return StatsHover(
           at: at,
+          beside: barsOf(spot.touchedBarGroupIndex),
           color: _partColor(context, type, index),
           title: splitLabel(splitKeys[index]),
           lines: [
@@ -486,6 +596,7 @@ class StatsSeriesChart extends StatelessWidget {
     }
     return StatsHover(
       at: at,
+      beside: barsOf(spot.touchedBarGroupIndex),
       color: statsTypeColor(colors, type),
       title: _typeLabel(l10n, type),
       lines: [month, _money(total)],
@@ -503,7 +614,7 @@ class StatsSeriesChart extends StatelessWidget {
     var from = 0.0;
     for (var i = 0; i < splitKeys.length; i++) {
       final value = bucket.partFor(type, splitKeys[i]);
-      if (value == 0) continue;
+      if (value == 0 || !_partShown(type, splitKeys[i])) continue;
       items.add(
         BarChartRodStackItem(from, from + value, _partColor(context, type, i)),
       );
@@ -520,7 +631,7 @@ class StatsSeriesChart extends StatelessWidget {
     final lines = [
       ...(byParts ? _partSeries(context, l10n) : _typeSeries(context, l10n)),
       if (showNet) _netSeries(l10n),
-    ];
+    ].where((line) => !_hidden.contains(line.id)).toList();
     // The same range and slots as the bars, so a month's point sits where
     // its bar would, and a single month is a point rather than no axis.
     final (minY, maxY) = _range(lines);

@@ -76,6 +76,17 @@ void main() {
     expect(find.text('Rent'), findsWidgets);
     expect(find.text('Expenses · July 2026'), findsOneWidget);
     expect(find.text('70.0% · €70.00'), findsOneWidget);
+    // The card sits beside the month's bars, never over them.
+    final card = tester.getRect(
+      find
+          .ancestor(
+            of: find.text('70.0% · €70.00'),
+            matching: find.byType(IgnorePointer),
+          )
+          .first,
+    );
+    final pointer = at(tester, BarChart, 35);
+    expect(card.left, greaterThan(pointer.dx + 20));
 
     await mouse.moveTo(at(tester, BarChart, 85));
     await tester.pumpAndSettle();
@@ -144,5 +155,65 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('€150.00'), findsOneWidget);
+  });
+
+  testWidgets('clicking a legend entry switches its part off and on', (
+    tester,
+  ) async {
+    await pumpChart(tester, StatsChart.bars);
+    BarChartRodData rod() => tester
+        .widget<BarChart>(find.byType(BarChart))
+        .data
+        .barGroups
+        .single
+        .barRods
+        .single;
+    Finder entry(String label) =>
+        find.ancestor(of: find.text(label), matching: find.byType(InkWell));
+
+    expect(rod().toY, 100);
+    expect(rod().rodStackItems, hasLength(2));
+
+    await tester.tap(entry('Rent'));
+    await tester.pumpAndSettle();
+    expect(rod().toY, 30);
+    expect(rod().rodStackItems.single.toY, 30);
+
+    await tester.tap(entry('Rent'));
+    await tester.pumpAndSettle();
+    expect(rod().toY, 100);
+    expect(rod().rodStackItems, hasLength(2));
+  });
+
+  testWidgets('switching the last part off drops the whole bar', (
+    tester,
+  ) async {
+    await pumpChart(tester, StatsChart.bars);
+    Finder entry(String label) =>
+        find.ancestor(of: find.text(label), matching: find.byType(InkWell));
+    await tester.tap(entry('Rent'));
+    await tester.tap(entry('Food'));
+    await tester.pumpAndSettle();
+    final groups = tester
+        .widget<BarChart>(find.byType(BarChart))
+        .data
+        .barGroups;
+    expect(groups.single.barRods, isEmpty);
+  });
+
+  testWidgets('clicking a line in the legend takes it off the chart', (
+    tester,
+  ) async {
+    await pumpChart(tester, StatsChart.line);
+    await tester.tap(
+      find.ancestor(of: find.text('Food'), matching: find.byType(InkWell)),
+    );
+    await tester.pumpAndSettle();
+    final bars = tester
+        .widget<LineChart>(find.byType(LineChart))
+        .data
+        .lineBarsData;
+    expect(bars, hasLength(1));
+    expect(bars.single.spots.single.y, 70);
   });
 }

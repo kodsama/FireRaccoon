@@ -10,11 +10,16 @@ class StatsHover {
   final String title;
   final List<String> lines;
 
+  /// What the card must not cover, such as the bars of the month hovered;
+  /// the card then sits clear of it on one side.
+  final Rect? beside;
+
   const StatsHover({
     required this.at,
     required this.color,
     required this.title,
     required this.lines,
+    this.beside,
   });
 }
 
@@ -32,9 +37,17 @@ class StatsHoverCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.colors;
     final at = hover.at;
-    final left = at.dx + 16 + width > area.width
-        ? at.dx - 16 - width
-        : at.dx + 16;
+    final beside = hover.beside;
+    // Clear of what it describes when told what that is, to the right if
+    // it fits there and to the left if not; else just off the pointer.
+    final double left;
+    if (beside != null) {
+      left = beside.right + 12 + width <= area.width
+          ? beside.right + 12
+          : beside.left - 12 - width;
+    } else {
+      left = at.dx + 16 + width > area.width ? at.dx - 16 - width : at.dx + 16;
+    }
     final top = (at.dy - 30).clamp(0.0, area.height - 72);
     return Positioned(
       left: left.clamp(0.0, area.width - width),

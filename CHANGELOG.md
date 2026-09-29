@@ -38,7 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ring rather than cutting names short; hovering a part shows its full name,
   share and amount. Bars and lines answer a hover the same way, for the one
   thing under the pointer: the part of a stacked bar with its share of that
-  bar, the bar, the net's curve, or the nearest line. Shares and amounts follow the number locale. The Stacked
+  bar, the bar, the net's curve, or the nearest line, in a card beside the month's bars that leaves them
+  in view. Clicking an entry in the chart's legend switches that part, type
+  or the net off and dims it there, and clicking it again brings it back.
+  Shares and amounts follow the number locale. The Stacked
   chart gives way to In detail, which stacks each type by the split it is
   set to
 
