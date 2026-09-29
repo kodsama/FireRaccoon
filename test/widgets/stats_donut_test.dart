@@ -35,6 +35,33 @@ void main() {
       expect(DonutGeometry.arcs(const []), isEmpty);
     });
 
+    test('wide slices end round, over the start of the next', () {
+      const ring = (58.0, 100.0);
+      final cap = DonutGeometry.capAngle(ring);
+      final total = 2 * math.pi / cap;
+      // In caps: three wide, then two slivers, then one wide again.
+      final values = [total - 7.4, 3.0, 2.0, 0.2, 0.2, 2.0];
+      final arcs = DonutGeometry.arcs([
+        for (final value in values) _slice('', value),
+      ]);
+      expect(DonutGeometry.roundEnds(arcs, ring), [
+        true,
+        true,
+        // The last wide one before the slivers stays flat so its end does
+        // not cover them.
+        false,
+        false,
+        false,
+        // It wraps round onto the first, which is wide.
+        true,
+      ]);
+    });
+
+    test('a whole ring has no ends to round', () {
+      final arcs = DonutGeometry.arcs([_slice('', 1)]);
+      expect(DonutGeometry.roundEnds(arcs, (58.0, 100.0)), [false]);
+    });
+
     test('finds the ring and the slice under a point', () {
       final (outerFrom, outerTo) = geometry.outerRing;
       final (innerFrom, innerTo) = geometry.innerRing;

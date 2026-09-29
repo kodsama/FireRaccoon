@@ -591,6 +591,40 @@ void main() {
     expect(find.text('Merged'), findsNothing);
   });
 
+  testWidgets('StatsScreen sums the slivers of a donut into Other', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final base = sampleTransactions.last;
+    final service = FakeFireflyService(
+      accounts: sampleAccounts,
+      transactions: [
+        base.copyWith(id: 'rent', categoryName: 'Rent', amount: 10000),
+        base.copyWith(id: 'gum', categoryName: 'Gum', amount: 2),
+        base.copyWith(id: 'pen', categoryName: 'Pens', amount: 1),
+        base.copyWith(id: 'tip', categoryName: 'Tips', amount: 1),
+      ],
+      primaryCurrency: sampleCurrency,
+      currentUser: sampleUser,
+    );
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation: '/stats?types=expense',
+        fireflyService: service,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final donut = tester.widget<StatsDonut>(find.byType(StatsDonut));
+    expect(donut.outer.map((slice) => slice.label), ['Rent', 'Other']);
+    expect(donut.outer.last.value, 4);
+    // The list beside it still names each one.
+    expect(find.text('Pens'), findsOneWidget);
+  });
+
   testWidgets('StatsScreen merges the types into a two-ring donut', (
     tester,
   ) async {

@@ -399,16 +399,41 @@ class _StatsBodyState extends State<_StatsBody> {
     );
   }
 
-  List<DonutSlice> _groupSlices(StatsTypeTotals totals) => [
-    for (final (index, entry) in _visible(totals))
-      DonutSlice(
-        label: _label(entry.key),
-        value: entry.value,
-        color: _shade(totals, index),
-        amount: _money(entry.value),
-        onTap: () => _open(_transactionsForGroup(entry.key, totals.type)),
-      ),
-  ];
+  /// The share of a ring below which a group is too thin to see or point
+  /// at: about half a degree.
+  static const _sliver = 0.5 / 360;
+
+  /// [totals]' groups as slices of a ring holding [ringTotal] in all, with
+  /// the slivers summed into one Other slice; the list beside the chart
+  /// still names each of them.
+  List<DonutSlice> _groupSlices(StatsTypeTotals totals, double ringTotal) {
+    final visible = _visible(totals);
+    final slivers = ringTotal <= 0
+        ? const <(int, MapEntry<String, double>)>[]
+        : visible.where((row) => row.$2.value / ringTotal < _sliver).toList();
+    final folded = slivers.length > 1;
+    final rest = slivers.fold(0.0, (sum, row) => sum + row.$2.value);
+    return [
+      for (final (index, entry) in visible)
+        if (!folded || !slivers.any((row) => row.$1 == index))
+          DonutSlice(
+            label: _label(entry.key),
+            value: entry.value,
+            color: _shade(totals, index),
+            amount: _money(entry.value),
+            onTap: () => _open(_transactionsForGroup(entry.key, totals.type)),
+          ),
+      if (folded)
+        DonutSlice(
+          label: widget.l10n.statsOtherSplit,
+          value: rest,
+          color: _shade(totals, slivers.first.$1),
+          amount: _money(rest),
+          onTap: () =>
+              _open(_transactionsFor(widget.filters, type: totals.type)),
+        ),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -433,7 +458,13 @@ class _StatsBodyState extends State<_StatsBody> {
         inner: breakdown.types.length > 1
             ? [for (final totals in breakdown.types) _typeSlice(totals)]
             : const [],
-        outer: [for (final totals in breakdown.types) ..._groupSlices(totals)],
+        outer: [
+          for (final totals in breakdown.types)
+            ..._groupSlices(
+              totals,
+              breakdown.types.fold(0.0, (sum, t) => sum + _shownTotal(t)),
+            ),
+        ],
         height: 400,
       );
     } else {
@@ -614,7 +645,7 @@ class _StatsBodyState extends State<_StatsBody> {
         else
           StatsDonut(
             formatPercent: _percent,
-            outer: _groupSlices(totals),
+            outer: _groupSlices(totals, _shownTotal(totals)),
             height: 320,
           ),
       ],
