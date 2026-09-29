@@ -166,6 +166,27 @@ class DonutGeometry {
     return arcs;
   }
 
+  /// How far round a round end on [ring] reaches past the point it is
+  /// centred on, in radians.
+  static double capAngle((double, double) ring) {
+    final (from, to) = ring;
+    return (to - from) / (from + to);
+  }
+
+  /// Which of [arcs] end round, lying over the start of the next. A slice
+  /// too narrow for a round end keeps flat ones, and so does the slice
+  /// before it, whose round end would otherwise cover it; one slice alone
+  /// is a whole ring and has no ends.
+  static List<bool> roundEnds(
+    List<(double, double)> arcs,
+    (double, double) ring,
+  ) {
+    final n = arcs.length;
+    final cap = capAngle(ring);
+    bool wide(int i) => n > 1 && arcs[i].$2 >= cap;
+    return [for (var i = 0; i < n; i++) wide(i) && wide((i + 1) % n)];
+  }
+
   /// The ring (true for inner) and slice under [position], if any.
   (bool, int)? hit(
     Offset position, {
@@ -239,28 +260,52 @@ class _DonutPainter extends CustomPainter {
     final (from, to) = ring;
     final arcs = DonutGeometry.arcs(slices);
     final center = geometry.center;
-    for (var i = 0; i < arcs.length; i++) {
+    final n = arcs.length;
+    final cap = DonutGeometry.capAngle(ring);
+    final rounded = DonutGeometry.roundEnds(arcs, ring);
+    bool roundEnd(int i) => rounded[i];
+
+    Path shape(int i) {
       final (start, sweep) = arcs[i];
       final lifted = hovered == (isInner, i);
       final outerRadius = lifted ? to + 6 : to;
-      final path = Path()
+      final ownCap = (outerRadius - from) / (from + outerRadius);
+      // A slice under the round end of the one before runs back beneath
+      // it, filling round the cap so the two meet without a notch.
+      final begin = roundEnd((i - 1 + n) % n) ? start - cap : start;
+      final end = roundEnd(i) ? start + sweep - ownCap : start + sweep;
+      final wedge = Path()
         ..arcTo(
           Rect.fromCircle(center: center, radius: outerRadius),
-          start,
-          sweep,
+          begin,
+          end - begin,
           true,
         )
         ..arcTo(
           Rect.fromCircle(center: center, radius: from),
-          start + sweep,
-          -sweep,
+          end,
+          begin - end,
           false,
         )
         ..close();
+      if (!roundEnd(i)) return wedge;
+      final middle = (from + outerRadius) / 2;
+      final tip = Path()
+        ..addOval(
+          Rect.fromCircle(
+            center: center + Offset(math.cos(end), math.sin(end)) * middle,
+            radius: (outerRadius - from) / 2,
+          ),
+        );
+      return Path.combine(PathOperation.union, wedge, tip);
+    }
+
+    void draw(int i) {
+      final path = shape(i);
       canvas.drawPath(path, Paint()..color = slices[i].color);
       // A thin gap between slices, in the card colour, keeps shades of one
       // hue apart.
-      if (arcs.length > 1) {
+      if (n > 1) {
         canvas.drawPath(
           path,
           Paint()
@@ -269,6 +314,38 @@ class _DonutPainter extends CustomPainter {
             ..strokeWidth = 1.5,
         );
       }
+    }
+
+    // Each round end lies over the start of the slice after it, so the
+    // slices go down last to first.
+    for (var i = n - 1; i >= 0; i--) {
+      draw(i);
+    }
+    // The last slice's end wraps round onto the first, which went down
+    // after it; that end is laid again over the first slice's start.
+    if (n > 1 && roundEnd(n - 1)) {
+      final (start, sweep) = arcs[n - 1];
+      final end = start + sweep;
+      final reach = to + 12;
+      canvas
+        ..save()
+        ..clipPath(
+          Path()
+            ..moveTo(center.dx, center.dy)
+            ..arcTo(
+              Rect.fromCircle(center: center, radius: reach),
+              end - 2 * cap,
+              3 * cap,
+              false,
+            )
+            ..close(),
+        );
+      draw(n - 1);
+      canvas.restore();
+    }
+
+    for (var i = 0; i < n; i++) {
+      final (start, sweep) = arcs[i];
       // Only the inner ring is written on: its slices are the types, few
       // and wide. The outer parts are named outside the ring instead.
       if (!isInner) continue;
