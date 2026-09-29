@@ -71,7 +71,7 @@ void main() {
   });
 
   test('Stats left on its defaults is opened bare', () async {
-    final c = await container({'statsLastLocation': '/stats?period=month'});
+    final c = await container({'statsLastChoice': '/stats?period=month'});
     c.read(statsLastLocationProvider).remember(Uri.parse('/stats?q=rent'));
     expect(c.read(statsLastLocationProvider).location, '/stats');
   });

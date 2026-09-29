@@ -55,7 +55,7 @@ final statsLayoutProvider = NotifierProvider<StatsLayoutNotifier, StatsLayout>(
 /// Where Stats was last left, so the side menu opens it there again rather
 /// than on the defaults: the period, types, filters and charts as they were.
 class StatsLastLocation {
-  static const _key = 'statsLastLocation';
+  static const _key = 'statsLastChoice';
 
   final SharedPreferences _prefs;
 

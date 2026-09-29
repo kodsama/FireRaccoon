@@ -704,11 +704,10 @@ class _TransactionsScreenState extends ConsumerState<TransactionsScreen>
     // budget filter, narrows to the person as the paginated one does.
     final activePersonId = ref.watch(activePersonFilterProvider);
     if (activePersonId != null) {
-      final peopleConfig = ref.watch(peopleSettingsProvider);
+      final ownedIds = ref.watch(ownedAccountIdsProvider);
       allTransactions = [
         for (final transaction in allTransactions)
-          if (touchesPersonAccounts(transaction, peopleConfig, activePersonId))
-            transaction,
+          if (touchesPersonAccounts(transaction, ownedIds)) transaction,
       ];
     }
     final activeAccountFilters = filterAccounts.toSet();

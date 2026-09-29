@@ -186,7 +186,11 @@ void main() {
 
     final groceries = sampleTransactions.last;
     final fake = FakeFireflyService(
-      accounts: sampleAccounts,
+      accounts: [
+        ...sampleAccounts,
+        for (final id in ['olivier-card', 'alex-card'])
+          sampleAccounts.first.copyWith(id: id, name: id),
+      ],
       transactions: [
         groceries.copyWith(
           id: 'hers',

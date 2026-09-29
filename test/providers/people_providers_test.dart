@@ -569,6 +569,7 @@ void main() {
       container
           .read(activePersonFilterProvider.notifier)
           .setPersonFilter(personId);
+      await container.read(accountsProvider.future);
       await container.read(transactionsProvider.future);
 
       expect(container.read(filteredTransactionsProvider).single.id, 'tx-2');

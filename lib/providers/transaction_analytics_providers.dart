@@ -132,13 +132,13 @@ final statsTransactionsProvider =
           ref.watch(scopedTransactionsProvider(scope.keyFor(type)).future),
       ];
       final personId = ref.watch(activePersonFilterProvider);
-      final config = ref.watch(peopleSettingsProvider);
+      final ownedIds = ref.watch(ownedAccountIdsProvider);
       final lists = await Future.wait(perType);
       return [
         for (final list in lists)
           for (final transaction in list)
             if (personId == null ||
-                touchesPersonAccounts(transaction, config, personId))
+                touchesPersonAccounts(transaction, ownedIds))
               transaction,
       ]..sort((a, b) => b.date.compareTo(a.date));
     });
