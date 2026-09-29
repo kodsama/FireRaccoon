@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ones, and so does the one before it, so a run of small parts still shows
   as thin wedges instead of disappearing under a neighbour
 
+- Parts of a donut under half a degree each are summed into one Other slice
+  per type, since they were too thin to see or point at. The list beside
+  the chart still names every one
+
 - Stats opens on this year rather than on the Dashboard's default period,
   which is usually a month and too short for the charts over time. The
   Dashboard's links to Stats still carry the period they were showing
