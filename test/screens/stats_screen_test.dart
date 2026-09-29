@@ -59,7 +59,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 50));
 
-    expect(find.text('This Month'), findsOneWidget);
+    expect(find.text('This Year'), findsOneWidget);
     expect(find.byType(RaccoonLoader), findsOneWidget);
   });
 
@@ -85,7 +85,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('This Month'), findsOneWidget);
+    expect(find.text('This Year'), findsOneWidget);
   });
 
   testWidgets('StatsScreen period selection updates the route', (tester) async {
@@ -100,17 +100,23 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('This Month'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('This Year'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('This Month'));
     await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(StatsScreen));
     expect(
       GoRouterState.of(context).uri.toString(),
-      '/stats?types=income&period=year',
+      '/stats?types=income&period=month',
     );
-    expect(find.text('This Year'), findsWidgets);
+    expect(find.text('This Month'), findsWidgets);
+    // Where the side menu opens Stats next time.
+    final prefs = await SharedPreferences.getInstance();
+    expect(
+      prefs.getString('statsLastLocation'),
+      '/stats?types=income&period=month',
+    );
   });
 
   testWidgets('StatsScreen shows expenses and income by category by default', (
@@ -449,7 +455,7 @@ void main() {
     await tester.pumpWidget(
       await buildScreenTestApp(
         child: const StatsScreen(),
-        initialLocation: '/stats?types=expense&view=tag',
+        initialLocation: '/stats?types=expense&view=tag&period=month',
         fireflyService: service,
       ),
     );

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Stats opens on this year rather than on the Dashboard's default period,
+  which is usually a month and too short for the charts over time. The
+  Dashboard's links to Stats still carry the period they were showing
+
+- The side menu opens Stats the way it was last left, with the same period,
+  types, filters, chart and split, and the app remembers it across restarts.
+  Links from the Dashboard and elsewhere still open on what they name
+
 - A screen waiting on its data shows the raccoon, hopping inside a spinning
   ring and dressed for the fun mode on, where it showed a bare spinner
 

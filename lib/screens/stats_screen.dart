@@ -44,6 +44,7 @@ class StatsScreen extends ConsumerWidget {
     final format = ref.watch(localeFormattingProvider);
     final defaultPeriod = ref.watch(defaultDashboardPeriodProvider);
     final uri = GoRouterState.of(context).uri;
+    ref.read(statsLastLocationProvider).remember(uri);
     final filters = StatsRoute.filtersFrom(
       GoRouterState.of(context),
       defaultDashboardPeriod: defaultPeriod,

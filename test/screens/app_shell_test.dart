@@ -29,8 +29,8 @@ class _StaticFireflyConnectionNotifier extends FireflyConnectionNotifier {
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
-  Future<Widget> buildTestApp() async {
-    SharedPreferences.setMockInitialValues({});
+  Future<Widget> buildTestApp([Map<String, Object> stored = const {}]) async {
+    SharedPreferences.setMockInitialValues(stored);
     final prefs = await SharedPreferences.getInstance();
 
     final router = GoRouter(
@@ -50,6 +50,10 @@ void main() {
             GoRoute(
               path: '/settings',
               builder: (context, state) => const Text('Settings Content'),
+            ),
+            GoRoute(
+              path: '/stats',
+              builder: (context, state) => const Text('Stats Content'),
             ),
           ],
         ),
@@ -193,6 +197,28 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Settings Content'), findsOneWidget);
+  });
+
+  testWidgets('the menu opens Stats where it was last left', (tester) async {
+    tester.view.physicalSize = const Size(1200, 1000);
+    tester.view.devicePixelRatio = 1.0;
+
+    await tester.pumpWidget(
+      await buildTestApp({
+        'statsLastLocation': '/stats?types=expense&period=lastYear&chart=bars',
+      }),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Stats').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Stats Content'), findsOneWidget);
+    final context = tester.element(find.byType(AppShell));
+    expect(
+      GoRouterState.of(context).uri.toString(),
+      '/stats?types=expense&period=lastYear&chart=bars',
+    );
   });
 
   testWidgets('AppShell sidebar net worth subtracts negative liabilities', (

@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../router/route_query.dart';
+import '../router/stats_route.dart';
 import 'theme_provider.dart';
 
 /// How far down Stats breaks each type: the types alone, or what is in them.
@@ -48,4 +50,31 @@ class StatsLayoutNotifier extends Notifier<StatsLayout> {
 
 final statsLayoutProvider = NotifierProvider<StatsLayoutNotifier, StatsLayout>(
   StatsLayoutNotifier.new,
+);
+
+/// Where Stats was last left, so the side menu opens it there again rather
+/// than on the defaults: the period, types, filters and charts as they were.
+class StatsLastLocation {
+  static const _key = 'statsLastLocation';
+
+  final SharedPreferences _prefs;
+
+  const StatsLastLocation(this._prefs);
+
+  String get location => _prefs.getString(_key) ?? StatsRoute.path;
+
+  /// The header search is left out, since the menu clears it on every other
+  /// page it opens.
+  void remember(Uri uri) {
+    final params = Map.of(uri.queryParametersAll)..remove(RouteQuery.searchKey);
+    final location = Uri(
+      path: StatsRoute.path,
+      queryParameters: params.isEmpty ? null : params,
+    ).toString();
+    if (_prefs.getString(_key) != location) _prefs.setString(_key, location);
+  }
+}
+
+final statsLastLocationProvider = Provider<StatsLastLocation>(
+  (ref) => StatsLastLocation(ref.watch(sharedPreferencesProvider)),
 );

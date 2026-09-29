@@ -71,12 +71,12 @@ void main() {
       });
     });
 
-    test('bounds a multi-year dashboard default with dates', () {
-      final uri = Uri.parse(
-        StatsRoute.location(defaultDashboardPeriod: DashboardPeriod.last2Years),
+    test('writes a month out, since Stats opens on a year', () {
+      expect(StatsRoute.location(), '/stats');
+      expect(
+        StatsRoute.location(period: ExpensePeriod.month),
+        '/stats?period=month',
       );
-      expect(uri.queryParameters['from'], isNotNull);
-      expect(uri.queryParameters['to'], isNotNull);
     });
   });
 
@@ -103,8 +103,12 @@ void main() {
       expect(filters.hasActiveFilters, isTrue);
     });
 
-    test('defaults to this month of expenses and income, by category', () {
-      final filters = StatsRoute.filtersFromUri(Uri.parse('/stats'));
+    test('defaults to this year of expenses and income, by category', () {
+      // The Dashboard's period setting is for Transactions links, not this.
+      final filters = StatsRoute.filtersFromUri(
+        Uri.parse('/stats'),
+        defaultDashboardPeriod: DashboardPeriod.thisMonth,
+      );
       expect(filters.types, {
         TransactionTypeFilter.expense,
         TransactionTypeFilter.income,
@@ -115,7 +119,7 @@ void main() {
       expect(filters.chart, isNull);
       expect(filters.effectiveChart, StatsChart.donut);
       expect(filters.showNet, isFalse);
-      expect(filters.period, ExpensePeriod.month);
+      expect(filters.period, ExpensePeriod.year);
       expect(filters.hasActiveFilters, isFalse);
     });
 

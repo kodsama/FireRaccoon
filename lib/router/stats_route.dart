@@ -69,6 +69,9 @@ class StatsRouteFilters {
   final ExpensePeriod period;
   final DateTime? from;
   final DateTime? to;
+
+  /// The Transactions page's default period, which links from here to it
+  /// are written against. Stats itself opens on [StatsRoute.defaultPeriod].
   final DashboardPeriod defaultDashboardPeriod;
 
   /// How the page is laid out rather than what it counts, so clearing the
@@ -87,7 +90,7 @@ class StatsRouteFilters {
     this.tags = const {},
     this.budgets = const {},
     this.accounts = const {},
-    this.period = ExpensePeriod.month,
+    this.period = ExpensePeriod.year,
     this.from,
     this.to,
     this.defaultDashboardPeriod = kDefaultDashboardPeriod,
@@ -118,7 +121,7 @@ class StatsRouteFilters {
   bool get hasCustomDateRange => from != null || to != null;
 
   ExpensePeriodParams get _defaultPeriodParams =>
-      expenseParamsFromDashboardPeriod(defaultDashboardPeriod);
+      expenseParamsFromDashboardPeriod(StatsRoute.defaultPeriod);
 
   bool get hasActiveFilters {
     if (categories.isNotEmpty ||
@@ -191,7 +194,6 @@ class StatsRouteFilters {
       period: hasNewDates ? null : (period ?? this.period),
       from: datedFrom != null ? formatDate(datedFrom) : null,
       to: datedTo != null ? formatDate(datedTo) : null,
-      defaultDashboardPeriod: defaultDashboardPeriod,
       grouping: grouping ?? this.grouping,
       interval: autoInterval ? null : (interval ?? this.interval),
       chart: chart ?? (crossed ? null : this.chart),
@@ -202,7 +204,6 @@ class StatsRouteFilters {
 
   /// Every filter back to its default, the layout kept.
   String get clearedLocation => StatsRoute.location(
-    defaultDashboardPeriod: defaultDashboardPeriod,
     grouping: grouping,
     interval: interval,
     chart: chart,
@@ -220,6 +221,10 @@ bool _sameTypes(Set<TransactionTypeFilter> a, Set<TransactionTypeFilter> b) =>
 class StatsRoute {
   static const path = '/stats';
 
+  /// The period Stats opens on when a link names none. A year, since a
+  /// month is too short for the charts over time to show anything.
+  static const defaultPeriod = DashboardPeriod.thisYear;
+
   static String location({
     Set<TransactionTypeFilter> types = StatsRouteFilters.defaultTypes,
     Iterable<String> categories = const [],
@@ -229,16 +234,13 @@ class StatsRoute {
     Iterable<String> accounts = const [],
     String? from,
     String? to,
-    DashboardPeriod defaultDashboardPeriod = kDefaultDashboardPeriod,
     StatsGrouping grouping = StatsGrouping.category,
     StatsInterval? interval,
     StatsChart? chart,
     StatsSplit split = StatsSplit.category,
     bool showNet = false,
   }) {
-    final defaultParams = expenseParamsFromDashboardPeriod(
-      defaultDashboardPeriod,
-    );
+    final defaultParams = expenseParamsFromDashboardPeriod(defaultPeriod);
     final resolvedPeriod = period ?? defaultParams.period;
     final resolvedFrom =
         from ??
@@ -316,9 +318,7 @@ class StatsRoute {
     Uri uri, {
     DashboardPeriod defaultDashboardPeriod = kDefaultDashboardPeriod,
   }) {
-    final defaultParams = expenseParamsFromDashboardPeriod(
-      defaultDashboardPeriod,
-    );
+    final defaultParams = expenseParamsFromDashboardPeriod(defaultPeriod);
     final hasPeriodParam = uri.queryParameters.containsKey('period');
     final hasCustomDates =
         uri.queryParameters.containsKey('from') ||
