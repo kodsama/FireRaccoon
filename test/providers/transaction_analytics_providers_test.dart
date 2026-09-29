@@ -192,12 +192,26 @@ void main() {
       description: id,
       sourceId: accountId,
       sourceName: accountId,
+      // The shop's expense account has an id like any other, and no owners;
+      // an account without owners counts for everyone, so it must not be
+      // what places the row with a person.
+      destinationId: 'shop',
       destinationName: 'Shop',
       categoryName: 'Food',
       currencySymbol: '€',
       currencyCode: 'EUR',
     );
+    Account card(String id) => Account(
+      id: id,
+      name: id,
+      type: 'asset',
+      role: 'defaultAsset',
+      currentBalance: 0,
+      currencySymbol: '€',
+      currencyCode: 'EUR',
+    );
     final fake = FakeFireflyService(
+      accounts: [card('olivier-card'), card('alex-card')],
       transactions: [row('hers', 'olivier-card'), row('his', 'alex-card')],
     );
     final container = ProviderContainer(
@@ -228,6 +242,7 @@ void main() {
     );
     final sub = container.listen(statsTransactionsProvider(scope), (_, _) {});
     addTearDown(sub.close);
+    await container.read(accountsProvider.future);
 
     Future<List<String>> ids() async =>
         (await container.read(statsTransactionsProvider(scope).future))
