@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Stats opens on this year rather than on the Dashboard's default period,
+  which is usually a month and too short for the charts over time. The
+  Dashboard's links to Stats still carry the period they were showing
+
 - A screen waiting on its data shows the raccoon, hopping inside a spinning
   ring and dressed for the fun mode on, where it showed a bare spinner
 
