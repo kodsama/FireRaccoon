@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-09-29
+
 ### Changed
 
 - Donut slices end round, each lying over the start of the next, as the
