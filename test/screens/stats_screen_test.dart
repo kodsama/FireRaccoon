@@ -114,8 +114,42 @@ void main() {
     // Where the side menu opens Stats next time.
     final prefs = await SharedPreferences.getInstance();
     expect(
-      prefs.getString('statsLastLocation'),
+      prefs.getString('statsLastChoice'),
       '/stats?types=income&period=month',
+    );
+  });
+
+  testWidgets('StatsScreen remembers a change, not the link it opened on', (
+    tester,
+  ) async {
+    configureLargeScreen(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+
+    // The Dashboard's Expenses card opens Stats on expenses alone.
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: const StatsScreen(),
+        initialLocation: '/stats?types=expense&period=month',
+      ),
+    );
+    await tester.pumpAndSettle();
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('statsLastChoice'), isNull);
+
+    await tester.tap(find.text('This Month'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('This Year'));
+    await tester.pumpAndSettle();
+    expect(prefs.getString('statsLastChoice'), '/stats?types=expense');
+
+    // Back to where the link opened is a choice too.
+    await tester.tap(find.text('This Year'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('This Month'));
+    await tester.pumpAndSettle();
+    expect(
+      prefs.getString('statsLastChoice'),
+      '/stats?types=expense&period=month',
     );
   });
 

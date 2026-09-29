@@ -33,18 +33,31 @@ import '../widgets/words_filter_dialog.dart';
 
 /// Expenses, income and transfers on one page, any mix of them, narrowed by
 /// category, tag, budget, account, period and words.
-class StatsScreen extends ConsumerWidget {
+class StatsScreen extends ConsumerStatefulWidget {
   const StatsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<StatsScreen> createState() => _StatsScreenState();
+}
+
+class _StatsScreenState extends ConsumerState<StatsScreen> {
+  /// Where the page was opened. A link from the Dashboard or anywhere else
+  /// names what it wants shown, which is not a choice made here, so the
+  /// page is remembered only once something on it has been changed.
+  Uri? _opened;
+  bool _changed = false;
+
+  @override
+  Widget build(BuildContext context) {
     final colors = context.colors;
     final l10n = context.l10n;
     final fun = context.funL10n(ref.watch(themeProvider).isRaccoonMode);
     final format = ref.watch(localeFormattingProvider);
     final defaultPeriod = ref.watch(defaultDashboardPeriodProvider);
     final uri = GoRouterState.of(context).uri;
-    ref.read(statsLastLocationProvider).remember(uri);
+    _opened ??= uri;
+    _changed = _changed || uri != _opened;
+    if (_changed) ref.read(statsLastLocationProvider).remember(uri);
     final filters = StatsRoute.filtersFrom(
       GoRouterState.of(context),
       defaultDashboardPeriod: defaultPeriod,

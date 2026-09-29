@@ -1227,7 +1227,7 @@ final canManageFireflyConnectionProvider = Provider<bool>((ref) {
 /// [shareWeightedAccountsProvider] is for.
 final ownedAccountsProvider = Provider<List<Account>>((ref) {
   final accounts = ref.watch(accountsProvider).asData?.value ?? const [];
-  final config = ref.watch(peopleProvider).config;
+  final config = ref.watch(peopleSettingsProvider);
   final activePersonId = ref.watch(activePersonFilterProvider);
 
   if (activePersonId == null) return accounts;
@@ -1261,30 +1261,29 @@ final shareWeightedAccountsProvider = Provider<List<Account>>((ref) {
   ];
 });
 
-/// Whether [transaction] moves money in or out of an account [personId]
-/// holds any share of, the test every person-scoped view narrows by.
-bool touchesPersonAccounts(
-  Transaction transaction,
-  AccountOwnershipConfig config,
-  String personId,
-) {
-  final sourceId = transaction.sourceId;
-  final destId = transaction.destinationId;
-  return (sourceId != null &&
-          config.getOwnershipRatio(sourceId, personId) > 0.0) ||
-      (destId != null && config.getOwnershipRatio(destId, personId) > 0.0);
-}
+/// The ids of [ownedAccountsProvider], for narrowing transactions to them.
+final ownedAccountIdsProvider = Provider<Set<String>>(
+  (ref) => {for (final account in ref.watch(ownedAccountsProvider)) account.id},
+);
+
+/// Whether [transaction] moves money in or out of one of [ownedIds], the
+/// test every person-scoped view narrows by. Only the person's own asset
+/// and liability accounts decide it: the other side of an expense or of
+/// income is a shop's or employer's account nobody is set as owning, and
+/// an account with no owners counts for everyone.
+bool touchesPersonAccounts(Transaction transaction, Set<String> ownedIds) =>
+    ownedIds.contains(transaction.sourceId) ||
+    ownedIds.contains(transaction.destinationId);
 
 final filteredTransactionsProvider = Provider<List<Transaction>>((ref) {
   final transactions =
       ref.watch(transactionsProvider).asData?.value ?? const [];
-  final config = ref.watch(peopleProvider).config;
   final activePersonId = ref.watch(activePersonFilterProvider);
 
   if (activePersonId == null) return transactions;
+  final ownedIds = ref.watch(ownedAccountIdsProvider);
   return [
     for (final transaction in transactions)
-      if (touchesPersonAccounts(transaction, config, activePersonId))
-        transaction,
+      if (touchesPersonAccounts(transaction, ownedIds)) transaction,
   ];
 });

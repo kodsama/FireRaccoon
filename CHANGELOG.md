@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.15.1] - 2026-09-29
+
+### Fixed
+
+- Stats remembered the page as a link had opened it, so a visit from the
+  Dashboard's Expenses card left it opening on expenses alone. Only a change
+  made on Stats is remembered now, and what 0.15.0 saved is dropped, so it
+  opens on this year's expenses and income until something is changed there
+
+- Picking a person left Stats, the transaction lists and the Dashboard's
+  spending showing everyone's expenses and income. A row counted for a
+  person when either end was theirs, and the far end of a purchase or a
+  salary, the shop's or employer's account, has no owners set, which counts
+  as everyone's. Only the person's own asset and liability accounts decide
+  it now
+
 ## [0.15.0] - 2026-09-29
 
 ### Changed
