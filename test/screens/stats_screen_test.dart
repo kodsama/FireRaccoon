@@ -111,6 +111,12 @@ void main() {
       '/stats?types=income&period=month',
     );
     expect(find.text('This Month'), findsWidgets);
+    // Where the side menu opens Stats next time.
+    final prefs = await SharedPreferences.getInstance();
+    expect(
+      prefs.getString('statsLastLocation'),
+      '/stats?types=income&period=month',
+    );
   });
 
   testWidgets('StatsScreen shows expenses and income by category by default', (

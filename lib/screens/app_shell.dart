@@ -28,6 +28,8 @@ import '../widgets/fun_decorated_surface.dart';
 import '../widgets/autocomplete_text_field.dart';
 import '../models/side_menu_config.dart';
 import '../providers/side_menu_config_provider.dart';
+import '../providers/stats_layout_provider.dart';
+import '../router/stats_route.dart';
 import '../router/route_query.dart';
 
 /// Below this width the sidebar is hidden behind a drawer and content uses
@@ -313,7 +315,11 @@ class _Sidebar extends ConsumerWidget {
                   .queryParameters['account'];
               unawaited(refreshFireflyData(ref, focusAccount: account));
             } else {
-              context.go(routePath);
+              context.go(
+                routePath == StatsRoute.path
+                    ? ref.read(statsLastLocationProvider).location
+                    : routePath,
+              );
             }
             if (inDrawer) Navigator.of(context).maybePop();
           },
