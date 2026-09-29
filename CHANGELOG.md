@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Stats remembered the page as a link had opened it, so a visit from the
+  Dashboard's Expenses card left it opening on expenses alone. Only a change
+  made on Stats is remembered now, and what 0.15.0 saved is dropped, so it
+  opens on this year's expenses and income until something is changed there
+
 ## [0.15.0] - 2026-09-29
 
 ### Changed

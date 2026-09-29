@@ -205,7 +205,7 @@ void main() {
 
     await tester.pumpWidget(
       await buildTestApp({
-        'statsLastLocation': '/stats?types=expense&period=lastYear&chart=bars',
+        'statsLastChoice': '/stats?types=expense&period=lastYear&chart=bars',
       }),
     );
     await tester.pumpAndSettle();
