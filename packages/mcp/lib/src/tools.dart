@@ -844,29 +844,6 @@ Map<String, Object?> _releasedArgs(Map<String, Object?> args) {
   return released;
 }
 
-/// [saved] with each leg carrying the flag the same leg had on [before],
-/// matched by journal id, or by position for a leg that has none.
-Transaction _withReconciledFrom(Transaction saved, Transaction before) {
-  final priorLegs = before.resolvedSplits();
-  final byJournal = {
-    for (final leg in priorLegs) ?leg.journalId: leg.reconciled,
-  };
-  final legs = [
-    for (final (index, leg) in saved.resolvedSplits().indexed)
-      leg.copyWith(
-        reconciled:
-            byJournal[leg.journalId] ??
-            (index < priorLegs.length
-                ? priorLegs[index].reconciled
-                : before.reconciled),
-      ),
-  ];
-  return saved.copyWith(
-    reconciled: legs.first.reconciled,
-    splits: saved.splits.isEmpty ? null : legs,
-  );
-}
-
 bool _reconciledFlagsDiffer(Transaction a, Transaction b) {
   final legsA = a.resolvedSplits();
   final legsB = b.resolvedSplits();
@@ -3573,7 +3550,7 @@ List<McpTool> buildTools({
         final ignored = <String>[];
         if (releasing) {
           steps.addAll(['released', 'changed']);
-          final restored = _withReconciledFrom(saved, existing);
+          final restored = saved.withReconciledFrom(existing);
           try {
             saved = await api.updateTransaction(restored);
           } on Object catch (error) {

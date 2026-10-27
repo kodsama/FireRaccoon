@@ -693,6 +693,43 @@ void main() {
       expect(reconciled.toSplitJson()['reconciled'], isTrue);
     });
 
+    group('around a reconciled change', () {
+      Transaction leg(String journal, {bool reconciled = false}) => Transaction(
+        id: '42',
+        journalId: journal,
+        type: 'withdrawal',
+        date: DateTime(2026, 7, 7),
+        amount: 10,
+        description: 'Split shop',
+        sourceName: 'Checking',
+        destinationName: 'Market',
+        categoryName: '',
+        currencySymbol: '€',
+        currencyCode: 'EUR',
+        sourceId: '1',
+        destinationId: '2',
+        reconciled: reconciled,
+      );
+
+      test('flags go back on the leg they came from, by journal', () {
+        final before = leg('a')
+            .copyWith(splits: [leg('a', reconciled: true), leg('b')]);
+        final saved = leg('b').copyWith(splits: [leg('b'), leg('a')]);
+
+        final restored = saved.withReconciledFrom(before);
+
+        expect(restored.splits.map((l) => l.reconciled), [false, true]);
+      });
+
+      test('a leg with no journal takes the flag at its position', () {
+        final restored = leg('')
+            .copyWith(journalId: null)
+            .withReconciledFrom(leg('x', reconciled: true));
+
+        expect(restored.reconciled, isTrue);
+      });
+    });
+
     test('toApiPayload includes group title for splits', () {
       final tx = Transaction(
         id: '1',

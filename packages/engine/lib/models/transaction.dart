@@ -108,6 +108,29 @@ class Transaction {
     return copyWith(reconciled: value, splits: updatedSplits);
   }
 
+  /// A copy with each leg carrying the flag the same leg has on [before],
+  /// matched by journal id, or by position for a leg that has none.
+  Transaction withReconciledFrom(Transaction before) {
+    final priorLegs = before.resolvedSplits();
+    final byJournal = {
+      for (final leg in priorLegs) ?leg.journalId: leg.reconciled,
+    };
+    final legs = [
+      for (final (index, leg) in resolvedSplits().indexed)
+        leg.copyWith(
+          reconciled:
+              byJournal[leg.journalId] ??
+              (index < priorLegs.length
+                  ? priorLegs[index].reconciled
+                  : before.reconciled),
+        ),
+    ];
+    return copyWith(
+      reconciled: legs.first.reconciled,
+      splits: splits.isEmpty ? null : legs,
+    );
+  }
+
   factory Transaction.fromJson(Map<String, dynamic> json) {
     final attrs = json['attributes'] as Map<String, dynamic>;
     final txs = attrs['transactions'] as List<dynamic>? ?? [];
