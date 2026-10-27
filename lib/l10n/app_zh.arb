@@ -1829,6 +1829,19 @@
   },
   "backupDeleteTitle": "删除这个备份？",
   "backupDeleteBody": "{id} 会连同其中的一切一起消失，别处没有副本。",
+  "backupPrune": "删除旧备份",
+  "backupPruneTitle": "删除早于以下时间的备份",
+  "backupPruneDays": "{count}天",
+  "backupPruneYear": "1年",
+  "backupPruneCustom": "天数",
+  "backupPrunePreview": "{count}个备份，{kilobytes} kB。最新的完整备份始终保留。",
+  "backupPruneNothing": "除最新的完整备份外，没有这么旧的备份。",
+  "backupSelected": "已选择{count}个",
+  "backupSelectAll": "全选",
+  "backupDownloadSelected": "下载",
+  "backupDeleteManyTitle": "删除{count}个备份？",
+  "backupDeleteManyBody": "将删除{kilobytes} kB，且别处没有副本。",
+  "backupsDeleted": "已删除{deleted}个，失败{failed}个",
   "@backupDeleteBody": {
     "placeholders": {
       "id": {

@@ -1829,6 +1829,19 @@
   },
   "backupDeleteTitle": "Eliminar esta cópia de segurança?",
   "backupDeleteBody": "{id} desaparece com tudo o que tem dentro, e mais nada guarda uma cópia.",
+  "backupPrune": "Eliminar cópias antigas",
+  "backupPruneTitle": "Eliminar cópias com mais de",
+  "backupPruneDays": "{count, plural, =1{1 dia} other{{count} dias}}",
+  "backupPruneYear": "1 ano",
+  "backupPruneCustom": "Dias",
+  "backupPrunePreview": "{count, plural, =1{1 cópia} other{{count} cópias}}, {kilobytes} kB. A cópia completa mais recente é sempre mantida.",
+  "backupPruneNothing": "Nenhuma cópia é tão antiga, além da completa mais recente.",
+  "backupSelected": "{count} selecionada(s)",
+  "backupSelectAll": "Selecionar tudo",
+  "backupDownloadSelected": "Transferir",
+  "backupDeleteManyTitle": "{count, plural, =1{Eliminar 1 cópia?} other{Eliminar {count} cópias?}}",
+  "backupDeleteManyBody": "{kilobytes} kB desaparecem e não há cópia noutro lado.",
+  "backupsDeleted": "{deleted} eliminada(s), {failed} falharam",
   "@backupDeleteBody": {
     "placeholders": {
       "id": {

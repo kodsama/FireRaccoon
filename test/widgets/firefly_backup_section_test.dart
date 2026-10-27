@@ -182,6 +182,49 @@ void main() {
     expect(find.text('No backups yet'), findsOneWidget);
   });
 
+  testWidgets('several selected backups are deleted after one question', (
+    tester,
+  ) async {
+    final store = _MemoryBackupStore();
+    _keep(store, '20200101T000000+0000', '2020-01-01T00:00:00Z');
+    _keep(store, '20200201T000000+0000', '2020-02-01T00:00:00Z');
+    await _pump(tester, store: store);
+
+    expect(find.text('0 selected'), findsOneWidget);
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pumpAndSettle();
+    expect(find.text('2 selected'), findsOneWidget);
+
+    await tester.tap(find.byIcon(LucideIcons.trash2));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete 2 backups?'), findsOneWidget);
+    await confirmDialogWithChallenge(tester);
+    await _letToastPass(tester);
+
+    expect(store.backups, isEmpty);
+  });
+
+  testWidgets('pruning by age keeps the newest complete backup', (
+    tester,
+  ) async {
+    final store = _MemoryBackupStore();
+    _keep(store, '20200101T000000+0000', '2020-01-01T00:00:00Z');
+    _keep(store, '20200201T000000+0000', '2020-02-01T00:00:00Z');
+    await _pump(tester, store: store);
+
+    await tester.tap(find.text('Delete older backups'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('1 year'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
+    await tester.pumpAndSettle();
+    expect(find.text('Delete 1 backup?'), findsOneWidget);
+    await confirmDialogWithChallenge(tester);
+    await _letToastPass(tester);
+
+    expect(store.backups.keys, ['20200201T000000+0000']);
+  });
+
   testWidgets('a failed read is reported rather than left blank', (
     tester,
   ) async {
@@ -434,4 +477,24 @@ void main() {
     expect(find.textContaining('problems with this backup'), findsOneWidget);
     await _letToastPass(tester);
   });
+}
+
+/// A complete backup taken at [takenAt], written straight into [store].
+void _keep(_MemoryBackupStore store, String id, String takenAt) {
+  store
+    ..put(
+      id,
+      kBackupManifestFile,
+      utf8.encode(
+        jsonEncode({
+          'id': id,
+          'taken_at': takenAt,
+          'timezone': {'name': 'UTC', 'offset_minutes': 0},
+          'entries': [
+            {'name': 'snapshot.json', 'bytes': 2},
+          ],
+        }),
+      ),
+    )
+    ..put(id, 'snapshot.json', utf8.encode('{}'));
 }

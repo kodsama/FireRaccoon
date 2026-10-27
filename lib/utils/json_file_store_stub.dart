@@ -9,3 +9,5 @@ Future<bool> jsonStoreExists(String path) async => false;
 Future<String?> jsonStoreRead(String path) async => null;
 
 Future<void> jsonStoreWrite(String path, String contents) async {}
+
+Future<void> jsonStoreWriteBytes(String path, List<int> bytes) async {}

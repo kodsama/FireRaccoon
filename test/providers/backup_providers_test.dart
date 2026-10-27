@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:archive/archive.dart';
+
 import 'package:fireraccoon/deployment/deployment_providers.dart';
 import 'package:fireraccoon/providers/backup_providers.dart';
 import 'package:fireraccoon/providers/data_providers.dart';
@@ -213,6 +215,22 @@ void main() {
 
       expect(store.deletions, 1);
       expect(container.read(backupsProvider).value, isEmpty);
+    });
+
+    test('several backups download as one zip, a folder each', () async {
+      final container = _container(store: _MemoryBackupStore());
+      await container.read(backupsProvider.future);
+      final notifier = container.read(backupsProvider.notifier);
+      final first = await notifier.create();
+      final second = await notifier.create();
+
+      final zip = ZipDecoder().decodeBytes(
+        await notifier.archive([first.id, second.id]),
+      );
+
+      final names = zip.files.map((file) => file.name);
+      expect(names, contains('${first.id}/$kBackupManifestFile'));
+      expect(names, contains('${second.id}/$kBackupSnapshotFile'));
     });
 
     test('hands one file back for saving elsewhere', () async {

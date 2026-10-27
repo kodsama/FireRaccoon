@@ -22,6 +22,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   are one group carrying every leg, and match the one bank row it pays out
   as
 
+- Backups can be deleted several at a time. The Backups list has a checkbox
+  per backup with select all, and the selection can be deleted or
+  downloaded as one zip, sealed backups staying sealed inside it. "Delete
+  older backups" takes 30 days, 90 days, a year or any number of days, says
+  how many backups and how much space it frees, and asks first. Over MCP,
+  `delete_backups` takes `backup_ids` or `older_than_days`, is a dry run
+  unless told otherwise, and answers each id on its own. A prune by age
+  never takes the newest complete backup
+
 ### Fixed
 
 - `check_connection` and `get_capabilities` reported a server behind a

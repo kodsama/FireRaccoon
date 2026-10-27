@@ -2119,6 +2119,67 @@
       }
     }
   },
+  "backupPrune": "Delete older backups",
+  "backupPruneTitle": "Delete backups older than",
+  "backupPruneDays": "{count, plural, =1{1 day} other{{count} days}}",
+  "@backupPruneDays": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupPruneYear": "1 year",
+  "backupPruneCustom": "Days",
+  "backupPrunePreview": "{count, plural, =1{1 backup} other{{count} backups}}, {kilobytes} kB. The newest complete backup is always kept.",
+  "@backupPrunePreview": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "kilobytes": {
+        "type": "String"
+      }
+    }
+  },
+  "backupPruneNothing": "No backup is that old, besides the newest complete one.",
+  "backupSelected": "{count} selected",
+  "@backupSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupSelectAll": "Select all",
+  "backupDownloadSelected": "Download",
+  "backupDeleteManyTitle": "{count, plural, =1{Delete 1 backup?} other{Delete {count} backups?}}",
+  "@backupDeleteManyTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "backupDeleteManyBody": "{kilobytes} kB goes, and nothing else keeps a copy.",
+  "@backupDeleteManyBody": {
+    "placeholders": {
+      "kilobytes": {
+        "type": "String"
+      }
+    }
+  },
+  "backupsDeleted": "{deleted} deleted, {failed} failed",
+  "@backupsDeleted": {
+    "placeholders": {
+      "deleted": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
   "backupTaken": "Backup {id} taken",
   "@backupTaken": {
     "placeholders": {

@@ -1904,6 +1904,19 @@
   },
   "backupDeleteTitle": "このバックアップを削除しますか？",
   "backupDeleteBody": "{id} は中身ごと消え、ほかに写しはありません。",
+  "backupPrune": "古いバックアップを削除",
+  "backupPruneTitle": "次より古いバックアップを削除",
+  "backupPruneDays": "{count}日",
+  "backupPruneYear": "1年",
+  "backupPruneCustom": "日数",
+  "backupPrunePreview": "{count}件のバックアップ、{kilobytes} kB。最新の完全なバックアップは常に残ります。",
+  "backupPruneNothing": "最新の完全なバックアップ以外に、それほど古いバックアップはありません。",
+  "backupSelected": "{count}件選択",
+  "backupSelectAll": "すべて選択",
+  "backupDownloadSelected": "ダウンロード",
+  "backupDeleteManyTitle": "{count}件のバックアップを削除しますか？",
+  "backupDeleteManyBody": "{kilobytes} kBが削除され、他にコピーはありません。",
+  "backupsDeleted": "{deleted}件削除、{failed}件失敗",
   "@backupDeleteBody": {
     "placeholders": {
       "id": {

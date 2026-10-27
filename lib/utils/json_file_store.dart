@@ -16,3 +16,6 @@ Future<String?> jsonStoreRead(String path) => store.jsonStoreRead(path);
 
 Future<void> jsonStoreWrite(String path, String contents) =>
     store.jsonStoreWrite(path, contents);
+
+Future<void> jsonStoreWriteBytes(String path, List<int> bytes) =>
+    store.jsonStoreWriteBytes(path, bytes);

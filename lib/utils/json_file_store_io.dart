@@ -24,3 +24,7 @@ Future<String?> jsonStoreRead(String path) async {
 Future<void> jsonStoreWrite(String path, String contents) async {
   await File(path).writeAsString(contents, flush: true);
 }
+
+Future<void> jsonStoreWriteBytes(String path, List<int> bytes) async {
+  await File(path).writeAsBytes(bytes, flush: true);
+}

@@ -3615,6 +3615,57 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get backupPrune => '删除旧备份';
+
+  @override
+  String get backupPruneTitle => '删除早于以下时间的备份';
+
+  @override
+  String backupPruneDays(int count) {
+    return '$count天';
+  }
+
+  @override
+  String get backupPruneYear => '1年';
+
+  @override
+  String get backupPruneCustom => '天数';
+
+  @override
+  String backupPrunePreview(int count, String kilobytes) {
+    return '$count个备份，$kilobytes kB。最新的完整备份始终保留。';
+  }
+
+  @override
+  String get backupPruneNothing => '除最新的完整备份外，没有这么旧的备份。';
+
+  @override
+  String backupSelected(int count) {
+    return '已选择$count个';
+  }
+
+  @override
+  String get backupSelectAll => '全选';
+
+  @override
+  String get backupDownloadSelected => '下载';
+
+  @override
+  String backupDeleteManyTitle(int count) {
+    return '删除$count个备份？';
+  }
+
+  @override
+  String backupDeleteManyBody(String kilobytes) {
+    return '将删除$kilobytes kB，且别处没有副本。';
+  }
+
+  @override
+  String backupsDeleted(int deleted, int failed) {
+    return '已删除$deleted个，失败$failed个';
+  }
+
+  @override
   String backupTaken(String id) {
     return '已创建备份 $id';
   }

@@ -6700,6 +6700,84 @@ abstract class AppLocalizations {
   /// **'{id} and everything in it goes, and nothing else keeps a copy.'**
   String backupDeleteBody(String id);
 
+  /// No description provided for @backupPrune.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete older backups'**
+  String get backupPrune;
+
+  /// No description provided for @backupPruneTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete backups older than'**
+  String get backupPruneTitle;
+
+  /// No description provided for @backupPruneDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day} other{{count} days}}'**
+  String backupPruneDays(int count);
+
+  /// No description provided for @backupPruneYear.
+  ///
+  /// In en, this message translates to:
+  /// **'1 year'**
+  String get backupPruneYear;
+
+  /// No description provided for @backupPruneCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Days'**
+  String get backupPruneCustom;
+
+  /// No description provided for @backupPrunePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 backup} other{{count} backups}}, {kilobytes} kB. The newest complete backup is always kept.'**
+  String backupPrunePreview(int count, String kilobytes);
+
+  /// No description provided for @backupPruneNothing.
+  ///
+  /// In en, this message translates to:
+  /// **'No backup is that old, besides the newest complete one.'**
+  String get backupPruneNothing;
+
+  /// No description provided for @backupSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String backupSelected(int count);
+
+  /// No description provided for @backupSelectAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Select all'**
+  String get backupSelectAll;
+
+  /// No description provided for @backupDownloadSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get backupDownloadSelected;
+
+  /// No description provided for @backupDeleteManyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Delete 1 backup?} other{Delete {count} backups?}}'**
+  String backupDeleteManyTitle(int count);
+
+  /// No description provided for @backupDeleteManyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'{kilobytes} kB goes, and nothing else keeps a copy.'**
+  String backupDeleteManyBody(String kilobytes);
+
+  /// No description provided for @backupsDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'{deleted} deleted, {failed} failed'**
+  String backupsDeleted(int deleted, int failed);
+
   /// No description provided for @backupTaken.
   ///
   /// In en, this message translates to:

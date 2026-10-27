@@ -33,16 +33,31 @@ Future<String?> deliverExportFile({
   /// the save dialog carries the name and nothing else.
   String? subject,
   String? text,
+}) => deliverExportBytes(
+  fileName: fileName,
+  bytes: utf8.encode(contents),
+  typeGroup: const XTypeGroup(label: 'JSON', extensions: ['json']),
+  mimeType: 'application/json',
+  subject: subject,
+  text: text,
+);
+
+/// [deliverExportFile] for a file that is not text, such as an archive.
+Future<String?> deliverExportBytes({
+  required String fileName,
+  required List<int> bytes,
+  required XTypeGroup typeGroup,
+  required String mimeType,
+  String? subject,
+  String? text,
 }) async {
   if (_savesToAFolder) {
     final location = await getSaveLocation(
       suggestedName: fileName,
-      acceptedTypeGroups: const [
-        XTypeGroup(label: 'JSON', extensions: ['json']),
-      ],
+      acceptedTypeGroups: [typeGroup],
     );
     if (location == null) return null;
-    await jsonStoreWrite(location.path, contents);
+    await jsonStoreWriteBytes(location.path, bytes);
     return location.path;
   }
 
@@ -55,15 +70,15 @@ Future<String?> deliverExportFile({
   // Written first so the share sheet has a real file behind it and the person
   // keeps a copy whether or not they pick a destination.
   final path = await jsonStoreDocumentsPath(fileName);
-  await jsonStoreWrite(path, contents);
+  await jsonStoreWriteBytes(path, bytes);
   await SharePlus.instance.share(
     ShareParams(
       text: text,
       subject: subject,
       files: [
         XFile.fromData(
-          utf8.encode(contents),
-          mimeType: 'application/json',
+          Uint8List.fromList(bytes),
+          mimeType: mimeType,
           name: fileName,
         ),
       ],

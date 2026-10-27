@@ -1829,6 +1829,19 @@
   },
   "backupDeleteTitle": "Ta bort säkerhetskopian?",
   "backupDeleteBody": "{id} försvinner med allt i den, och ingen annanstans finns en kopia.",
+  "backupPrune": "Ta bort äldre säkerhetskopior",
+  "backupPruneTitle": "Ta bort säkerhetskopior äldre än",
+  "backupPruneDays": "{count, plural, =1{1 dag} other{{count} dagar}}",
+  "backupPruneYear": "1 år",
+  "backupPruneCustom": "Dagar",
+  "backupPrunePreview": "{count, plural, =1{1 säkerhetskopia} other{{count} säkerhetskopior}}, {kilobytes} kB. Den senaste fullständiga säkerhetskopian behålls alltid.",
+  "backupPruneNothing": "Ingen säkerhetskopia är så gammal, utöver den senaste fullständiga.",
+  "backupSelected": "{count} valda",
+  "backupSelectAll": "Markera alla",
+  "backupDownloadSelected": "Ladda ner",
+  "backupDeleteManyTitle": "{count, plural, =1{Ta bort 1 säkerhetskopia?} other{Ta bort {count} säkerhetskopior?}}",
+  "backupDeleteManyBody": "{kilobytes} kB försvinner, och ingen kopia finns någon annanstans.",
+  "backupsDeleted": "{deleted} borttagna, {failed} misslyckades",
   "@backupDeleteBody": {
     "placeholders": {
       "id": {
