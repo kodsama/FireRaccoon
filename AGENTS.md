@@ -59,7 +59,7 @@ live in `CONTEXT.md`.
 | Tool | Purpose |
 |------|---------|
 | `get_capabilities` | App and server version, tool catalog, the write-gated list, live backend status, and whether a reverse-proxy session is held |
-| `check_connection` | Whether Firefly III is connected, which server, which version, and how many users |
+| `check_connection` | Whether Firefly III is connected, which server, which version, how many users, and how long the API took to answer |
 | `get_current_user` | Authenticated Firefly user |
 | `get_primary_currency` | Instance default currency |
 | `set_primary_currency` | Change the default currency |

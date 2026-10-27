@@ -2250,7 +2250,12 @@ List<McpTool> buildTools({
     final url = target.normalizedBaseUrl;
     final client = httpClient ?? http.Client();
     try {
+      // Timed here because only FireRaccoon gets past a sign-in gateway: a
+      // probe from outside meets the gateway's fast redirect and reports a
+      // healthy round trip while Firefly is never touched.
+      final clock = Stopwatch()..start();
       final about = await fetch(client, '/api/v1/about');
+      clock.stop();
       if (about == null) {
         return {
           'configured': true,
@@ -2318,6 +2323,9 @@ List<McpTool> buildTools({
         'authorized': true,
         'url': url,
         ...version,
+        'latency_ms': clock.elapsedMilliseconds,
+        'request_timeout_ms': kFireflyRequestTimeout.inMilliseconds,
+        'via': target.proxyCookie == null ? 'direct' : 'proxy_session',
         'user': _currentUserJson(user),
         'user_count': _userCount(users),
       };

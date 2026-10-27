@@ -1318,7 +1318,8 @@ x-mcp:
     check_connection:
       description: >
         Whether Firefly III is connected, which server, which version, and how
-        many users it holds.
+        many users it holds, with latency_ms for the API round trip, the
+        request_timeout_ms it is held to, and via (direct or proxy_session).
       inputSchema: { type: object, properties: {} }
     get_current_user:
       description: Fetch authenticated user
