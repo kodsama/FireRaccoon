@@ -1739,6 +1739,165 @@ void main() {
       },
     );
 
+    group('splits', () {
+      List<Map<String, Object?>> sentLines(List<String> bodies) => [
+        for (final line
+            in (jsonDecode(bodies.single) as Map)['transactions'] as List)
+          (line as Map).cast<String, Object?>(),
+      ];
+
+      final loan = <String, Object?>{
+        'source_id': '5',
+        'splits': [
+          {
+            'description': 'Loan 1 principal',
+            'amount': 400,
+            'destination_id': '20',
+            'category_id': '7',
+          },
+          {
+            'description': 'Loan 1 interest',
+            'amount': 350,
+            'destination_id': '9',
+            'category_id': '8',
+          },
+          {
+            'description': 'Loan 2 interest',
+            'amount': 250,
+            'destination_id': '9',
+            'category_id': '8',
+          },
+        ],
+      };
+
+      test('create_recurrence writes one line per leg', () async {
+        final bodies = <String>[];
+        final result =
+            await _tool(
+              'create_recurrence',
+              client: fireflyMockClient(recordBodies: bodies),
+            ).run({
+              'title': 'Loan payment',
+              'first_date': '2026-09-01',
+              'type': 'withdrawal',
+              'currency_code': 'EUR',
+              ...loan,
+            });
+
+        expect(result['ok'], isTrue);
+        final lines = sentLines(bodies);
+        expect(lines.map((l) => l['amount']), ['400.00', '350.00', '250.00']);
+        expect(lines.map((l) => l['destination_id']), ['20', '9', '9']);
+        expect(lines.map((l) => l['source_id']), everyElement('5'));
+        expect(lines.map((l) => l['category_id']), ['7', '8', '8']);
+      });
+
+      test('update_recurrence replaces a single leg with several, sending no '
+          'ids', () async {
+        // Firefly drops every update when a submitted leg and a stored one
+        // are left unpaired, so a stored id beside new legs would leave the
+        // rule as it was.
+        final bodies = <String>[];
+        final result = await _tool(
+          'update_recurrence',
+          client: fireflyMockClient(recordBodies: bodies),
+        ).run({'recurrence_id': '12', ...loan});
+
+        expect(result['ok'], isTrue);
+        final lines = sentLines(bodies);
+        expect(lines, hasLength(3));
+        expect(lines.where((l) => l.containsKey('id')), isEmpty);
+      });
+
+      test('update_recurrence keeps the id when the leg count holds', () async {
+        final bodies = <String>[];
+        await _tool(
+          'update_recurrence',
+          client: fireflyMockClient(recordBodies: bodies),
+        ).run({
+          'recurrence_id': '12',
+          'splits': [
+            {
+              'description': 'Rent payment',
+              'amount': 1250,
+              'source_id': '5',
+              'destination_id': '9',
+            },
+          ],
+        });
+
+        final line = sentLines(bodies).single;
+        expect(line['id'], '55');
+        expect(line['amount'], '1250.00');
+      });
+
+      test(
+        'an amount beside splits is refused before anything is written',
+        () async {
+          final bodies = <String>[];
+          final result = await _tool(
+            'update_recurrence',
+            client: fireflyMockClient(recordBodies: bodies),
+          ).run({'recurrence_id': '12', 'amount': 1000, ...loan});
+
+          expect(result['code'], 'bad_input');
+          expect(bodies, isEmpty);
+        },
+      );
+
+      test('an update without splits keeps every stored leg', () async {
+        // The merge read only the first line, so any edit to a rule of
+        // several legs wrote it back as one.
+        final bodies = <String>[];
+        final result = await _tool(
+          'update_recurrence',
+          client: fireflyMockClient(
+            recordBodies: bodies,
+            recurrenceExtraLines: [
+              {
+                'id': '56',
+                'description': 'Interest',
+                'amount': '80.00',
+                'currency_code': 'EUR',
+                'source_id': '5',
+                'destination_id': '9',
+              },
+            ],
+          ),
+        ).run({'recurrence_id': '12', 'category_id': '8'});
+
+        expect(result['ok'], isTrue);
+        final lines = sentLines(bodies);
+        expect(lines.map((l) => l['id']), ['55', '56']);
+        expect(lines.map((l) => l['amount']), ['1200.00', '80.00']);
+        expect(lines.map((l) => l['category_id']), everyElement('8'));
+      });
+
+      test('one amount on a rule of several legs is refused', () async {
+        final bodies = <String>[];
+        final result = await _tool(
+          'update_recurrence',
+          client: fireflyMockClient(
+            recordBodies: bodies,
+            recurrenceExtraLines: [
+              {
+                'id': '56',
+                'description': 'Interest',
+                'amount': '80.00',
+                'currency_code': 'EUR',
+                'source_id': '5',
+                'destination_id': '9',
+              },
+            ],
+          ),
+        ).run({'recurrence_id': '12', 'amount': 1300});
+
+        expect(result['code'], 'bad_input');
+        expect(result['error'], contains('2 legs'));
+        expect(bodies, isEmpty);
+      });
+    });
+
     test('update_recurrence keeps the weekend handling it was not asked to '
         'change', () async {
       // Regression: the schema had no weekend parameter and the input sent one

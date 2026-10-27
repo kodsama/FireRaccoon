@@ -1,5 +1,6 @@
 import '../models/recurrence.dart';
 import '../models/transaction.dart';
+import '../utils/money.dart';
 import 'recurrence_scheduler.dart';
 
 /// Marker stored in the notes of auto-materialized transactions so re-runs
@@ -187,6 +188,9 @@ List<Transaction> planWriteAheadTransactions({
     if (!recurrence.active) continue;
     final line = recurrence.primaryTransaction;
     if (line == null || line.amount <= 0) continue;
+    final amount = roundMoney(
+      recurrence.transactions.fold(0.0, (sum, leg) => sum + leg.amount),
+    );
 
     final occurrences = expandRecurrenceOccurrences(
       recurrence: recurrence,
@@ -197,34 +201,47 @@ List<Transaction> planWriteAheadTransactions({
       final key = writeAheadDedupKey(
         description: line.description,
         date: date,
-        amount: line.amount,
+        amount: amount,
       );
       if (taken.contains(key)) continue;
       taken.add(key);
-      planned.add(
-        Transaction(
-          id: '',
-          type: recurrence.type.name,
-          date: date,
-          amount: line.amount,
-          description: line.description,
-          sourceName: line.sourceName ?? '',
-          destinationName: line.destinationName ?? '',
-          categoryName: line.categoryName ?? '',
-          currencySymbol: line.currencySymbol ?? '',
-          currencyCode: line.currencyCode,
-          sourceId: line.sourceId,
-          destinationId: line.destinationId,
-          categoryId: line.categoryId,
-          budgetId: line.budgetId,
-          budgetName: line.budgetName,
-          billId: line.billId,
-          billName: line.billName,
-          tags: line.tags,
-          notes: writeAheadMarkerFor(recurrence.id),
-        ),
-      );
+      planned.add(writeAheadTransaction(recurrence, date));
     }
   }
   return planned;
+}
+
+/// The row [recurrence] writes ahead on [date], one leg per line of the rule.
+///
+/// A rule of several lines is one group, so a month of it matches the one
+/// bank row it pays out as.
+Transaction writeAheadTransaction(Recurrence recurrence, DateTime date) {
+  final legs = [
+    for (final line in recurrence.transactions)
+      Transaction(
+        id: '',
+        type: recurrence.type.apiValue,
+        date: date,
+        amount: line.amount,
+        description: line.description,
+        sourceName: line.sourceName ?? '',
+        destinationName: line.destinationName ?? '',
+        categoryName: line.categoryName ?? '',
+        currencySymbol: line.currencySymbol ?? '',
+        currencyCode: line.currencyCode,
+        foreignAmount: line.foreignAmount,
+        foreignCurrencyCode: line.foreignCurrencyCode,
+        sourceId: line.sourceId,
+        destinationId: line.destinationId,
+        categoryId: line.categoryId,
+        budgetId: line.budgetId,
+        budgetName: line.budgetName,
+        billId: line.billId,
+        billName: line.billName,
+        tags: line.tags,
+        notes: writeAheadMarkerFor(recurrence.id),
+      ),
+  ];
+  if (legs.length == 1) return legs.single;
+  return legs.first.copyWith(splits: legs, groupTitle: recurrence.title);
 }

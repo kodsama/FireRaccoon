@@ -119,8 +119,8 @@ live in `CONTEXT.md`.
 | `delete_piggy_bank` | Delete a piggy bank; linked accounts are untouched |
 | `get_recurrences` | List recurring rules, each with the amount, accounts, category, budget and tags of the lines it creates |
 | `get_recurrence_transactions` | Transactions a recurring rule has created |
-| `create_recurrence` | Create a recurring rule |
-| `update_recurrence` | Change a recurring rule; fields left out keep their stored value, and the answer names the rows written ahead from it |
+| `create_recurrence` | Create a recurring rule, one line or several in `splits` |
+| `update_recurrence` | Change a recurring rule; fields left out keep their stored value, `splits` restates every leg, and the answer names the rows written ahead from it |
 | `delete_recurrence` | Delete a recurring rule; transactions it created are kept unless asked otherwise |
 | `get_currencies` | List currencies and which are enabled |
 | `run_projection` | Savings, compound, portfolio, or cashflow projection |

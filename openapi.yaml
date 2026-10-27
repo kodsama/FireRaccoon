@@ -1681,15 +1681,18 @@ x-mcp:
       description: >
         Create a recurring transaction rule. schedule_rule states a monthly
         schedule Firefly cannot, such as the last banking day of the month.
+        One line takes amount, description, source_id and destination_id at
+        the top level; a rule of several takes them per leg in splits.
       mapsTo: POST /api/v1/recurrences
-      required: [title, first_date, type, amount, description, source_id, destination_id]
+      required: [title, first_date, type]
     update_recurrence:
       description: >
         Change a recurring rule. Only the fields being changed are passed;
         everything left out keeps what is stored, weekend handling and schedule
         included. The answer names the transactions written ahead from the rule,
         each with the date it would move to if the schedule changed, which
-        update_future_transactions can bring along.
+        update_future_transactions can bring along. splits restates every leg
+        of the rule.
       mapsTo: PUT /api/v1/recurrences/{recurrenceId}
       required: [recurrence_id]
     get_recurrence_transactions:

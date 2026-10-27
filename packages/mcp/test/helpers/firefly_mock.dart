@@ -248,6 +248,9 @@ Map<String, Object?> recurrenceEnvelope({
   /// Firefly's own interface without them does.
   bool bareLine = false,
   String? notes,
+
+  /// Legs after the first, for a rule that pays out as a group.
+  List<Map<String, Object?>> extraLines = const [],
 }) => {
   'data': {
     'id': '12',
@@ -285,6 +288,7 @@ Map<String, Object?> recurrenceEnvelope({
             'tags': ['standing'],
           },
         },
+        ...extraLines,
       ],
     },
   },
@@ -537,6 +541,7 @@ MockClient fireflyMockClient({
   String? recurrenceForeignAmount,
   String? recurrenceForeignCurrencyCode,
   bool recurrenceBareLine = false,
+  List<Map<String, Object?>> recurrenceExtraLines = const [],
   String? recurrenceNotes,
 
   /// The accounts Firefly keeps for corrections. Both mock accounts have one,
@@ -595,6 +600,7 @@ MockClient fireflyMockClient({
     foreignAmount: recurrenceForeignAmount,
     foreignCurrencyCode: recurrenceForeignCurrencyCode,
     bareLine: recurrenceBareLine,
+    extraLines: recurrenceExtraLines,
     notes: recurrenceNotes,
   );
 
