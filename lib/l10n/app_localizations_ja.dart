@@ -2357,6 +2357,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get transactionSaved => '取引を保存しました。';
 
   @override
+  String savedButLeftUnreconciled(String error) {
+    return '保存しましたが、再度照合済みにできませんでした: $error。照合済みにチェックして保存してください。';
+  }
+
+  @override
   String failedToSaveTransaction(String error) {
     return '取引の保存に失敗しました: $error';
   }

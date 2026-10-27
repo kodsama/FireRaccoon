@@ -2410,6 +2410,11 @@ class AppLocalizationsFr extends AppLocalizations {
   String get transactionSaved => 'Transaction saved.';
 
   @override
+  String savedButLeftUnreconciled(String error) {
+    return 'Enregistrée, mais le rapprochement n\'a pas pu être rétabli : $error. Cochez rapprochée et enregistrez pour terminer.';
+  }
+
+  @override
   String failedToSaveTransaction(String error) {
     return 'Failed to save transaction: $error';
   }

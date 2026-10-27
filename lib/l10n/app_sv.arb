@@ -1359,6 +1359,7 @@
     }
   },
   "transactionSaved": "Transaction saved.",
+  "savedButLeftUnreconciled": "Sparad, men det gick inte att stämma av den igen: {error}. Markera avstämd och spara för att slutföra.",
   "failedToSaveTransaction": "Failed to save transaction: {error}",
   "@failedToSaveTransaction": {
     "placeholders": {

@@ -2409,6 +2409,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get transactionSaved => 'Transaction saved.';
 
   @override
+  String savedButLeftUnreconciled(String error) {
+    return 'Guardada, mas não foi possível marcá-la de novo como reconciliada: $error. Marque reconciliada e guarde para terminar.';
+  }
+
+  @override
   String failedToSaveTransaction(String error) {
     return 'Failed to save transaction: $error';
   }

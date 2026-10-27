@@ -4390,6 +4390,12 @@ abstract class AppLocalizations {
   /// **'Transaction saved.'**
   String get transactionSaved;
 
+  /// No description provided for @savedButLeftUnreconciled.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved, but marking it reconciled again failed: {error}. Tick reconciled and save to finish.'**
+  String savedButLeftUnreconciled(String error);
+
   /// No description provided for @failedToSaveTransaction.
   ///
   /// In en, this message translates to:

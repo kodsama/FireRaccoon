@@ -108,6 +108,53 @@ class Transaction {
     return copyWith(reconciled: value, splits: updatedSplits);
   }
 
+  /// A copy with each leg carrying the flag the same leg has on [before],
+  /// matched by journal id, or by position for a leg that has none.
+  Transaction withReconciledFrom(Transaction before) {
+    final priorLegs = before.resolvedSplits();
+    final byJournal = {
+      for (final leg in priorLegs) ?leg.journalId: leg.reconciled,
+    };
+    final legs = [
+      for (final (index, leg) in resolvedSplits().indexed)
+        leg.copyWith(
+          reconciled:
+              byJournal[leg.journalId] ??
+              (index < priorLegs.length
+                  ? priorLegs[index].reconciled
+                  : before.reconciled),
+        ),
+    ];
+    return copyWith(
+      reconciled: legs.first.reconciled,
+      splits: splits.isEmpty ? null : legs,
+    );
+  }
+
+  /// Whether a leg's amount, currency or accounts differ from [before].
+  ///
+  /// These are what Firefly will not change on a reconciled journal, and what
+  /// [toSplitJson] leaves off an update of one.
+  bool movesMoneyFrom(Transaction before) {
+    final legs = resolvedSplits();
+    final priorLegs = before.resolvedSplits();
+    if (legs.length != priorLegs.length) return true;
+    for (final (index, leg) in legs.indexed) {
+      final prior = priorLegs[index];
+      if (leg.amount.toStringAsFixed(2) != prior.amount.toStringAsFixed(2) ||
+          leg.currencyCode != prior.currencyCode ||
+          leg.sourceId != prior.sourceId ||
+          leg.sourceName != prior.sourceName ||
+          leg.destinationId != prior.destinationId ||
+          leg.destinationName != prior.destinationName ||
+          leg.foreignAmount?.toStringAsFixed(2) !=
+              prior.foreignAmount?.toStringAsFixed(2)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   factory Transaction.fromJson(Map<String, dynamic> json) {
     final attrs = json['attributes'] as Map<String, dynamic>;
     final txs = attrs['transactions'] as List<dynamic>? ?? [];

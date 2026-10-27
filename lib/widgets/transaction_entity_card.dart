@@ -183,7 +183,35 @@ Future<void> saveTransactionEntity(
   final l10n = context.l10n;
   try {
     final service = ref.read(apiServiceProvider);
-    final saved = await service?.updateTransaction(updated);
+    // Firefly will not move the money on a reconciled journal, and
+    // toSplitJson leaves those fields off rather than argue, so a new payee
+    // on a reconciled row was dropped under a "saved" toast. The row is
+    // released for the change and its flags go back on in a second write,
+    // which is what keep_reconciled does over MCP.
+    final releasing =
+        updated.resolvedSplits().any((leg) => leg.reconciled) &&
+        updated.movesMoneyFrom(previous);
+    var saved = await service?.updateTransaction(
+      releasing ? updated.withReconciled(false) : updated,
+    );
+    if (releasing && saved != null) {
+      final changed = saved;
+      try {
+        saved = await service!.updateTransaction(
+          changed.withReconciledFrom(updated),
+        );
+      } catch (e) {
+        await refreshTransactionLists(ref, filterAccount, upsert: changed);
+        if (context.mounted) {
+          reportError(
+            context,
+            l10n.savedButLeftUnreconciled(readableError(e)),
+            error: e,
+          );
+        }
+        return;
+      }
+    }
     ref
         .read(undoHistoryProvider.notifier)
         .record(

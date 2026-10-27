@@ -2356,6 +2356,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get transactionSaved => '交易已保存。';
 
   @override
+  String savedButLeftUnreconciled(String error) {
+    return '已保存，但未能重新标记为已对账：$error。勾选已对账并保存以完成。';
+  }
+
+  @override
   String failedToSaveTransaction(String error) {
     return '保存交易失败：$error';
   }

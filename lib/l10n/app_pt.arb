@@ -1359,6 +1359,7 @@
     }
   },
   "transactionSaved": "Transaction saved.",
+  "savedButLeftUnreconciled": "Guardada, mas não foi possível marcá-la de novo como reconciliada: {error}. Marque reconciliada e guarde para terminar.",
   "failedToSaveTransaction": "Failed to save transaction: {error}",
   "@failedToSaveTransaction": {
     "placeholders": {
