@@ -203,7 +203,7 @@ answers `ok: false` with a `code` and a `remedy`:
 |--------|---------------|
 | `not_connected` | No server is configured. Nobody has finished setting up. |
 | `backend_unreachable` | A server is configured and did not answer. |
-| `backend_unauthorized` | Firefly III answered and refused the token. |
+| `backend_unauthorized` | Firefly III answered and refused the token, or something else answered in its place: a sign-in page, or an `/about` with no version. |
 
 The distinction is worth keeping: an agent told a socket failed retries or
 concludes the ledger is broken, when the real answer is that there is no ledger

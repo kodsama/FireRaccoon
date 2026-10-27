@@ -2290,6 +2290,23 @@ List<McpTool> buildTools({
           'reason': 'Firefly III at $url answered ${about.statusCode}.',
         };
       }
+      // A sign-in gateway answers /about with its login page and a 200. Taking
+      // that for Firefly reported a healthy backend while every data call
+      // failed, so the version /about owes is the proof the API answered.
+      final page = isWebPage(about);
+      final version = _aboutJson(about.body);
+      if (page || version['firefly_version'] == null) {
+        return {
+          'configured': true,
+          'connected': true,
+          'authorized': false,
+          'url': url,
+          'reason': page
+              ? webPageReason(Uri.parse(url).origin)
+              : '$url answered /api/v1/about without a Firefly III version, '
+                    'so it is not the Firefly III API.',
+        };
+      }
       // Both are extra colour on a connection already proved by /about, so a
       // refusal here narrows what is reported rather than sinking the whole
       // status: /api/v1/users is owner-only and 403s for everybody else.
@@ -2300,7 +2317,7 @@ List<McpTool> buildTools({
         'connected': true,
         'authorized': true,
         'url': url,
-        ..._aboutJson(about.body),
+        ...version,
         'user': _currentUserJson(user),
         'user_count': _userCount(users),
       };

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `check_connection` and `get_capabilities` reported a server behind a
+  sign-in gateway as connected and authorized, because the gateway's login
+  page answered `/api/v1/about` with a 200. A web page, or an answer with no
+  Firefly III version, is now `authorized: false` with the reason a data
+  call would give, so a run checking its preconditions stops before the
+  backup rather than at it
+
 ## [0.15.1] - 2026-09-29
 
 ### Fixed
