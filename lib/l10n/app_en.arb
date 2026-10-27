@@ -1443,6 +1443,14 @@
     }
   },
   "transactionSaved": "Transaction saved.",
+  "savedButLeftUnreconciled": "Saved, but marking it reconciled again failed: {error}. Tick reconciled and save to finish.",
+  "@savedButLeftUnreconciled": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "failedToSaveTransaction": "Failed to save transaction: {error}",
   "@failedToSaveTransaction": {
     "placeholders": {

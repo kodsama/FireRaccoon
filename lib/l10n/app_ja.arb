@@ -1359,6 +1359,7 @@
     }
   },
   "transactionSaved": "取引を保存しました。",
+  "savedButLeftUnreconciled": "保存しましたが、再度照合済みにできませんでした: {error}。照合済みにチェックして保存してください。",
   "failedToSaveTransaction": "取引の保存に失敗しました: {error}",
   "@failedToSaveTransaction": {
     "placeholders": {

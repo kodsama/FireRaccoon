@@ -1359,6 +1359,7 @@
     }
   },
   "transactionSaved": "Transaction saved.",
+  "savedButLeftUnreconciled": "Enregistrée, mais le rapprochement n'a pas pu être rétabli : {error}. Cochez rapprochée et enregistrez pour terminer.",
   "failedToSaveTransaction": "Failed to save transaction: {error}",
   "@failedToSaveTransaction": {
     "placeholders": {

@@ -2402,6 +2402,11 @@ class AppLocalizationsSv extends AppLocalizations {
   String get transactionSaved => 'Transaction saved.';
 
   @override
+  String savedButLeftUnreconciled(String error) {
+    return 'Sparad, men det gick inte att stämma av den igen: $error. Markera avstämd och spara för att slutföra.';
+  }
+
+  @override
   String failedToSaveTransaction(String error) {
     return 'Failed to save transaction: $error';
   }

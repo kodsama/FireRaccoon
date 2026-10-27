@@ -2404,6 +2404,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionSaved => 'Transaction saved.';
 
   @override
+  String savedButLeftUnreconciled(String error) {
+    return 'Saved, but marking it reconciled again failed: $error. Tick reconciled and save to finish.';
+  }
+
+  @override
   String failedToSaveTransaction(String error) {
     return 'Failed to save transaction: $error';
   }

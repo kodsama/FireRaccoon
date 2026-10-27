@@ -728,6 +728,32 @@ void main() {
 
         expect(restored.reconciled, isTrue);
       });
+
+      test('moving money is an amount, currency or account change', () {
+        final stored = leg('a', reconciled: true);
+
+        expect(
+          stored.copyWith(description: 'New').movesMoneyFrom(stored),
+          isFalse,
+        );
+        expect(stored.copyWith(amount: 11).movesMoneyFrom(stored), isTrue);
+        expect(
+          stored.copyWith(currencyCode: 'SEK').movesMoneyFrom(stored),
+          isTrue,
+        );
+        expect(
+          stored.copyWith(destinationId: '3').movesMoneyFrom(stored),
+          isTrue,
+        );
+        expect(
+          stored.copyWith(foreignAmount: 5).movesMoneyFrom(stored),
+          isTrue,
+        );
+        expect(
+          stored.copyWith(splits: [stored, stored]).movesMoneyFrom(stored),
+          isTrue,
+        );
+      });
     });
 
     test('toApiPayload includes group title for splits', () {

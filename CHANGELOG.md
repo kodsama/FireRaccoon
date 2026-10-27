@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   call would give, so a run checking its preconditions stops before the
   backup rather than at it
 
+- Changing the payee, an account, the amount or the currency of a
+  reconciled transaction in the edit panel said "Transaction saved" and kept
+  the old value, since Firefly will not move money on a reconciled row. The
+  row is now released for the change and reconciled again, as
+  `keep_reconciled` does over MCP, and a failure to reconcile it again says
+  so rather than reporting it saved
+
 ## [0.15.1] - 2026-09-29
 
 ### Fixed
