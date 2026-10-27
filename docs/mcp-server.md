@@ -116,7 +116,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `find_account` | Resolve raw bank text to an account, one string or a batch, ranked with the reason each candidate matched |  |
 | `match_statement` | Pair statement rows against recorded split legs, with the arithmetic behind every verdict |  |
 | `get_capabilities` | App and server version, tool catalog, the write-gated list, the person behind the presented key, and live backend status |  |
-| `check_connection` | Whether Firefly III is connected, which server, which version, and how many users |  |
+| `check_connection` | Whether Firefly III is connected, which server, which version, how many users, and how long the API took to answer |  |
 | `get_current_user` | Authenticated Firefly user profile |  |
 | `get_primary_currency` | Instance default currency |  |
 | `set_primary_currency` | Change the default currency | yes |

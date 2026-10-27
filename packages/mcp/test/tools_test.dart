@@ -750,6 +750,41 @@ void main() {
       expect(result['error'], contains('without a Firefly III version'));
     });
 
+    test(
+      'reports how long /about took and the ceiling it is held to',
+      () async {
+        final firefly = fireflyMockClient();
+        final tool = _tool(
+          'check_connection',
+          client: MockClient((request) async {
+            if (request.url.path == '/api/v1/about') {
+              await Future<void>.delayed(const Duration(milliseconds: 50));
+            }
+            return firefly.get(request.url, headers: request.headers);
+          }),
+        );
+
+        final result = await tool.run({});
+
+        expect(result['latency_ms'], greaterThanOrEqualTo(50));
+        expect(result['request_timeout_ms'], 45000);
+        expect(result['via'], 'direct');
+      },
+    );
+
+    test('says the probe went through the proxy session it holds', () async {
+      final tool = buildTools(
+        target: const FireflyTarget(
+          baseUrl: fireflyBaseUrl,
+          bearer: fireflyToken,
+          proxyCookie: 'jwttoken=abc',
+        ),
+        httpClient: fireflyMockClient(),
+      ).firstWhere((t) => t.name == 'check_connection');
+
+      expect((await tool.run({}))['via'], 'proxy_session');
+    });
+
     test('strips a trailing slash from the target base URL', () async {
       final tools = buildTools(
         target: const FireflyTarget(

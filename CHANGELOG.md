@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `check_connection` and the `backend` block of `get_capabilities` report
+  `latency_ms`, the round trip of the API request they already make, beside
+  `request_timeout_ms`, the ceiling a request is held to, and `via`,
+  `direct` or `proxy_session`. Behind a sign-in gateway FireRaccoon is the
+  only client that reaches Firefly, so a probe from outside times the
+  gateway instead
+
 ### Fixed
 
 - `check_connection` and `get_capabilities` reported a server behind a
