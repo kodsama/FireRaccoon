@@ -175,8 +175,8 @@ are described under [Importing a statement](#importing-a-statement).
 | `delete_piggy_bank` | Delete a piggy bank | yes |
 | `get_recurrences` | List recurring rules, each with the amount, accounts, category, budget and tags of the lines it creates |  |
 | `get_recurrence_transactions` | Transactions a recurring rule has created |  |
-| `create_recurrence` | Create a recurring rule; `weekend` says what an occurrence landing on a weekend does | yes |
-| `update_recurrence` | Change a recurring rule; omitted fields keep their stored value, and the answer names the rows written ahead from it | yes |
+| `create_recurrence` | Create a recurring rule, one line or several in `splits`; `weekend` says what an occurrence landing on a weekend does | yes |
+| `update_recurrence` | Change a recurring rule; omitted fields keep their stored value, `splits` restates every leg, and the answer names the rows written ahead from it | yes |
 | `delete_recurrence` | Delete a recurring rule; created transactions are kept unless `delete_future_transactions` says otherwise | yes |
 | `get_currencies` | List currencies and which are enabled |  |
 | `run_projection` | On-device balance forecast |  |
