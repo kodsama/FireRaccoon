@@ -66,6 +66,44 @@ void main() {
   final reference = DateTime(2026, 7, 12);
 
   group('planWriteAheadTransactions', () {
+    test('a rule of several lines writes one group carrying every leg', () {
+      final rule = _monthly(description: 'Loan payment');
+      final loan = Recurrence(
+        id: rule.id,
+        type: rule.type,
+        title: 'Loan payment',
+        firstDate: rule.firstDate,
+        repetitions: rule.repetitions,
+        transactions: [
+          for (final (description, amount) in [
+            ('Principal', 400.0),
+            ('Interest', 350.0),
+          ])
+            RecurrenceTransactionLine(
+              description: description,
+              amount: amount,
+              currencyCode: 'SEK',
+              sourceName: 'Checking',
+              destinationName: 'Bank',
+            ),
+        ],
+      );
+
+      final planned = planWriteAheadTransactions(
+        recurrences: [loan],
+        existing: const [],
+        days: 30,
+        reference: reference,
+      ).single;
+
+      expect(planned.splits.map((leg) => leg.description), [
+        'Principal',
+        'Interest',
+      ]);
+      expect(planned.totalAmount, 750);
+      expect(planned.groupTitle, 'Loan payment');
+    });
+
     test('materializes occurrences within the horizon with the marker', () {
       final planned = planWriteAheadTransactions(
         recurrences: [_monthly()],
