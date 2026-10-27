@@ -3712,6 +3712,76 @@ class AppLocalizationsSv extends AppLocalizations {
   }
 
   @override
+  String get backupPrune => 'Ta bort äldre säkerhetskopior';
+
+  @override
+  String get backupPruneTitle => 'Ta bort säkerhetskopior äldre än';
+
+  @override
+  String backupPruneDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dagar',
+      one: '1 dag',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupPruneYear => '1 år';
+
+  @override
+  String get backupPruneCustom => 'Dagar';
+
+  @override
+  String backupPrunePreview(int count, String kilobytes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count säkerhetskopior',
+      one: '1 säkerhetskopia',
+    );
+    return '$_temp0, $kilobytes kB. Den senaste fullständiga säkerhetskopian behålls alltid.';
+  }
+
+  @override
+  String get backupPruneNothing =>
+      'Ingen säkerhetskopia är så gammal, utöver den senaste fullständiga.';
+
+  @override
+  String backupSelected(int count) {
+    return '$count valda';
+  }
+
+  @override
+  String get backupSelectAll => 'Markera alla';
+
+  @override
+  String get backupDownloadSelected => 'Ladda ner';
+
+  @override
+  String backupDeleteManyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Ta bort $count säkerhetskopior?',
+      one: 'Ta bort 1 säkerhetskopia?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupDeleteManyBody(String kilobytes) {
+    return '$kilobytes kB försvinner, och ingen kopia finns någon annanstans.';
+  }
+
+  @override
+  String backupsDeleted(int deleted, int failed) {
+    return '$deleted borttagna, $failed misslyckades';
+  }
+
+  @override
   String backupTaken(String id) {
     return 'Säkerhetskopia $id tagen';
   }

@@ -3741,6 +3741,76 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
+  String get backupPrune => 'Supprimer les anciennes sauvegardes';
+
+  @override
+  String get backupPruneTitle => 'Supprimer les sauvegardes de plus de';
+
+  @override
+  String backupPruneDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count jours',
+      one: '1 jour',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupPruneYear => '1 an';
+
+  @override
+  String get backupPruneCustom => 'Jours';
+
+  @override
+  String backupPrunePreview(int count, String kilobytes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count sauvegardes',
+      one: '1 sauvegarde',
+    );
+    return '$_temp0, $kilobytes ko. La sauvegarde complète la plus récente est toujours conservée.';
+  }
+
+  @override
+  String get backupPruneNothing =>
+      'Aucune sauvegarde n\'est aussi ancienne, hormis la plus récente complète.';
+
+  @override
+  String backupSelected(int count) {
+    return '$count sélectionnée(s)';
+  }
+
+  @override
+  String get backupSelectAll => 'Tout sélectionner';
+
+  @override
+  String get backupDownloadSelected => 'Télécharger';
+
+  @override
+  String backupDeleteManyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Supprimer $count sauvegardes ?',
+      one: 'Supprimer 1 sauvegarde ?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupDeleteManyBody(String kilobytes) {
+    return '$kilobytes ko disparaissent, et aucune copie n\'existe ailleurs.';
+  }
+
+  @override
+  String backupsDeleted(int deleted, int failed) {
+    return '$deleted supprimée(s), $failed en échec';
+  }
+
+  @override
   String backupTaken(String id) {
     return 'Sauvegarde $id créée';
   }

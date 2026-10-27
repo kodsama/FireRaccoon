@@ -1,3 +1,4 @@
+import 'package:file_selector/file_selector.dart' show XTypeGroup;
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,13 +39,132 @@ String backupActivityLabel(BuildContext context, BackupActivity activity) {
 ///
 /// The same backups an agent takes over MCP: one list, whether it was a person
 /// pressing the button here or a tool called before a bulk change.
-class FireflyBackupSection extends ConsumerWidget {
+class FireflyBackupSection extends ConsumerStatefulWidget {
   const FireflyBackupSection({super.key});
 
+  @override
+  ConsumerState<FireflyBackupSection> createState() =>
+      _FireflyBackupSectionState();
+}
+
+class _FireflyBackupSectionState extends ConsumerState<FireflyBackupSection> {
   static final _log = AppLogger.scoped('widgets.fireflyBackup');
 
+  final Set<String> _selected = {};
+
+  String _kilobytes(Iterable<BackupManifest> manifests) =>
+      (manifests.fold(0, (total, manifest) => total + manifest.totalBytes) /
+              1024)
+          .toStringAsFixed(1);
+
+  Future<void> _deleteAll(List<BackupManifest> doomed) async {
+    final l10n = context.l10n;
+    final confirmed = await showConfirmationDialog(
+      context: context,
+      title: l10n.backupDeleteManyTitle(doomed.length),
+      message: l10n.backupDeleteManyBody(_kilobytes(doomed)),
+      confirmLabel: l10n.delete,
+      confirmColor: Theme.of(context).colorScheme.error,
+    );
+    if (confirmed != true || !mounted) return;
+    final results = await ref
+        .read(backupsProvider.notifier)
+        .deleteAll(doomed.map((manifest) => manifest.id));
+    if (!mounted) return;
+    setState(() => _selected.removeAll(results.keys));
+    final deleted = results.values
+        .where((result) => result == BackupDeletion.deleted)
+        .length;
+    final failed = results.values
+        .where((result) => result == BackupDeletion.failed)
+        .length;
+    final message = l10n.backupsDeleted(deleted, failed);
+    failed == 0
+        ? showInfoToast(context, message)
+        : showErrorToast(context, message);
+  }
+
+  Future<void> _prune(List<BackupManifest> manifests) async {
+    final days = await showDialog<int>(
+      context: context,
+      builder: (context) => const _PruneDialog(),
+    );
+    if (days == null || !mounted) return;
+    final doomed = backupsTakenBefore(
+      manifests,
+      DateTime.now().subtract(Duration(days: days)),
+    );
+    if (doomed.isEmpty) {
+      showInfoToast(context, context.l10n.backupPruneNothing);
+      return;
+    }
+    await _deleteAll(doomed);
+  }
+
+  Future<void> _download(List<BackupManifest> chosen) async {
+    final bytes = await ref
+        .read(backupsProvider.notifier)
+        .archive(chosen.map((manifest) => manifest.id));
+    if (!mounted) return;
+    final path = await deliverExportBytes(
+      fileName: 'fireraccoon-backups.zip',
+      bytes: bytes,
+      typeGroup: const XTypeGroup(label: 'ZIP', extensions: ['zip']),
+      mimeType: 'application/zip',
+      subject: 'fireraccoon-backups',
+    );
+    if (!mounted || path == null) return;
+    showInfoToast(context, context.l10n.fireflyDataExportedTo(path));
+  }
+
+  Widget _selectionBar(List<BackupManifest> manifests) {
+    final l10n = context.l10n;
+    final chosen = [
+      for (final manifest in manifests)
+        if (_selected.contains(manifest.id)) manifest,
+    ];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 4, 16, 4),
+      child: Row(
+        children: [
+          Checkbox(
+            tristate: true,
+            value: chosen.isEmpty
+                ? false
+                : chosen.length == manifests.length
+                ? true
+                : null,
+            semanticLabel: l10n.backupSelectAll,
+            onChanged: (_) => setState(() {
+              if (chosen.length == manifests.length) {
+                _selected.clear();
+              } else {
+                _selected.addAll(manifests.map((manifest) => manifest.id));
+              }
+            }),
+          ),
+          Expanded(child: Text(l10n.backupSelected(chosen.length))),
+          IconButton(
+            tooltip: l10n.backupDownloadSelected,
+            icon: const Icon(LucideIcons.download, size: 18),
+            onPressed: chosen.isEmpty ? null : () => _download(chosen),
+          ),
+          IconButton(
+            tooltip: l10n.delete,
+            icon: const Icon(LucideIcons.trash2, size: 18),
+            onPressed: chosen.isEmpty ? null : () => _deleteAll(chosen),
+          ),
+          TextButton(
+            onPressed: () => _prune(manifests),
+            child: Text(l10n.backupPrune),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
     final theme = Theme.of(context);
     final available = ref.watch(backupServiceProvider) != null;
@@ -111,8 +231,17 @@ class FireflyBackupSection extends ConsumerWidget {
                     )
                   : Column(
                       children: [
+                        _selectionBar(manifests),
                         for (final manifest in manifests)
-                          _BackupTile(manifest: manifest),
+                          _BackupTile(
+                            manifest: manifest,
+                            selected: _selected.contains(manifest.id),
+                            onSelected: (selected) => setState(
+                              () => selected
+                                  ? _selected.add(manifest.id)
+                                  : _selected.remove(manifest.id),
+                            ),
+                          ),
                       ],
                     ),
             ),
@@ -212,10 +341,91 @@ class _TakeBackupButton extends ConsumerWidget {
   }
 }
 
+/// Asks how old a backup has to be to go: a few common ages, or any number
+/// of days.
+class _PruneDialog extends StatefulWidget {
+  const _PruneDialog();
+
+  @override
+  State<_PruneDialog> createState() => _PruneDialogState();
+}
+
+class _PruneDialogState extends State<_PruneDialog> {
+  static const _presets = [30, 90, 365];
+
+  int? _days = 90;
+  final _custom = TextEditingController();
+
+  @override
+  void dispose() {
+    _custom.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    return AlertDialog(
+      title: Text(l10n.backupPruneTitle),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Wrap(
+            spacing: 8,
+            children: [
+              for (final days in _presets)
+                ChoiceChip(
+                  label: Text(
+                    days == 365
+                        ? l10n.backupPruneYear
+                        : l10n.backupPruneDays(days),
+                  ),
+                  selected: _days == days && _custom.text.isEmpty,
+                  onSelected: (_) => setState(() {
+                    _custom.clear();
+                    _days = days;
+                  }),
+                ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _custom,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(labelText: l10n.backupPruneCustom),
+            onChanged: (text) => setState(
+              () => _days = text.isEmpty ? 90 : int.tryParse(text.trim()),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: _days == null || _days! < 0
+              ? null
+              : () => Navigator.of(context).pop(_days),
+          child: Text(l10n.delete),
+        ),
+      ],
+    );
+  }
+}
+
 class _BackupTile extends ConsumerWidget {
-  const _BackupTile({required this.manifest});
+  const _BackupTile({
+    required this.manifest,
+    required this.selected,
+    required this.onSelected,
+  });
 
   final BackupManifest manifest;
+  final bool selected;
+  final ValueChanged<bool> onSelected;
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
     final l10n = context.l10n;
@@ -360,13 +570,22 @@ class _BackupTile extends ConsumerWidget {
     final kilobytes = (manifest.totalBytes / 1024).toStringAsFixed(1);
 
     return ListTile(
-      leading: Icon(
-        !manifest.complete
-            ? LucideIcons.triangleAlert
-            : manifest.encrypted
-            ? LucideIcons.lock
-            : LucideIcons.archive,
-        color: manifest.complete ? null : theme.colorScheme.error,
+      leading: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Checkbox(
+            value: selected,
+            onChanged: (value) => onSelected(value ?? false),
+          ),
+          Icon(
+            !manifest.complete
+                ? LucideIcons.triangleAlert
+                : manifest.encrypted
+                ? LucideIcons.lock
+                : LucideIcons.archive,
+            color: manifest.complete ? null : theme.colorScheme.error,
+          ),
+        ],
       ),
       title: Text(
         '${DateFormat.yMMMd().add_Hm().format(taken)} '

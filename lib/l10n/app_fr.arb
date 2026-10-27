@@ -1829,6 +1829,19 @@
   },
   "backupDeleteTitle": "Supprimer cette sauvegarde ?",
   "backupDeleteBody": "{id} disparaît avec tout son contenu, et rien d'autre n'en garde de copie.",
+  "backupPrune": "Supprimer les anciennes sauvegardes",
+  "backupPruneTitle": "Supprimer les sauvegardes de plus de",
+  "backupPruneDays": "{count, plural, =1{1 jour} other{{count} jours}}",
+  "backupPruneYear": "1 an",
+  "backupPruneCustom": "Jours",
+  "backupPrunePreview": "{count, plural, =1{1 sauvegarde} other{{count} sauvegardes}}, {kilobytes} ko. La sauvegarde complète la plus récente est toujours conservée.",
+  "backupPruneNothing": "Aucune sauvegarde n'est aussi ancienne, hormis la plus récente complète.",
+  "backupSelected": "{count} sélectionnée(s)",
+  "backupSelectAll": "Tout sélectionner",
+  "backupDownloadSelected": "Télécharger",
+  "backupDeleteManyTitle": "{count, plural, =1{Supprimer 1 sauvegarde ?} other{Supprimer {count} sauvegardes ?}}",
+  "backupDeleteManyBody": "{kilobytes} ko disparaissent, et aucune copie n'existe ailleurs.",
+  "backupsDeleted": "{deleted} supprimée(s), {failed} en échec",
   "@backupDeleteBody": {
     "placeholders": {
       "id": {
