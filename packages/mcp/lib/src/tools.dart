@@ -110,6 +110,7 @@ const List<String> _writeToolNames = [
   'create_liability',
   'create_backup',
   'delete_backup',
+  'delete_backups',
   'restore_backup',
 ];
 
@@ -3974,6 +3975,114 @@ List<McpTool> buildTools({
         if (await service.read(id) == null) return _notFound('No backup $id');
         await service.delete(id);
         return {'ok': true, 'backup_id': id, 'deleted': true};
+      },
+    ),
+    McpTool(
+      name: 'delete_backups',
+      writes: true,
+      description:
+          'Remove several backups at once: the ones named in backup_ids, or '
+          'every one taken more than older_than_days ago. A dry run by '
+          'default, answering what would go and how much space it frees; pass '
+          'dry_run:false to delete. An age-based prune never takes the newest '
+          'keep_latest complete backups, so it cannot leave nothing to restore '
+          'from. Each id is answered on its own, deleted, not_found or failed. '
+          'There is no undoing this and no copy elsewhere.',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'backup_ids': {
+            'type': 'array',
+            'items': {'type': 'string'},
+            'minItems': 1,
+          },
+          'older_than_days': {
+            'type': 'integer',
+            'minimum': 0,
+            'description': 'Age from when each backup was taken.',
+          },
+          'keep_latest': {
+            'type': 'integer',
+            'minimum': 0,
+            'default': 1,
+            'description':
+                'Newest complete backups an age-based prune leaves alone.',
+          },
+          'dry_run': {'type': 'boolean', 'default': true},
+        },
+      },
+      run: (args) async {
+        final service = backupService();
+        if (service == null) return _backupsUnavailable();
+        final named = args['backup_ids'];
+        final days = args['older_than_days'];
+        if ((named == null) == (days == null)) {
+          return _badInput('pass exactly one of backup_ids or older_than_days');
+        }
+        if (named != null && (named is! List || named.isEmpty)) {
+          return _badInput('backup_ids must be a non-empty array');
+        }
+        if (days != null && (days is! int || days < 0)) {
+          return _badInput('older_than_days must be a whole number of days');
+        }
+        final keepLatest = args['keep_latest'] ?? 1;
+        if (keepLatest is! int || keepLatest < 0) {
+          return _badInput('keep_latest must be a whole number');
+        }
+        final dryRun = args['dry_run'] ?? true;
+        if (dryRun is! bool) return _badInput('dry_run must be a boolean');
+
+        final manifests = await service.list();
+        final List<String> ids;
+        if (named != null) {
+          ids = [for (final id in named as List) '$id'.trim()];
+        } else {
+          ids = [
+            for (final manifest in backupsTakenBefore(
+              manifests,
+              DateTime.now().subtract(Duration(days: days as int)),
+              keepLatest: keepLatest,
+            ))
+              manifest.id,
+          ];
+        }
+        final byId = {for (final manifest in manifests) manifest.id: manifest};
+        final results = dryRun
+            ? {
+                for (final id in ids)
+                  id: byId.containsKey(id) ? null : BackupDeletion.notFound,
+              }
+            : await service.deleteAll(ids);
+        final statuses = {
+          for (final id in ids)
+            id: switch (results[id]) {
+              null => 'would_delete',
+              BackupDeletion.deleted => 'deleted',
+              BackupDeletion.notFound => 'not_found',
+              BackupDeletion.failed => 'failed',
+            },
+        };
+        final failed = statuses.values.where((s) => s == 'failed').length;
+        final gone = [
+          for (final id in ids)
+            if (statuses[id] case 'deleted' || 'would_delete') byId[id]!,
+        ];
+        return {
+          'ok': failed == 0,
+          if (failed > 0) 'code': 'partial_failure',
+          'dry_run': dryRun,
+          'count': gone.length,
+          'total_bytes': gone.fold<int>(0, (sum, m) => sum + m.totalBytes),
+          'backups': [
+            for (final id in ids)
+              {
+                'backup_id': id,
+                'status': statuses[id],
+                if (byId[id] != null) 'taken_at': byId[id]!.takenAtStamp,
+                if (byId[id] != null) 'bytes': byId[id]!.totalBytes,
+              },
+          ],
+        };
       },
     ),
     McpTool(

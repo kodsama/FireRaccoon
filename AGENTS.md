@@ -50,7 +50,7 @@ See `docs/adr/0002-local-vs-server-mode.md` and `docs/deployment.md`.
 
 Accounts, transactions, budgets, budget limits, categories, tags, bills, piggy
 banks, recurrences, currencies, reconciliation, and the on-device projection:
-68 tools, 36 of them write-gated. The rich account prognosis behind the UI is
+69 tools, 37 of them write-gated. The rich account prognosis behind the UI is
 the one engine capability with no tool
 (`docs/adr/0001-projection-vs-prognosis.md`). `get_capabilities` returns the
 live catalog and the write-gated names a `viewer` key is refused. Domain terms
@@ -78,6 +78,7 @@ live in `CONTEXT.md`.
 | `list_backups` | Backups this FireRaccoon holds, newest first |
 | `get_backup` | One backup's manifest, or a file inside it |
 | `delete_backup` | Remove one backup and everything in it |
+| `delete_backups` | Remove several backups by id or by age; dry run by default, never the newest complete one by age, answered per id |
 | `verify_backup` | Check a backup opens and matches its manifest, then report how the ledger has drifted from it; writes nothing |
 | `restore_backup` | Plan or apply putting a backup back; dry run by default, takes a fresh backup before it writes, refuses another user's ledger |
 | `find_incomplete_transactions` | Transactions missing a description, category, budget, tags, payee, notes or piggy bank |

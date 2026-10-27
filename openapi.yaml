@@ -1307,6 +1307,7 @@ x-mcp:
       - create_liability
       - create_backup
       - delete_backup
+      - delete_backups
       - restore_backup
   tools:
     get_capabilities:
@@ -1426,6 +1427,12 @@ x-mcp:
     delete_backup:
       description: Remove one backup and everything in it
       required: [backup_id]
+    delete_backups:
+      description: >
+        Remove several backups, named by backup_ids or taken more than
+        older_than_days ago. Dry run unless dry_run is false; an age-based
+        prune keeps the newest keep_latest complete backups (default 1). Each
+        id is answered deleted, not_found or failed.
     verify_backup:
       description: >
         Check a backup is still what its manifest describes (parts present,

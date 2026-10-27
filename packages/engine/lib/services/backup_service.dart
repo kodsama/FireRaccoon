@@ -323,6 +323,28 @@ class BackupIntegrity {
   };
 }
 
+/// What became of one backup in a batch delete.
+enum BackupDeletion { deleted, notFound, failed }
+
+/// The backups among [newestFirst] taken before [cutoff], leaving out the
+/// newest [keepLatest] complete ones whatever their age, so pruning by age can
+/// never leave nothing to restore from.
+List<BackupManifest> backupsTakenBefore(
+  List<BackupManifest> newestFirst,
+  DateTime cutoff, {
+  int keepLatest = 1,
+}) {
+  final kept = newestFirst
+      .where((manifest) => manifest.complete)
+      .take(keepLatest)
+      .toSet();
+  return [
+    for (final manifest in newestFirst)
+      if (manifest.takenAt.isBefore(cutoff) && !kept.contains(manifest))
+        manifest,
+  ];
+}
+
 /// Where backups are kept.
 ///
 /// Deliberately files rather than one blob: the parts are read back one at a
@@ -542,6 +564,43 @@ class BackupService {
   }
 
   Future<void> delete(String backupId) => _store.deleteBackup(backupId);
+
+  /// Deletes each of [backupIds], answering per id so one failure in a batch
+  /// is visible rather than sinking or hiding the rest.
+  Future<Map<String, BackupDeletion>> deleteAll(
+    Iterable<String> backupIds,
+  ) async {
+    final results = <String, BackupDeletion>{};
+    for (final id in backupIds) {
+      if (await read(id) == null) {
+        results[id] = BackupDeletion.notFound;
+        continue;
+      }
+      try {
+        await delete(id);
+        results[id] = BackupDeletion.deleted;
+      } on Object {
+        results[id] = BackupDeletion.failed;
+      }
+    }
+    return results;
+  }
+
+  /// Every file of a backup as it is stored, sealed parts still sealed, keyed
+  /// by its name inside the backup. Empty when there is no such backup.
+  Future<Map<String, List<int>>> storedFiles(String backupId) async {
+    final manifest = await read(backupId);
+    if (manifest == null) return const {};
+    final files = <String, List<int>>{};
+    for (final name in [
+      kBackupManifestFile,
+      for (final entry in manifest.entries) entry.name,
+    ]) {
+      final bytes = await _store.get(backupId, name);
+      if (bytes != null) files[name] = bytes;
+    }
+    return files;
+  }
 
   /// Whether a backup is still the backup its manifest describes.
   ///

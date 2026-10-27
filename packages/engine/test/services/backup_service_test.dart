@@ -89,6 +89,62 @@ MockClient _ledger({
 }
 
 void main() {
+  group('pruning', () {
+    final cutoff = DateTime.utc(2026, 9, 1);
+    final recent = _manifest('c', DateTime.utc(2026, 10, 1));
+    final old = _manifest('b', DateTime.utc(2026, 6, 1));
+    final older = _manifest('a', DateTime.utc(2026, 1, 1));
+
+    test('takes the backups from before the cutoff', () {
+      expect(backupsTakenBefore([recent, old, older], cutoff), [old, older]);
+    });
+
+    test('never takes the newest complete backup, however old', () {
+      // Every backup is past the cutoff, and a prune that took them all would
+      // leave nothing to restore from.
+      expect(backupsTakenBefore([old, older], cutoff), [older]);
+    });
+
+    test('an incomplete backup does not count as the one kept', () {
+      final broken = _manifest('d', DateTime.utc(2026, 8, 1), complete: false);
+      expect(backupsTakenBefore([broken, old, older], cutoff), [broken, older]);
+    });
+
+    test('keepLatest zero keeps nothing back', () {
+      expect(backupsTakenBefore([old, older], cutoff, keepLatest: 0), [
+        old,
+        older,
+      ]);
+    });
+  });
+
+  group('deleting several', () {
+    test('answers per id, an unknown one included', () async {
+      final store = _MemoryBackupStore();
+      _keep(store, _manifest('a', DateTime.utc(2026, 1, 1)));
+      final service = BackupService(_serviceWith(_ledger()), store);
+
+      final results = await service.deleteAll(['a', 'missing']);
+
+      expect(results, {
+        'a': BackupDeletion.deleted,
+        'missing': BackupDeletion.notFound,
+      });
+      expect(store.backups, isEmpty);
+    });
+
+    test('stored files are the manifest and every part as written', () async {
+      final store = _MemoryBackupStore();
+      _keep(store, _manifest('a', DateTime.utc(2026, 1, 1)));
+      final service = BackupService(_serviceWith(_ledger()), store);
+
+      final files = await service.storedFiles('a');
+
+      expect(files.keys, [kBackupManifestFile, kBackupSnapshotFile]);
+      expect(await service.storedFiles('missing'), isEmpty);
+    });
+  });
+
   group('naming', () {
     test('an id carries the date, the time and the offset', () {
       final id = backupIdFor(DateTime(2026, 9, 1, 22, 27, 36));
@@ -853,4 +909,28 @@ void main() {
       expect(check.manifest, isNull);
     });
   });
+}
+
+BackupManifest _manifest(String id, DateTime takenAt, {bool complete = true}) =>
+    BackupManifest(
+      id: id,
+      takenAt: takenAt,
+      timeZoneName: 'UTC',
+      timeZoneOffset: Duration.zero,
+      counts: const {},
+      entries: [
+        BackupEntry(
+          name: kBackupSnapshotFile,
+          bytes: 2,
+          error: complete ? null : 'never written',
+        ),
+      ],
+      covers: const [],
+      excludes: const [],
+    );
+
+void _keep(_MemoryBackupStore store, BackupManifest manifest) {
+  store
+    ..put(manifest.id, kBackupManifestFile, utf8.encode(jsonEncode(manifest)))
+    ..put(manifest.id, kBackupSnapshotFile, utf8.encode('{}'));
 }

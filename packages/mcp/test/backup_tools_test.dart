@@ -248,6 +248,76 @@ void main() {
       expect(Directory('${root.path}/$id').existsSync(), isFalse);
     });
 
+    group('delete_backups', () {
+      late MockClient client;
+      late List<String> ids;
+
+      setUp(() async {
+        client = fireflyMockClient();
+        final create = _tool('create_backup', client: client, backups: store);
+        ids = [
+          for (var i = 0; i < 2; i++)
+            (await create.run({}))['backup_id']! as String,
+        ];
+      });
+
+      McpTool tool() => _tool('delete_backups', client: client, backups: store);
+
+      test('is a dry run unless told otherwise', () async {
+        final result = await tool().run({'backup_ids': ids});
+
+        expect(result['dry_run'], isTrue);
+        expect(result['count'], 2);
+        expect(result['total_bytes'], greaterThan(0));
+        expect(
+          (result['backups']! as List).map((b) => (b as Map)['status']),
+          everyElement('would_delete'),
+        );
+        expect(Directory('${root.path}/${ids.first}').existsSync(), isTrue);
+      });
+
+      test('answers each id, an unknown one included', () async {
+        final result = await tool().run({
+          'backup_ids': [ids.first, 'nope'],
+          'dry_run': false,
+        });
+
+        expect(result['ok'], isTrue);
+        expect(result['count'], 1);
+        expect((result['backups']! as List).map((b) => (b as Map)['status']), [
+          'deleted',
+          'not_found',
+        ]);
+        expect(Directory('${root.path}/${ids.first}').existsSync(), isFalse);
+        expect(Directory('${root.path}/${ids.last}').existsSync(), isTrue);
+      });
+
+      test('a prune by age keeps the newest complete backup', () async {
+        final result = await tool().run({
+          'older_than_days': 0,
+          'dry_run': false,
+        });
+
+        final listed =
+            (await _tool(
+                  'list_backups',
+                  client: client,
+                  backups: store,
+                ).run({}))['backups']!
+                as List;
+        expect(result['count'], 1);
+        expect(listed, hasLength(1));
+      });
+
+      test('takes exactly one of backup_ids or older_than_days', () async {
+        expect((await tool().run({}))['code'], 'bad_input');
+        expect(
+          (await tool().run({'backup_ids': ids, 'older_than_days': 3}))['code'],
+          'bad_input',
+        );
+      });
+    });
+
     test(
       'every backup tool refuses when there is nowhere to keep one',
       () async {
@@ -257,6 +327,7 @@ void main() {
           'list_backups',
           'get_backup',
           'delete_backup',
+          'delete_backups',
         ]) {
           final result = await _tool(
             name,
@@ -274,7 +345,14 @@ void main() {
           if (tool.writes) tool.name,
       ];
 
-      expect(names, containsAll(<String>['create_backup', 'delete_backup']));
+      expect(
+        names,
+        containsAll(<String>[
+          'create_backup',
+          'delete_backup',
+          'delete_backups',
+        ]),
+      );
       expect(names, isNot(contains('list_backups')));
       expect(names, isNot(contains('get_backup')));
     });
