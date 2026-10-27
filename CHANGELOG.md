@@ -9,16 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-### - `check_connection` and the `backend` block of `get_capabilities` report
-
+- `check_connection` and the `backend` block of `get_capabilities` report
   `latency_ms`, the round trip of the API request they already make, beside
   `request_timeout_ms`, the ceiling a request is held to, and `via`,
   `direct` or `proxy_session`. Behind a sign-in gateway FireRaccoon is the
   only client that reaches Firefly, so a probe from outside times the
   gateway instead
 
-### - `create_recurrence` and `update_recurrence` take `splits`, one item per
-
+- `create_recurrence` and `update_recurrence` take `splits`, one item per
   leg, so a loan payment can be one rule that pays principal to the
   liability and interest to the lender. Rows written ahead from such a rule
   are one group carrying every leg, and match the one bank row it pays out
@@ -43,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `update_recurrence` read only the first line of a rule, so any change to
   a rule of several lines wrote it back as one and the rest were lost. Every
   stored leg is kept now, and one `amount` on such a rule is refused
+
+- Saving a recurrence of several lines from its edit dialog, which shows
+  the first line only, deleted the others. They are sent back as stored
 
 ## [0.15.1] - 2026-09-29
 
