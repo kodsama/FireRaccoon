@@ -110,6 +110,7 @@ const List<String> _writeToolNames = [
   'create_liability',
   'create_backup',
   'delete_backup',
+  'delete_backups',
   'restore_backup',
 ];
 
@@ -842,29 +843,6 @@ Map<String, Object?> _releasedArgs(Map<String, Object?> args) {
     released['reconciled'] = false;
   }
   return released;
-}
-
-/// [saved] with each leg carrying the flag the same leg had on [before],
-/// matched by journal id, or by position for a leg that has none.
-Transaction _withReconciledFrom(Transaction saved, Transaction before) {
-  final priorLegs = before.resolvedSplits();
-  final byJournal = {
-    for (final leg in priorLegs) ?leg.journalId: leg.reconciled,
-  };
-  final legs = [
-    for (final (index, leg) in saved.resolvedSplits().indexed)
-      leg.copyWith(
-        reconciled:
-            byJournal[leg.journalId] ??
-            (index < priorLegs.length
-                ? priorLegs[index].reconciled
-                : before.reconciled),
-      ),
-  ];
-  return saved.copyWith(
-    reconciled: legs.first.reconciled,
-    splits: saved.splits.isEmpty ? null : legs,
-  );
 }
 
 bool _reconciledFlagsDiffer(Transaction a, Transaction b) {
@@ -1774,6 +1752,36 @@ Map<String, Object?> _recurrenceFieldSchema() => {
     'type': 'array',
     'items': {'type': 'string'},
   },
+  'splits': {
+    'type': 'array',
+    'minItems': 1,
+    'description':
+        'The legs of the rule, every one of them, for a rule that pays out '
+        'as one group of several lines. Each leg takes what it states and '
+        'falls back to the top-level field, except amount, foreign_amount and '
+        'description, which each leg states itself; the top-level description '
+        'then describes the rule.',
+    'items': {
+      'type': 'object',
+      'required': ['amount', 'description'],
+      'properties': {
+        'description': {'type': 'string'},
+        'amount': {'type': 'number', 'exclusiveMinimum': 0},
+        'foreign_amount': {'type': 'number', 'exclusiveMinimum': 0},
+        'foreign_currency_code': {'type': 'string'},
+        'currency_code': {'type': 'string'},
+        'source_id': {'type': 'string'},
+        'destination_id': {'type': 'string'},
+        'category_id': {'type': 'string'},
+        'budget_id': {'type': 'string'},
+        'bill_id': {'type': 'string'},
+        'tags': {
+          'type': 'array',
+          'items': {'type': 'string'},
+        },
+      },
+    },
+  },
 };
 
 /// How far ahead a recurrence's own rows are looked for.
@@ -1810,45 +1818,36 @@ Transaction _rowFromRecurrence(
   Recurrence recurrence, {
   DateTime? date,
 }) {
-  final line = recurrence.primaryTransaction!;
-  return Transaction(
-    id: row.id,
-    journalId: row.journalId,
-    type: recurrence.type.apiValue,
-    date: date ?? row.date,
-    amount: line.amount,
-    description: line.description,
-    sourceName: line.sourceName ?? '',
-    destinationName: line.destinationName ?? '',
-    categoryName: line.categoryName ?? '',
-    currencySymbol: row.currencySymbol,
-    currencyCode: line.currencyCode,
-    foreignAmount: line.foreignAmount,
-    foreignCurrencyCode: line.foreignCurrencyCode,
-    sourceId: line.sourceId,
-    destinationId: line.destinationId,
-    categoryId: line.categoryId,
-    budgetId: line.budgetId,
-    budgetName: line.budgetName,
-    notes: writeAheadMarkerFor(recurrence.id),
-    tags: line.tags,
-    billId: line.billId,
-    billName: line.billName,
-    // Firefly keeps what it has when a field is merely absent, so a rule that
-    // dropped its budget has to say so.
-    clearedFields: {
-      if (line.categoryId == null && (line.categoryName ?? '').isEmpty) ...[
-        'category_id',
-        'category_name',
-      ],
-      if (line.budgetId == null && (line.budgetName ?? '').isEmpty) ...[
-        'budget_id',
-        'budget_name',
-      ],
-      if (line.billId == null) 'bill_id',
-      if (line.tags.isEmpty) 'tags',
-    },
-  );
+  final planned = writeAheadTransaction(recurrence, date ?? row.date);
+  final rowLegs = row.resolvedSplits();
+  // Legs pair with the row's journals by position. Firefly deletes a journal
+  // the update leaves out and creates one it has no id for, so a rule that
+  // gained or lost a line reshapes the row to match.
+  final legs = [
+    for (final (index, leg) in planned.resolvedSplits().indexed)
+      leg.copyWith(
+        id: row.id,
+        journalId: index < rowLegs.length ? rowLegs[index].journalId : null,
+        currencySymbol: row.currencySymbol,
+        // Firefly keeps what it has when a field is merely absent, so a rule
+        // that dropped its budget has to say so.
+        clearedFields: {
+          if (leg.categoryId == null && leg.categoryName.isEmpty) ...[
+            'category_id',
+            'category_name',
+          ],
+          if (leg.budgetId == null && (leg.budgetName ?? '').isEmpty) ...[
+            'budget_id',
+            'budget_name',
+          ],
+          if (leg.billId == null) 'bill_id',
+          if (leg.tags.isEmpty) 'tags',
+        },
+      ),
+  ];
+  return legs.length == 1
+      ? legs.single
+      : legs.first.copyWith(splits: legs, groupTitle: recurrence.title);
 }
 
 /// What a recurrence write did, or could have done, to the rows it had already
@@ -1899,6 +1898,128 @@ String? _mergedText(Map<String, Object?> args, String key, String? stored) {
   return (args[key] as String?)?.trim();
 }
 
+/// The lines of the rule, one per leg.
+///
+/// `splits` restates every leg: each takes what it states, then the top-level
+/// field. Without it the legs are the stored ones, or one new leg, and a
+/// top-level field reaches every leg over what it had stored. An amount or a
+/// line description only ever belongs to one leg, so they reach the legs from
+/// the top level only on a rule of one.
+Future<List<RecurrenceTransactionInput>> _recurrenceLegs(
+  Map<String, Object?> args,
+  FireflyService api, {
+  Recurrence? current,
+}) async {
+  final stored = current?.transactions ?? const <RecurrenceTransactionLine>[];
+  final splits = args['splits'];
+  final List<Map<String, Object?>> own;
+  final List<RecurrenceTransactionLine?> bases;
+  if (splits != null) {
+    if (splits is! List || splits.isEmpty) {
+      throw ArgumentError('splits must be a non-empty array');
+    }
+    for (final key in const ['amount', 'foreign_amount']) {
+      if (args.containsKey(key)) {
+        throw ArgumentError('$key goes on each leg in splits, not beside them');
+      }
+    }
+    own = [
+      for (final (index, leg) in splits.indexed)
+        if (leg is Map<String, Object?>)
+          leg
+        else
+          throw ArgumentError('splits[$index] must be an object'),
+    ];
+    bases = List.filled(own.length, null);
+  } else {
+    if (stored.length > 1) {
+      for (final key in const ['amount', 'foreign_amount']) {
+        if (args.containsKey(key)) {
+          throw ArgumentError(
+            'This rule has ${stored.length} legs and one $key does not say '
+            'how to divide it. Pass splits to restate the legs.',
+          );
+        }
+      }
+    }
+    bases = stored.isEmpty ? [null] : stored;
+    own = [for (final _ in bases) const {}];
+  }
+  final single = splits == null && bases.length == 1;
+  // Firefly pairs submitted legs with stored ones by id, and drops every
+  // update when any leg on either side is left unpaired. Ids go out only when
+  // the counts match; otherwise none do, and it replaces the lines whole.
+  final keepIds = own.length == stored.length;
+
+  String? primary;
+  final legs = <RecurrenceTransactionInput>[];
+  for (final (index, leg) in own.indexed) {
+    final base = bases[index];
+    final label = splits == null ? '' : 'splits[$index].';
+    bool has(String key) =>
+        leg.containsKey(key) ||
+        (args.containsKey(key) &&
+            (single ||
+                !const {
+                  'amount',
+                  'foreign_amount',
+                  'description',
+                }.contains(key)));
+    Object? read(String key) => leg.containsKey(key) ? leg[key] : args[key];
+    String? text(String key, String? storedValue) =>
+        has(key) ? (read(key) as String?)?.trim() : storedValue;
+
+    final amount = has('amount')
+        ? (read('amount') as num?)?.toDouble()
+        : base?.amount;
+    if (amount == null || amount <= 0) {
+      throw ArgumentError('${label}amount must be greater than zero');
+    }
+    final description = text('description', base?.description);
+    if (description == null || description.isEmpty) {
+      throw ArgumentError('${label}description is required');
+    }
+    final sourceId = text('source_id', base?.sourceId);
+    if (sourceId == null || sourceId.isEmpty) {
+      throw ArgumentError('${label}source_id is required');
+    }
+    final destinationId = text('destination_id', base?.destinationId);
+    if (destinationId == null || destinationId.isEmpty) {
+      throw ArgumentError('${label}destination_id is required');
+    }
+    var currency = text('currency_code', base?.currencyCode);
+    if (currency == null || currency.isEmpty) {
+      currency = primary ??= (await api.getPrimaryCurrency()).code;
+    }
+    legs.add(
+      RecurrenceTransactionInput(
+        id: keepIds ? stored[index].id : null,
+        description: description,
+        amount: amount,
+        currencyCode: currency,
+        foreignAmount: has('foreign_amount')
+            ? (read('foreign_amount') as num?)?.toDouble()
+            : base?.foreignAmount,
+        foreignCurrencyCode: text(
+          'foreign_currency_code',
+          base?.foreignCurrencyCode,
+        ),
+        sourceId: sourceId,
+        destinationId: destinationId,
+        budgetId: has('budget_id')
+            ? read('budget_id') as String?
+            : base?.budgetId,
+        categoryId: has('category_id')
+            ? read('category_id') as String?
+            : base?.categoryId,
+        billId: has('bill_id') ? read('bill_id') as String? : base?.billId,
+        tags: has('tags') ? _strList(read('tags')) : base?.tags ?? const [],
+      ),
+    );
+  }
+  return legs;
+}
+
 /// Builds the complete rule Firefly wants from the arguments and, on an update,
 /// from [current].
 ///
@@ -1910,7 +2031,6 @@ Future<RecurrenceInput> _recurrenceInput(
   FireflyService api, {
   Recurrence? current,
 }) async {
-  final storedLine = current?.primaryTransaction;
   final storedRepetition = current?.primaryRepetition;
 
   final title = _mergedText(args, 'title', current?.title);
@@ -1918,37 +2038,7 @@ Future<RecurrenceInput> _recurrenceInput(
   final firstDate =
       _optionalDate(args['first_date'], 'first_date') ?? current?.firstDate;
   if (firstDate == null) throw ArgumentError('first_date is required');
-  final amount = (args['amount'] as num?)?.toDouble() ?? storedLine?.amount;
-  if (amount == null || amount <= 0) {
-    throw ArgumentError('amount must be greater than zero');
-  }
-  final lineDescription = _mergedText(
-    args,
-    'description',
-    storedLine?.description,
-  );
-  if (lineDescription == null || lineDescription.isEmpty) {
-    throw ArgumentError('description is required');
-  }
-  final sourceId = _mergedText(args, 'source_id', storedLine?.sourceId);
-  final destinationId = _mergedText(
-    args,
-    'destination_id',
-    storedLine?.destinationId,
-  );
-  if (sourceId == null || sourceId.isEmpty) {
-    throw ArgumentError('source_id is required');
-  }
-  if (destinationId == null || destinationId.isEmpty) {
-    throw ArgumentError('destination_id is required');
-  }
-  var currency = _mergedText(args, 'currency_code', storedLine?.currencyCode);
-  if (currency == null || currency.isEmpty) {
-    currency = (await api.getPrimaryCurrency()).code;
-  }
-  final foreignAmount = args.containsKey('foreign_amount')
-      ? (args['foreign_amount'] as num?)?.toDouble()
-      : storedLine?.foreignAmount;
+  final transactions = await _recurrenceLegs(args, api, current: current);
 
   var notes = args.containsKey('notes')
       ? args['notes'] as String?
@@ -2019,34 +2109,7 @@ Future<RecurrenceInput> _recurrenceInput(
             : storedRepetition?.weekend ?? RecurrenceWeekendMode.createAnyway,
       ),
     ],
-    transactions: [
-      RecurrenceTransactionInput(
-        id: storedLine?.id,
-        description: lineDescription,
-        amount: amount,
-        currencyCode: currency,
-        foreignAmount: foreignAmount,
-        foreignCurrencyCode: _mergedText(
-          args,
-          'foreign_currency_code',
-          storedLine?.foreignCurrencyCode,
-        ),
-        sourceId: sourceId,
-        destinationId: destinationId,
-        budgetId: args.containsKey('budget_id')
-            ? args['budget_id'] as String?
-            : storedLine?.budgetId,
-        categoryId: args.containsKey('category_id')
-            ? args['category_id'] as String?
-            : storedLine?.categoryId,
-        billId: args.containsKey('bill_id')
-            ? args['bill_id'] as String?
-            : storedLine?.billId,
-        tags: args.containsKey('tags')
-            ? _strList(args['tags'])
-            : storedLine?.tags ?? const [],
-      ),
-    ],
+    transactions: transactions,
   );
 }
 
@@ -2250,7 +2313,12 @@ List<McpTool> buildTools({
     final url = target.normalizedBaseUrl;
     final client = httpClient ?? http.Client();
     try {
+      // Timed here because only FireRaccoon gets past a sign-in gateway: a
+      // probe from outside meets the gateway's fast redirect and reports a
+      // healthy round trip while Firefly is never touched.
+      final clock = Stopwatch()..start();
       final about = await fetch(client, '/api/v1/about');
+      clock.stop();
       if (about == null) {
         return {
           'configured': true,
@@ -2290,6 +2358,23 @@ List<McpTool> buildTools({
           'reason': 'Firefly III at $url answered ${about.statusCode}.',
         };
       }
+      // A sign-in gateway answers /about with its login page and a 200. Taking
+      // that for Firefly reported a healthy backend while every data call
+      // failed, so the version /about owes is the proof the API answered.
+      final page = isWebPage(about);
+      final version = _aboutJson(about.body);
+      if (page || version['firefly_version'] == null) {
+        return {
+          'configured': true,
+          'connected': true,
+          'authorized': false,
+          'url': url,
+          'reason': page
+              ? webPageReason(Uri.parse(url).origin)
+              : '$url answered /api/v1/about without a Firefly III version, '
+                    'so it is not the Firefly III API.',
+        };
+      }
       // Both are extra colour on a connection already proved by /about, so a
       // refusal here narrows what is reported rather than sinking the whole
       // status: /api/v1/users is owner-only and 403s for everybody else.
@@ -2300,7 +2385,10 @@ List<McpTool> buildTools({
         'connected': true,
         'authorized': true,
         'url': url,
-        ..._aboutJson(about.body),
+        ...version,
+        'latency_ms': clock.elapsedMilliseconds,
+        'request_timeout_ms': kFireflyRequestTimeout.inMilliseconds,
+        'via': target.proxyCookie == null ? 'direct' : 'proxy_session',
         'user': _currentUserJson(user),
         'user_count': _userCount(users),
       };
@@ -3556,7 +3644,7 @@ List<McpTool> buildTools({
         final ignored = <String>[];
         if (releasing) {
           steps.addAll(['released', 'changed']);
-          final restored = _withReconciledFrom(saved, existing);
+          final restored = saved.withReconciledFrom(existing);
           try {
             saved = await api.updateTransaction(restored);
           } on Object catch (error) {
@@ -3887,6 +3975,114 @@ List<McpTool> buildTools({
         if (await service.read(id) == null) return _notFound('No backup $id');
         await service.delete(id);
         return {'ok': true, 'backup_id': id, 'deleted': true};
+      },
+    ),
+    McpTool(
+      name: 'delete_backups',
+      writes: true,
+      description:
+          'Remove several backups at once: the ones named in backup_ids, or '
+          'every one taken more than older_than_days ago. A dry run by '
+          'default, answering what would go and how much space it frees; pass '
+          'dry_run:false to delete. An age-based prune never takes the newest '
+          'keep_latest complete backups, so it cannot leave nothing to restore '
+          'from. Each id is answered on its own, deleted, not_found or failed. '
+          'There is no undoing this and no copy elsewhere.',
+      inputSchema: {
+        'type': 'object',
+        'properties': {
+          'backup_ids': {
+            'type': 'array',
+            'items': {'type': 'string'},
+            'minItems': 1,
+          },
+          'older_than_days': {
+            'type': 'integer',
+            'minimum': 0,
+            'description': 'Age from when each backup was taken.',
+          },
+          'keep_latest': {
+            'type': 'integer',
+            'minimum': 0,
+            'default': 1,
+            'description':
+                'Newest complete backups an age-based prune leaves alone.',
+          },
+          'dry_run': {'type': 'boolean', 'default': true},
+        },
+      },
+      run: (args) async {
+        final service = backupService();
+        if (service == null) return _backupsUnavailable();
+        final named = args['backup_ids'];
+        final days = args['older_than_days'];
+        if ((named == null) == (days == null)) {
+          return _badInput('pass exactly one of backup_ids or older_than_days');
+        }
+        if (named != null && (named is! List || named.isEmpty)) {
+          return _badInput('backup_ids must be a non-empty array');
+        }
+        if (days != null && (days is! int || days < 0)) {
+          return _badInput('older_than_days must be a whole number of days');
+        }
+        final keepLatest = args['keep_latest'] ?? 1;
+        if (keepLatest is! int || keepLatest < 0) {
+          return _badInput('keep_latest must be a whole number');
+        }
+        final dryRun = args['dry_run'] ?? true;
+        if (dryRun is! bool) return _badInput('dry_run must be a boolean');
+
+        final manifests = await service.list();
+        final List<String> ids;
+        if (named != null) {
+          ids = [for (final id in named as List) '$id'.trim()];
+        } else {
+          ids = [
+            for (final manifest in backupsTakenBefore(
+              manifests,
+              DateTime.now().subtract(Duration(days: days as int)),
+              keepLatest: keepLatest,
+            ))
+              manifest.id,
+          ];
+        }
+        final byId = {for (final manifest in manifests) manifest.id: manifest};
+        final results = dryRun
+            ? {
+                for (final id in ids)
+                  id: byId.containsKey(id) ? null : BackupDeletion.notFound,
+              }
+            : await service.deleteAll(ids);
+        final statuses = {
+          for (final id in ids)
+            id: switch (results[id]) {
+              null => 'would_delete',
+              BackupDeletion.deleted => 'deleted',
+              BackupDeletion.notFound => 'not_found',
+              BackupDeletion.failed => 'failed',
+            },
+        };
+        final failed = statuses.values.where((s) => s == 'failed').length;
+        final gone = [
+          for (final id in ids)
+            if (statuses[id] case 'deleted' || 'would_delete') byId[id]!,
+        ];
+        return {
+          'ok': failed == 0,
+          if (failed > 0) 'code': 'partial_failure',
+          'dry_run': dryRun,
+          'count': gone.length,
+          'total_bytes': gone.fold<int>(0, (sum, m) => sum + m.totalBytes),
+          'backups': [
+            for (final id in ids)
+              {
+                'backup_id': id,
+                'status': statuses[id],
+                if (byId[id] != null) 'taken_at': byId[id]!.takenAtStamp,
+                if (byId[id] != null) 'bytes': byId[id]!.totalBytes,
+              },
+          ],
+        };
       },
     ),
     McpTool(
@@ -5603,18 +5799,13 @@ List<McpTool> buildTools({
           '"week,weekday" pair, yearly a MM-DD. weekend says what an occurrence '
           'landing on a Saturday or Sunday does, and schedule_rule says a '
           'monthly schedule Firefly cannot state, such as the last banking day '
-          'of the month.',
+          'of the month. One line takes amount, description, source_id and '
+          'destination_id at the top level; a rule of several, such as a loan '
+          'payment split into principal and interest, takes them per leg in '
+          'splits and writes one group a period.',
       inputSchema: {
         'type': 'object',
-        'required': [
-          'title',
-          'first_date',
-          'type',
-          'amount',
-          'description',
-          'source_id',
-          'destination_id',
-        ],
+        'required': ['title', 'first_date', 'type'],
         'properties': _recurrenceFieldSchema(),
       },
       run: (args) async {
@@ -5639,7 +5830,9 @@ List<McpTool> buildTools({
           'FireRaccoon has already written ahead from this rule, each with '
           'the date it would move to if the schedule changed. They keep the '
           'old values and dates unless update_future_transactions says '
-          'otherwise.',
+          'otherwise. splits restates every leg of the rule; without it a '
+          'top-level field reaches every stored leg, and amount is refused on '
+          'a rule of several legs.',
       inputSchema: {
         'type': 'object',
         'required': ['recurrence_id'],

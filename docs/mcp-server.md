@@ -108,7 +108,7 @@ The desktop app binds the first free port in 8787–8796 and shows it in Setting
 
 ## Available tools
 
-68 tools, 36 of which write. The two that carry a bank import lead the table and
+69 tools, 37 of which write. The two that carry a bank import lead the table and
 are described under [Importing a statement](#importing-a-statement).
 
 | Tool | Description | Writes |
@@ -116,7 +116,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `find_account` | Resolve raw bank text to an account, one string or a batch, ranked with the reason each candidate matched |  |
 | `match_statement` | Pair statement rows against recorded split legs, with the arithmetic behind every verdict |  |
 | `get_capabilities` | App and server version, tool catalog, the write-gated list, the person behind the presented key, and live backend status |  |
-| `check_connection` | Whether Firefly III is connected, which server, which version, and how many users |  |
+| `check_connection` | Whether Firefly III is connected, which server, which version, how many users, and how long the API took to answer |  |
 | `get_current_user` | Authenticated Firefly user profile |  |
 | `get_primary_currency` | Instance default currency |  |
 | `set_primary_currency` | Change the default currency | yes |
@@ -135,6 +135,7 @@ are described under [Importing a statement](#importing-a-statement).
 | `list_backups` | Backups this FireRaccoon holds, newest first, each stamped in the zone it was taken in |  |
 | `get_backup` | One manifest, or a file inside a backup, truncated at `max_bytes` |  |
 | `delete_backup` | Remove one backup and everything in it | yes |
+| `delete_backups` | Remove several backups by id or by age; dry run by default, never the newest complete one by age, answered per id | yes |
 | `verify_backup` | Check a backup's own files, then how far the ledger has moved from it; an export that was never written is listed under `never_written`, not counted as damage |  |
 | `restore_backup` | Plan or apply putting a backup back, taking a fresh one first | yes |
 | `find_incomplete_transactions` | Transactions missing a description, category, budget, tags, payee, notes or piggy bank |  |
@@ -175,8 +176,8 @@ are described under [Importing a statement](#importing-a-statement).
 | `delete_piggy_bank` | Delete a piggy bank | yes |
 | `get_recurrences` | List recurring rules, each with the amount, accounts, category, budget and tags of the lines it creates |  |
 | `get_recurrence_transactions` | Transactions a recurring rule has created |  |
-| `create_recurrence` | Create a recurring rule; `weekend` says what an occurrence landing on a weekend does | yes |
-| `update_recurrence` | Change a recurring rule; omitted fields keep their stored value, and the answer names the rows written ahead from it | yes |
+| `create_recurrence` | Create a recurring rule, one line or several in `splits`; `weekend` says what an occurrence landing on a weekend does | yes |
+| `update_recurrence` | Change a recurring rule; omitted fields keep their stored value, `splits` restates every leg, and the answer names the rows written ahead from it | yes |
 | `delete_recurrence` | Delete a recurring rule; created transactions are kept unless `delete_future_transactions` says otherwise | yes |
 | `get_currencies` | List currencies and which are enabled |  |
 | `run_projection` | On-device balance forecast |  |
@@ -203,7 +204,7 @@ answers `ok: false` with a `code` and a `remedy`:
 |--------|---------------|
 | `not_connected` | No server is configured. Nobody has finished setting up. |
 | `backend_unreachable` | A server is configured and did not answer. |
-| `backend_unauthorized` | Firefly III answered and refused the token. |
+| `backend_unauthorized` | Firefly III answered and refused the token, or something else answered in its place: a sign-in page, or an `/about` with no version. |
 
 The distinction is worth keeping: an agent told a socket failed retries or
 concludes the ledger is broken, when the real answer is that there is no ledger

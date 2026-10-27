@@ -2357,6 +2357,11 @@ class AppLocalizationsJa extends AppLocalizations {
   String get transactionSaved => '取引を保存しました。';
 
   @override
+  String savedButLeftUnreconciled(String error) {
+    return '保存しましたが、再度照合済みにできませんでした: $error。照合済みにチェックして保存してください。';
+  }
+
+  @override
   String failedToSaveTransaction(String error) {
     return '取引の保存に失敗しました: $error';
   }
@@ -3613,6 +3618,57 @@ class AppLocalizationsJa extends AppLocalizations {
   @override
   String backupDeleteBody(String id) {
     return '$id は中身ごと消え、ほかに写しはありません。';
+  }
+
+  @override
+  String get backupPrune => '古いバックアップを削除';
+
+  @override
+  String get backupPruneTitle => '次より古いバックアップを削除';
+
+  @override
+  String backupPruneDays(int count) {
+    return '$count日';
+  }
+
+  @override
+  String get backupPruneYear => '1年';
+
+  @override
+  String get backupPruneCustom => '日数';
+
+  @override
+  String backupPrunePreview(int count, String kilobytes) {
+    return '$count件のバックアップ、$kilobytes kB。最新の完全なバックアップは常に残ります。';
+  }
+
+  @override
+  String get backupPruneNothing => '最新の完全なバックアップ以外に、それほど古いバックアップはありません。';
+
+  @override
+  String backupSelected(int count) {
+    return '$count件選択';
+  }
+
+  @override
+  String get backupSelectAll => 'すべて選択';
+
+  @override
+  String get backupDownloadSelected => 'ダウンロード';
+
+  @override
+  String backupDeleteManyTitle(int count) {
+    return '$count件のバックアップを削除しますか？';
+  }
+
+  @override
+  String backupDeleteManyBody(String kilobytes) {
+    return '$kilobytes kBが削除され、他にコピーはありません。';
+  }
+
+  @override
+  String backupsDeleted(int deleted, int failed) {
+    return '$deleted件削除、$failed件失敗';
   }
 
   @override

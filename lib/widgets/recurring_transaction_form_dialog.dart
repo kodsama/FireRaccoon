@@ -358,6 +358,25 @@ class _RecurringTransactionFormDialogState
           billId: _billId,
           tags: tags,
         ),
+        // The form edits the first line only. The rest go back as stored, ids
+        // and all: Firefly deletes a stored line the update leaves out.
+        for (final line
+            in widget.recurrence?.transactions.skip(1) ??
+                const <RecurrenceTransactionLine>[])
+          RecurrenceTransactionInput(
+            id: line.id,
+            description: line.description,
+            amount: line.amount,
+            currencyCode: line.currencyCode,
+            foreignAmount: line.foreignAmount,
+            foreignCurrencyCode: line.foreignCurrencyCode,
+            sourceId: line.sourceId ?? '',
+            destinationId: line.destinationId ?? '',
+            budgetId: line.budgetId,
+            categoryId: line.categoryId,
+            billId: line.billId,
+            tags: line.tags,
+          ),
       ],
     );
   }

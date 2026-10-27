@@ -718,6 +718,73 @@ void main() {
       expect(result['url'], fireflyBaseUrl);
     });
 
+    test('a sign-in page in front of Firefly is not authorized', () async {
+      // The gateway answers /about with its login page and a 200. Reporting
+      // that as authorized sent a run on into a backup that could not work.
+      final tool = _tool(
+        'check_connection',
+        client: MockClient(
+          (_) async => http.Response(
+            '<!doctype html><title>Sign in</title>',
+            200,
+            headers: {'content-type': 'text/html; charset=utf-8'},
+          ),
+        ),
+      );
+      final result = await tool.run({});
+      expect(result['ok'], isFalse);
+      expect(result['code'], 'backend_unauthorized');
+      expect(result['connected'], isTrue);
+      expect(result['authorized'], isFalse);
+      expect(result['error'], contains('answered with a web page'));
+    });
+
+    test('an /about with no version is not the Firefly API', () async {
+      final tool = _tool(
+        'check_connection',
+        client: MockClient((_) async => http.Response('{}', 200)),
+      );
+      final result = await tool.run({});
+      expect(result['ok'], isFalse);
+      expect(result['authorized'], isFalse);
+      expect(result['error'], contains('without a Firefly III version'));
+    });
+
+    test(
+      'reports how long /about took and the ceiling it is held to',
+      () async {
+        final firefly = fireflyMockClient();
+        final tool = _tool(
+          'check_connection',
+          client: MockClient((request) async {
+            if (request.url.path == '/api/v1/about') {
+              await Future<void>.delayed(const Duration(milliseconds: 50));
+            }
+            return firefly.get(request.url, headers: request.headers);
+          }),
+        );
+
+        final result = await tool.run({});
+
+        expect(result['latency_ms'], greaterThanOrEqualTo(50));
+        expect(result['request_timeout_ms'], 45000);
+        expect(result['via'], 'direct');
+      },
+    );
+
+    test('says the probe went through the proxy session it holds', () async {
+      final tool = buildTools(
+        target: const FireflyTarget(
+          baseUrl: fireflyBaseUrl,
+          bearer: fireflyToken,
+          proxyCookie: 'jwttoken=abc',
+        ),
+        httpClient: fireflyMockClient(),
+      ).firstWhere((t) => t.name == 'check_connection');
+
+      expect((await tool.run({}))['via'], 'proxy_session');
+    });
+
     test('strips a trailing slash from the target base URL', () async {
       final tools = buildTools(
         target: const FireflyTarget(
@@ -739,7 +806,7 @@ void main() {
         server.listen((request) async {
           if (request.uri.path == '/api/v1/about') {
             request.response.statusCode = 200;
-            request.response.write('{}');
+            request.response.write('{"data":{"version":"6.7.7"}}');
           } else {
             request.response.statusCode = 404;
           }

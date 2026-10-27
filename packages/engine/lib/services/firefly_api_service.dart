@@ -27,6 +27,23 @@ import 'firefly_service.dart';
 /// Per-request ceiling for a call somebody is waiting on.
 const Duration kFireflyRequestTimeout = Duration(seconds: 45);
 
+/// Whether [response] is a web page rather than an answer from the API.
+bool isWebPage(http.Response response) {
+  final contentType = response.headers['content-type'] ?? '';
+  final body = response.body.trimLeft();
+  return contentType.contains('text/html') ||
+      body.startsWith('<!DOCTYPE') ||
+      body.startsWith('<!doctype') ||
+      body.startsWith('<html');
+}
+
+/// Why a web page from [origin] is not Firefly, named once so the status probe
+/// and a failed data call say the same thing.
+String webPageReason(String origin) =>
+    '$origin answered with a web page, not the Firefly III API. Check the '
+    'server URL: a user interface address, or one behind a sign-in page, '
+    'answers every path with HTML.';
+
 /// Per-request ceiling for a read that walks the whole ledger.
 ///
 /// A backup or a full export fetches page after page, and a page off a loaded
@@ -229,18 +246,9 @@ class FireflyApiService implements FireflyService {
   /// what reached the person was a complaint about malformed data when the real
   /// problem was the address they typed.
   void _refuseWebPage(http.Response response, Uri uri) {
-    final contentType = response.headers['content-type'] ?? '';
-    final body = response.body.trimLeft();
-    final isPage =
-        contentType.contains('text/html') ||
-        body.startsWith('<!DOCTYPE') ||
-        body.startsWith('<!doctype') ||
-        body.startsWith('<html');
-    if (!isPage) return;
+    if (!isWebPage(response)) return;
     throw FireflyApiException(
-      '${uri.origin} answered with a web page, not the Firefly III API. Check '
-      'the server URL: a user interface address, or one behind a sign-in page, '
-      'answers every path with HTML.',
+      webPageReason(uri.origin),
       statusCode: response.statusCode,
     );
   }

@@ -7,6 +7,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2026-10-27
+
+### Added
+
+- `check_connection` and the `backend` block of `get_capabilities` report
+  `latency_ms`, the round trip of the API request they already make, beside
+  `request_timeout_ms`, the ceiling a request is held to, and `via`,
+  `direct` or `proxy_session`. Behind a sign-in gateway FireRaccoon is the
+  only client that reaches Firefly, so a probe from outside times the
+  gateway instead
+
+- `create_recurrence` and `update_recurrence` take `splits`, one item per
+  leg, so a loan payment can be one rule that pays principal to the
+  liability and interest to the lender. Rows written ahead from such a rule
+  are one group carrying every leg, and match the one bank row it pays out
+  as
+
+- Backups can be deleted several at a time. The Backups list has a checkbox
+  per backup with select all, and the selection can be deleted or
+  downloaded as one zip, sealed backups staying sealed inside it. "Delete
+  older backups" takes 30 days, 90 days, a year or any number of days, says
+  how many backups and how much space it frees, and asks first. Over MCP,
+  `delete_backups` takes `backup_ids` or `older_than_days`, is a dry run
+  unless told otherwise, and answers each id on its own. A prune by age
+  never takes the newest complete backup
+
+### Fixed
+
+- `check_connection` and `get_capabilities` reported a server behind a
+  sign-in gateway as connected and authorized, because the gateway's login
+  page answered `/api/v1/about` with a 200. A web page, or an answer with no
+  Firefly III version, is now `authorized: false` with the reason a data
+  call would give, so a run checking its preconditions stops before the
+  backup rather than at it
+
+- Changing the payee, an account, the amount or the currency of a
+  reconciled transaction in the edit panel said "Transaction saved" and kept
+  the old value, since Firefly will not move money on a reconciled row. The
+  row is now released for the change and reconciled again, as
+  `keep_reconciled` does over MCP, and a failure to reconcile it again says
+  so rather than reporting it saved
+
+- `update_recurrence` read only the first line of a rule, so any change to
+  a rule of several lines wrote it back as one and the rest were lost. Every
+  stored leg is kept now, and one `amount` on such a rule is refused
+
+- Saving a recurrence of several lines from its edit dialog, which shows
+  the first line only, deleted the others. They are sent back as stored
+
 ## [0.15.1] - 2026-09-29
 
 ### Fixed

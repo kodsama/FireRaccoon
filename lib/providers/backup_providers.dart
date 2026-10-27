@@ -1,3 +1,4 @@
+import 'package:archive/archive.dart';
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 import 'package:flutter/foundation.dart';
@@ -133,6 +134,37 @@ class BackupsNotifier extends AsyncNotifier<List<BackupManifest>> {
       for (final manifest in state.value ?? const <BackupManifest>[])
         if (manifest.id != backupId) manifest,
     ]);
+  }
+
+  /// Deletes every one of [backupIds], answering per id.
+  Future<Map<String, BackupDeletion>> deleteAll(
+    Iterable<String> backupIds,
+  ) async {
+    final service = ref.read(backupServiceProvider);
+    if (service == null) return const {};
+    final results = await service.deleteAll(backupIds);
+    _log.info('Backups deleted: $results');
+    state = AsyncData([
+      for (final manifest in state.value ?? const <BackupManifest>[])
+        if (results[manifest.id] != BackupDeletion.deleted) manifest,
+    ]);
+    return results;
+  }
+
+  /// [backupIds] as one zip, a folder per backup holding its files as they
+  /// are stored, so a sealed one stays sealed.
+  Future<List<int>> archive(Iterable<String> backupIds) async {
+    final service = ref.read(backupServiceProvider);
+    final zip = Archive();
+    if (service != null) {
+      for (final id in backupIds) {
+        for (final MapEntry(key: name, value: bytes)
+            in (await service.storedFiles(id)).entries) {
+          zip.addFile(ArchiveFile.bytes('$id/$name', bytes));
+        }
+      }
+    }
+    return ZipEncoder().encode(zip);
   }
 
   /// One file out of a backup, for handing it to something else.

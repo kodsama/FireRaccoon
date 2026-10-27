@@ -2409,6 +2409,11 @@ class AppLocalizationsPt extends AppLocalizations {
   String get transactionSaved => 'Transaction saved.';
 
   @override
+  String savedButLeftUnreconciled(String error) {
+    return 'Guardada, mas não foi possível marcá-la de novo como reconciliada: $error. Marque reconciliada e guarde para terminar.';
+  }
+
+  @override
   String failedToSaveTransaction(String error) {
     return 'Failed to save transaction: $error';
   }
@@ -3718,6 +3723,76 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String backupDeleteBody(String id) {
     return '$id desaparece com tudo o que tem dentro, e mais nada guarda uma cópia.';
+  }
+
+  @override
+  String get backupPrune => 'Eliminar cópias antigas';
+
+  @override
+  String get backupPruneTitle => 'Eliminar cópias com mais de';
+
+  @override
+  String backupPruneDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count dias',
+      one: '1 dia',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupPruneYear => '1 ano';
+
+  @override
+  String get backupPruneCustom => 'Dias';
+
+  @override
+  String backupPrunePreview(int count, String kilobytes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count cópias',
+      one: '1 cópia',
+    );
+    return '$_temp0, $kilobytes kB. A cópia completa mais recente é sempre mantida.';
+  }
+
+  @override
+  String get backupPruneNothing =>
+      'Nenhuma cópia é tão antiga, além da completa mais recente.';
+
+  @override
+  String backupSelected(int count) {
+    return '$count selecionada(s)';
+  }
+
+  @override
+  String get backupSelectAll => 'Selecionar tudo';
+
+  @override
+  String get backupDownloadSelected => 'Transferir';
+
+  @override
+  String backupDeleteManyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Eliminar $count cópias?',
+      one: 'Eliminar 1 cópia?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupDeleteManyBody(String kilobytes) {
+    return '$kilobytes kB desaparecem e não há cópia noutro lado.';
+  }
+
+  @override
+  String backupsDeleted(int deleted, int failed) {
+    return '$deleted eliminada(s), $failed falharam';
   }
 
   @override

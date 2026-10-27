@@ -193,6 +193,58 @@ void main() {
     expect(find.text('Edit Recurring Transaction'), findsNothing);
   });
 
+  testWidgets('editing a rule of several lines keeps the lines after the '
+      'first', (tester) async {
+    configureDialogTestSurface(tester);
+    addTearDown(tester.view.resetPhysicalSize);
+    final loan = Recurrence(
+      id: sampleRecurrence.id,
+      type: sampleRecurrence.type,
+      title: sampleRecurrence.title,
+      firstDate: sampleRecurrence.firstDate,
+      repetitions: sampleRecurrence.repetitions,
+      transactions: [
+        ...sampleRecurrence.transactions,
+        const RecurrenceTransactionLine(
+          id: 'tx-line-2',
+          description: 'Interest',
+          amount: 12,
+          currencyCode: 'EUR',
+          sourceId: '1',
+          destinationId: '2',
+        ),
+      ],
+    );
+    final fake = buildDialogFireflyService(recurrences: [loan]);
+
+    await tester.pumpWidget(
+      await buildScreenTestApp(
+        child: Consumer(
+          builder: (context, ref, _) => ElevatedButton(
+            onPressed: () => showRecurringTransactionFormDialog(
+              context: context,
+              ref: ref,
+              recurrence: loan,
+            ),
+            child: const Text('Open Dialog'),
+          ),
+        ),
+        fireflyService: fake,
+        authSettings: AuthSettings(
+          serverUrl: 'https://firefly.test',
+          apiToken: 'token',
+        ),
+      ),
+    );
+    await settleIgnoringOverflow(tester);
+    await _openCreateDialog(tester);
+    await tapDialogPrimaryAction(tester, label: 'Save');
+
+    final lines = fake.savedRecurrences.last.transactions;
+    expect(lines.map((line) => line.id), ['tx-line-1', 'tx-line-2']);
+    expect(lines.last.amount, 12);
+  });
+
   testWidgets('the schedule rule never reaches the notes field, and survives '
       'a save that never touched it', (tester) async {
     // The rule is a marker, not prose. Left visible in the notes it reads as

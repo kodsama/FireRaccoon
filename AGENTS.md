@@ -50,7 +50,7 @@ See `docs/adr/0002-local-vs-server-mode.md` and `docs/deployment.md`.
 
 Accounts, transactions, budgets, budget limits, categories, tags, bills, piggy
 banks, recurrences, currencies, reconciliation, and the on-device projection:
-68 tools, 36 of them write-gated. The rich account prognosis behind the UI is
+69 tools, 37 of them write-gated. The rich account prognosis behind the UI is
 the one engine capability with no tool
 (`docs/adr/0001-projection-vs-prognosis.md`). `get_capabilities` returns the
 live catalog and the write-gated names a `viewer` key is refused. Domain terms
@@ -59,7 +59,7 @@ live in `CONTEXT.md`.
 | Tool | Purpose |
 |------|---------|
 | `get_capabilities` | App and server version, tool catalog, the write-gated list, live backend status, and whether a reverse-proxy session is held |
-| `check_connection` | Whether Firefly III is connected, which server, which version, and how many users |
+| `check_connection` | Whether Firefly III is connected, which server, which version, how many users, and how long the API took to answer |
 | `get_current_user` | Authenticated Firefly user |
 | `get_primary_currency` | Instance default currency |
 | `set_primary_currency` | Change the default currency |
@@ -78,6 +78,7 @@ live in `CONTEXT.md`.
 | `list_backups` | Backups this FireRaccoon holds, newest first |
 | `get_backup` | One backup's manifest, or a file inside it |
 | `delete_backup` | Remove one backup and everything in it |
+| `delete_backups` | Remove several backups by id or by age; dry run by default, never the newest complete one by age, answered per id |
 | `verify_backup` | Check a backup opens and matches its manifest, then report how the ledger has drifted from it; writes nothing |
 | `restore_backup` | Plan or apply putting a backup back; dry run by default, takes a fresh backup before it writes, refuses another user's ledger |
 | `find_incomplete_transactions` | Transactions missing a description, category, budget, tags, payee, notes or piggy bank |
@@ -119,8 +120,8 @@ live in `CONTEXT.md`.
 | `delete_piggy_bank` | Delete a piggy bank; linked accounts are untouched |
 | `get_recurrences` | List recurring rules, each with the amount, accounts, category, budget and tags of the lines it creates |
 | `get_recurrence_transactions` | Transactions a recurring rule has created |
-| `create_recurrence` | Create a recurring rule |
-| `update_recurrence` | Change a recurring rule; fields left out keep their stored value, and the answer names the rows written ahead from it |
+| `create_recurrence` | Create a recurring rule, one line or several in `splits` |
+| `update_recurrence` | Change a recurring rule; fields left out keep their stored value, `splits` restates every leg, and the answer names the rows written ahead from it |
 | `delete_recurrence` | Delete a recurring rule; transactions it created are kept unless asked otherwise |
 | `get_currencies` | List currencies and which are enabled |
 | `run_projection` | Savings, compound, portfolio, or cashflow projection |

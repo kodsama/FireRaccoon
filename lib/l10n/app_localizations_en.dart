@@ -2404,6 +2404,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionSaved => 'Transaction saved.';
 
   @override
+  String savedButLeftUnreconciled(String error) {
+    return 'Saved, but marking it reconciled again failed: $error. Tick reconciled and save to finish.';
+  }
+
+  @override
   String failedToSaveTransaction(String error) {
     return 'Failed to save transaction: $error';
   }
@@ -3704,6 +3709,76 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String backupDeleteBody(String id) {
     return '$id and everything in it goes, and nothing else keeps a copy.';
+  }
+
+  @override
+  String get backupPrune => 'Delete older backups';
+
+  @override
+  String get backupPruneTitle => 'Delete backups older than';
+
+  @override
+  String backupPruneDays(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days',
+      one: '1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get backupPruneYear => '1 year';
+
+  @override
+  String get backupPruneCustom => 'Days';
+
+  @override
+  String backupPrunePreview(int count, String kilobytes) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count backups',
+      one: '1 backup',
+    );
+    return '$_temp0, $kilobytes kB. The newest complete backup is always kept.';
+  }
+
+  @override
+  String get backupPruneNothing =>
+      'No backup is that old, besides the newest complete one.';
+
+  @override
+  String backupSelected(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get backupSelectAll => 'Select all';
+
+  @override
+  String get backupDownloadSelected => 'Download';
+
+  @override
+  String backupDeleteManyTitle(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Delete $count backups?',
+      one: 'Delete 1 backup?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String backupDeleteManyBody(String kilobytes) {
+    return '$kilobytes kB goes, and nothing else keeps a copy.';
+  }
+
+  @override
+  String backupsDeleted(int deleted, int failed) {
+    return '$deleted deleted, $failed failed';
   }
 
   @override
