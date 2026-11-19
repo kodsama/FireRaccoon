@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.1] - 2026-11-19
+
+### Fixed
+
+- The MCP server picks a random base port in the IANA dynamic range
+  (49152–65525) instead of hardcoding 8787, avoiding collisions with
+  Cloudflare Workers / Wrangler and Caveman proxy runtimes. Existing
+  installations on the old 8787 default automatically migrate away.
+
 ## [0.16.0] - 2026-10-27
 
 ### Added
