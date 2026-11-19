@@ -7,6 +7,7 @@ import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 
 import '../l10n/app_localizations.dart';
+import '../providers/mcp_port_provider.dart';
 
 typedef IsolateSpawner = Future<Isolate> Function(
   void Function(McpIsolateConfig) entry,
@@ -76,7 +77,7 @@ class McpService extends ChangeNotifier {
     String? backupsDirectory,
     String? appVersion,
     String? proxyCookie,
-    int basePort = 8787,
+    int basePort = kDefaultMcpBasePort,
   }) {
     final next = (_queue ?? Future<void>.value()).then(
       (_) => _sync(

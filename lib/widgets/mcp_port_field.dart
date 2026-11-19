@@ -80,14 +80,13 @@ class _McpPortFieldState extends ConsumerState<McpPortField> {
                 ),
               ),
               const SizedBox(width: 8),
-              if (current != kDefaultMcpBasePort)
-                TextButton(
-                  onPressed: () {
-                    setState(() => _error = null);
-                    ref.read(mcpBasePortProvider.notifier).reset();
-                  },
-                  child: Text(l10n.mcpBasePortReset),
-                ),
+              TextButton(
+                onPressed: () {
+                  setState(() => _error = null);
+                  ref.read(mcpBasePortProvider.notifier).reset();
+                },
+                child: Text(l10n.mcpBasePortReset),
+              ),
             ],
           ),
           const SizedBox(height: 4),
