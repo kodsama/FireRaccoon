@@ -19,9 +19,10 @@ without touching the GUI.
    acts as the person who created it, so a viewer's key gets read-only tools.
    Set `FIRERACCOON_URL` and `FIRERACCOON_API_KEY`. Firefly III credentials are
    never accepted here, and tools take no credential arguments.
-4. **Connect via MCP.** Stdio for Cursor/CLI clients; TCP `127.0.0.1:8787+` when
-   the desktop app is running (embedded server in Settings). Both require the
-   key; TCP takes it as `initialize.params.apiKey`.
+4. **Connect via MCP.** Stdio for Cursor/CLI clients; TCP in the dynamic port
+   range (`127.0.0.1:49152+` by default) when the desktop app is running
+   (embedded server in Settings). Both require the key; TCP takes it as
+   `initialize.params.apiKey`.
 
 ## MCP session
 
@@ -145,7 +146,7 @@ FIRERACCOON_URL=https://fireraccoon.example FIRERACCOON_API_KEY=frcn_... \
   dart run packages/mcp/bin/fireraccoon_mcp.dart
 
 # TCP
-dart run packages/mcp/bin/fireraccoon_mcp.dart --tcp --port 8787
+dart run packages/mcp/bin/fireraccoon_mcp.dart --tcp --port 52872
 
 # Schema export
 dart run packages/mcp/bin/fireraccoon_mcp.dart schema

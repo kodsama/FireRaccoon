@@ -49,8 +49,8 @@ Map<String, Object?> buildMcpSchema({FireflyTarget? target}) {
       'stdio': {'command': 'fireraccoon_mcp'},
       'tcp': {
         'host': '127.0.0.1',
-        'port': 8787,
-        'portRange': '8787-8796',
+        'port': 52872,
+        'portRange': '52872-52881',
         'auth': 'apiKey',
       },
     },

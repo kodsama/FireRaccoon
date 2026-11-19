@@ -34,8 +34,8 @@ export FIRERACCOON_API_KEY=frcn_...
 # Stdio transport (the default; MCP clients spawn this process)
 dart run fireraccoon_mcp
 
-# TCP transport on localhost:8787
-dart run fireraccoon_mcp --tcp --port 8787
+# TCP transport on localhost:52872
+dart run fireraccoon_mcp --tcp --port 52872
 
 # Export machine-readable tool catalog (agent discovery)
 dart run fireraccoon_mcp schema
@@ -90,7 +90,7 @@ Adjust paths to your clone location.
 
 ## Connecting to the desktop app
 
-The desktop app binds the first free port in 8787–8796 and shows it in Settings under MCP. Clients present their key on `initialize`:
+The desktop app binds a free port in the dynamic range (49152–65525 by default) and shows it in Settings under MCP. Clients present their key on `initialize`:
 
 ```json
 {
@@ -746,4 +746,4 @@ The MCP layer is a thin adapter; all business logic lives in `packages/engine`.
 - Prefer stdio transport so the key stays in the parent process environment.
 - The secret is stored alongside its digest so its owner can read the key back instead of reissuing it, which means a stolen `DATA_DIR` or keychain entry does yield working keys. That is the same exposure the Firefly PAT already carries in the same store, and an agent key grants strictly less than the PAT does. Revoke the keys if either is lost.
 - Check a key's last-used stamp in Settings before assuming an unused key is safe to keep.
-- Do not expose port 8787 to untrusted networks.
+- Do not expose the MCP port to untrusted networks.

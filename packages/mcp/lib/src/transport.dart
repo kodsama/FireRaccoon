@@ -51,7 +51,7 @@ Future<ServerSocket> serveTcp({
   required McpServerForConnection server,
   required McpAuthenticator authenticator,
   String host = '127.0.0.1',
-  int port = 8787,
+  int port = 52872,
   void Function(String message)? onLog,
 }) async {
   final socket = await ServerSocket.bind(host, port);

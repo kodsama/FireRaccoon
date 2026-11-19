@@ -1,10 +1,20 @@
+import 'dart:async';
+import 'dart:math';
+
 import 'package:fireraccoon_engine/fireraccoon_engine.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'theme_provider.dart';
 
-/// Where the MCP server starts looking for a free port.
-const kDefaultMcpBasePort = 8787;
+/// Default base port when a static fallback is needed.
+///
+/// Placed in the IANA dynamic/private range (RFC 6335: 49152–65535) so it never
+/// collides with registered services or popular dev proxies like 8787.
+const kDefaultMcpBasePort = 52872;
+
+/// Range for randomly generated MCP base ports.
+const kMinDynamicMcpBasePort = 49152;
+const kMaxDynamicMcpBasePort = 65535 - kMcpPortRange;
 
 /// How many ports it will try before giving up.
 ///
@@ -21,6 +31,12 @@ const kMaxMcpBasePort = 65535 - kMcpPortRange;
 int normalizeMcpBasePort(int value) =>
     value.clamp(kMinMcpBasePort, kMaxMcpBasePort);
 
+int generateRandomMcpBasePort([Random? random]) {
+  final r = random ?? Random();
+  return kMinDynamicMcpBasePort +
+      r.nextInt(kMaxDynamicMcpBasePort - kMinDynamicMcpBasePort + 1);
+}
+
 /// The base port the MCP server binds from.
 ///
 /// Configurable because the default range can be taken by something else on the
@@ -35,7 +51,13 @@ class McpBasePortNotifier extends Notifier<int> {
   int build() {
     final prefs = ref.watch(sharedPreferencesProvider);
     final stored = prefs.getInt(_prefsKey);
-    if (stored == null) return kDefaultMcpBasePort;
+    // 8787 was the old colliding default; migrate away to a random dynamic port.
+    if (stored == null || stored == 8787) {
+      final generated = generateRandomMcpBasePort();
+      unawaited(prefs.setInt(_prefsKey, generated));
+      _log.info('Assigned random MCP base port: $generated');
+      return generated;
+    }
     final value = normalizeMcpBasePort(stored);
     _log.finer('Loaded MCP base port preference: $value');
     return value;
@@ -49,12 +71,12 @@ class McpBasePortNotifier extends Notifier<int> {
     _log.info('Updated MCP base port to $normalized');
   }
 
-  /// Back to the default, and out of the stored preferences entirely, so a
-  /// later change of default is picked up rather than pinned by an old write.
-  Future<void> reset() async {
-    state = kDefaultMcpBasePort;
-    await ref.read(sharedPreferencesProvider).remove(_prefsKey);
-    _log.info('MCP base port reset to the default');
+  /// Resets to a fresh random port in the dynamic range.
+  Future<void> reset([Random? random]) async {
+    final fresh = generateRandomMcpBasePort(random);
+    state = fresh;
+    await ref.read(sharedPreferencesProvider).setInt(_prefsKey, fresh);
+    _log.info('MCP base port reset to random port $fresh');
   }
 }
 
