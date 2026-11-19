@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:fireraccoon/providers/mcp_port_provider.dart';
 import 'package:fireraccoon/providers/theme_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,10 +19,21 @@ void main() {
     return container;
   }
 
-  test('defaults to the port agents are configured with', () async {
+  test('defaults to a random port in dynamic range and saves it', () async {
     final container = await containerWith({});
+    final port = container.read(mcpBasePortProvider);
 
-    expect(container.read(mcpBasePortProvider), kDefaultMcpBasePort);
+    expect(port, greaterThanOrEqualTo(kMinDynamicMcpBasePort));
+    expect(port, lessThanOrEqualTo(kMaxDynamicMcpBasePort));
+  });
+
+  test('migrates away from old colliding default 8787', () async {
+    final container = await containerWith({'mcpBasePort': 8787});
+    final port = container.read(mcpBasePortProvider);
+
+    expect(port, isNot(8787));
+    expect(port, greaterThanOrEqualTo(kMinDynamicMcpBasePort));
+    expect(port, lessThanOrEqualTo(kMaxDynamicMcpBasePort));
   });
 
   test('a chosen port is kept', () async {
@@ -60,9 +73,7 @@ void main() {
     },
   );
 
-  test('resetting forgets the preference, not just the value', () async {
-    // A stored copy of today's default would pin the port if the default ever
-    // moved, which is the one thing a reset is supposed to prevent.
+  test('resetting picks a fresh random port and stores it', () async {
     SharedPreferences.setMockInitialValues({'mcpBasePort': 9100});
     final prefs = await SharedPreferences.getInstance();
     final container = ProviderContainer(
@@ -70,9 +81,12 @@ void main() {
     );
     addTearDown(container.dispose);
 
-    await container.read(mcpBasePortProvider.notifier).reset();
+    await container.read(mcpBasePortProvider.notifier).reset(Random(42));
+    final port = container.read(mcpBasePortProvider);
 
-    expect(container.read(mcpBasePortProvider), kDefaultMcpBasePort);
-    expect(prefs.getInt('mcpBasePort'), isNull);
+    expect(port, isNot(9100));
+    expect(port, greaterThanOrEqualTo(kMinDynamicMcpBasePort));
+    expect(port, lessThanOrEqualTo(kMaxDynamicMcpBasePort));
+    expect(prefs.getInt('mcpBasePort'), port);
   });
 }

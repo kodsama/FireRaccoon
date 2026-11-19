@@ -8,7 +8,7 @@ import 'package:fireraccoon_mcp/fireraccoon_mcp.dart';
 const _usage = '''
 fireraccoon_mcp: MCP server for FireRaccoon
 
-  --tcp [--port N]   serve on localhost TCP (default 8787) instead of stdio
+  --tcp [--port N]   serve on localhost TCP (default 52872) instead of stdio
   schema             emit the JSON tool catalog and exit
 
 Credentials (a FireRaccoon account, never a Firefly III token):
@@ -72,7 +72,7 @@ Future<void> main(List<String> args) async {
   }
 
   if (args.contains('--tcp')) {
-    final port = _intAfter(args, '--port') ?? 8787;
+    final port = _intAfter(args, '--port') ?? 52872;
     await serveTcp(
       // Each connection's own key becomes its Firefly bearer, so the backend
       // stays the authority on what that key may do.

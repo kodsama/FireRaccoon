@@ -13,7 +13,7 @@ info:
        key management, avatars, and the Firefly proxy.
     2. **Firefly III REST endpoints** consumed by the app and MCP tools.
     3. **MCP tools** exposed by the built-in `fireraccoon_mcp` server (JSON-RPC 2.0
-       over stdio or TCP `127.0.0.1:8787+`).
+       over stdio or TCP `127.0.0.1:49152+`).
 
     Backend routes answer `503` with `code: store_locked` while the encrypted
     store is locked, apart from the three that report that state or clear it:
@@ -1241,8 +1241,8 @@ x-mcp:
       command: dart run packages/mcp/bin/fireraccoon_mcp.dart
     tcp:
       host: 127.0.0.1
-      port: 8787
-      note: Desktop app binds 8787–8796 when running
+      port: 52872
+      note: Desktop app binds a random port in 49152–65525 when running
   auth:
     credential: FireRaccoon agent key
     env:
